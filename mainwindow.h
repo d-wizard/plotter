@@ -64,6 +64,7 @@ private:
 
 private slots:
     void pointSelected(const QPointF &pos);
+    void rectSelected(const QRectF &pos);
 
 };
 

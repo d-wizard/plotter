@@ -57,6 +57,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mt_qwfPlotCurve->attach(mt_qwtPlot);
 
+
+    //mt_qwtPlot->setAxisScale(QwtPlot::yLeft, -25, 25);
+    //mt_qwtPlot->setAxisScale(QwtPlot::xBottom, -25, 25);
     mt_qwtPlot->replot();
     mt_qwtPlot->show();
 
@@ -65,11 +68,13 @@ MainWindow::MainWindow(QWidget *parent) :
     //        QwtPlotPicker::NoRubberBand, QwtPicker::AlwaysOn,
     //        mt_qwtPlot->canvas());
     picker = new QwtPlotPicker(mt_qwtPlot->canvas());
-    picker->setStateMachine(new QwtPickerClickPointMachine());
+    picker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerClickPointMachine());
     //picker->setMousePattern(QwtEventPattern::MouseSelect1,Qt::LeftButton);
 
-    connect(picker, SIGNAL(appended(QPointF)),
-            this, SLOT(pointSelected(QPointF)));
+    //connect(picker, SIGNAL(appended(QPointF)),
+    //        this, SLOT(pointSelected(QPointF)));
+    connect(picker, SIGNAL(selected(QRectF)),
+            this, SLOT(rectSelected(QRectF)));
 
 }
 
@@ -139,5 +144,23 @@ void MainWindow::pointSelected(const QPointF &pos)
     }
 
 
+
+}
+
+
+void MainWindow::rectSelected(const QRectF &pos)
+{
+    QRectF rectCopy = pos;
+    qreal x1, y1, x2, y2;
+
+    rectCopy.getCoords(&x1, &y1, &x2, &y2);
+
+    mt_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
+    mt_qwtPlot->setAxisScale(QwtPlot::xBottom, x1, x2);
+    mt_qwtPlot->replot();
+    if(x1 == 0.0 && x2 == 0.0 && y1 == 0.0 && y2 == 0.0)
+    {
+        mi_index =0;
+    }
 
 }
