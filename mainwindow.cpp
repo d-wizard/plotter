@@ -26,8 +26,12 @@
 #include <qwt_legend.h>
 #include <qwt_plot_picker.h>
 #include <qwt_picker_machine.h>
-
+#include <qwt_scale_widget.h>
 #include <math.h>
+
+
+QLabel* legendLabel;
+QwtPlotGrid *grid;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,13 +41,37 @@ MainWindow::MainWindow(QWidget *parent) :
     mi_size = 100;
     mi_index = 0;
 
+    QPalette palette = this->palette();
+    palette.setColor( QPalette::WindowText, Qt::white);
+    palette.setColor( QPalette::Text, Qt::white);
+    this->setPalette(palette);
 
-    QwtText t_plotTitle("t_title");
+
+    palette = ui->menuGraph->palette();
+    palette.setColor( QPalette::WindowText, Qt::black);
+    palette.setColor( QPalette::Text, Qt::black);
+    ui->menuGraph->setPalette(palette);
+
     int i_index;
 
-    mt_qwtPlot = new QwtPlot(t_plotTitle, this);
+    mt_qwtPlot = new QwtPlot( this);
     mt_qwfPlotCurve = new QwtPlotCurve("Curve 1");
-    ui->fullHorzLayout->addWidget(mt_qwtPlot);
+    ui->GraphLayout->addWidget(mt_qwtPlot);
+
+    mt_qwfPlotCurve->setPen(Qt::cyan);
+
+    mt_qwtPlot->insertLegend( new QwtLegend() );
+
+    grid = new QwtPlotGrid();
+    grid->attach( mt_qwtPlot );
+    grid->setPen(Qt::white);
+
+    legendLabel = new QLabel(mt_qwfPlotCurve->title().text(), parent);
+    palette = this->palette();
+    palette.setColor( QPalette::WindowText, Qt::cyan);
+    palette.setColor( QPalette::Text, Qt::cyan);
+    legendLabel->setPalette(palette);
+    ui->LegendLayout->addWidget(legendLabel);
 
     md_x = new double[mi_size];
     md_y = new double[mi_size];
@@ -65,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //mt_qwtPlot->setAxisScale(QwtPlot::xBottom, -25, 25);
     mt_qwtPlot->replot();
     mt_qwtPlot->show();
+    grid->show();
 
 
     //picker = new QwtPlotPicker(QwtPlot::xBottom, QwtPlot::yLeft,
@@ -74,8 +103,8 @@ MainWindow::MainWindow(QWidget *parent) :
     picker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerClickPointMachine());
     //picker->setMousePattern(QwtEventPattern::MouseSelect1,Qt::LeftButton);
 
-    //connect(picker, SIGNAL(appended(QPointF)),
-    //        this, SLOT(pointSelected(QPointF)));
+    connect(picker, SIGNAL(appended(QPointF)),
+            this, SLOT(pointSelected(QPointF)));
     connect(picker, SIGNAL(selected(QRectF)),
             this, SLOT(rectSelected(QRectF)));
 
@@ -88,6 +117,8 @@ MainWindow::~MainWindow()
     delete mt_qwtPlot;
     delete [] md_x;
     delete [] md_y;
+
+    delete legendLabel;
  }
 
  void MainWindow::addValue(double i_value)
@@ -166,5 +197,17 @@ void MainWindow::rectSelected(const QRectF &pos)
     {
         mi_index =0;
     }
+
+}
+
+void MainWindow::on_cmdResetZoom_clicked()
+{
+    mt_qwtPlot->setAxisScale(QwtPlot::yLeft, -1, 1);
+    mt_qwtPlot->setAxisScale(QwtPlot::xBottom, 0, 100);
+    mt_qwtPlot->replot();
+}
+
+void MainWindow::on_cmdToggleSelect_clicked()
+{
 
 }

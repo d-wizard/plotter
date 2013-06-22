@@ -66,6 +66,8 @@ private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
 
+    void on_cmdResetZoom_clicked();
+    void on_cmdToggleSelect_clicked();
 };
 
 #endif // MAINWINDOW_H
