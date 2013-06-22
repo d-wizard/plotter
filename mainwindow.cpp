@@ -27,6 +27,8 @@
 #include <qwt_plot_picker.h>
 #include <qwt_picker_machine.h>
 
+#include <math.h>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -41,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mt_qwtPlot = new QwtPlot(t_plotTitle, this);
     mt_qwfPlotCurve = new QwtPlotCurve("Curve 1");
+    ui->fullHorzLayout->addWidget(mt_qwtPlot);
 
     md_x = new double[mi_size];
     md_y = new double[mi_size];
@@ -49,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for(i_index = 0; i_index < mi_size; ++i_index)
     {
        md_x[i_index] = i_index;
-       md_y[i_index] = (double)i_index;//0.0;
+       md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
     }
 
     mt_qwfPlotCurve->setSamples(md_x, md_y, mi_size);
@@ -80,7 +83,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;delete mt_qwfPlotCurve;
+    delete ui;
+    delete mt_qwfPlotCurve;
     delete mt_qwtPlot;
     delete [] md_x;
     delete [] md_y;
