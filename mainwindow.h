@@ -64,6 +64,63 @@ private:
     CurveData();
 };
 
+class Cursor
+{
+public:
+    Cursor():
+        isAttached(false),
+        m_curve(NULL),
+        m_symbol(NULL)
+    {
+        m_curve = new QwtPlotCurve("");
+    }
+    ~Cursor()
+    {
+        if(m_curve != NULL)
+        {
+            //delete m_curve;
+            m_curve = NULL;
+        }
+    }
+
+    void showCursor(QwtPlot* parent, double x, double y, QColor color, QwtSymbol::Style symbol)
+    {
+        hideCursor();
+
+        m_symbol = new QwtSymbol( symbol,
+           QBrush( color ), QPen( color, 2 ), QSize( 8, 8 ) );
+
+        m_curve->setSymbol( m_symbol );
+        m_curve->setSamples( &x, &y, 1);
+
+        m_curve->attach(parent);
+        isAttached = true;
+    }
+
+    void hideCursor()
+    {
+        if(isAttached)
+        {
+            m_curve->detach();
+            isAttached = false;
+        }
+
+        if(m_symbol != NULL)
+        {
+            //delete m_symbol;
+            m_symbol = NULL;
+        }
+    }
+
+private:
+    QwtPlotCurve* m_curve;
+    QwtSymbol* m_symbol;
+
+    bool isAttached;
+};
+
+
+
 typedef enum
 {
     E_CURSOR,
@@ -91,7 +148,7 @@ private:
 
     QwtPlot* m_qwtPlot;
     std::vector<CurveData> m_qwtCurves;
-    QwtPlotCurve* m_qwtSelectedSample;
+    Cursor m_qwtSelectedSample;
     QwtPlotCurve* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;

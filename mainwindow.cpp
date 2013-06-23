@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_qwtPlot(NULL),
-    m_qwtSelectedSample(NULL),
+    //m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
     m_selectMode(E_CURSOR),
@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
     // Init the cursor curves
-    m_qwtSelectedSample = new QwtPlotCurve("");
+    //m_qwtSelectedSample = new QwtPlotCurve("");
     m_qwtSelectedSampleDelta = new QwtPlotCurve("");
 
 
@@ -143,6 +143,8 @@ MainWindow::MainWindow(QWidget *parent) :
     add1dCurve("Curve1", md_y);
     add1dCurve("Curve2", md_x);
 
+
+
 }
 
 MainWindow::~MainWindow()
@@ -152,6 +154,7 @@ MainWindow::~MainWindow()
     if(m_qwtPlot != NULL)
     {
         delete m_qwtPlot;
+        m_qwtPlot = NULL;
     }
     //if(m_qwtGrid != NULL)
     //{
@@ -161,10 +164,10 @@ MainWindow::~MainWindow()
     //{
     //    delete m_qwtPicker;
     //}
-    if(m_qwtSelectedSample != NULL)
-    {
-        delete m_qwtSelectedSample;
-    }
+    //if(m_qwtSelectedSample != NULL)
+    //{
+    //    delete m_qwtSelectedSample;
+    //}
     if(m_qwtSelectedSampleDelta != NULL)
     {
         delete m_qwtSelectedSampleDelta;
@@ -311,58 +314,17 @@ void MainWindow::pointSelected(const QPointF &pos)
     if(m_selectMode == E_CURSOR)
     {
         int posIndex = (int)(pos.x() + 0.5);
-        QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
-            QBrush( m_qwtCurves[selectedCurveIndex].color ), QPen( m_qwtCurves[selectedCurveIndex].color, 2 ), QSize( 8, 8 ) );
-        m_qwtSelectedSample->setSymbol( symbol );
-        m_qwtSelectedSample->setSamples(
-                    &m_qwtCurves[selectedCurveIndex].xPoints[posIndex],
-                    &m_qwtCurves[selectedCurveIndex].yPoints[posIndex],
-                    1);
 
-        m_qwtSelectedSample->attach(m_qwtPlot);
+        m_qwtSelectedSample.showCursor(m_qwtPlot,
+                                       m_qwtCurves[selectedCurveIndex].xPoints[posIndex],
+                                       m_qwtCurves[selectedCurveIndex].yPoints[posIndex],
+                                       m_qwtCurves[selectedCurveIndex].color,
+                                       QwtSymbol::Ellipse);
 
         m_qwtPlot->replot();
 
 
     }
-
-#if 0
-    QPoint blah = pos.toPoint();
-    int i = mt_qwfPlotCurve->closestPoint(blah, NULL);
-    QPointF found = mt_qwfPlotCurve->sample(i);
-    qreal x = pos.x();
-    int roundX = (int)(x + 0.5);
-    double yVal = md_y[roundX];
-
-
-    if(roundX < 0)
-    {
-        roundX = 0;
-    }
-    else if(roundX >= mi_size)
-    {
-        roundX = mi_size - 1;
-    }
-
-    QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
-        QBrush( Qt::yellow ), QPen( Qt::red, 2 ), QSize( 8, 8 ) );
-    mt_qwfPlotCurveSelectedSample->setSymbol( symbol );
-    mt_qwfPlotCurveSelectedSample->setSamples(&md_x[roundX], &md_y[roundX], 1);
-
-    mt_qwfPlotCurveSelectedSample->attach(mt_qwtPlot);
-
-    mt_qwtPlot->replot();
-    //mt_qwtPlot->show();
-
-    if(yVal == 0 || i == 0 || found.x() == 0.0)
-    {
-        mi_index = (int)blah.rx();
-    }
-    else
-    {
-        mi_index = 1;
-    }
-#endif
 
 
 }
@@ -379,6 +341,9 @@ void MainWindow::rectSelected(const QRectF &pos)
 
         m_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
         m_qwtPlot->setAxisScale(QwtPlot::xBottom, x1, x2);
+
+        m_qwtSelectedSample.hideCursor();
+
         m_qwtPlot->replot();
     }
 
