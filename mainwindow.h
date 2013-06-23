@@ -33,6 +33,7 @@
 #include <qwt_picker_machine.h>
 #include <qwt_scale_widget.h>
 
+#include <QLabel>
 
 typedef std::vector<double> dubVect;
 
@@ -48,6 +49,7 @@ class CurveData
 {
 public:
     CurveData(QwtPlotCurve* newCurve):
+        pointLabel(new QLabel("")),
         curve(newCurve){}
     ~CurveData()
     {
@@ -55,6 +57,7 @@ public:
         {
             //delete curve;
         }
+        //delete pointLabel;
     }
 
     QwtPlotCurve* curve;
@@ -63,6 +66,8 @@ public:
     maxMinXY maxMin;
 
     QColor color;
+
+    QLabel* pointLabel;
 
     bool displayed;
 private:
@@ -163,8 +168,6 @@ private:
     int selectedCurveIndex;
 
     maxMinXY maxMin;
-
-
 
     void resetPlot();
     void add1dCurve(std::string name, dubVect yPoints);

@@ -18,7 +18,7 @@
  */
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include <stdio.h>
 
 QwtPlotGrid *grid;
 int mi_size;
@@ -145,6 +145,7 @@ MainWindow::MainWindow(QWidget *parent) :
     resetPlot();
     add1dCurve("Curve1", md_y);
     add1dCurve("Curve2", md_x);
+
 
 }
 
@@ -365,6 +366,22 @@ void MainWindow::pointSelected(const QPointF &pos)
                                        QwtSymbol::Ellipse);
 
         m_qwtPlot->replot();
+
+        for(int i = 0; i < m_qwtCurves.size(); ++i)
+        {
+            ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
+
+            char tempText[100];
+            snprintf(tempText, sizeof(tempText), "%d : %f", posIndex, (float)m_qwtCurves[i].yPoints[posIndex]);
+            m_qwtCurves[i].pointLabel->setText(tempText);
+
+            QPalette palette = this->palette();
+            palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
+            palette.setColor( QPalette::Text, m_qwtCurves[i].color);
+            m_qwtCurves[i].pointLabel->setPalette(palette);
+
+            ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
+        }
 
 
     }
