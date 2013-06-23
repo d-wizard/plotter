@@ -36,7 +36,13 @@
 
 typedef std::vector<double> dubVect;
 
-
+typedef struct
+{
+    double minX;
+    double minY;
+    double maxX;
+    double maxY;
+}maxMinXY;
 
 class CurveData
 {
@@ -54,12 +60,11 @@ public:
     QwtPlotCurve* curve;
     dubVect xPoints;
     dubVect yPoints;
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
+    maxMinXY maxMin;
 
     QColor color;
+
+    bool displayed;
 private:
     CurveData();
 };
@@ -157,10 +162,15 @@ private:
 
     int selectedCurveIndex;
 
+    maxMinXY maxMin;
+
+
 
     void resetPlot();
     void add1dCurve(std::string name, dubVect yPoints);
     void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+
+    void calcMaxMin();
 
 private slots:
     void pointSelected(const QPointF &pos);

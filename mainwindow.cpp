@@ -118,6 +118,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(picker, SIGNAL(selected(QRectF)),
             this, SLOT(rectSelected(QRectF)));
 #endif
+    // init test samples.
+    md_x.resize(mi_size);
+    md_y.resize(mi_size);
+
+
+    for(int i_index = 0; i_index < mi_size; ++i_index)
+    {
+       md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
+       md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+    }
+
+
+
 
     // Init the cursor curves
     //m_qwtSelectedSample = new QwtPlotCurve("");
@@ -130,20 +143,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
 
     resetPlot();
-    md_x.resize(mi_size);
-    md_y.resize(mi_size);
-
-
-    for(int i_index = 0; i_index < mi_size; ++i_index)
-    {
-       md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-       md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-
     add1dCurve("Curve1", md_y);
     add1dCurve("Curve2", md_x);
-
-
 
 }
 
@@ -233,23 +234,24 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
         m_qwtCurves[curveIndex].xPoints[i] = (double)i;
     }
 
-    m_qwtCurves[curveIndex].minX = 0;
-    m_qwtCurves[curveIndex].maxX = vectSize-1;
-    m_qwtCurves[curveIndex].minY = m_qwtCurves[curveIndex].yPoints[0];
-    m_qwtCurves[curveIndex].maxY = m_qwtCurves[curveIndex].yPoints[0];
+    m_qwtCurves[curveIndex].maxMin.minX = 0;
+    m_qwtCurves[curveIndex].maxMin.maxX = vectSize-1;
+    m_qwtCurves[curveIndex].maxMin.minY = m_qwtCurves[curveIndex].yPoints[0];
+    m_qwtCurves[curveIndex].maxMin.maxY = m_qwtCurves[curveIndex].yPoints[0];
 
-    for(int i = 1; i < vectSize; ++i)
+    for(int i = 0; i < vectSize; ++i)
     {
-        if(m_qwtCurves[curveIndex].minY > m_qwtCurves[curveIndex].yPoints[i])
+        if(m_qwtCurves[curveIndex].maxMin.minY > m_qwtCurves[curveIndex].yPoints[i])
         {
-            m_qwtCurves[curveIndex].minY = m_qwtCurves[curveIndex].yPoints[i];
+            m_qwtCurves[curveIndex].maxMin.minY = m_qwtCurves[curveIndex].yPoints[i];
         }
-        if(m_qwtCurves[curveIndex].maxY < m_qwtCurves[curveIndex].yPoints[i])
+        if(m_qwtCurves[curveIndex].maxMin.maxY < m_qwtCurves[curveIndex].yPoints[i])
         {
-            m_qwtCurves[curveIndex].maxY = m_qwtCurves[curveIndex].yPoints[i];
+            m_qwtCurves[curveIndex].maxMin.maxY = m_qwtCurves[curveIndex].yPoints[i];
         }
     }
 
+    m_qwtCurves[curveIndex].displayed = true;
 
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
     m_qwtCurves[curveIndex].color = QColor(
@@ -301,9 +303,50 @@ void MainWindow::zoomMode()
 
 void MainWindow::resetZoom()
 {
-    m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_qwtCurves[0].minY, m_qwtCurves[0].maxY);
-    m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_qwtCurves[0].minX, m_qwtCurves[0].maxX);
+    calcMaxMin();
+    m_qwtPlot->setAxisScale(
+        QwtPlot::yLeft, maxMin.minY, maxMin.maxY);
+    m_qwtPlot->setAxisScale(
+        QwtPlot::xBottom, maxMin.minX, maxMin.maxX);
     m_qwtPlot->replot();
+}
+
+
+void MainWindow::calcMaxMin()
+{
+    int i = 0;
+    while(i < m_qwtCurves.size() && m_qwtCurves[i].displayed == false)
+    {
+        ++i;
+    }
+    if(i < m_qwtCurves.size())
+    {
+        maxMin = m_qwtCurves[i].maxMin;
+        while(i < m_qwtCurves.size())
+        {
+            if(m_qwtCurves[i].displayed)
+            {
+                if(maxMin.minX > m_qwtCurves[i].maxMin.minX)
+                {
+                    maxMin.minX = m_qwtCurves[i].maxMin.minX;
+                }
+                if(maxMin.minY > m_qwtCurves[i].maxMin.minY)
+                {
+                    maxMin.minY = m_qwtCurves[i].maxMin.minY;
+                }
+                if(maxMin.maxX < m_qwtCurves[i].maxMin.maxX)
+                {
+                    maxMin.maxX = m_qwtCurves[i].maxMin.maxX;
+                }
+                if(maxMin.maxY < m_qwtCurves[i].maxMin.maxY)
+                {
+                    maxMin.maxY = m_qwtCurves[i].maxMin.maxY;
+                }
+            }
+            ++i;
+        }
+    }
+
 }
 
 
