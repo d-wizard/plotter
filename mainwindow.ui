@@ -362,9 +362,6 @@
         <item>
          <layout class="QGridLayout" name="GraphLayout"/>
         </item>
-        <item>
-         <layout class="QVBoxLayout" name="LegendLayout"/>
-        </item>
        </layout>
       </item>
      </layout>

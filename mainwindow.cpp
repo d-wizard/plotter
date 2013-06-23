@@ -19,26 +19,25 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_grid.h>
-#include <qwt_symbol.h>
-#include <qwt_legend.h>
-#include <qwt_plot_picker.h>
-#include <qwt_picker_machine.h>
-#include <qwt_scale_widget.h>
-#include <math.h>
 
-
-QLabel* legendLabel;
 QwtPlotGrid *grid;
+int mi_size;
+int mi_index;
+dubVect md_x;
+dubVect md_y;
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    m_qwtPlot(NULL),
+    m_qwtSelectedSample(NULL),
+    m_qwtSelectedSampleDelta(NULL),
+    m_qwtPicker(NULL),
+    m_selectMode(E_CURSOR)
 {
     ui->setupUi(this);
-    mi_size = 100;
+    mi_size = 100000;
     mi_index = 0;
 
     QPalette palette = this->palette();
@@ -47,31 +46,21 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setPalette(palette);
 
 
-    palette = ui->menuGraph->palette();
-    palette.setColor( QPalette::WindowText, Qt::black);
-    palette.setColor( QPalette::Text, Qt::black);
-    ui->menuGraph->setPalette(palette);
-
+#if 0
     int i_index;
-
     mt_qwtPlot = new QwtPlot( this);
     mt_qwfPlotCurve = new QwtPlotCurve("Curve 1");
     ui->GraphLayout->addWidget(mt_qwtPlot);
 
     mt_qwfPlotCurve->setPen(Qt::cyan);
 
-    mt_qwtPlot->insertLegend( new QwtLegend() );
+    mt_qwtPlot->insertLegend(new QwtLegend() );
+    //mt_qwtPlot->insertLegend(NULL);
 
     grid = new QwtPlotGrid();
     grid->attach( mt_qwtPlot );
-    grid->setPen(Qt::white);
+    grid->setPen(QColor(55,55,55));
 
-    legendLabel = new QLabel(mt_qwfPlotCurve->title().text(), parent);
-    palette = this->palette();
-    palette.setColor( QPalette::WindowText, Qt::cyan);
-    palette.setColor( QPalette::Text, Qt::cyan);
-    legendLabel->setPalette(palette);
-    ui->LegendLayout->addWidget(legendLabel);
 
     md_x = new double[mi_size];
     md_y = new double[mi_size];
@@ -84,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     mt_qwfPlotCurve->setSamples(md_x, md_y, mi_size);
-    mt_qwfPlotCurveSelectedSample = new QwtPlotCurve("SelectedSample");
+    mt_qwfPlotCurveSelectedSample = new QwtPlotCurve("");
 
     mt_qwfPlotCurve->attach(mt_qwtPlot);
 
@@ -107,41 +96,132 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(pointSelected(QPointF)));
     connect(picker, SIGNAL(selected(QRectF)),
             this, SLOT(rectSelected(QRectF)));
+#endif
+
+    resetPlot();
+    md_x.resize(mi_size);
+    md_y.resize(mi_size);
+
+
+    for(int i_index = 0; i_index < mi_size; ++i_index)
+    {
+       md_x[i_index] = i_index;
+       md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+    }
+
+    add1dCurve("Curve1", md_y);
 
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete mt_qwfPlotCurve;
-    delete mt_qwtPlot;
-    delete [] md_x;
-    delete [] md_y;
+    //delete mt_qwfPlotCurve;
+    //delete mt_qwtPlot;
+    //delete [] md_x;
+    //delete [] md_y;
 
-    delete legendLabel;
  }
 
- void MainWindow::addValue(double i_value)
- {
-    md_y[mi_index] = i_value;
-
-    if(++mi_index == mi_size)
+void MainWindow::resetPlot()
+{
+    if(m_qwtPlot != NULL)
     {
-       mi_index = 0;
+        ui->GraphLayout->removeWidget(m_qwtPlot);
+        delete m_qwtPlot;
     }
- }
+    m_qwtPlot = new QwtPlot(this);
+    m_qwtGrid = new QwtPlotGrid();
+    m_qwtGrid->attach( m_qwtPlot );
+    m_qwtGrid->setPen(QColor(55,55,55));
+    ui->GraphLayout->addWidget(m_qwtPlot);
 
- void MainWindow::updatePlot()
- {
-    mt_qwfPlotCurve->setSamples(md_x, md_y, mi_size);
-    mt_qwtPlot->replot();
- }
+    if(m_qwtPlot != NULL)
+    {
+        delete m_qwtPicker;
+    }
+    m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
+    m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());
+
+    connect(m_qwtPicker, SIGNAL(appended(QPointF)),
+            this, SLOT(pointSelected(QPointF)));
+    connect(m_qwtPicker, SIGNAL(selected(QRectF)),
+            this, SLOT(rectSelected(QRectF)));
+}
+
+void MainWindow::add1dCurve(std::string name, dubVect yPoints)
+{
+    QwtPlotCurve* curve = new QwtPlotCurve(name.c_str());
+    CurveData curvDat = CurveData(curve);
+
+    m_qwtCurves.push_back(curvDat);
+
+    int vectSize = yPoints.size();
+    int curveIndex = m_qwtCurves.size()-1;
+    m_qwtCurves[curveIndex].xPoints.resize(vectSize);
+    m_qwtCurves[curveIndex].yPoints = yPoints;
+
+    for(int i = 0; i < vectSize; ++i)
+    {
+        m_qwtCurves[curveIndex].xPoints[i] = (double)i;
+    }
+
+    m_qwtCurves[curveIndex].color = QColor(0,255,255);
+    curve->setPen(m_qwtCurves[curveIndex].color);
+
+    curve->setSamples( &m_qwtCurves[curveIndex].xPoints[0],
+                       &m_qwtCurves[curveIndex].yPoints[0],
+                       vectSize);
+
+    curve->attach(m_qwtPlot);
+
+    m_qwtPlot->replot();
+    m_qwtPlot->show();
+    m_qwtGrid->show();
+}
+
+
+void MainWindow::add2dCurve(std::string name, dubVect xPoints, dubVect yPoints)
+{
+
+}
+
+
+void MainWindow::toggleLegend()
+{
+
+}
+
+
+void MainWindow::cursorMode()
+{
+
+}
+
+
+void MainWindow::deltaCursorMode()
+{
+
+}
+
+
+void MainWindow::zoomMode()
+{
+
+}
+
+
+void MainWindow::resetZoom()
+{
+
+}
+
+
+
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
-    lastPointSelected = pos;
-
-
+#if 0
     QPoint blah = pos.toPoint();
     int i = mt_qwfPlotCurve->closestPoint(blah, NULL);
     QPointF found = mt_qwfPlotCurve->sample(i);
@@ -177,7 +257,7 @@ void MainWindow::pointSelected(const QPointF &pos)
     {
         mi_index = 1;
     }
-
+#endif
 
 
 }
@@ -187,7 +267,7 @@ void MainWindow::rectSelected(const QRectF &pos)
 {
     QRectF rectCopy = pos;
     qreal x1, y1, x2, y2;
-
+#if 0
     rectCopy.getCoords(&x1, &y1, &x2, &y2);
 
     mt_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
@@ -197,17 +277,5 @@ void MainWindow::rectSelected(const QRectF &pos)
     {
         mi_index =0;
     }
-
-}
-
-void MainWindow::on_cmdResetZoom_clicked()
-{
-    mt_qwtPlot->setAxisScale(QwtPlot::yLeft, -1, 1);
-    mt_qwtPlot->setAxisScale(QwtPlot::xBottom, 0, 100);
-    mt_qwtPlot->replot();
-}
-
-void MainWindow::on_cmdToggleSelect_clicked()
-{
-
+#endif
 }

@@ -20,10 +20,57 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <string>
+#include <vector>
+#include <math.h>
+
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+#include <qwt_plot_grid.h>
+#include <qwt_symbol.h>
+#include <qwt_legend.h>
 #include <qwt_plot_picker.h>
 #include <qwt_picker_machine.h>
+#include <qwt_scale_widget.h>
+
+
+typedef std::vector<double> dubVect;
+
+
+
+class CurveData
+{
+public:
+    CurveData(QwtPlotCurve* newCurve):
+        curve(newCurve){}
+    ~CurveData()
+    {
+        if(curve != NULL)
+        {
+            //delete curve;
+        }
+    }
+
+    QwtPlotCurve* curve;
+    dubVect xPoints;
+    dubVect yPoints;
+    double minX;
+    double minY;
+    double maxX;
+    double maxY;
+
+    QColor color;
+private:
+    CurveData();
+};
+
+typedef enum
+{
+    E_CURSOR,
+    E_ZOOM
+}eSelectMode;
+
+
 
 namespace Ui {
 class MainWindow;
@@ -38,36 +85,33 @@ public:
     ~MainWindow();
 
 
-    void addValue(double i_value);
-    void updatePlot();
-
-    double* md_x;
-    double* md_y;
-
-    QwtPlot* mt_qwtPlot;
-    QwtPlotCurve* mt_qwfPlotCurve;
-    QwtPlotCurve* mt_qwfPlotCurveSelectedSample;
-
-    QwtPlotPicker* picker;
-
-
-    QPointF lastPointSelected;
-    QRectF lastPointSelectedrect;
-    QVector<QPointF> lastPointSelectedvect;
-
-    int mi_size;
-    int mi_index;
-
 private:
     Ui::MainWindow *ui;
 
+
+    QwtPlot* m_qwtPlot;
+    std::vector<CurveData> m_qwtCurves;
+    CurveData* m_qwtSelectedSample;
+    CurveData* m_qwtSelectedSampleDelta;
+    QwtPlotPicker* m_qwtPicker;
+    QwtPlotGrid* m_qwtGrid;
+
+    eSelectMode m_selectMode;
+
+
+    void resetPlot();
+    void add1dCurve(std::string name, dubVect yPoints);
+    void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+    void toggleLegend();
+    void cursorMode();
+    void deltaCursorMode();
+    void zoomMode();
+    void resetZoom();
 
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
 
-    void on_cmdResetZoom_clicked();
-    void on_cmdToggleSelect_clicked();
 };
 
 #endif // MAINWINDOW_H
