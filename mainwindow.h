@@ -91,26 +91,30 @@ private:
 
     QwtPlot* m_qwtPlot;
     std::vector<CurveData> m_qwtCurves;
-    CurveData* m_qwtSelectedSample;
-    CurveData* m_qwtSelectedSampleDelta;
+    QwtPlotCurve* m_qwtSelectedSample;
+    QwtPlotCurve* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;
 
     eSelectMode m_selectMode;
 
+    int selectedCurveIndex;
+
 
     void resetPlot();
     void add1dCurve(std::string name, dubVect yPoints);
     void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+
+private slots:
+    void pointSelected(const QPointF &pos);
+    void rectSelected(const QRectF &pos);
+
+    // Menu Commands
     void toggleLegend();
     void cursorMode();
     void deltaCursorMode();
     void zoomMode();
     void resetZoom();
-
-private slots:
-    void pointSelected(const QPointF &pos);
-    void rectSelected(const QRectF &pos);
 
 };
 

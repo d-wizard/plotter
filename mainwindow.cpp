@@ -26,6 +26,25 @@ int mi_index;
 dubVect md_x;
 dubVect md_y;
 
+typedef struct
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+}tRGB;
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
+tRGB curveColors[] =
+{
+    {0,255,255},
+    {255,0,255},
+    {255,255,0},
+    {255,128,128},
+    {128,255,128},
+    {128,128,255}
+};
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -34,7 +53,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
-    m_selectMode(E_CURSOR)
+    m_selectMode(E_CURSOR),
+    m_qwtGrid(NULL),
+    selectedCurveIndex(0)
 {
     ui->setupUi(this);
     mi_size = 100000;
@@ -98,6 +119,16 @@ MainWindow::MainWindow(QWidget *parent) :
             this, SLOT(rectSelected(QRectF)));
 #endif
 
+    // Init the cursor curves
+    m_qwtSelectedSample = new QwtPlotCurve("");
+    m_qwtSelectedSampleDelta = new QwtPlotCurve("");
+
+
+    // Connect menu commands
+    connect(ui->actionZoom, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
+    connect(ui->actionSelect_Point, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
+    connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
+
     resetPlot();
     md_x.resize(mi_size);
     md_y.resize(mi_size);
@@ -105,17 +136,41 @@ MainWindow::MainWindow(QWidget *parent) :
 
     for(int i_index = 0; i_index < mi_size; ++i_index)
     {
-       md_x[i_index] = i_index;
+       md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
        md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
     }
 
     add1dCurve("Curve1", md_y);
+    add1dCurve("Curve2", md_x);
 
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+
+    if(m_qwtPlot != NULL)
+    {
+        delete m_qwtPlot;
+    }
+    //if(m_qwtGrid != NULL)
+    //{
+    //    delete m_qwtGrid;
+    //}
+    //if(m_qwtPicker != NULL)
+    //{
+    //    delete m_qwtPicker;
+    //}
+    if(m_qwtSelectedSample != NULL)
+    {
+        delete m_qwtSelectedSample;
+    }
+    if(m_qwtSelectedSampleDelta != NULL)
+    {
+        delete m_qwtSelectedSampleDelta;
+    }
+
+
     //delete mt_qwfPlotCurve;
     //delete mt_qwtPlot;
     //delete [] md_x;
@@ -131,17 +186,26 @@ void MainWindow::resetPlot()
         delete m_qwtPlot;
     }
     m_qwtPlot = new QwtPlot(this);
+
+    if(m_qwtGrid != NULL)
+    {
+        delete m_qwtGrid;
+    }
     m_qwtGrid = new QwtPlotGrid();
     m_qwtGrid->attach( m_qwtPlot );
     m_qwtGrid->setPen(QColor(55,55,55));
+
     ui->GraphLayout->addWidget(m_qwtPlot);
 
-    if(m_qwtPlot != NULL)
+    if(m_qwtPicker != NULL)
     {
         delete m_qwtPicker;
     }
     m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
     m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());
+
+    m_qwtPlot->show();
+    m_qwtGrid->show();
 
     connect(m_qwtPicker, SIGNAL(appended(QPointF)),
             this, SLOT(pointSelected(QPointF)));
@@ -166,7 +230,30 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
         m_qwtCurves[curveIndex].xPoints[i] = (double)i;
     }
 
-    m_qwtCurves[curveIndex].color = QColor(0,255,255);
+    m_qwtCurves[curveIndex].minX = 0;
+    m_qwtCurves[curveIndex].maxX = vectSize-1;
+    m_qwtCurves[curveIndex].minY = m_qwtCurves[curveIndex].yPoints[0];
+    m_qwtCurves[curveIndex].maxY = m_qwtCurves[curveIndex].yPoints[0];
+
+    for(int i = 1; i < vectSize; ++i)
+    {
+        if(m_qwtCurves[curveIndex].minY > m_qwtCurves[curveIndex].yPoints[i])
+        {
+            m_qwtCurves[curveIndex].minY = m_qwtCurves[curveIndex].yPoints[i];
+        }
+        if(m_qwtCurves[curveIndex].maxY < m_qwtCurves[curveIndex].yPoints[i])
+        {
+            m_qwtCurves[curveIndex].maxY = m_qwtCurves[curveIndex].yPoints[i];
+        }
+    }
+
+
+    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+    m_qwtCurves[curveIndex].color = QColor(
+                curveColors[colorLookupIndex].red,
+                curveColors[colorLookupIndex].green,
+                curveColors[colorLookupIndex].blue);
+
     curve->setPen(m_qwtCurves[curveIndex].color);
 
     curve->setSamples( &m_qwtCurves[curveIndex].xPoints[0],
@@ -176,8 +263,6 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     curve->attach(m_qwtPlot);
 
     m_qwtPlot->replot();
-    m_qwtPlot->show();
-    m_qwtGrid->show();
 }
 
 
@@ -195,7 +280,7 @@ void MainWindow::toggleLegend()
 
 void MainWindow::cursorMode()
 {
-
+    m_selectMode = E_CURSOR;
 }
 
 
@@ -207,13 +292,15 @@ void MainWindow::deltaCursorMode()
 
 void MainWindow::zoomMode()
 {
-
+    m_selectMode = E_ZOOM;
 }
 
 
 void MainWindow::resetZoom()
 {
-
+    m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_qwtCurves[0].minY, m_qwtCurves[0].maxY);
+    m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_qwtCurves[0].minX, m_qwtCurves[0].maxX);
+    m_qwtPlot->replot();
 }
 
 
@@ -221,6 +308,24 @@ void MainWindow::resetZoom()
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
+    if(m_selectMode == E_CURSOR)
+    {
+        int posIndex = (int)(pos.x() + 0.5);
+        QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
+            QBrush( m_qwtCurves[selectedCurveIndex].color ), QPen( m_qwtCurves[selectedCurveIndex].color, 2 ), QSize( 8, 8 ) );
+        m_qwtSelectedSample->setSymbol( symbol );
+        m_qwtSelectedSample->setSamples(
+                    &m_qwtCurves[selectedCurveIndex].xPoints[posIndex],
+                    &m_qwtCurves[selectedCurveIndex].yPoints[posIndex],
+                    1);
+
+        m_qwtSelectedSample->attach(m_qwtPlot);
+
+        m_qwtPlot->replot();
+
+
+    }
+
 #if 0
     QPoint blah = pos.toPoint();
     int i = mt_qwfPlotCurve->closestPoint(blah, NULL);
@@ -265,17 +370,16 @@ void MainWindow::pointSelected(const QPointF &pos)
 
 void MainWindow::rectSelected(const QRectF &pos)
 {
-    QRectF rectCopy = pos;
-    qreal x1, y1, x2, y2;
-#if 0
-    rectCopy.getCoords(&x1, &y1, &x2, &y2);
-
-    mt_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
-    mt_qwtPlot->setAxisScale(QwtPlot::xBottom, x1, x2);
-    mt_qwtPlot->replot();
-    if(x1 == 0.0 && x2 == 0.0 && y1 == 0.0 && y2 == 0.0)
+    if(m_selectMode == E_ZOOM)
     {
-        mi_index =0;
+        QRectF rectCopy = pos;
+        qreal x1, y1, x2, y2;
+
+        rectCopy.getCoords(&x1, &y1, &x2, &y2);
+
+        m_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
+        m_qwtPlot->setAxisScale(QwtPlot::xBottom, x1, x2);
+        m_qwtPlot->replot();
     }
-#endif
+
 }
