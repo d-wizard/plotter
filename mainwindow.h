@@ -50,6 +50,7 @@ class CurveData
 public:
     CurveData(QwtPlotCurve* newCurve):
         pointLabel(new QLabel("")),
+        curveAction(NULL),
         curve(newCurve){}
     ~CurveData()
     {
@@ -68,6 +69,8 @@ public:
     QColor color;
 
     QLabel* pointLabel;
+
+    QAction* curveAction;
 
     bool displayed;
 private:
@@ -185,6 +188,8 @@ private slots:
     void deltaCursorMode();
     void zoomMode();
     void resetZoom();
+
+    void cursorMenuSelect();
 
 };
 

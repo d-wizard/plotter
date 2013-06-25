@@ -25,6 +25,7 @@ int mi_size;
 int mi_index;
 dubVect md_x;
 dubVect md_y;
+dubVect md_z;
 
 typedef struct
 {
@@ -121,12 +122,14 @@ MainWindow::MainWindow(QWidget *parent) :
     // init test samples.
     md_x.resize(mi_size);
     md_y.resize(mi_size);
+    md_z.resize(mi_size);
 
 
     for(int i_index = 0; i_index < mi_size; ++i_index)
     {
        md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
        md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+       md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
     }
 
 
@@ -145,6 +148,7 @@ MainWindow::MainWindow(QWidget *parent) :
     resetPlot();
     add1dCurve("Curve1", md_y);
     add1dCurve("Curve2", md_x);
+    add1dCurve("Curve3", md_z);
 
 
 }
@@ -230,6 +234,11 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     m_qwtCurves[curveIndex].xPoints.resize(vectSize);
     m_qwtCurves[curveIndex].yPoints = yPoints;
 
+    //m_qwtCurves[curveIndex].curveAction = new QAction(name.c_str(), this);
+    //m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
+    //connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
+     //                this,SLOT(cursorMenuSelect()));
+
     for(int i = 0; i < vectSize; ++i)
     {
         m_qwtCurves[curveIndex].xPoints[i] = (double)i;
@@ -240,7 +249,7 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     m_qwtCurves[curveIndex].maxMin.minY = m_qwtCurves[curveIndex].yPoints[0];
     m_qwtCurves[curveIndex].maxMin.maxY = m_qwtCurves[curveIndex].yPoints[0];
 
-    for(int i = 0; i < vectSize; ++i)
+    for(int i = 1; i < vectSize; ++i)
     {
         if(m_qwtCurves[curveIndex].maxMin.minY > m_qwtCurves[curveIndex].yPoints[i])
         {
@@ -312,6 +321,10 @@ void MainWindow::resetZoom()
     m_qwtPlot->replot();
 }
 
+void MainWindow::cursorMenuSelect()
+{
+    calcMaxMin();
+}
 
 void MainWindow::calcMaxMin()
 {
@@ -357,7 +370,17 @@ void MainWindow::pointSelected(const QPointF &pos)
 {
     if(m_selectMode == E_CURSOR)
     {
+        // 1d assumed
         int posIndex = (int)(pos.x() + 0.5);
+
+        if(posIndex < 0)
+        {
+            posIndex = 0;
+        }
+        else if(posIndex >= m_qwtCurves[selectedCurveIndex].xPoints.size())
+        {
+            posIndex = m_qwtCurves[selectedCurveIndex].xPoints.size()-1;
+        }
 
         m_qwtSelectedSample.showCursor(m_qwtPlot,
                                        m_qwtCurves[selectedCurveIndex].xPoints[posIndex],

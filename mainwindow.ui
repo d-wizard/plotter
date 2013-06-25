@@ -439,7 +439,13 @@
     <addaction name="actionSelect_Point"/>
     <addaction name="actionReset_Zoom"/>
    </widget>
+   <widget class="QMenu" name="menuCurves">
+    <property name="title">
+     <string>Curves</string>
+    </property>
+   </widget>
    <addaction name="menuGraph"/>
+   <addaction name="menuCurves"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionZoom">
