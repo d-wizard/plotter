@@ -146,15 +146,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
 
     resetPlot();
-    add1dCurve("Curve1", md_y);
-    add1dCurve("Curve2", md_x);
-    add1dCurve("Curve3", md_z);
+    //add1dCurve("Curve1", md_y);
+    //add1dCurve("Curve2", md_x);
+    //add1dCurve("Curve3", md_z);
 
+
+    m_tcpMsgReader = new TCPMsgReader(this, 2000);
 
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_tcpMsgReader;
     delete ui;
 
     if(m_qwtPlot != NULL)
@@ -392,7 +395,14 @@ void MainWindow::pointSelected(const QPointF &pos)
 
         for(int i = 0; i < m_qwtCurves.size(); ++i)
         {
-            ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
+            if(m_qwtCurves[i].pointLabel != NULL)
+            {
+                ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
+                delete m_qwtCurves[i].pointLabel;
+                m_qwtCurves[i].pointLabel = NULL;
+            }
+
+            m_qwtCurves[i].pointLabel = new QLabel("");
 
             char tempText[100];
             snprintf(tempText, sizeof(tempText), "%d : %f", posIndex, (float)m_qwtCurves[i].yPoints[posIndex]);

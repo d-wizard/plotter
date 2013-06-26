@@ -35,6 +35,8 @@
 
 #include <QLabel>
 
+#include "TCPMsgReader.h"
+
 typedef std::vector<double> dubVect;
 
 typedef struct
@@ -49,7 +51,7 @@ class CurveData
 {
 public:
     CurveData(QwtPlotCurve* newCurve):
-        pointLabel(new QLabel("")),
+        pointLabel(NULL),
         curveAction(NULL),
         curve(newCurve){}
     ~CurveData()
@@ -155,6 +157,10 @@ public:
     ~MainWindow();
 
 
+    void resetPlot();
+    void add1dCurve(std::string name, dubVect yPoints);
+    void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+
 private:
     Ui::MainWindow *ui;
 
@@ -172,9 +178,8 @@ private:
 
     maxMinXY maxMin;
 
-    void resetPlot();
-    void add1dCurve(std::string name, dubVect yPoints);
-    void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+    TCPMsgReader* m_tcpMsgReader;
+
 
     void calcMaxMin();
 
