@@ -194,7 +194,7 @@ private slots:
     void zoomMode();
     void resetZoom();
 
-    void cursorMenuSelect();
+    void cursorMenuSelect(int index);
 
 };
 

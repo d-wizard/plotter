@@ -19,6 +19,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <stdio.h>
+#include <QSignalMapper>
 
 QwtPlotGrid *grid;
 int mi_size;
@@ -146,9 +147,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
 
     resetPlot();
-    //add1dCurve("Curve1", md_y);
-    //add1dCurve("Curve2", md_x);
-    //add1dCurve("Curve3", md_z);
+    add1dCurve("Curve1", md_y);
+    add1dCurve("Curve2", md_x);
+    add1dCurve("Curve3", md_z);
 
 
     m_tcpMsgReader = new TCPMsgReader(this, 2000);
@@ -237,10 +238,14 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     m_qwtCurves[curveIndex].xPoints.resize(vectSize);
     m_qwtCurves[curveIndex].yPoints = yPoints;
 
-    //m_qwtCurves[curveIndex].curveAction = new QAction(name.c_str(), this);
+    m_qwtCurves[curveIndex].curveAction = new QAction(name.c_str(), this);
+    QSignalMapper *mapper = new QSignalMapper(this);
     //m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
-    //connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
-     //                this,SLOT(cursorMenuSelect()));
+    mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
+    connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
+                     mapper,SLOT(map()));
+    ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
+    connect( mapper, SIGNAL(mapped(int)), SLOT(cursorMenuSelect(int)) );
 
     for(int i = 0; i < vectSize; ++i)
     {
@@ -324,8 +329,18 @@ void MainWindow::resetZoom()
     m_qwtPlot->replot();
 }
 
-void MainWindow::cursorMenuSelect()
+void MainWindow::cursorMenuSelect(int index)
 {
+    m_qwtCurves[index].displayed = !m_qwtCurves[index].displayed;
+    if(!m_qwtCurves[index].displayed)
+    {
+        m_qwtCurves[index].curve->detach();
+    }
+    else
+    {
+        m_qwtCurves[index].curve->attach(m_qwtPlot);
+    }
+    m_qwtPlot->replot();
     calcMaxMin();
 }
 
