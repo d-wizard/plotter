@@ -45,9 +45,11 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
     {
         case E_RESET_PLOT:
             _this->m_parent->resetPlot();
+            _this->m_plotMsgUnpacker.reset();
         break;
         case E_PLOT_1D:
             _this->m_parent->add1dCurve(_this->m_plotMsgUnpacker.m_plotName, _this->m_plotMsgUnpacker.m_yAxisValues);
+            _this->m_plotMsgUnpacker.reset();
         break;
         case E_PLOT_2D:
         break;
