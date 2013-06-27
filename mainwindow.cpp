@@ -69,57 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setPalette(palette);
 
 
-#if 0
-    int i_index;
-    mt_qwtPlot = new QwtPlot( this);
-    mt_qwfPlotCurve = new QwtPlotCurve("Curve 1");
-    ui->GraphLayout->addWidget(mt_qwtPlot);
+    connect(this, SIGNAL(addMenuItemSignal(int)),
+            this, SLOT(addMenuItem(int)), Qt::QueuedConnection);
 
-    mt_qwfPlotCurve->setPen(Qt::cyan);
-
-    mt_qwtPlot->insertLegend(new QwtLegend() );
-    //mt_qwtPlot->insertLegend(NULL);
-
-    grid = new QwtPlotGrid();
-    grid->attach( mt_qwtPlot );
-    grid->setPen(QColor(55,55,55));
-
-
-    md_x = new double[mi_size];
-    md_y = new double[mi_size];
-
-
-    for(i_index = 0; i_index < mi_size; ++i_index)
-    {
-       md_x[i_index] = i_index;
-       md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-
-    mt_qwfPlotCurve->setSamples(md_x, md_y, mi_size);
-    mt_qwfPlotCurveSelectedSample = new QwtPlotCurve("");
-
-    mt_qwfPlotCurve->attach(mt_qwtPlot);
-
-
-    //mt_qwtPlot->setAxisScale(QwtPlot::yLeft, -25, 25);
-    //mt_qwtPlot->setAxisScale(QwtPlot::xBottom, -25, 25);
-    mt_qwtPlot->replot();
-    mt_qwtPlot->show();
-    grid->show();
-
-
-    //picker = new QwtPlotPicker(QwtPlot::xBottom, QwtPlot::yLeft,
-    //        QwtPlotPicker::NoRubberBand, QwtPicker::AlwaysOn,
-    //        mt_qwtPlot->canvas());
-    picker = new QwtPlotPicker(mt_qwtPlot->canvas());
-    picker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerClickPointMachine());
-    //picker->setMousePattern(QwtEventPattern::MouseSelect1,Qt::LeftButton);
-
-    connect(picker, SIGNAL(appended(QPointF)),
-            this, SLOT(pointSelected(QPointF)));
-    connect(picker, SIGNAL(selected(QRectF)),
-            this, SLOT(rectSelected(QRectF)));
-#endif
     // init test samples.
     md_x.resize(mi_size);
     md_y.resize(mi_size);
@@ -147,9 +99,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
 
     resetPlot();
-    add1dCurve("Curve1", md_y);
-    add1dCurve("Curve2", md_x);
-    add1dCurve("Curve3", md_z);
+    //add1dCurve("Curve1", md_y);
+    //add1dCurve("Curve2", md_x);
+    //add1dCurve("Curve3", md_z);
 
 
     m_tcpMsgReader = new TCPMsgReader(this, 2000);
@@ -216,9 +168,22 @@ void MainWindow::resetPlot()
     }
     m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
     m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());
+    //m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
+    //m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+
+    //m_qwtPicker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+    //    QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
+    //    m_qwtPlot->canvas() );
+    //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
+    m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
+    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+    m_qwtPicker->setTrackerPen( QColor( Qt::white ) );
 
     m_qwtPlot->show();
     m_qwtGrid->show();
+
+    //m_qwtMagnifier = new QwtPlotMagnifier(m_qwtPlot->canvas());
+    //m_qwtMagnifier->setMouseButton(Qt::MidButton);
 
     connect(m_qwtPicker, SIGNAL(appended(QPointF)),
             this, SLOT(pointSelected(QPointF)));
@@ -226,26 +191,37 @@ void MainWindow::resetPlot()
             this, SLOT(rectSelected(QRectF)));
 }
 
+void MainWindow::addMenuItem(int curveIndex)
+{
+    m_qwtCurves[curveIndex].curveAction = new QAction(m_qwtCurves[curveIndex].title.c_str(), this);
+    m_qwtCurves[curveIndex].mapper = new QSignalMapper(this);
+    //m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
+    m_qwtCurves[curveIndex].mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
+    connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
+                     m_qwtCurves[curveIndex].mapper,SLOT(map()));
+
+    //QMetaObject::invokeMethod(ui->menuCurves, "addAction", Qt::QueuedConnection, Q_ARG(QAction*, m_qwtCurves[curveIndex].curveAction));
+
+    ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
+    connect( m_qwtCurves[curveIndex].mapper, SIGNAL(mapped(int)), SLOT(cursorMenuSelect(int)) );
+}
+
 void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 {
-    QwtPlotCurve* curve = new QwtPlotCurve(name.c_str());
-    CurveData curvDat = CurveData(curve);
+    m_qwtCurves.push_back(CurveData(name, yPoints));
 
-    m_qwtCurves.push_back(curvDat);
+    QwtPlotCurve* curve = m_qwtCurves[m_qwtCurves.size()-1].getCurve();
 
     int vectSize = yPoints.size();
     int curveIndex = m_qwtCurves.size()-1;
     m_qwtCurves[curveIndex].xPoints.resize(vectSize);
     m_qwtCurves[curveIndex].yPoints = yPoints;
 
-    m_qwtCurves[curveIndex].curveAction = new QAction(name.c_str(), this);
-    QSignalMapper *mapper = new QSignalMapper(this);
-    //m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
-    mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
-    connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
-                     mapper,SLOT(map()));
-    ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
-    connect( mapper, SIGNAL(mapped(int)), SLOT(cursorMenuSelect(int)) );
+    //addMenuItem(curveIndex);
+
+    //myThread->start();
+
+    emit addMenuItemSignal(curveIndex);
 
     for(int i = 0; i < vectSize; ++i)
     {
@@ -304,6 +280,7 @@ void MainWindow::toggleLegend()
 void MainWindow::cursorMode()
 {
     m_selectMode = E_CURSOR;
+    m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
 }
 
 
@@ -316,6 +293,7 @@ void MainWindow::deltaCursorMode()
 void MainWindow::zoomMode()
 {
     m_selectMode = E_ZOOM;
+    //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
 }
 
 

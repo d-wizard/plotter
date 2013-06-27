@@ -34,6 +34,7 @@
 #include <qwt_scale_widget.h>
 
 #include <QLabel>
+#include <QSignalMapper>
 
 #include "TCPMsgReader.h"
 
@@ -47,13 +48,34 @@ typedef struct
     double maxY;
 }maxMinXY;
 
+typedef enum
+{
+    E_PLOT_TYPE_1D,
+    E_PLOT_TYPE_2D
+}ePlotType;
+
 class CurveData
 {
 public:
-    CurveData(QwtPlotCurve* newCurve):
+    CurveData(const std::string& curveName, const dubVect& newYPoints):
+        yPoints(newYPoints),
+        plotType(E_PLOT_TYPE_1D),
+        curve(new QwtPlotCurve(curveName.c_str())),
         pointLabel(NULL),
         curveAction(NULL),
-        curve(newCurve){}
+        mapper(NULL),
+        displayed(false),
+        title(curveName){}
+    CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints):
+        xPoints(newXPoints),
+        yPoints(newYPoints),
+        plotType(E_PLOT_TYPE_2D),
+        curve(new QwtPlotCurve(curveName.c_str())),
+        pointLabel(NULL),
+        curveAction(NULL),
+        mapper(NULL),
+        displayed(false),
+        title(curveName){}
     ~CurveData()
     {
         if(curve != NULL)
@@ -67,14 +89,20 @@ public:
     dubVect xPoints;
     dubVect yPoints;
     maxMinXY maxMin;
+    ePlotType plotType;
+
+    std::string title;
 
     QColor color;
 
     QLabel* pointLabel;
 
     QAction* curveAction;
+    QSignalMapper* mapper;
 
     bool displayed;
+
+    QwtPlotCurve* getCurve(){return curve;}
 private:
     CurveData();
 };
@@ -195,6 +223,11 @@ private slots:
     void resetZoom();
 
     void cursorMenuSelect(int index);
+
+public slots:
+    void addMenuItem(int curveIndex);
+signals:
+    void addMenuItemSignal(int curveIndex);
 
 };
 

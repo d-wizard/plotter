@@ -444,8 +444,14 @@
      <string>Curves</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuSelected">
+    <property name="title">
+     <string>Selected</string>
+    </property>
+   </widget>
    <addaction name="menuGraph"/>
    <addaction name="menuCurves"/>
+   <addaction name="menuSelected"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionZoom">
