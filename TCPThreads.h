@@ -43,7 +43,7 @@ typedef struct
 
 typedef struct
 {
-   unsigned int buff[(MAX_PACKET_SIZE*MAX_PACKETS)/sizeof(unsigned int)];
+   unsigned int buff[((MAX_PACKET_SIZE*MAX_PACKETS)+(sizeof(unsigned int)-1))/sizeof(unsigned int)];
 
    char* buffPtr;
    unsigned int buffIndex;

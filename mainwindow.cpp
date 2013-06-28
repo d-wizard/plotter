@@ -69,8 +69,8 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setPalette(palette);
 
 
-    connect(this, SIGNAL(addMenuItemSignal(int)),
-            this, SLOT(addMenuItem(int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(updateCursorMenusSignal()),
+            this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
 
     // init test samples.
     md_x.resize(mi_size);
@@ -99,9 +99,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
 
     resetPlot();
-    //add1dCurve("Curve1", md_y);
-    //add1dCurve("Curve2", md_x);
-    //add1dCurve("Curve3", md_z);
+    add1dCurve("Curve1", md_y);
+    add1dCurve("Curve2", md_x);
+    add1dCurve("Curve3", md_z);
 
 
     m_tcpMsgReader = new TCPMsgReader(this, 2000);
@@ -191,19 +191,97 @@ void MainWindow::resetPlot()
             this, SLOT(rectSelected(QRectF)));
 }
 
-void MainWindow::addMenuItem(int curveIndex)
+void MainWindow::updateCursorMenus()
 {
-    m_qwtCurves[curveIndex].curveAction = new QAction(m_qwtCurves[curveIndex].title.c_str(), this);
-    m_qwtCurves[curveIndex].mapper = new QSignalMapper(this);
-    //m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
-    m_qwtCurves[curveIndex].mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
-    connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
-                     m_qwtCurves[curveIndex].mapper,SLOT(map()));
+    // TODO: make this thread safe
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        ui->menuCurves->removeAction(m_qwtCurves[i].curveAction);
 
-    //QMetaObject::invokeMethod(ui->menuCurves, "addAction", Qt::QueuedConnection, Q_ARG(QAction*, m_qwtCurves[curveIndex].curveAction));
+        // TODO: Do I need to disconnect the action / mapper?
+        if(m_qwtCurves[i].curveAction != NULL)
+        {
+            delete m_qwtCurves[i].curveAction;
+        }
+        if(m_qwtCurves[i].mapper != NULL)
+        {
+            delete m_qwtCurves[i].mapper;
+        }
+    }
 
-    ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
-    connect( m_qwtCurves[curveIndex].mapper, SIGNAL(mapped(int)), SLOT(cursorMenuSelect(int)) );
+    for(int i = 0; i < m_selectedCursorActions.size(); ++i)
+    {
+        ui->menuSelected->removeAction(m_selectedCursorActions[i].action);
+        // TODO: Do I need to disconnect the action / mapper?
+        delete m_selectedCursorActions[i].action;
+        delete m_selectedCursorActions[i].mapper;
+    }
+    m_selectedCursorActions.clear();
+
+
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        m_qwtCurves[i].curveAction = new QAction(m_qwtCurves[i].title.c_str(), this);
+        m_qwtCurves[i].mapper = new QSignalMapper(this);
+
+        m_qwtCurves[i].mapper->setMapping(m_qwtCurves[i].curveAction, i);
+        connect(m_qwtCurves[i].curveAction,SIGNAL(triggered()),
+                         m_qwtCurves[i].mapper,SLOT(map()));
+
+        ui->menuCurves->addAction(m_qwtCurves[i].curveAction);
+        connect( m_qwtCurves[i].mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
+
+        if(m_qwtCurves[i].displayed)
+        {
+            tMenuActionMapper actionMapper;
+            actionMapper.action = new QAction(m_qwtCurves[i].title.c_str(), this);
+            actionMapper.mapper = new QSignalMapper(this);
+
+            actionMapper.mapper->setMapping(actionMapper.action, i);
+            connect(actionMapper.action,SIGNAL(triggered()),
+                             actionMapper.mapper,SLOT(map()));
+
+            ui->menuSelected->addAction(actionMapper.action);
+            connect( actionMapper.mapper, SIGNAL(mapped(int)), SLOT(selectedCursorMenuSelect(int)) );
+
+            m_selectedCursorActions.push_back(actionMapper);
+        }
+
+    }
+
+
+    // Handle situation where a cursor has been made invisible but it was the selected cursor
+    if(m_qwtCurves[selectedCurveIndex].displayed == false && m_selectedCursorActions.size() > 0)
+    {
+        int i = 1;
+        int newSelectedCurveIndex = 0;
+        while(i < m_qwtCurves.size())
+        {
+            newSelectedCurveIndex = (selectedCurveIndex - i);
+            if(newSelectedCurveIndex < 0)
+            {
+                newSelectedCurveIndex += m_qwtCurves.size();
+            }
+            if(m_qwtCurves[newSelectedCurveIndex].displayed)
+            {
+                selectedCurveIndex = newSelectedCurveIndex;
+                break;
+            }
+        }
+    }
+
+
+    //m_qwtCurves[curveIndex].curveAction = new QAction(m_qwtCurves[curveIndex].title.c_str(), this);
+    //m_qwtCurves[curveIndex].mapper = new QSignalMapper(this);
+    ////m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
+    //m_qwtCurves[curveIndex].mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
+    //connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
+    //                 m_qwtCurves[curveIndex].mapper,SLOT(map()));
+
+    ////QMetaObject::invokeMethod(ui->menuCurves, "addAction", Qt::QueuedConnection, Q_ARG(QAction*, m_qwtCurves[curveIndex].curveAction));
+
+    //ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
+    //connect( m_qwtCurves[curveIndex].mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 }
 
 void MainWindow::add1dCurve(std::string name, dubVect yPoints)
@@ -221,7 +299,6 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 
     //myThread->start();
 
-    emit addMenuItemSignal(curveIndex);
 
     for(int i = 0; i < vectSize; ++i)
     {
@@ -262,6 +339,7 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     curve->attach(m_qwtPlot);
 
     m_qwtPlot->replot();
+    emit updateCursorMenusSignal();
 }
 
 
@@ -307,7 +385,7 @@ void MainWindow::resetZoom()
     m_qwtPlot->replot();
 }
 
-void MainWindow::cursorMenuSelect(int index)
+void MainWindow::visibleCursorMenuSelect(int index)
 {
     m_qwtCurves[index].displayed = !m_qwtCurves[index].displayed;
     if(!m_qwtCurves[index].displayed)
@@ -320,6 +398,12 @@ void MainWindow::cursorMenuSelect(int index)
     }
     m_qwtPlot->replot();
     calcMaxMin();
+    emit updateCursorMenusSignal();
+}
+
+void MainWindow::selectedCursorMenuSelect(int index)
+{
+    selectedCurveIndex = index;
 }
 
 void MainWindow::calcMaxMin()

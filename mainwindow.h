@@ -54,6 +54,13 @@ typedef enum
     E_PLOT_TYPE_2D
 }ePlotType;
 
+typedef struct
+{
+    QAction* action;
+    QSignalMapper* mapper;
+}tMenuActionMapper;
+
+
 class CurveData
 {
 public:
@@ -208,6 +215,8 @@ private:
 
     TCPMsgReader* m_tcpMsgReader;
 
+    std::vector<tMenuActionMapper> m_selectedCursorActions;
+
 
     void calcMaxMin();
 
@@ -222,12 +231,14 @@ private slots:
     void zoomMode();
     void resetZoom();
 
-    void cursorMenuSelect(int index);
+    void visibleCursorMenuSelect(int index);
+    void selectedCursorMenuSelect(int index);
 
+// Functions that could be called from a thread, but modify ui
 public slots:
-    void addMenuItem(int curveIndex);
+    void updateCursorMenus();
 signals:
-    void addMenuItemSignal(int curveIndex);
+    void updateCursorMenusSignal();
 
 };
 
