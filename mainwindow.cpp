@@ -193,6 +193,10 @@ void MainWindow::resetPlot()
 
 void MainWindow::updateCursorMenus()
 {
+    QIcon checkIcon("CheckBox.png");
+    int numDisplayedCurves = 0;
+
+
     // TODO: make this thread safe
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
@@ -207,6 +211,11 @@ void MainWindow::updateCursorMenus()
         {
             delete m_qwtCurves[i].mapper;
         }
+
+        if(m_qwtCurves[i].displayed)
+        {
+            ++numDisplayedCurves;
+        }
     }
 
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
@@ -219,9 +228,39 @@ void MainWindow::updateCursorMenus()
     m_selectedCursorActions.clear();
 
 
+    // Handle situation where a cursor has been made invisible but it was the selected cursor
+    if(m_qwtCurves[selectedCurveIndex].displayed == false && numDisplayedCurves > 0)
+    {
+        int newSelectedCurveIndex = 0;
+        for(int i = 1; i < m_qwtCurves.size(); ++i)
+        {
+            newSelectedCurveIndex = (selectedCurveIndex - i);
+            if(newSelectedCurveIndex < 0)
+            {
+                newSelectedCurveIndex += m_qwtCurves.size();
+            }
+            if(m_qwtCurves[newSelectedCurveIndex].displayed)
+            {
+                selectedCurveIndex = newSelectedCurveIndex;
+                break;
+            }
+        }
+    }
+    else if(numDisplayedCurves == 0)
+    {
+        m_qwtSelectedSample.hideCursor();
+    }
+
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        m_qwtCurves[i].curveAction = new QAction(m_qwtCurves[i].title.c_str(), this);
+        if(m_qwtCurves[i].displayed)
+        {
+            m_qwtCurves[i].curveAction = new QAction(checkIcon, m_qwtCurves[i].title.c_str(), this);
+        }
+        else
+        {
+            m_qwtCurves[i].curveAction = new QAction(m_qwtCurves[i].title.c_str(), this);
+        }
         m_qwtCurves[i].mapper = new QSignalMapper(this);
 
         m_qwtCurves[i].mapper->setMapping(m_qwtCurves[i].curveAction, i);
@@ -234,7 +273,14 @@ void MainWindow::updateCursorMenus()
         if(m_qwtCurves[i].displayed)
         {
             tMenuActionMapper actionMapper;
-            actionMapper.action = new QAction(m_qwtCurves[i].title.c_str(), this);
+            if(i == selectedCurveIndex)
+            {
+                actionMapper.action = new QAction(checkIcon, m_qwtCurves[i].title.c_str(), this);
+            }
+            else
+            {
+                actionMapper.action = new QAction(m_qwtCurves[i].title.c_str(), this);
+            }
             actionMapper.mapper = new QSignalMapper(this);
 
             actionMapper.mapper->setMapping(actionMapper.action, i);
@@ -249,26 +295,6 @@ void MainWindow::updateCursorMenus()
 
     }
 
-
-    // Handle situation where a cursor has been made invisible but it was the selected cursor
-    if(m_qwtCurves[selectedCurveIndex].displayed == false && m_selectedCursorActions.size() > 0)
-    {
-        int i = 1;
-        int newSelectedCurveIndex = 0;
-        while(i < m_qwtCurves.size())
-        {
-            newSelectedCurveIndex = (selectedCurveIndex - i);
-            if(newSelectedCurveIndex < 0)
-            {
-                newSelectedCurveIndex += m_qwtCurves.size();
-            }
-            if(m_qwtCurves[newSelectedCurveIndex].displayed)
-            {
-                selectedCurveIndex = newSelectedCurveIndex;
-                break;
-            }
-        }
-    }
 
 
     //m_qwtCurves[curveIndex].curveAction = new QAction(m_qwtCurves[curveIndex].title.c_str(), this);
@@ -391,6 +417,10 @@ void MainWindow::visibleCursorMenuSelect(int index)
     if(!m_qwtCurves[index].displayed)
     {
         m_qwtCurves[index].curve->detach();
+        if(selectedCurveIndex == index)
+        {
+            m_qwtSelectedSample.hideCursor();
+        }
     }
     else
     {
@@ -403,7 +433,12 @@ void MainWindow::visibleCursorMenuSelect(int index)
 
 void MainWindow::selectedCursorMenuSelect(int index)
 {
-    selectedCurveIndex = index;
+    if(selectedCurveIndex != index)
+    {
+        selectedCurveIndex = index;
+        m_qwtSelectedSample.hideCursor();
+        emit updateCursorMenusSignal();
+    }
 }
 
 void MainWindow::calcMaxMin()
@@ -478,19 +513,22 @@ void MainWindow::pointSelected(const QPointF &pos)
                 delete m_qwtCurves[i].pointLabel;
                 m_qwtCurves[i].pointLabel = NULL;
             }
+            if(m_qwtCurves[i].displayed)
+            {
 
-            m_qwtCurves[i].pointLabel = new QLabel("");
+                m_qwtCurves[i].pointLabel = new QLabel("");
 
-            char tempText[100];
-            snprintf(tempText, sizeof(tempText), "%d : %f", posIndex, (float)m_qwtCurves[i].yPoints[posIndex]);
-            m_qwtCurves[i].pointLabel->setText(tempText);
+                char tempText[100];
+                snprintf(tempText, sizeof(tempText), "%d : %f", posIndex, (float)m_qwtCurves[i].yPoints[posIndex]);
+                m_qwtCurves[i].pointLabel->setText(tempText);
 
-            QPalette palette = this->palette();
-            palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
-            palette.setColor( QPalette::Text, m_qwtCurves[i].color);
-            m_qwtCurves[i].pointLabel->setPalette(palette);
+                QPalette palette = this->palette();
+                palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
+                palette.setColor( QPalette::Text, m_qwtCurves[i].color);
+                m_qwtCurves[i].pointLabel->setPalette(palette);
 
-            ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
+                ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
+            }
         }
 
 
