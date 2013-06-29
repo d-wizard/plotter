@@ -383,6 +383,20 @@
       </item>
      </layout>
     </item>
+    <item row="2" column="0">
+     <widget class="QScrollBar" name="horizontalScrollBar">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" rowspan="2">
+     <widget class="QScrollBar" name="verticalScrollBar">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -437,6 +451,8 @@
     </property>
     <addaction name="actionZoom"/>
     <addaction name="actionSelect_Point"/>
+    <addaction name="actionDelta_Cursor"/>
+    <addaction name="separator"/>
     <addaction name="actionReset_Zoom"/>
    </widget>
    <widget class="QMenu" name="menuCurves">
@@ -467,6 +483,11 @@
   <action name="actionReset_Zoom">
    <property name="text">
     <string>Reset Zoom</string>
+   </property>
+  </action>
+  <action name="actionDelta_Cursor">
+   <property name="text">
+    <string>Delta Cursor</string>
    </property>
   </action>
  </widget>

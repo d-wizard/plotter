@@ -36,23 +36,9 @@
 #include <QLabel>
 #include <QSignalMapper>
 
+#include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
-
-typedef std::vector<double> dubVect;
-
-typedef struct
-{
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
-}maxMinXY;
-
-typedef enum
-{
-    E_PLOT_TYPE_1D,
-    E_PLOT_TYPE_2D
-}ePlotType;
+#include "PlotZoom.h"
 
 typedef struct
 {
@@ -120,7 +106,9 @@ public:
     Cursor():
         isAttached(false),
         m_curve(NULL),
-        m_symbol(NULL)
+        m_symbol(NULL),
+        m_xPoint(0),
+        m_yPoint(0)
     {
         m_curve = new QwtPlotCurve("");
     }
@@ -140,8 +128,10 @@ public:
         m_symbol = new QwtSymbol( symbol,
            QBrush( color ), QPen( color, 2 ), QSize( 8, 8 ) );
 
+        m_xPoint = x;
+        m_yPoint = y;
         m_curve->setSymbol( m_symbol );
-        m_curve->setSamples( &x, &y, 1);
+        m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
 
         m_curve->attach(parent);
         isAttached = true;
@@ -162,11 +152,15 @@ public:
         }
     }
 
+    double m_xPoint;
+    double m_yPoint;
+
+    bool isAttached;
+
 private:
     QwtPlotCurve* m_curve;
     QwtSymbol* m_symbol;
 
-    bool isAttached;
 };
 
 
@@ -174,6 +168,7 @@ private:
 typedef enum
 {
     E_CURSOR,
+    E_DELTA_CURSOR,
     E_ZOOM
 }eSelectMode;
 
@@ -203,7 +198,7 @@ private:
     QwtPlot* m_qwtPlot;
     std::vector<CurveData> m_qwtCurves;
     Cursor m_qwtSelectedSample;
-    QwtPlotCurve* m_qwtSelectedSampleDelta;
+    Cursor m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;
 
@@ -211,14 +206,21 @@ private:
 
     int selectedCurveIndex;
 
+    PlotZoom* m_plotZoom;
     maxMinXY maxMin;
 
     TCPMsgReader* m_tcpMsgReader;
+    int m_tcpPort;
 
     std::vector<tMenuActionMapper> m_selectedCursorActions;
 
 
     void calcMaxMin();
+    void clearPointLabels();
+    void displayPointLabels();
+    void displayDeltaLabel();
+    void updatePointDisplay();
+    void updateCursors();
 
 private slots:
     void pointSelected(const QPointF &pos);
@@ -233,6 +235,10 @@ private slots:
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);
+
+    void on_verticalScrollBar_sliderMoved(int position);
+    void on_horizontalScrollBar_sliderMoved(int position);
+
 
 // Functions that could be called from a thread, but modify ui
 public slots:

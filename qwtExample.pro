@@ -23,7 +23,9 @@ HEADERS  += mainwindow.h \
     TCPThreads.h \
     TCPMsgReader.h \
     PackUnpackPlotMsg.h \
-    DataTypes.h
+    DataTypes.h \
+    PlotZoom.h \
+    PlotHelperTypes.h
 
 FORMS    += mainwindow.ui
 

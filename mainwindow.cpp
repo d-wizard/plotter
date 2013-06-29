@@ -52,11 +52,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_qwtPlot(NULL),
-    //m_qwtSelectedSample(NULL),
-    m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
     m_selectMode(E_CURSOR),
     m_qwtGrid(NULL),
+    m_plotZoom(NULL),
     selectedCurveIndex(0)
 {
     ui->setupUi(this);
@@ -86,17 +85,13 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
 
-
-
-    // Init the cursor curves
-    //m_qwtSelectedSample = new QwtPlotCurve("");
-    m_qwtSelectedSampleDelta = new QwtPlotCurve("");
-
-
     // Connect menu commands
     connect(ui->actionZoom, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
     connect(ui->actionSelect_Point, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
+    connect(ui->actionDelta_Cursor, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
+
+    ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
 
     resetPlot();
     add1dCurve("Curve1", md_y);
@@ -105,6 +100,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     m_tcpMsgReader = new TCPMsgReader(this, 2000);
+
+    ui->verticalScrollBar->setRange(0,0);
+    ui->horizontalScrollBar->setRange(0,0);
 
 }
 
@@ -118,6 +116,11 @@ MainWindow::~MainWindow()
         delete m_qwtPlot;
         m_qwtPlot = NULL;
     }
+    if(m_plotZoom != NULL)
+    {
+        delete m_plotZoom;
+        m_plotZoom = NULL;
+    }
     //if(m_qwtGrid != NULL)
     //{
     //    delete m_qwtGrid;
@@ -126,20 +129,7 @@ MainWindow::~MainWindow()
     //{
     //    delete m_qwtPicker;
     //}
-    //if(m_qwtSelectedSample != NULL)
-    //{
-    //    delete m_qwtSelectedSample;
-    //}
-    if(m_qwtSelectedSampleDelta != NULL)
-    {
-        delete m_qwtSelectedSampleDelta;
-    }
 
-
-    //delete mt_qwfPlotCurve;
-    //delete mt_qwtPlot;
-    //delete [] md_x;
-    //delete [] md_y;
 
  }
 
@@ -151,6 +141,13 @@ void MainWindow::resetPlot()
         delete m_qwtPlot;
     }
     m_qwtPlot = new QwtPlot(this);
+
+    if(m_plotZoom != NULL)
+    {
+        delete m_plotZoom;
+        m_plotZoom = NULL;
+    }
+    m_plotZoom = new PlotZoom(m_qwtPlot, ui->verticalScrollBar, ui->horizontalScrollBar);
 
     if(m_qwtGrid != NULL)
     {
@@ -242,6 +239,7 @@ void MainWindow::updateCursorMenus()
             if(m_qwtCurves[newSelectedCurveIndex].displayed)
             {
                 selectedCurveIndex = newSelectedCurveIndex;
+                updateCursors();
                 break;
             }
         }
@@ -249,6 +247,7 @@ void MainWindow::updateCursorMenus()
     else if(numDisplayedCurves == 0)
     {
         m_qwtSelectedSample.hideCursor();
+        clearPointLabels();
     }
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
@@ -295,19 +294,6 @@ void MainWindow::updateCursorMenus()
 
     }
 
-
-
-    //m_qwtCurves[curveIndex].curveAction = new QAction(m_qwtCurves[curveIndex].title.c_str(), this);
-    //m_qwtCurves[curveIndex].mapper = new QSignalMapper(this);
-    ////m_qwtCurves[curveIndex].curveAction = ui->menuCurves->addAction(name.c_str());
-    //m_qwtCurves[curveIndex].mapper->setMapping(m_qwtCurves[curveIndex].curveAction, curveIndex);
-    //connect(m_qwtCurves[curveIndex].curveAction,SIGNAL(triggered()),
-    //                 m_qwtCurves[curveIndex].mapper,SLOT(map()));
-
-    ////QMetaObject::invokeMethod(ui->menuCurves, "addAction", Qt::QueuedConnection, Q_ARG(QAction*, m_qwtCurves[curveIndex].curveAction));
-
-    //ui->menuCurves->addAction(m_qwtCurves[curveIndex].curveAction);
-    //connect( m_qwtCurves[curveIndex].mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 }
 
 void MainWindow::add1dCurve(std::string name, dubVect yPoints)
@@ -320,11 +306,6 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
     int curveIndex = m_qwtCurves.size()-1;
     m_qwtCurves[curveIndex].xPoints.resize(vectSize);
     m_qwtCurves[curveIndex].yPoints = yPoints;
-
-    //addMenuItem(curveIndex);
-
-    //myThread->start();
-
 
     for(int i = 0; i < vectSize; ++i)
     {
@@ -363,6 +344,7 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
                        vectSize);
 
     curve->attach(m_qwtPlot);
+    calcMaxMin();
 
     m_qwtPlot->replot();
     emit updateCursorMenusSignal();
@@ -384,19 +366,39 @@ void MainWindow::toggleLegend()
 void MainWindow::cursorMode()
 {
     m_selectMode = E_CURSOR;
+    ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
+    ui->actionZoom->setIcon(QIcon());
+    ui->actionDelta_Cursor->setIcon(QIcon());
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
+    m_qwtSelectedSampleDelta.hideCursor();
+    m_qwtPlot->replot();
 }
 
 
 void MainWindow::deltaCursorMode()
 {
+    m_selectMode = E_DELTA_CURSOR;
+    ui->actionDelta_Cursor->setIcon(QIcon("CheckBox.png"));
+    ui->actionZoom->setIcon(QIcon());
+    ui->actionSelect_Point->setIcon(QIcon());
 
+    m_qwtSelectedSampleDelta.showCursor(m_qwtPlot,
+                                        m_qwtSelectedSample.m_xPoint,
+                                        m_qwtSelectedSample.m_yPoint,
+                                        m_qwtCurves[selectedCurveIndex].color,
+                                        QwtSymbol::Diamond);
+    m_qwtSelectedSample.hideCursor();
+    updatePointDisplay();
+    m_qwtPlot->replot();
 }
 
 
 void MainWindow::zoomMode()
 {
     m_selectMode = E_ZOOM;
+    ui->actionZoom->setIcon(QIcon("CheckBox.png"));
+    ui->actionSelect_Point->setIcon(QIcon());
+    ui->actionDelta_Cursor->setIcon(QIcon());
     //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
 }
 
@@ -404,11 +406,7 @@ void MainWindow::zoomMode()
 void MainWindow::resetZoom()
 {
     calcMaxMin();
-    m_qwtPlot->setAxisScale(
-        QwtPlot::yLeft, maxMin.minY, maxMin.maxY);
-    m_qwtPlot->setAxisScale(
-        QwtPlot::xBottom, maxMin.minX, maxMin.maxX);
-    m_qwtPlot->replot();
+    m_plotZoom->SetZoom(maxMin);
 }
 
 void MainWindow::visibleCursorMenuSelect(int index)
@@ -417,10 +415,6 @@ void MainWindow::visibleCursorMenuSelect(int index)
     if(!m_qwtCurves[index].displayed)
     {
         m_qwtCurves[index].curve->detach();
-        if(selectedCurveIndex == index)
-        {
-            m_qwtSelectedSample.hideCursor();
-        }
     }
     else
     {
@@ -436,7 +430,7 @@ void MainWindow::selectedCursorMenuSelect(int index)
     if(selectedCurveIndex != index)
     {
         selectedCurveIndex = index;
-        m_qwtSelectedSample.hideCursor();
+        updateCursors();
         emit updateCursorMenusSignal();
     }
 }
@@ -475,6 +469,12 @@ void MainWindow::calcMaxMin()
             ++i;
         }
     }
+    else
+    {
+        // TODO: Should do something when there are no curves displayed
+    }
+
+    m_plotZoom->SetPlotDimensions(maxMin);
 
 }
 
@@ -483,7 +483,7 @@ void MainWindow::calcMaxMin()
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
-    if(m_selectMode == E_CURSOR)
+    if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
     {
         // 1d assumed
         int posIndex = (int)(pos.x() + 0.5);
@@ -503,37 +503,10 @@ void MainWindow::pointSelected(const QPointF &pos)
                                        m_qwtCurves[selectedCurveIndex].color,
                                        QwtSymbol::Ellipse);
 
+        updatePointDisplay();
         m_qwtPlot->replot();
 
-        for(int i = 0; i < m_qwtCurves.size(); ++i)
-        {
-            if(m_qwtCurves[i].pointLabel != NULL)
-            {
-                ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
-                delete m_qwtCurves[i].pointLabel;
-                m_qwtCurves[i].pointLabel = NULL;
-            }
-            if(m_qwtCurves[i].displayed)
-            {
-
-                m_qwtCurves[i].pointLabel = new QLabel("");
-
-                char tempText[100];
-                snprintf(tempText, sizeof(tempText), "%d : %f", posIndex, (float)m_qwtCurves[i].yPoints[posIndex]);
-                m_qwtCurves[i].pointLabel->setText(tempText);
-
-                QPalette palette = this->palette();
-                palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
-                palette.setColor( QPalette::Text, m_qwtCurves[i].color);
-                m_qwtCurves[i].pointLabel->setPalette(palette);
-
-                ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
-            }
-        }
-
-
     }
-
 
 }
 
@@ -543,16 +516,132 @@ void MainWindow::rectSelected(const QRectF &pos)
     if(m_selectMode == E_ZOOM)
     {
         QRectF rectCopy = pos;
-        qreal x1, y1, x2, y2;
+        maxMinXY zoomDim;
 
-        rectCopy.getCoords(&x1, &y1, &x2, &y2);
+        rectCopy.getCoords(&zoomDim.minX, &zoomDim.minY, &zoomDim.maxX, &zoomDim.maxY);
 
-        m_qwtPlot->setAxisScale(QwtPlot::yLeft, y1, y2);
-        m_qwtPlot->setAxisScale(QwtPlot::xBottom, x1, x2);
+        m_plotZoom->SetZoom(zoomDim);
 
-        m_qwtSelectedSample.hideCursor();
-
-        m_qwtPlot->replot();
     }
 
 }
+
+void MainWindow::on_verticalScrollBar_sliderMoved(int position)
+{
+    m_plotZoom->VertSliderMoved();
+}
+
+void MainWindow::on_horizontalScrollBar_sliderMoved(int position)
+{
+    m_plotZoom->HorzSliderMoved();
+}
+
+void MainWindow::clearPointLabels()
+{
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i].pointLabel != NULL)
+        {
+            ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
+            delete m_qwtCurves[i].pointLabel;
+            m_qwtCurves[i].pointLabel = NULL;
+        }
+    }
+}
+void MainWindow::displayPointLabels()
+{
+    clearPointLabels();
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i].displayed)
+        {
+            m_qwtCurves[i].pointLabel = new QLabel("");
+
+            char tempText[100];
+            snprintf(tempText, sizeof(tempText), "(%f,%f)",
+                     (float)m_qwtCurves[i].xPoints[m_qwtSelectedSample.m_xPoint],
+                     (float)m_qwtCurves[i].yPoints[m_qwtSelectedSample.m_xPoint]);
+            m_qwtCurves[i].pointLabel->setText(tempText);
+
+            QPalette palette = this->palette();
+            palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
+            palette.setColor( QPalette::Text, m_qwtCurves[i].color);
+            m_qwtCurves[i].pointLabel->setPalette(palette);
+
+            ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
+        }
+    }
+}
+void MainWindow::displayDeltaLabel()
+{
+    clearPointLabels();
+    if(m_qwtCurves[selectedCurveIndex].displayed)
+    {
+        m_qwtCurves[selectedCurveIndex].pointLabel = new QLabel("");
+
+        char tempText[100];
+        snprintf(tempText, sizeof(tempText), "(%f,%f) : (%f,%f) d (%f,%f)",
+                 (float)m_qwtSelectedSampleDelta.m_xPoint,
+                 (float)m_qwtSelectedSampleDelta.m_yPoint,
+                 (float)m_qwtSelectedSample.m_xPoint,
+                 (float)m_qwtSelectedSample.m_yPoint,
+                 (float)(m_qwtSelectedSample.m_xPoint-m_qwtSelectedSampleDelta.m_xPoint),
+                 (float)(m_qwtSelectedSample.m_yPoint-m_qwtSelectedSampleDelta.m_yPoint));
+
+        m_qwtCurves[selectedCurveIndex].pointLabel->setText(tempText);
+        QPalette palette = this->palette();
+        palette.setColor( QPalette::WindowText, m_qwtCurves[selectedCurveIndex].color);
+        palette.setColor( QPalette::Text, m_qwtCurves[selectedCurveIndex].color);
+        m_qwtCurves[selectedCurveIndex].pointLabel->setPalette(palette);
+
+        ui->InfoLayout->addWidget(m_qwtCurves[selectedCurveIndex].pointLabel);
+    }
+
+}
+
+void MainWindow::updatePointDisplay()
+{
+    clearPointLabels();
+    if(m_qwtSelectedSampleDelta.isAttached)
+    {
+        if(m_qwtSelectedSample.isAttached)
+        {
+            displayDeltaLabel();
+        }
+    }
+    else if(m_qwtSelectedSample.isAttached)
+    {
+        displayPointLabels();
+    }
+
+}
+
+void MainWindow::updateCursors()
+{
+    if(m_qwtSelectedSample.isAttached)
+    {
+        m_qwtSelectedSample.showCursor(m_qwtPlot,
+                                       m_qwtSelectedSample.m_xPoint,
+                                       m_qwtCurves[selectedCurveIndex].yPoints[m_qwtSelectedSample.m_xPoint],
+                                       m_qwtCurves[selectedCurveIndex].color,
+                                       QwtSymbol::Ellipse);
+    }
+
+    if(m_qwtSelectedSampleDelta.isAttached)
+    {
+        m_qwtSelectedSampleDelta.showCursor(m_qwtPlot,
+                                            m_qwtSelectedSampleDelta.m_xPoint,
+                                            m_qwtCurves[selectedCurveIndex].yPoints[m_qwtSelectedSampleDelta.m_xPoint],
+                                            m_qwtCurves[selectedCurveIndex].color,
+                                            QwtSymbol::Diamond);
+    }
+
+    updatePointDisplay();
+    if(m_qwtSelectedSample.isAttached || m_qwtSelectedSampleDelta.isAttached)
+    {
+        m_qwtPlot->replot();
+    }
+}
+
+
+
