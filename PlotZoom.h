@@ -127,6 +127,8 @@ public:
            m_zoomDimensions.minY = (((double)m_curYScrollPos) - m_yAxisB) / m_yAxisM;
            m_zoomDimensions.maxY = m_zoomDimensions.minY + m_zoomHeight;
 
+           BoundZoom(m_zoomDimensions);
+
            m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
            m_qwtPlot->replot();
        }
@@ -138,6 +140,8 @@ public:
            m_curXScrollPos = m_horzScroll->sliderPosition();
            m_zoomDimensions.minX = (((double)m_curXScrollPos) - m_xAxisB) / m_xAxisM;
            m_zoomDimensions.maxX = m_zoomDimensions.minX + m_zoomWidth;
+
+           BoundZoom(m_zoomDimensions);
 
            m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
            m_qwtPlot->replot();
