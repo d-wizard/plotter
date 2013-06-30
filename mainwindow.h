@@ -39,129 +39,14 @@
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
 #include "PlotZoom.h"
+#include "Cursor.h"
+#include "CurveData.h"
 
 typedef struct
 {
     QAction* action;
     QSignalMapper* mapper;
 }tMenuActionMapper;
-
-
-class CurveData
-{
-public:
-    CurveData(const std::string& curveName, const dubVect& newYPoints):
-        yPoints(newYPoints),
-        plotType(E_PLOT_TYPE_1D),
-        curve(new QwtPlotCurve(curveName.c_str())),
-        pointLabel(NULL),
-        curveAction(NULL),
-        mapper(NULL),
-        displayed(false),
-        title(curveName){}
-    CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints):
-        xPoints(newXPoints),
-        yPoints(newYPoints),
-        plotType(E_PLOT_TYPE_2D),
-        curve(new QwtPlotCurve(curveName.c_str())),
-        pointLabel(NULL),
-        curveAction(NULL),
-        mapper(NULL),
-        displayed(false),
-        title(curveName){}
-    ~CurveData()
-    {
-        if(curve != NULL)
-        {
-            //delete curve;
-        }
-        //delete pointLabel;
-    }
-
-    QwtPlotCurve* curve;
-    dubVect xPoints;
-    dubVect yPoints;
-    maxMinXY maxMin;
-    ePlotType plotType;
-
-    std::string title;
-
-    QColor color;
-
-    QLabel* pointLabel;
-
-    QAction* curveAction;
-    QSignalMapper* mapper;
-
-    bool displayed;
-
-    QwtPlotCurve* getCurve(){return curve;}
-private:
-    CurveData();
-};
-
-class Cursor
-{
-public:
-    Cursor():
-        isAttached(false),
-        m_curve(NULL),
-        m_symbol(NULL),
-        m_xPoint(0),
-        m_yPoint(0)
-    {
-        m_curve = new QwtPlotCurve("");
-    }
-    ~Cursor()
-    {
-        if(m_curve != NULL)
-        {
-            //delete m_curve;
-            m_curve = NULL;
-        }
-    }
-
-    void showCursor(QwtPlot* parent, double x, double y, QColor color, QwtSymbol::Style symbol)
-    {
-        hideCursor();
-
-        m_symbol = new QwtSymbol( symbol,
-           QBrush( color ), QPen( color, 2 ), QSize( 8, 8 ) );
-
-        m_xPoint = x;
-        m_yPoint = y;
-        m_curve->setSymbol( m_symbol );
-        m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
-
-        m_curve->attach(parent);
-        isAttached = true;
-    }
-
-    void hideCursor()
-    {
-        if(isAttached)
-        {
-            m_curve->detach();
-            isAttached = false;
-        }
-
-        if(m_symbol != NULL)
-        {
-            //delete m_symbol;
-            m_symbol = NULL;
-        }
-    }
-
-    double m_xPoint;
-    double m_yPoint;
-
-    bool isAttached;
-
-private:
-    QwtPlotCurve* m_curve;
-    QwtSymbol* m_symbol;
-
-};
 
 
 
@@ -196,15 +81,15 @@ private:
 
 
     QwtPlot* m_qwtPlot;
-    std::vector<CurveData> m_qwtCurves;
-    Cursor m_qwtSelectedSample;
-    Cursor m_qwtSelectedSampleDelta;
+    std::vector<CurveData*> m_qwtCurves;
+    Cursor* m_qwtSelectedSample;
+    Cursor* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;
 
     eSelectMode m_selectMode;
 
-    int selectedCurveIndex;
+    int m_selectedCurveIndex;
 
     PlotZoom* m_plotZoom;
     maxMinXY maxMin;
@@ -227,6 +112,8 @@ private:
 
     void modifySelectedCursor(int modDelta);
     void modifyCursorPos(int modDelta);
+
+    void setSelectedCurveIndex(int index);
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);

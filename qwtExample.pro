@@ -25,7 +25,9 @@ HEADERS  += mainwindow.h \
     PackUnpackPlotMsg.h \
     DataTypes.h \
     PlotZoom.h \
-    PlotHelperTypes.h
+    PlotHelperTypes.h \
+    Cursor.h \
+    CurveData.h
 
 FORMS    += mainwindow.ui
 

@@ -53,11 +53,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_qwtPlot(NULL),
+    m_qwtSelectedSample(NULL),
+    m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
     m_selectMode(E_CURSOR),
     m_qwtGrid(NULL),
     m_plotZoom(NULL),
-    selectedCurveIndex(0)
+    m_selectedCurveIndex(0)
 {
     ui->setupUi(this);
     mi_size = 100000;
@@ -125,6 +127,16 @@ MainWindow::~MainWindow()
         delete m_plotZoom;
         m_plotZoom = NULL;
     }
+    if(m_qwtSelectedSample != NULL)
+    {
+        delete m_qwtSelectedSample;
+        m_qwtSelectedSample = NULL;
+    }
+    if(m_qwtSelectedSampleDelta != NULL)
+    {
+        delete m_qwtSelectedSampleDelta;
+        m_qwtSelectedSampleDelta = NULL;
+    }
     //if(m_qwtGrid != NULL)
     //{
     //    delete m_qwtGrid;
@@ -152,6 +164,20 @@ void MainWindow::resetPlot()
         m_plotZoom = NULL;
     }
     m_plotZoom = new PlotZoom(m_qwtPlot, ui->verticalScrollBar, ui->horizontalScrollBar);
+
+    if(m_qwtSelectedSample != NULL)
+    {
+        delete m_qwtSelectedSample;
+        m_qwtSelectedSample = NULL;
+    }
+    m_qwtSelectedSample = new Cursor(m_qwtPlot, QwtSymbol::Ellipse);
+
+    if(m_qwtSelectedSampleDelta != NULL)
+    {
+        delete m_qwtSelectedSampleDelta;
+        m_qwtSelectedSampleDelta = NULL;
+    }
+    m_qwtSelectedSampleDelta = new Cursor(m_qwtPlot, QwtSymbol::Diamond);
 
     if(m_qwtGrid != NULL)
     {
@@ -201,19 +227,19 @@ void MainWindow::updateCursorMenus()
     // TODO: make this thread safe
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        ui->menuCurves->removeAction(m_qwtCurves[i].curveAction);
+        ui->menuCurves->removeAction(m_qwtCurves[i]->curveAction);
 
         // TODO: Do I need to disconnect the action / mapper?
-        if(m_qwtCurves[i].curveAction != NULL)
+        if(m_qwtCurves[i]->curveAction != NULL)
         {
-            delete m_qwtCurves[i].curveAction;
+            delete m_qwtCurves[i]->curveAction;
         }
-        if(m_qwtCurves[i].mapper != NULL)
+        if(m_qwtCurves[i]->mapper != NULL)
         {
-            delete m_qwtCurves[i].mapper;
+            delete m_qwtCurves[i]->mapper;
         }
 
-        if(m_qwtCurves[i].displayed)
+        if(m_qwtCurves[i]->displayed)
         {
             ++numDisplayedCurves;
         }
@@ -230,19 +256,20 @@ void MainWindow::updateCursorMenus()
 
 
     // Handle situation where a cursor has been made invisible but it was the selected cursor
-    if(m_qwtCurves[selectedCurveIndex].displayed == false && numDisplayedCurves > 0)
+    if(m_qwtCurves[m_selectedCurveIndex]->displayed == false && numDisplayedCurves > 0)
     {
         int newSelectedCurveIndex = 0;
         for(int i = 1; i < m_qwtCurves.size(); ++i)
         {
-            newSelectedCurveIndex = (selectedCurveIndex - i);
+            newSelectedCurveIndex = (m_selectedCurveIndex - i);
             if(newSelectedCurveIndex < 0)
             {
                 newSelectedCurveIndex += m_qwtCurves.size();
             }
-            if(m_qwtCurves[newSelectedCurveIndex].displayed)
+            if(m_qwtCurves[newSelectedCurveIndex]->displayed)
             {
-                selectedCurveIndex = newSelectedCurveIndex;
+
+                setSelectedCurveIndex(newSelectedCurveIndex);
                 updateCursors();
                 break;
             }
@@ -250,40 +277,40 @@ void MainWindow::updateCursorMenus()
     }
     else if(numDisplayedCurves == 0)
     {
-        m_qwtSelectedSample.hideCursor();
-        m_qwtSelectedSampleDelta.hideCursor();
+        m_qwtSelectedSample->hideCursor();
+        m_qwtSelectedSampleDelta->hideCursor();
         clearPointLabels();
     }
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i].displayed)
+        if(m_qwtCurves[i]->displayed)
         {
-            m_qwtCurves[i].curveAction = new QAction(checkIcon, m_qwtCurves[i].title.c_str(), this);
+            m_qwtCurves[i]->curveAction = new QAction(checkIcon, m_qwtCurves[i]->title.c_str(), this);
         }
         else
         {
-            m_qwtCurves[i].curveAction = new QAction(m_qwtCurves[i].title.c_str(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->title.c_str(), this);
         }
-        m_qwtCurves[i].mapper = new QSignalMapper(this);
+        m_qwtCurves[i]->mapper = new QSignalMapper(this);
 
-        m_qwtCurves[i].mapper->setMapping(m_qwtCurves[i].curveAction, i);
-        connect(m_qwtCurves[i].curveAction,SIGNAL(triggered()),
-                         m_qwtCurves[i].mapper,SLOT(map()));
+        m_qwtCurves[i]->mapper->setMapping(m_qwtCurves[i]->curveAction, i);
+        connect(m_qwtCurves[i]->curveAction,SIGNAL(triggered()),
+                         m_qwtCurves[i]->mapper,SLOT(map()));
 
-        ui->menuCurves->addAction(m_qwtCurves[i].curveAction);
-        connect( m_qwtCurves[i].mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
+        ui->menuCurves->addAction(m_qwtCurves[i]->curveAction);
+        connect( m_qwtCurves[i]->mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 
-        if(m_qwtCurves[i].displayed)
+        if(m_qwtCurves[i]->displayed)
         {
             tMenuActionMapper actionMapper;
-            if(i == selectedCurveIndex)
+            if(i == m_selectedCurveIndex)
             {
-                actionMapper.action = new QAction(checkIcon, m_qwtCurves[i].title.c_str(), this);
+                actionMapper.action = new QAction(checkIcon, m_qwtCurves[i]->title.c_str(), this);
             }
             else
             {
-                actionMapper.action = new QAction(m_qwtCurves[i].title.c_str(), this);
+                actionMapper.action = new QAction(m_qwtCurves[i]->title.c_str(), this);
             }
             actionMapper.mapper = new QSignalMapper(this);
 
@@ -303,53 +330,58 @@ void MainWindow::updateCursorMenus()
 
 void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 {
-    m_qwtCurves.push_back(CurveData(name, yPoints));
+    m_qwtCurves.push_back(new CurveData(name, yPoints));
 
-    QwtPlotCurve* curve = m_qwtCurves[m_qwtCurves.size()-1].getCurve();
+    QwtPlotCurve* curve = m_qwtCurves[m_qwtCurves.size()-1]->getCurve();
 
     int vectSize = yPoints.size();
     int curveIndex = m_qwtCurves.size()-1;
-    m_qwtCurves[curveIndex].xPoints.resize(vectSize);
-    m_qwtCurves[curveIndex].yPoints = yPoints;
+    m_qwtCurves[curveIndex]->xPoints.resize(vectSize);
+    m_qwtCurves[curveIndex]->yPoints = yPoints;
 
     for(int i = 0; i < vectSize; ++i)
     {
-        m_qwtCurves[curveIndex].xPoints[i] = (double)i;
+        m_qwtCurves[curveIndex]->xPoints[i] = (double)i;
     }
 
-    m_qwtCurves[curveIndex].maxMin.minX = 0;
-    m_qwtCurves[curveIndex].maxMin.maxX = vectSize-1;
-    m_qwtCurves[curveIndex].maxMin.minY = m_qwtCurves[curveIndex].yPoints[0];
-    m_qwtCurves[curveIndex].maxMin.maxY = m_qwtCurves[curveIndex].yPoints[0];
+    m_qwtCurves[curveIndex]->maxMin.minX = 0;
+    m_qwtCurves[curveIndex]->maxMin.maxX = vectSize-1;
+    m_qwtCurves[curveIndex]->maxMin.minY = m_qwtCurves[curveIndex]->yPoints[0];
+    m_qwtCurves[curveIndex]->maxMin.maxY = m_qwtCurves[curveIndex]->yPoints[0];
 
     for(int i = 1; i < vectSize; ++i)
     {
-        if(m_qwtCurves[curveIndex].maxMin.minY > m_qwtCurves[curveIndex].yPoints[i])
+        if(m_qwtCurves[curveIndex]->maxMin.minY > m_qwtCurves[curveIndex]->yPoints[i])
         {
-            m_qwtCurves[curveIndex].maxMin.minY = m_qwtCurves[curveIndex].yPoints[i];
+            m_qwtCurves[curveIndex]->maxMin.minY = m_qwtCurves[curveIndex]->yPoints[i];
         }
-        if(m_qwtCurves[curveIndex].maxMin.maxY < m_qwtCurves[curveIndex].yPoints[i])
+        if(m_qwtCurves[curveIndex]->maxMin.maxY < m_qwtCurves[curveIndex]->yPoints[i])
         {
-            m_qwtCurves[curveIndex].maxMin.maxY = m_qwtCurves[curveIndex].yPoints[i];
+            m_qwtCurves[curveIndex]->maxMin.maxY = m_qwtCurves[curveIndex]->yPoints[i];
         }
     }
 
-    m_qwtCurves[curveIndex].displayed = true;
+    m_qwtCurves[curveIndex]->displayed = true;
 
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
-    m_qwtCurves[curveIndex].color = QColor(
+    m_qwtCurves[curveIndex]->color = QColor(
                 curveColors[colorLookupIndex].red,
                 curveColors[colorLookupIndex].green,
                 curveColors[colorLookupIndex].blue);
 
-    curve->setPen(m_qwtCurves[curveIndex].color);
+    curve->setPen(m_qwtCurves[curveIndex]->color);
 
-    curve->setSamples( &m_qwtCurves[curveIndex].xPoints[0],
-                       &m_qwtCurves[curveIndex].yPoints[0],
+    curve->setSamples( &m_qwtCurves[curveIndex]->xPoints[0],
+                       &m_qwtCurves[curveIndex]->yPoints[0],
                        vectSize);
 
     curve->attach(m_qwtPlot);
     calcMaxMin();
+
+    if(m_qwtSelectedSample->getCurve() == NULL)
+    {
+        setSelectedCurveIndex(curveIndex);
+    }
 
     m_qwtPlot->replot();
     emit updateCursorMenusSignal();
@@ -375,7 +407,7 @@ void MainWindow::cursorMode()
     ui->actionZoom->setIcon(QIcon());
     ui->actionDelta_Cursor->setIcon(QIcon());
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
-    m_qwtSelectedSampleDelta.hideCursor();
+    m_qwtSelectedSampleDelta->hideCursor();
     m_qwtPlot->replot();
 }
 
@@ -387,12 +419,11 @@ void MainWindow::deltaCursorMode()
     ui->actionZoom->setIcon(QIcon());
     ui->actionSelect_Point->setIcon(QIcon());
 
-    m_qwtSelectedSampleDelta.showCursor(m_qwtPlot,
-                                        m_qwtSelectedSample.m_xPoint,
-                                        m_qwtSelectedSample.m_yPoint,
-                                        m_qwtCurves[selectedCurveIndex].color,
-                                        QwtSymbol::Diamond);
-    m_qwtSelectedSample.hideCursor();
+    m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
+    m_qwtSelectedSampleDelta->showCursor(
+        QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint));
+
+    m_qwtSelectedSample->hideCursor();
     updatePointDisplay();
     m_qwtPlot->replot();
 }
@@ -416,14 +447,14 @@ void MainWindow::resetZoom()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
-    m_qwtCurves[index].displayed = !m_qwtCurves[index].displayed;
-    if(!m_qwtCurves[index].displayed)
+    m_qwtCurves[index]->displayed = !m_qwtCurves[index]->displayed;
+    if(!m_qwtCurves[index]->displayed)
     {
-        m_qwtCurves[index].curve->detach();
+        m_qwtCurves[index]->curve->detach();
     }
     else
     {
-        m_qwtCurves[index].curve->attach(m_qwtPlot);
+        m_qwtCurves[index]->curve->attach(m_qwtPlot);
     }
     updatePointDisplay();
     m_qwtPlot->replot();
@@ -433,9 +464,9 @@ void MainWindow::visibleCursorMenuSelect(int index)
 
 void MainWindow::selectedCursorMenuSelect(int index)
 {
-    if(selectedCurveIndex != index)
+    if(m_selectedCurveIndex != index)
     {
-        selectedCurveIndex = index;
+        setSelectedCurveIndex(index);
         updateCursors();
         emit updateCursorMenusSignal();
     }
@@ -444,32 +475,32 @@ void MainWindow::selectedCursorMenuSelect(int index)
 void MainWindow::calcMaxMin()
 {
     int i = 0;
-    while(i < m_qwtCurves.size() && m_qwtCurves[i].displayed == false)
+    while(i < m_qwtCurves.size() && m_qwtCurves[i]->displayed == false)
     {
         ++i;
     }
     if(i < m_qwtCurves.size())
     {
-        maxMin = m_qwtCurves[i].maxMin;
+        maxMin = m_qwtCurves[i]->maxMin;
         while(i < m_qwtCurves.size())
         {
-            if(m_qwtCurves[i].displayed)
+            if(m_qwtCurves[i]->displayed)
             {
-                if(maxMin.minX > m_qwtCurves[i].maxMin.minX)
+                if(maxMin.minX > m_qwtCurves[i]->maxMin.minX)
                 {
-                    maxMin.minX = m_qwtCurves[i].maxMin.minX;
+                    maxMin.minX = m_qwtCurves[i]->maxMin.minX;
                 }
-                if(maxMin.minY > m_qwtCurves[i].maxMin.minY)
+                if(maxMin.minY > m_qwtCurves[i]->maxMin.minY)
                 {
-                    maxMin.minY = m_qwtCurves[i].maxMin.minY;
+                    maxMin.minY = m_qwtCurves[i]->maxMin.minY;
                 }
-                if(maxMin.maxX < m_qwtCurves[i].maxMin.maxX)
+                if(maxMin.maxX < m_qwtCurves[i]->maxMin.maxX)
                 {
-                    maxMin.maxX = m_qwtCurves[i].maxMin.maxX;
+                    maxMin.maxX = m_qwtCurves[i]->maxMin.maxX;
                 }
-                if(maxMin.maxY < m_qwtCurves[i].maxMin.maxY)
+                if(maxMin.maxY < m_qwtCurves[i]->maxMin.maxY)
                 {
-                    maxMin.maxY = m_qwtCurves[i].maxMin.maxY;
+                    maxMin.maxY = m_qwtCurves[i]->maxMin.maxY;
                 }
             }
             ++i;
@@ -491,23 +522,7 @@ void MainWindow::pointSelected(const QPointF &pos)
 {
     if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
     {
-        // 1d assumed
-        int posIndex = (int)(pos.x() + 0.5);
-
-        if(posIndex < 0)
-        {
-            posIndex = 0;
-        }
-        else if(posIndex >= m_qwtCurves[selectedCurveIndex].xPoints.size())
-        {
-            posIndex = m_qwtCurves[selectedCurveIndex].xPoints.size()-1;
-        }
-
-        m_qwtSelectedSample.showCursor(m_qwtPlot,
-                                       m_qwtCurves[selectedCurveIndex].xPoints[posIndex],
-                                       m_qwtCurves[selectedCurveIndex].yPoints[posIndex],
-                                       m_qwtCurves[selectedCurveIndex].color,
-                                       QwtSymbol::Ellipse);
+        m_qwtSelectedSample->showCursor(pos);
 
         updatePointDisplay();
         m_qwtPlot->replot();
@@ -546,11 +561,11 @@ void MainWindow::clearPointLabels()
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i].pointLabel != NULL)
+        if(m_qwtCurves[i]->pointLabel != NULL)
         {
-            ui->InfoLayout->removeWidget(m_qwtCurves[i].pointLabel);
-            delete m_qwtCurves[i].pointLabel;
-            m_qwtCurves[i].pointLabel = NULL;
+            ui->InfoLayout->removeWidget(m_qwtCurves[i]->pointLabel);
+            delete m_qwtCurves[i]->pointLabel;
+            m_qwtCurves[i]->pointLabel = NULL;
         }
     }
 }
@@ -559,48 +574,48 @@ void MainWindow::displayPointLabels()
     clearPointLabels();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i].displayed)
+        if(m_qwtCurves[i]->displayed)
         {
-            m_qwtCurves[i].pointLabel = new QLabel("");
+            m_qwtCurves[i]->pointLabel = new QLabel("");
 
             char tempText[100];
             snprintf(tempText, sizeof(tempText), "(%f,%f)",
-                     (float)m_qwtCurves[i].xPoints[m_qwtSelectedSample.m_xPoint],
-                     (float)m_qwtCurves[i].yPoints[m_qwtSelectedSample.m_xPoint]);
-            m_qwtCurves[i].pointLabel->setText(tempText);
+                     (float)m_qwtCurves[i]->xPoints[m_qwtSelectedSample->m_pointIndex],
+                     (float)m_qwtCurves[i]->yPoints[m_qwtSelectedSample->m_pointIndex]);
+            m_qwtCurves[i]->pointLabel->setText(tempText);
 
             QPalette palette = this->palette();
-            palette.setColor( QPalette::WindowText, m_qwtCurves[i].color);
-            palette.setColor( QPalette::Text, m_qwtCurves[i].color);
-            m_qwtCurves[i].pointLabel->setPalette(palette);
+            palette.setColor( QPalette::WindowText, m_qwtCurves[i]->color);
+            palette.setColor( QPalette::Text, m_qwtCurves[i]->color);
+            m_qwtCurves[i]->pointLabel->setPalette(palette);
 
-            ui->InfoLayout->addWidget(m_qwtCurves[i].pointLabel);
+            ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
         }
     }
 }
 void MainWindow::displayDeltaLabel()
 {
     clearPointLabels();
-    if(m_qwtCurves[selectedCurveIndex].displayed)
+    if(m_qwtCurves[m_selectedCurveIndex]->displayed)
     {
-        m_qwtCurves[selectedCurveIndex].pointLabel = new QLabel("");
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
         char tempText[100];
         snprintf(tempText, sizeof(tempText), "(%f,%f) : (%f,%f) d (%f,%f)",
-                 (float)m_qwtSelectedSampleDelta.m_xPoint,
-                 (float)m_qwtSelectedSampleDelta.m_yPoint,
-                 (float)m_qwtSelectedSample.m_xPoint,
-                 (float)m_qwtSelectedSample.m_yPoint,
-                 (float)(m_qwtSelectedSample.m_xPoint-m_qwtSelectedSampleDelta.m_xPoint),
-                 (float)(m_qwtSelectedSample.m_yPoint-m_qwtSelectedSampleDelta.m_yPoint));
+                 (float)m_qwtSelectedSampleDelta->m_xPoint,
+                 (float)m_qwtSelectedSampleDelta->m_yPoint,
+                 (float)m_qwtSelectedSample->m_xPoint,
+                 (float)m_qwtSelectedSample->m_yPoint,
+                 (float)(m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint),
+                 (float)(m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint));
 
-        m_qwtCurves[selectedCurveIndex].pointLabel->setText(tempText);
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(tempText);
         QPalette palette = this->palette();
-        palette.setColor( QPalette::WindowText, m_qwtCurves[selectedCurveIndex].color);
-        palette.setColor( QPalette::Text, m_qwtCurves[selectedCurveIndex].color);
-        m_qwtCurves[selectedCurveIndex].pointLabel->setPalette(palette);
+        palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->color);
+        palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->color);
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setPalette(palette);
 
-        ui->InfoLayout->addWidget(m_qwtCurves[selectedCurveIndex].pointLabel);
+        ui->InfoLayout->addWidget(m_qwtCurves[m_selectedCurveIndex]->pointLabel);
     }
 
 }
@@ -608,14 +623,14 @@ void MainWindow::displayDeltaLabel()
 void MainWindow::updatePointDisplay()
 {
     clearPointLabels();
-    if(m_qwtSelectedSampleDelta.isAttached)
+    if(m_qwtSelectedSampleDelta->isAttached)
     {
-        if(m_qwtSelectedSample.isAttached)
+        if(m_qwtSelectedSample->isAttached)
         {
             displayDeltaLabel();
         }
     }
-    else if(m_qwtSelectedSample.isAttached)
+    else if(m_qwtSelectedSample->isAttached)
     {
         displayPointLabels();
     }
@@ -624,26 +639,18 @@ void MainWindow::updatePointDisplay()
 
 void MainWindow::updateCursors()
 {
-    if(m_qwtSelectedSample.isAttached)
+    if(m_qwtSelectedSample->isAttached)
     {
-        m_qwtSelectedSample.showCursor(m_qwtPlot,
-                                       m_qwtSelectedSample.m_xPoint,
-                                       m_qwtCurves[selectedCurveIndex].yPoints[m_qwtSelectedSample.m_xPoint],
-                                       m_qwtCurves[selectedCurveIndex].color,
-                                       QwtSymbol::Ellipse);
+        m_qwtSelectedSample->showCursor();
     }
 
-    if(m_qwtSelectedSampleDelta.isAttached)
+    if(m_qwtSelectedSampleDelta->isAttached)
     {
-        m_qwtSelectedSampleDelta.showCursor(m_qwtPlot,
-                                            m_qwtSelectedSampleDelta.m_xPoint,
-                                            m_qwtCurves[selectedCurveIndex].yPoints[m_qwtSelectedSampleDelta.m_xPoint],
-                                            m_qwtCurves[selectedCurveIndex].color,
-                                            QwtSymbol::Diamond);
+        m_qwtSelectedSampleDelta->showCursor();
     }
 
     updatePointDisplay();
-    if(m_qwtSelectedSample.isAttached || m_qwtSelectedSampleDelta.isAttached)
+    if(m_qwtSelectedSample->isAttached || m_qwtSelectedSampleDelta->isAttached)
     {
         m_qwtPlot->replot();
     }
@@ -760,9 +767,9 @@ void MainWindow::modifySelectedCursor(int modDelta)
 
         for(int i = 0; i < m_qwtCurves.size(); ++i)
         {
-            if(m_qwtCurves[i].displayed)
+            if(m_qwtCurves[i]->displayed)
             {
-                if(i == selectedCurveIndex)
+                if(i == m_selectedCurveIndex)
                 {
                     indexOfSelectedCursor = displayedCurves.size();
                 }
@@ -782,7 +789,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
                 newIndexOfSelectedCursor -= displayedCurves.size();
             }
 
-            selectedCurveIndex = displayedCurves[newIndexOfSelectedCursor];
+            setSelectedCurveIndex(displayedCurves[newIndexOfSelectedCursor]);
             updateCursors();
         }
         emit updateCursorMenusSignal();
@@ -794,13 +801,13 @@ void MainWindow::modifyCursorPos(int modDelta)
 {
     if(modDelta != 0)
     {
-        if(m_qwtSelectedSample.isAttached)
+        if(m_qwtSelectedSample->isAttached)
         {
-            int newXPos = (int)m_qwtSelectedSample.m_xPoint + modDelta;
+            int newXPos = (int)m_qwtSelectedSample->m_pointIndex + modDelta;
 
-            if(newXPos >= 0 && newXPos <= m_qwtCurves[selectedCurveIndex].xPoints.size())
+            if(newXPos >= 0 && newXPos <= m_qwtSelectedSample->getCurve()->xPoints.size())
             {
-                m_qwtSelectedSample.m_xPoint = newXPos;
+                m_qwtSelectedSample->m_pointIndex = newXPos;
                 updateCursors();
             }
 
@@ -844,5 +851,20 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
     case QAbstractSlider::SliderPageStepSub:
         m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -10);
         break;
+    }
+}
+CurveData* blah;
+void MainWindow::setSelectedCurveIndex(int index)
+{
+    if(index >= 0 && index < m_qwtCurves.size())
+    {
+        blah = m_qwtCurves[index];
+
+
+
+
+        m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
+        m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
+        m_selectedCurveIndex = index;
     }
 }
