@@ -214,13 +214,23 @@ private:
 
     std::vector<tMenuActionMapper> m_selectedCursorActions;
 
+    bool eventFilter(QObject *obj, QEvent *event);
 
     void calcMaxMin();
+
     void clearPointLabels();
     void displayPointLabels();
     void displayDeltaLabel();
     void updatePointDisplay();
+
     void updateCursors();
+
+    void modifySelectedCursor(int modDelta);
+    void modifyCursorPos(int modDelta);
+
+    // Key Press Functions
+    bool keyPressModifyZoom(int key);
+    bool keyPressModifyCursor(int key);
 
 private slots:
     void pointSelected(const QPointF &pos);
@@ -241,6 +251,10 @@ private slots:
 
 
 // Functions that could be called from a thread, but modify ui
+    void on_verticalScrollBar_actionTriggered(int action);
+
+    void on_horizontalScrollBar_actionTriggered(int action);
+
 public slots:
     void updateCursorMenus();
 signals:

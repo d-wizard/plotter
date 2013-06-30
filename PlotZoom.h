@@ -66,80 +66,56 @@ public:
    
    void SetZoom(maxMinXY zoomDimensions)
    {
-        m_zoomDimensions = zoomDimensions;
-        m_zoomWidth = m_zoomDimensions.maxX - m_zoomDimensions.minX;
-        m_zoomHeight = m_zoomDimensions.maxY - m_zoomDimensions.minY;
+       BoundZoom(zoomDimensions);
+       double zoomWidth = zoomDimensions.maxX - zoomDimensions.minX;
+       double zoomHeight = zoomDimensions.maxY - zoomDimensions.minY;
 
-        m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
-        m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
+       if(zoomWidth > 0.0 && zoomHeight > 0.0)
+       {
+           m_zoomDimensions = zoomDimensions;
+           m_zoomWidth = zoomWidth;
+           m_zoomHeight = zoomHeight;
 
-        m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
-        m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
-        m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
-        m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
+           m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
+           m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
 
-        m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
-        m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
+           m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
+           m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
+           m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
+           m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
 
-        if(m_curXScrollPos < 0)
-        {
-            m_curXScrollPos = 0;
-        }
-        else if(m_curXScrollPos >= m_scrollBarResXAxis)
-        {
-            m_curXScrollPos = m_scrollBarResXAxis - 1;
-        }
-        if(m_curYScrollPos < 0)
-        {
-            m_curYScrollPos = 0;
-        }
-        else if(m_curYScrollPos >= m_scrollBarResYAxis)
-        {
-            m_curYScrollPos = m_scrollBarResYAxis - 1;
-        }
+           m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
+           m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
 
-        if(m_zoomDimensions.minX < m_plotDimensions.minX)
-        {
-            m_zoomDimensions.minX = m_plotDimensions.minX;
-        }
-        if(m_zoomDimensions.maxX > m_plotDimensions.maxX)
-        {
-            m_zoomDimensions.maxX = m_plotDimensions.maxX;
-        }
-        if(m_zoomDimensions.minY < m_plotDimensions.minY)
-        {
-            m_zoomDimensions.minY = m_plotDimensions.minY;
-        }
-        if(m_zoomDimensions.maxY > m_plotDimensions.maxY)
-        {
-            m_zoomDimensions.maxY = m_plotDimensions.maxY;
-        }
 
-        if( m_zoomDimensions.minX == m_plotDimensions.minX &&
-            m_zoomDimensions.maxX == m_plotDimensions.maxX )
-        {
-            m_horzScroll->setRange(0, 0);
-            m_curXScrollPos = -1;
-        }
-        else
-        {
-            m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
-            m_horzScroll->setSliderPosition(m_curXScrollPos);
-        }
+           if( m_zoomDimensions.minX == m_plotDimensions.minX &&
+               m_zoomDimensions.maxX == m_plotDimensions.maxX )
+           {
+               m_horzScroll->setRange(0, 0);
+               m_curXScrollPos = -1;
+           }
+           else
+           {
+               m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
+               BoundScroll(m_horzScroll, m_curXScrollPos);
+               m_horzScroll->setSliderPosition(m_curXScrollPos);
+           }
 
-        if( m_zoomDimensions.minY == m_plotDimensions.minY &&
-            m_zoomDimensions.maxY == m_plotDimensions.maxY )
-        {
-            m_vertScroll->setRange(0, 0);
-            m_curYScrollPos = -1;
-        }
-        else
-        {
-            m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
-            m_vertScroll->setSliderPosition(m_curYScrollPos);
-        }
+           if( m_zoomDimensions.minY == m_plotDimensions.minY &&
+               m_zoomDimensions.maxY == m_plotDimensions.maxY )
+           {
+               m_vertScroll->setRange(0, 0);
+               m_curYScrollPos = -1;
+           }
+           else
+           {
+               m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
+               BoundScroll(m_vertScroll, m_curYScrollPos);
+               m_vertScroll->setSliderPosition(m_curYScrollPos);
+           }
 
-        m_qwtPlot->replot();
+           m_qwtPlot->replot();
+       }
 
    }
 
@@ -167,6 +143,61 @@ public:
            m_qwtPlot->replot();
        }
    }
+
+    void ModSliderPos(QScrollBar* scroll, int posMod)
+    {
+        if(scroll == m_vertScroll || scroll == m_horzScroll && posMod != 0)
+        {
+            int newPos = scroll->sliderPosition() + posMod;
+
+            BoundScroll(scroll, newPos);
+
+            if(newPos != scroll->sliderPosition())
+            {
+                scroll->setSliderPosition(newPos);
+                if(scroll == m_vertScroll)
+                {
+                    VertSliderMoved();
+                }
+                else if(scroll == m_horzScroll)
+                {
+                    HorzSliderMoved();
+                }
+            }
+        }
+    }
+
+    void BoundZoom(maxMinXY& zoom)
+    {
+        if(zoom.minX < m_plotDimensions.minX)
+        {
+            zoom.minX = m_plotDimensions.minX;
+        }
+        if(zoom.maxX > m_plotDimensions.maxX)
+        {
+            zoom.maxX = m_plotDimensions.maxX;
+        }
+        if(zoom.minY < m_plotDimensions.minY)
+        {
+            zoom.minY = m_plotDimensions.minY;
+        }
+        if(zoom.maxY > m_plotDimensions.maxY)
+        {
+            zoom.maxY = m_plotDimensions.maxY;
+        }
+    }
+
+    void BoundScroll(QScrollBar* scroll, int& newPos)
+    {
+        if(newPos < scroll->minimum())
+        {
+            newPos = scroll->minimum();
+        }
+        else if(newPos > scroll->maximum())
+        {
+            newPos = scroll->maximum();
+        }
+    }
 
 private:
    QwtPlot* m_qwtPlot;

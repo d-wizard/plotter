@@ -20,6 +20,7 @@
 #include "ui_mainwindow.h"
 #include <stdio.h>
 #include <QSignalMapper>
+#include <QKeyEvent>
 
 QwtPlotGrid *grid;
 int mi_size;
@@ -103,6 +104,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
+
+    // For multi-window will probably need to do this whenever the window get focus.
+    QCoreApplication::instance()->installEventFilter(this);
 
 }
 
@@ -247,6 +251,7 @@ void MainWindow::updateCursorMenus()
     else if(numDisplayedCurves == 0)
     {
         m_qwtSelectedSample.hideCursor();
+        m_qwtSelectedSampleDelta.hideCursor();
         clearPointLabels();
     }
 
@@ -420,6 +425,7 @@ void MainWindow::visibleCursorMenuSelect(int index)
     {
         m_qwtCurves[index].curve->attach(m_qwtPlot);
     }
+    updatePointDisplay();
     m_qwtPlot->replot();
     calcMaxMin();
     emit updateCursorMenusSignal();
@@ -643,5 +649,200 @@ void MainWindow::updateCursors()
     }
 }
 
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        bool validKey = true;
+        QKeyEvent *KeyEvent = (QKeyEvent*)event;
+
+        switch(m_selectMode)
+        {
+        case E_ZOOM:
+            validKey = keyPressModifyZoom(KeyEvent->key());
+            break;
+        case E_CURSOR:
+        case E_DELTA_CURSOR:
+            validKey = keyPressModifyCursor(KeyEvent->key());
+            break;
+        default:
+            validKey = false;
+            break;
+        }
 
 
+        if(validKey)
+        {
+            return true;
+        }
+        else
+        {
+            // standard event processing
+            return QObject::eventFilter(obj, event);
+        }
+    }
+    else
+    {
+        // standard event processing
+        return QObject::eventFilter(obj, event);
+    }
+}
+
+bool MainWindow::keyPressModifyZoom(int key)
+{
+    int posMod = 0;
+    QScrollBar* scroll = NULL;
+    bool valid = false;
+
+    switch(key)
+    {
+        case Qt::Key_Down:
+            scroll = ui->verticalScrollBar;
+            posMod = 1;
+        break;
+        case Qt::Key_Up:
+            scroll = ui->verticalScrollBar;
+            posMod = -1;
+        break;
+        case Qt::Key_Left:
+            scroll = ui->horizontalScrollBar;
+            posMod = -1;
+        break;
+        case Qt::Key_Right:
+            scroll = ui->horizontalScrollBar;
+            posMod = 1;
+        break;
+    }
+
+    if(scroll != NULL)
+    {
+        valid = true;
+        m_plotZoom->ModSliderPos(scroll, posMod);
+    }
+
+    return valid;
+}
+
+bool MainWindow::keyPressModifyCursor(int key)
+{
+    bool valid = true;
+
+    switch(key)
+    {
+        case Qt::Key_Down:
+            modifySelectedCursor(-1);
+        break;
+        case Qt::Key_Up:
+            modifySelectedCursor(1);
+        break;
+        case Qt::Key_Left:
+            modifyCursorPos(-1);
+        break;
+        case Qt::Key_Right:
+            modifyCursorPos(1);
+        break;
+        default:
+            valid = false;
+        break;
+    }
+
+    return valid;
+}
+
+void MainWindow::modifySelectedCursor(int modDelta)
+{
+    if(modDelta != 0)
+    {
+        std::vector<int> displayedCurves;
+        int indexOfSelectedCursor = -1;
+
+        int modDeltaAbs = (int)abs(modDelta);
+
+        for(int i = 0; i < m_qwtCurves.size(); ++i)
+        {
+            if(m_qwtCurves[i].displayed)
+            {
+                if(i == selectedCurveIndex)
+                {
+                    indexOfSelectedCursor = displayedCurves.size();
+                }
+                displayedCurves.push_back(i);
+            }
+        }
+
+        if(modDeltaAbs < displayedCurves.size() && indexOfSelectedCursor >= 0)
+        {
+            int newIndexOfSelectedCursor = indexOfSelectedCursor + modDelta;
+            if(newIndexOfSelectedCursor < 0)
+            {
+                newIndexOfSelectedCursor += displayedCurves.size();
+            }
+            else if(newIndexOfSelectedCursor >= displayedCurves.size())
+            {
+                newIndexOfSelectedCursor -= displayedCurves.size();
+            }
+
+            selectedCurveIndex = displayedCurves[newIndexOfSelectedCursor];
+            updateCursors();
+        }
+        emit updateCursorMenusSignal();
+    }
+
+}
+
+void MainWindow::modifyCursorPos(int modDelta)
+{
+    if(modDelta != 0)
+    {
+        if(m_qwtSelectedSample.isAttached)
+        {
+            int newXPos = (int)m_qwtSelectedSample.m_xPoint + modDelta;
+
+            if(newXPos >= 0 && newXPos <= m_qwtCurves[selectedCurveIndex].xPoints.size())
+            {
+                m_qwtSelectedSample.m_xPoint = newXPos;
+                updateCursors();
+            }
+
+        }
+    }
+}
+
+
+void MainWindow::on_verticalScrollBar_actionTriggered(int action)
+{
+    switch(action)
+    {
+    case QAbstractSlider::SliderSingleStepAdd:
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, 1);
+        break;
+    case QAbstractSlider::SliderSingleStepSub:
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -1);
+        break;
+    case QAbstractSlider::SliderPageStepAdd:
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, 10);
+        break;
+    case QAbstractSlider::SliderPageStepSub:
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -10);
+        break;
+    }
+}
+
+void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
+{
+    switch(action)
+    {
+    case QAbstractSlider::SliderSingleStepAdd:
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, 1);
+        break;
+    case QAbstractSlider::SliderSingleStepSub:
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -1);
+        break;
+    case QAbstractSlider::SliderPageStepAdd:
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, 10);
+        break;
+    case QAbstractSlider::SliderPageStepSub:
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -10);
+        break;
+    }
+}
