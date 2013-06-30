@@ -22,31 +22,21 @@
 #include <QSignalMapper>
 #include <QKeyEvent>
 
-QwtPlotGrid *grid;
 int mi_size;
-int mi_index;
 dubVect md_x;
 dubVect md_y;
 dubVect md_z;
 
-typedef struct
+QColor curveColors[] =
 {
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-}tRGB;
-
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
-tRGB curveColors[] =
-{
-    {0,255,255},
-    {255,0,255},
-    {255,255,0},
-    {255,128,128},
-    {128,255,128},
-    {128,128,255}
+    QColor(0,255,255),
+    QColor(255,0,255),
+    QColor(255,255,0),
+    QColor(255,128,128),
+    QColor(128,255,128),
+    QColor(128,128,255)
 };
+
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -63,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     mi_size = 100000;
-    mi_index = 0;
 
     QPalette palette = this->palette();
     palette.setColor( QPalette::WindowText, Qt::white);
@@ -97,9 +86,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
 
     resetPlot();
-    add1dCurve("Curve1", md_y);
-    add1dCurve("Curve2", md_x);
-    add1dCurve("Curve3", md_z);
+    //add1dCurve("Curve1", md_y);
+    //add1dCurve("Curve2", md_x);
+    //add1dCurve("Curve3", md_z);
+    add2dCurve("Curve1", md_x, md_y);
 
 
     m_tcpMsgReader = new TCPMsgReader(this, 2000);
@@ -330,51 +320,15 @@ void MainWindow::updateCursorMenus()
 
 void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 {
-    m_qwtCurves.push_back(new CurveData(name, yPoints));
-
-    QwtPlotCurve* curve = m_qwtCurves[m_qwtCurves.size()-1]->getCurve();
-
+    int curveIndex = m_qwtCurves.size();
+    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
     int vectSize = yPoints.size();
-    int curveIndex = m_qwtCurves.size()-1;
-    m_qwtCurves[curveIndex]->xPoints.resize(vectSize);
-    m_qwtCurves[curveIndex]->yPoints = yPoints;
 
-    for(int i = 0; i < vectSize; ++i)
-    {
-        m_qwtCurves[curveIndex]->xPoints[i] = (double)i;
-    }
+    m_qwtCurves.push_back(new CurveData(name, yPoints, curveColors[colorLookupIndex]));
 
-    m_qwtCurves[curveIndex]->maxMin.minX = 0;
-    m_qwtCurves[curveIndex]->maxMin.maxX = vectSize-1;
-    m_qwtCurves[curveIndex]->maxMin.minY = m_qwtCurves[curveIndex]->yPoints[0];
-    m_qwtCurves[curveIndex]->maxMin.maxY = m_qwtCurves[curveIndex]->yPoints[0];
-
-    for(int i = 1; i < vectSize; ++i)
-    {
-        if(m_qwtCurves[curveIndex]->maxMin.minY > m_qwtCurves[curveIndex]->yPoints[i])
-        {
-            m_qwtCurves[curveIndex]->maxMin.minY = m_qwtCurves[curveIndex]->yPoints[i];
-        }
-        if(m_qwtCurves[curveIndex]->maxMin.maxY < m_qwtCurves[curveIndex]->yPoints[i])
-        {
-            m_qwtCurves[curveIndex]->maxMin.maxY = m_qwtCurves[curveIndex]->yPoints[i];
-        }
-    }
+    QwtPlotCurve* curve = m_qwtCurves[curveIndex]->getCurve();
 
     m_qwtCurves[curveIndex]->displayed = true;
-
-    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
-    m_qwtCurves[curveIndex]->color = QColor(
-                curveColors[colorLookupIndex].red,
-                curveColors[colorLookupIndex].green,
-                curveColors[colorLookupIndex].blue);
-
-    curve->setPen(m_qwtCurves[curveIndex]->color);
-
-    curve->setSamples( &m_qwtCurves[curveIndex]->xPoints[0],
-                       &m_qwtCurves[curveIndex]->yPoints[0],
-                       vectSize);
-
     curve->attach(m_qwtPlot);
     calcMaxMin();
 
@@ -390,7 +344,25 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 
 void MainWindow::add2dCurve(std::string name, dubVect xPoints, dubVect yPoints)
 {
+    int curveIndex = m_qwtCurves.size();
+    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+    int vectSize = yPoints.size();
 
+    m_qwtCurves.push_back(new CurveData(name, xPoints, yPoints, curveColors[colorLookupIndex]));
+
+    QwtPlotCurve* curve = m_qwtCurves[curveIndex]->getCurve();
+
+    m_qwtCurves[curveIndex]->displayed = true;
+    curve->attach(m_qwtPlot);
+    calcMaxMin();
+
+    if(m_qwtSelectedSample->getCurve() == NULL)
+    {
+        setSelectedCurveIndex(curveIndex);
+    }
+
+    m_qwtPlot->replot();
+    emit updateCursorMenusSignal();
 }
 
 
@@ -853,16 +825,11 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
         break;
     }
 }
-CurveData* blah;
+
 void MainWindow::setSelectedCurveIndex(int index)
 {
     if(index >= 0 && index < m_qwtCurves.size())
     {
-        blah = m_qwtCurves[index];
-
-
-
-
         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
         m_selectedCurveIndex = index;

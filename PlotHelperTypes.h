@@ -19,6 +19,8 @@
 #ifndef PlotHelperTypes_h
 #define PlotHelperTypes_h
 
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
 typedef std::vector<double> dubVect;
 
 typedef struct

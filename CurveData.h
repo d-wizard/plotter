@@ -22,7 +22,7 @@
 class CurveData
 {
 public:
-    CurveData(const std::string& curveName, const dubVect& newYPoints):
+    CurveData(const std::string& curveName, const dubVect& newYPoints, const QColor& curveColor):
         yPoints(newYPoints),
         plotType(E_PLOT_TYPE_1D),
         curve(new QwtPlotCurve(curveName.c_str())),
@@ -30,8 +30,14 @@ public:
         curveAction(NULL),
         mapper(NULL),
         displayed(false),
-        title(curveName){}
-    CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints):
+        title(curveName),
+        color(curveColor)
+        {
+            fill1DxPoints();
+            findMaxMin();
+            initCurve();
+        }
+    CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
         xPoints(newXPoints),
         yPoints(newYPoints),
         plotType(E_PLOT_TYPE_2D),
@@ -40,7 +46,12 @@ public:
         curveAction(NULL),
         mapper(NULL),
         displayed(false),
-        title(curveName){}
+        title(curveName),
+        color(curveColor)
+        {
+            findMaxMin();
+            initCurve();
+        }
     ~CurveData()
     {
         if(curve != NULL)
@@ -68,6 +79,77 @@ public:
     bool displayed;
 
     QwtPlotCurve* getCurve(){return curve;}
+
+    void fill1DxPoints()
+    {
+        xPoints.resize(yPoints.size());
+        for(int i = 0; i < xPoints.size(); ++i)
+        {
+            xPoints[i] = (double)i;
+        }
+    }
+
+    void findMaxMin()
+    {
+        int vectSize = yPoints.size();
+        if(plotType == E_PLOT_TYPE_1D)
+        {
+            maxMin.minX = 0;
+            maxMin.maxX = vectSize-1;
+            maxMin.minY = yPoints[0];
+            maxMin.maxY = yPoints[0];
+
+            for(int i = 1; i < vectSize; ++i)
+            {
+                if(maxMin.minY > yPoints[i])
+                {
+                    maxMin.minY = yPoints[i];
+                }
+                if(maxMin.maxY < yPoints[i])
+                {
+                    maxMin.maxY = yPoints[i];
+                }
+            }
+        }
+        else if(plotType == E_PLOT_TYPE_2D)
+        {
+            maxMin.minX = xPoints[0];
+            maxMin.maxX = xPoints[0];
+            maxMin.minY = yPoints[0];
+            maxMin.maxY = yPoints[0];
+
+            for(int i = 1; i < vectSize; ++i)
+            {
+                if(maxMin.minX > xPoints[i])
+                {
+                    maxMin.minX = xPoints[i];
+                }
+                if(maxMin.maxX < xPoints[i])
+                {
+                    maxMin.maxX = xPoints[i];
+                }
+
+                if(maxMin.minY > yPoints[i])
+                {
+                    maxMin.minY = yPoints[i];
+                }
+                if(maxMin.maxY < yPoints[i])
+                {
+                    maxMin.maxY = yPoints[i];
+                }
+            }
+        }
+    }
+
+    void initCurve()
+    {
+        curve->setPen(color);
+        curve->setSamples( &xPoints[0],
+                           &yPoints[0],
+                           yPoints.size());
+    }
+
+
 private:
     CurveData();
 };
