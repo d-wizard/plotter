@@ -36,6 +36,7 @@ public:
         m_parentCurve(NULL),
         m_style(style),
         isAttached(false),
+        outOfRange(false),
         m_curve(NULL),
         m_symbol(NULL),
         m_xPoint(0),
@@ -56,6 +57,12 @@ public:
     void setCurve(CurveData* curve)
     {
         m_parentCurve = curve;
+        if(isAttached && m_pointIndex >= m_parentCurve->yPoints.size())
+        {
+            outOfRange = true;
+            hideCursor();
+            isAttached = true;
+        }
     }
 
     CurveData* getCurve()
@@ -120,16 +127,24 @@ public:
     void showCursor()
     {
         hideCursor();
+        if(m_pointIndex < m_parentCurve->yPoints.size())
+        {
+            m_symbol = new QwtSymbol( m_style,
+               QBrush( m_parentCurve->color ), QPen( m_parentCurve->color, 2 ), QSize( 8, 8 ) );
 
-        m_symbol = new QwtSymbol( m_style,
-           QBrush( m_parentCurve->color ), QPen( m_parentCurve->color, 2 ), QSize( 8, 8 ) );
+            m_xPoint = m_parentCurve->xPoints[m_pointIndex];
+            m_yPoint = m_parentCurve->yPoints[m_pointIndex];
+            m_curve->setSymbol( m_symbol );
+            m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
 
-        m_xPoint = m_parentCurve->xPoints[m_pointIndex];
-        m_yPoint = m_parentCurve->yPoints[m_pointIndex];
-        m_curve->setSymbol( m_symbol );
-        m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
+            outOfRange = false;
 
-        m_curve->attach(m_plot);
+            m_curve->attach(m_plot);
+        }
+        else
+        {
+            outOfRange = true;
+        }
         isAttached = true;
     }
 
@@ -155,6 +170,7 @@ public:
     int m_pointIndex;
 
     bool isAttached;
+    bool outOfRange;
 
 private:
     QwtPlotCurve* m_curve;
