@@ -57,7 +57,7 @@ public:
     void setCurve(CurveData* curve)
     {
         m_parentCurve = curve;
-        if(isAttached && m_pointIndex >= m_parentCurve->yPoints.size())
+        if(isAttached && m_pointIndex >= m_parentCurve->numPoints)
         {
             outOfRange = true;
             hideCursor();
@@ -81,9 +81,9 @@ public:
             {
                 m_pointIndex = 0;
             }
-            else if(m_pointIndex >= m_parentCurve->xPoints.size())
+            else if(m_pointIndex >= m_parentCurve->numPoints)
             {
-                m_pointIndex = m_parentCurve->xPoints.size()-1;
+                m_pointIndex = m_parentCurve->numPoints-1;
             }
         }
         else
@@ -91,8 +91,8 @@ public:
             double xPos = pos.x();
             double yPos = pos.y();
 
-            double* xPoints = &m_parentCurve->xPoints[0];
-            double* yPoints = &m_parentCurve->yPoints[0];
+            const double* xPoints = m_parentCurve->getXPoints();
+            const double* yPoints = m_parentCurve->getYPoints();
 
             double xDelta = fabs(xPoints[0] - xPos);
             double yDelta = fabs(yPoints[0] - yPos);
@@ -100,7 +100,7 @@ public:
             int minPointIndex = 0;
 
             double curPointDist = 0.0;
-            int numPoints = m_parentCurve->yPoints.size();
+            int numPoints = m_parentCurve->numPoints;
 
             for(int i = 1; i < numPoints; ++i)
             {
@@ -127,13 +127,13 @@ public:
     void showCursor()
     {
         hideCursor();
-        if(m_pointIndex < m_parentCurve->yPoints.size())
+        if(m_pointIndex < m_parentCurve->numPoints)
         {
             m_symbol = new QwtSymbol( m_style,
                QBrush( m_parentCurve->color ), QPen( m_parentCurve->color, 2 ), QSize( 8, 8 ) );
 
-            m_xPoint = m_parentCurve->xPoints[m_pointIndex];
-            m_yPoint = m_parentCurve->yPoints[m_pointIndex];
+            m_xPoint = m_parentCurve->getXPoints()[m_pointIndex];
+            m_yPoint = m_parentCurve->getYPoints()[m_pointIndex];
             m_curve->setSymbol( m_symbol );
             m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
 

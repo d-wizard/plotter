@@ -566,14 +566,14 @@ void MainWindow::displayPointLabels()
     clearPointLabels();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->displayed && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->yPoints.size())
+        if(m_qwtCurves[i]->displayed && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->numPoints)
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
             char tempText[100];
             snprintf(tempText, sizeof(tempText), "(%f,%f)",
-                     (float)m_qwtCurves[i]->xPoints[m_qwtSelectedSample->m_pointIndex],
-                     (float)m_qwtCurves[i]->yPoints[m_qwtSelectedSample->m_pointIndex]);
+                     (float)m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex],
+                     (float)m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex]);
             m_qwtCurves[i]->pointLabel->setText(tempText);
 
             QPalette palette = this->palette();
@@ -799,11 +799,11 @@ void MainWindow::modifyCursorPos(int modDelta)
 
             while(newXPos < 0)
             {
-                newXPos += m_qwtSelectedSample->getCurve()->xPoints.size();
+                newXPos += m_qwtSelectedSample->getCurve()->numPoints;
             }
-            while(newXPos >= m_qwtSelectedSample->getCurve()->xPoints.size())
+            while(newXPos >= m_qwtSelectedSample->getCurve()->numPoints)
             {
-                newXPos -= m_qwtSelectedSample->getCurve()->xPoints.size();
+                newXPos -= m_qwtSelectedSample->getCurve()->numPoints;
             }
 
             m_qwtSelectedSample->m_pointIndex = newXPos;

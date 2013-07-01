@@ -28,6 +28,7 @@ class CurveData
 public:
     CurveData(const std::string& curveName, const dubVect& newYPoints, const QColor& curveColor):
         yPoints(newYPoints),
+        numPoints(0),
         plotType(E_PLOT_TYPE_1D),
         curve(new QwtPlotCurve(curveName.c_str())),
         pointLabel(NULL),
@@ -37,6 +38,7 @@ public:
         title(curveName),
         color(curveColor)
         {
+            numPoints = yPoints.size();
             fill1DxPoints();
             findMaxMin();
             initCurve();
@@ -44,6 +46,7 @@ public:
     CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
         xPoints(newXPoints),
         yPoints(newYPoints),
+        numPoints(0),
         plotType(E_PLOT_TYPE_2D),
         curve(new QwtPlotCurve(curveName.c_str())),
         pointLabel(NULL),
@@ -53,6 +56,16 @@ public:
         title(curveName),
         color(curveColor)
         {
+            if(xPoints.size() > yPoints.size())
+            {
+                xPoints.resize(yPoints.size());
+            }
+            else if(xPoints.size() < yPoints.size())
+            {
+                yPoints.resize(xPoints.size());
+            }
+
+            numPoints = yPoints.size();
             findMaxMin();
             initCurve();
         }
@@ -66,11 +79,9 @@ public:
     }
 
     QwtPlotCurve* curve;
-    dubVect xPoints;
-    dubVect yPoints;
     maxMinXY maxMin;
     ePlotType plotType;
-
+    unsigned int numPoints;
     std::string title;
 
     QColor color;
@@ -83,6 +94,8 @@ public:
     bool displayed;
 
     QwtPlotCurve* getCurve(){return curve;}
+    const double* getXPoints(){return &xPoints[0];}
+    const double* getYPoints(){return &yPoints[0];}
 
     void fill1DxPoints()
     {
@@ -156,6 +169,9 @@ public:
 
 private:
     CurveData();
+
+    dubVect xPoints;
+    dubVect yPoints;
 };
 
 #endif
