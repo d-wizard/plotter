@@ -54,6 +54,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_selectedCurveIndex(0)
 {
     ui->setupUi(this);
+
+    srand((unsigned)time(0));
+
     mi_size = 1000;
 
     QPalette palette = this->palette();
@@ -563,7 +566,7 @@ void MainWindow::displayPointLabels()
     clearPointLabels();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->displayed)
+        if(m_qwtCurves[i]->displayed && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->yPoints.size())
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
