@@ -19,6 +19,10 @@
 #ifndef CurveData_h
 #define CurveData_h
 
+#include <qwt_plot.h>
+#include <qwt_plot_curve.h>
+#include "PlotHelperTypes.h"
+
 class CurveData
 {
 public:

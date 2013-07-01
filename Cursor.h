@@ -19,11 +19,14 @@
 #ifndef Cursor_h
 #define Cursor_h
 
+#include <math.h>
+
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_symbol.h>
 
 #include "CurveData.h"
+#include "PlotHelperTypes.h"
 
 class Cursor
 {
@@ -62,16 +65,53 @@ public:
 
     void showCursor(QPointF pos)
     {
-        // 1d assumed
-        m_pointIndex = (int)(pos.x() + 0.5);
+        if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
+        {
+            // 1d assumed
+            m_pointIndex = (int)(pos.x() + 0.5);
 
-        if(m_pointIndex < 0)
-        {
-            m_pointIndex = 0;
+            if(m_pointIndex < 0)
+            {
+                m_pointIndex = 0;
+            }
+            else if(m_pointIndex >= m_parentCurve->xPoints.size())
+            {
+                m_pointIndex = m_parentCurve->xPoints.size()-1;
+            }
         }
-        else if(m_pointIndex >= m_parentCurve->xPoints.size())
+        else
         {
-            m_pointIndex = m_parentCurve->xPoints.size()-1;
+            double xPos = pos.x();
+            double yPos = pos.y();
+
+            double* xPoints = &m_parentCurve->xPoints[0];
+            double* yPoints = &m_parentCurve->yPoints[0];
+
+            double xDelta = fabs(xPoints[0] - xPos);
+            double yDelta = fabs(yPoints[0] - yPos);
+            double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+            int minPointIndex = 0;
+
+            double curPointDist = 0.0;
+            int numPoints = m_parentCurve->yPoints.size();
+
+            for(int i = 1; i < numPoints; ++i)
+            {
+                xDelta = fabs(xPoints[i] - xPos);
+                yDelta = fabs(yPoints[i] - yPos);
+                if(xDelta < minDist && yDelta < minDist)
+                {
+                    curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+                    if(curPointDist < minDist)
+                    {
+                        minDist = curPointDist;
+                        minPointIndex = i;
+                    }
+                }
+            }
+
+            m_pointIndex = minPointIndex;
+
         }
 
         showCursor();
