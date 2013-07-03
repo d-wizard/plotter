@@ -680,6 +680,36 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             return QObject::eventFilter(obj, event);
         }
     }
+    else if(event->type() == QEvent::Wheel)
+    {
+        QKeyEvent *KeyEvent = (QKeyEvent*)event;
+        if(KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+        {
+            QWheelEvent *wheelEvent = static_cast<QWheelEvent *> (event);
+
+            int i = wheelEvent->delta();
+            QSize cavasSize = m_qwtPlot->canvas()->frameSize();
+            QPoint mousePos = m_qwtPlot->canvas()->mapFromGlobal(m_qwtPlot->cursor().pos());
+
+            const int OFFSET = 6;
+
+            // Map position relative to the curve's canvas.
+            // Y axis needs to be inverted so the 0 point is at the bottom.
+            QPointF relMousePos(
+                (double)(mousePos.x() - OFFSET) / (double)(cavasSize.width() - 2*OFFSET),
+                1.0 - (double)(mousePos.y() - OFFSET) / (double)(cavasSize.height() - 2*OFFSET));
+
+            if(wheelEvent->delta() > 0)
+            {
+                m_plotZoom->Zoom(0.9, relMousePos);
+            }
+            else if(wheelEvent->delta() < 0)
+            {
+                m_plotZoom->Zoom(1.1, relMousePos);
+            }
+        }
+
+    }
     else
     {
         // standard event processing

@@ -23,6 +23,8 @@
 #include "PlotHelperTypes.h"
 #include <qwt_plot.h>
 
+#include <math.h>
+
 class PlotZoom
 {
 public:
@@ -59,9 +61,9 @@ public:
 
    void SetPlotDimensions(maxMinXY plotDimensions)
    {
-        m_plotDimensions = plotDimensions;
-        m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
-        m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
+        m_plotDimensions = m_plotDimensions = plotDimensions;
+        m_zoomWidth = m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
+        m_zoomHeight = m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
    }
    
    void SetZoom(maxMinXY zoomDimensions)
@@ -202,6 +204,80 @@ public:
             newPos = scroll->maximum();
         }
     }
+
+    void Zoom(double zoomFactor)
+    {
+        double zoomFactorDiff1d = sqrt(zoomFactor)-1;
+        double diffX = zoomFactorDiff1d * m_zoomWidth;
+        double diffY = zoomFactorDiff1d * m_zoomHeight;
+
+        maxMinXY temp = m_zoomDimensions;
+        temp.minX -= diffX;
+        temp.minY -= diffY;
+        temp.maxX += diffX;
+        temp.maxY += diffY;
+        SetZoom(temp);
+    }
+    void Zoom(double zoomFactor, QPointF relativeMousePos)
+    {
+        double zoomFactor1d = sqrt(zoomFactor);
+        double halfNewWidth = m_zoomWidth * zoomFactor1d / 2.0;
+        double halfNewHeight = m_zoomHeight * zoomFactor1d / 2.0;
+
+        double newXMid = m_zoomWidth * relativeMousePos.x() + m_zoomDimensions.minX;
+        double newYMid = m_zoomHeight * relativeMousePos.y() + m_zoomDimensions.minY;
+
+        maxMinXY zoom = m_zoomDimensions;
+        zoom.minX = newXMid - halfNewWidth;
+        zoom.minY = newYMid - halfNewHeight;
+        zoom.maxX = newXMid + halfNewWidth;
+        zoom.maxY = newYMid + halfNewHeight;
+
+        // If out of bounds, set within bounds and try to keep the same width/height
+        if(zoom.minX < m_plotDimensions.minX)
+        {
+            double diff = m_plotDimensions.minX - zoom.minX;
+            zoom.minX = m_plotDimensions.minX;
+            zoom.maxX += diff;
+            if(zoom.maxX > m_plotDimensions.maxX)
+            {
+                zoom.maxX = m_plotDimensions.maxX;
+            }
+        }
+        if(zoom.maxX > m_plotDimensions.maxX)
+        {
+            double diff = zoom.maxX - m_plotDimensions.maxX;
+            zoom.maxX = m_plotDimensions.maxX;
+            zoom.minX -= diff;
+            if(zoom.minX < m_plotDimensions.minX)
+            {
+                zoom.minX = m_plotDimensions.minX;
+            }
+        }
+        if(zoom.minY < m_plotDimensions.minY)
+        {
+            double diff = m_plotDimensions.minY - zoom.minY;
+            zoom.minY = m_plotDimensions.minY;
+            zoom.maxY += diff;
+            if(zoom.maxY > m_plotDimensions.maxY)
+            {
+                zoom.maxY = m_plotDimensions.maxY;
+            }
+        }
+        if(zoom.maxY > m_plotDimensions.maxY)
+        {
+            double diff = zoom.maxY - m_plotDimensions.maxY;
+            zoom.maxY = m_plotDimensions.maxY;
+            zoom.minY -= diff;
+            if(zoom.minY < m_plotDimensions.minY)
+            {
+                zoom.minY = m_plotDimensions.minY;
+            }
+        }
+
+        SetZoom(zoom);
+    }
+
 
 private:
    QwtPlot* m_qwtPlot;
