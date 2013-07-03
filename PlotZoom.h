@@ -205,33 +205,27 @@ public:
         }
     }
 
-    void Zoom(double zoomFactor)
-    {
-        double zoomFactorDiff1d = sqrt(zoomFactor)-1;
-        double diffX = zoomFactorDiff1d * m_zoomWidth;
-        double diffY = zoomFactorDiff1d * m_zoomHeight;
 
-        maxMinXY temp = m_zoomDimensions;
-        temp.minX -= diffX;
-        temp.minY -= diffY;
-        temp.maxX += diffX;
-        temp.maxY += diffY;
-        SetZoom(temp);
-    }
+    // relativeMousePos is the % (0 to 1) of where the mouse is when zoom is requested
+    // Keep the relative point point at the same poisition in the canvas as before the zoom.
     void Zoom(double zoomFactor, QPointF relativeMousePos)
     {
-        double zoomFactor1d = sqrt(zoomFactor);
-        double halfNewWidth = m_zoomWidth * zoomFactor1d / 2.0;
-        double halfNewHeight = m_zoomHeight * zoomFactor1d / 2.0;
+        double newXPoint = m_zoomWidth * relativeMousePos.x() + m_zoomDimensions.minX;
+        double newYPoint = m_zoomHeight * relativeMousePos.y() + m_zoomDimensions.minY;
 
-        double newXMid = m_zoomWidth * relativeMousePos.x() + m_zoomDimensions.minX;
-        double newYMid = m_zoomHeight * relativeMousePos.y() + m_zoomDimensions.minY;
+        double newWidth = m_zoomWidth * zoomFactor;
+        double newHeight = m_zoomHeight * zoomFactor;
+
+        double leftOfPoint = newWidth * relativeMousePos.x();
+        double rightOfPoint = newWidth - leftOfPoint;
+        double downOfPoint = newHeight * relativeMousePos.y();
+        double upOfPoint = newHeight - downOfPoint;
 
         maxMinXY zoom = m_zoomDimensions;
-        zoom.minX = newXMid - halfNewWidth;
-        zoom.minY = newYMid - halfNewHeight;
-        zoom.maxX = newXMid + halfNewWidth;
-        zoom.maxY = newYMid + halfNewHeight;
+        zoom.minX = newXPoint - leftOfPoint;
+        zoom.minY = newYPoint - downOfPoint;
+        zoom.maxX = newXPoint + rightOfPoint;
+        zoom.maxY = newYPoint + upOfPoint;
 
         // If out of bounds, set within bounds and try to keep the same width/height
         if(zoom.minX < m_plotDimensions.minX)
