@@ -21,7 +21,6 @@
 
 #include <QMainWindow>
 #include <string>
-#include <vector>
 #include <math.h>
 
 #include <qwt_plot.h>
@@ -35,6 +34,7 @@
 
 #include <QLabel>
 #include <QSignalMapper>
+#include <QList>
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -81,7 +81,7 @@ private:
 
 
     QwtPlot* m_qwtPlot;
-    std::vector<CurveData*> m_qwtCurves;
+    QList<CurveData*> m_qwtCurves;
     Cursor* m_qwtSelectedSample;
     Cursor* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
@@ -97,7 +97,7 @@ private:
     TCPMsgReader* m_tcpMsgReader;
     int m_tcpPort;
 
-    std::vector<tMenuActionMapper> m_selectedCursorActions;
+    QList<tMenuActionMapper> m_selectedCursorActions;
 
     bool eventFilter(QObject *obj, QEvent *event);
 
