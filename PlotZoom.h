@@ -40,8 +40,8 @@ public:
        m_xAxisB(0),
        m_yAxisM(0),
        m_yAxisB(0),
-       m_scrollBarResXAxis(1000),
-       m_scrollBarResYAxis(1000),
+       m_scrollBarResXAxis(10000),
+       m_scrollBarResYAxis(10000),
        m_curXScrollPos(-1),
        m_curYScrollPos(-1)
    {
