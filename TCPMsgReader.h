@@ -23,6 +23,8 @@
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 
+#include <map>
+
 class plotGuiMain;
 
 class TCPMsgReader
@@ -32,7 +34,8 @@ public:
    ~TCPMsgReader();
 
    plotGuiMain* m_parent;
-   GetEntirePlotMsg m_plotMsgGetter;
+
+   std::map<struct sockaddr_storage*, GetEntirePlotMsg> m_msgReaderMap;
    
 private:
    dServerSocket m_servSock;

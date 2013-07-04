@@ -35,18 +35,21 @@ TCPMsgReader::~TCPMsgReader()
    dServerSocket_killAll(&m_servSock);
 }
 
-char* packetAddr = NULL;
-
-// probably need to make a map of clients, in case multiple clients are talking at the same time
-// do not want packets to be inter mixed.
 void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)
 {
     TCPMsgReader* _this = (TCPMsgReader*)inPtr;
     char* plotMsg = NULL;
     unsigned int plotMsgSize = 0;
-    _this->m_plotMsgGetter.ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
+
+    if(_this->m_msgReaderMap.find(client) == _this->m_msgReaderMap.end())
+    {
+       _this->m_msgReaderMap[client] = GetEntirePlotMsg();
+    }
+
+    _this->m_msgReaderMap[client].ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
     if(plotMsg != NULL)
     {
         _this->m_parent->readPlotMsg(plotMsg, plotMsgSize);
+        _this->m_msgReaderMap.erase(_this->m_msgReaderMap.find(client));
     }
 }
