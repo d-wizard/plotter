@@ -92,10 +92,9 @@ private:
     int m_selectedCurveIndex;
 
     PlotZoom* m_plotZoom;
-    maxMinXY maxMin;
+    maxMinXY m_maxMin;
 
-    //TCPMsgReader* m_tcpMsgReader;
-    int m_tcpPort;
+    QIcon m_checkedIcon;
 
     QList<tMenuActionMapper> m_selectedCursorActions;
 

@@ -44,6 +44,7 @@ QColor curveColors[] =
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_checkedIcon("CheckBox.png"),
     m_qwtPlot(NULL),
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
@@ -101,17 +102,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(ui->actionDelta_Cursor, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
 
-    ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
+    ui->actionSelect_Point->setIcon(m_checkedIcon);
 
     resetPlot();
-    //add1dCurve("Curve1", md_y);
-    //add1dCurve("Curve2", md_x);
-    //add1dCurve("Curve3", md_z);
+    add1dCurve("Curve1", md_y);
+    add1dCurve("Curve2", md_x);
+    add1dCurve("Curve3", md_z);
     //add2dCurve("Curve1", md_x, md_y);
     //add2dCurve("Curve2", md_x1, md_y1);
 
-
-    //m_tcpMsgReader = new TCPMsgReader(this, 2000);
 
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
@@ -123,7 +122,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    //delete m_tcpMsgReader;
     delete ui;
 
     if(m_qwtPlot != NULL)
@@ -229,7 +227,6 @@ void MainWindow::resetPlot()
 
 void MainWindow::updateCursorMenus()
 {
-    QIcon checkIcon("CheckBox.png");
     int numDisplayedCurves = 0;
 
 
@@ -295,7 +292,7 @@ void MainWindow::updateCursorMenus()
     {
         if(m_qwtCurves[i]->displayed)
         {
-            m_qwtCurves[i]->curveAction = new QAction(checkIcon, m_qwtCurves[i]->title.c_str(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->title.c_str(), this);
         }
         else
         {
@@ -315,7 +312,7 @@ void MainWindow::updateCursorMenus()
             tMenuActionMapper actionMapper;
             if(i == m_selectedCurveIndex)
             {
-                actionMapper.action = new QAction(checkIcon, m_qwtCurves[i]->title.c_str(), this);
+                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->title.c_str(), this);
             }
             else
             {
@@ -394,7 +391,7 @@ void MainWindow::toggleLegend()
 void MainWindow::cursorMode()
 {
     m_selectMode = E_CURSOR;
-    ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
+    ui->actionSelect_Point->setIcon(m_checkedIcon);
     ui->actionZoom->setIcon(QIcon());
     ui->actionDelta_Cursor->setIcon(QIcon());
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
@@ -407,7 +404,7 @@ void MainWindow::cursorMode()
 void MainWindow::deltaCursorMode()
 {
     m_selectMode = E_DELTA_CURSOR;
-    ui->actionDelta_Cursor->setIcon(QIcon("CheckBox.png"));
+    ui->actionDelta_Cursor->setIcon(m_checkedIcon);
     ui->actionZoom->setIcon(QIcon());
     ui->actionSelect_Point->setIcon(QIcon());
 
@@ -424,7 +421,7 @@ void MainWindow::deltaCursorMode()
 void MainWindow::zoomMode()
 {
     m_selectMode = E_ZOOM;
-    ui->actionZoom->setIcon(QIcon("CheckBox.png"));
+    ui->actionZoom->setIcon(m_checkedIcon);
     ui->actionSelect_Point->setIcon(QIcon());
     ui->actionDelta_Cursor->setIcon(QIcon());
     //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
@@ -434,7 +431,7 @@ void MainWindow::zoomMode()
 void MainWindow::resetZoom()
 {
     calcMaxMin();
-    m_plotZoom->SetZoom(maxMin);
+    m_plotZoom->SetZoom(m_maxMin);
 }
 
 void MainWindow::visibleCursorMenuSelect(int index)
@@ -473,26 +470,26 @@ void MainWindow::calcMaxMin()
     }
     if(i < m_qwtCurves.size())
     {
-        maxMin = m_qwtCurves[i]->maxMin;
+        m_maxMin = m_qwtCurves[i]->maxMin;
         while(i < m_qwtCurves.size())
         {
             if(m_qwtCurves[i]->displayed)
             {
-                if(maxMin.minX > m_qwtCurves[i]->maxMin.minX)
+                if(m_maxMin.minX > m_qwtCurves[i]->maxMin.minX)
                 {
-                    maxMin.minX = m_qwtCurves[i]->maxMin.minX;
+                    m_maxMin.minX = m_qwtCurves[i]->maxMin.minX;
                 }
-                if(maxMin.minY > m_qwtCurves[i]->maxMin.minY)
+                if(m_maxMin.minY > m_qwtCurves[i]->maxMin.minY)
                 {
-                    maxMin.minY = m_qwtCurves[i]->maxMin.minY;
+                    m_maxMin.minY = m_qwtCurves[i]->maxMin.minY;
                 }
-                if(maxMin.maxX < m_qwtCurves[i]->maxMin.maxX)
+                if(m_maxMin.maxX < m_qwtCurves[i]->maxMin.maxX)
                 {
-                    maxMin.maxX = m_qwtCurves[i]->maxMin.maxX;
+                    m_maxMin.maxX = m_qwtCurves[i]->maxMin.maxX;
                 }
-                if(maxMin.maxY < m_qwtCurves[i]->maxMin.maxY)
+                if(m_maxMin.maxY < m_qwtCurves[i]->maxMin.maxY)
                 {
-                    maxMin.maxY = m_qwtCurves[i]->maxMin.maxY;
+                    m_maxMin.maxY = m_qwtCurves[i]->maxMin.maxY;
                 }
             }
             ++i;
@@ -503,7 +500,7 @@ void MainWindow::calcMaxMin()
         // TODO: Should do something when there are no curves displayed
     }
 
-    m_plotZoom->SetPlotDimensions(maxMin);
+    m_plotZoom->SetPlotDimensions(m_maxMin);
 
 }
 
