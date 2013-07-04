@@ -21,8 +21,12 @@
 
 #include <string>
 #include <vector>
+#include <stdio.h>
+#include <string.h>
 
 #define MAX_PLOT_VALUE_SIZE (8)
+
+#define MSG_SIZE_PARAM_NUM_BYTES (4)
 
 typedef enum
 {
@@ -46,7 +50,63 @@ typedef enum
    E_FLOAT_64
 }ePlotDataTypes;
 
-bool getPlotAction(char* inByte, ePlotAction& action);
+
+class GetEntirePlotMsg
+{
+public:
+    GetEntirePlotMsg():
+        m_msgSize(0),
+        m_numMsgBytesRead(0),
+        m_bytesNeededForMsgSize(MSG_SIZE_PARAM_NUM_BYTES){}
+
+    void ReadPlotPacket(char* packet, unsigned int packetSize, char** retValMsgPtr, unsigned int* retValMsgSize)
+    {
+        unsigned int numBytesInPacketRemaining = packetSize;
+        *retValMsgPtr = NULL;
+        *retValMsgSize = 0;
+        if(m_bytesNeededForMsgSize > 0)
+        {
+            unsigned int bytesToCopyToMsgSize =
+               std::min(numBytesInPacketRemaining, m_bytesNeededForMsgSize);
+            memcpy( ((char*)&m_msgSize)+(MSG_SIZE_PARAM_NUM_BYTES - m_bytesNeededForMsgSize),
+                    packet,
+                    bytesToCopyToMsgSize);
+
+            numBytesInPacketRemaining -= bytesToCopyToMsgSize;
+            m_bytesNeededForMsgSize -= bytesToCopyToMsgSize;
+            if(m_bytesNeededForMsgSize == 0)
+            {
+                m_msgSize -= MSG_SIZE_PARAM_NUM_BYTES;
+                m_msg.resize(m_msgSize);
+                m_numMsgBytesRead = 0;
+            }
+        }
+        if(numBytesInPacketRemaining)
+        {
+            unsigned int bytesToCopy =
+               std::min(numBytesInPacketRemaining, (m_msgSize-m_numMsgBytesRead));
+            memcpy( &m_msg[m_numMsgBytesRead],
+                    packet+(packetSize-numBytesInPacketRemaining),
+                    bytesToCopy);
+
+            m_numMsgBytesRead += bytesToCopy;
+            if(m_numMsgBytesRead >= m_msgSize)
+            {
+                *retValMsgPtr = &m_msg[0];
+                *retValMsgSize = m_msgSize;
+                m_bytesNeededForMsgSize = MSG_SIZE_PARAM_NUM_BYTES;
+            }
+        }
+    }
+
+private:
+    unsigned int m_msgSize;
+    unsigned int m_bytesNeededForMsgSize;
+    unsigned int m_numMsgBytesRead;
+    std::vector<char> m_msg;
+};
+
+
 
 class UnpackPlotMsg
 {
@@ -54,7 +114,7 @@ public:
    UnpackPlotMsg();
    ~UnpackPlotMsg();
 
-   ePlotAction Unpack(char* inBytes, unsigned int numBytes);
+   ePlotAction Unpack(const char *inBytes, unsigned int numBytes);
    void reset();
 
 

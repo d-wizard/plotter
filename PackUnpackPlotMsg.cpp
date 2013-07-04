@@ -68,7 +68,7 @@ void UnpackPlotMsg::reset()
    m_yAxisValues.clear();
 }
 
-ePlotAction UnpackPlotMsg::Unpack(char* inBytes, unsigned int numBytes)
+ePlotAction UnpackPlotMsg::Unpack(const char* inBytes, unsigned int numBytes)
 {
    ePlotAction retVal = E_INVALID_PLOT_ACTION;
    for(unsigned int i = 0; i < numBytes; ++i)
@@ -339,13 +339,18 @@ inline void copyAndIncIndex(char* baseWritePtr, unsigned int* index, const void*
 
 void packResetPlotMsg(std::vector<char>& msg)
 {
-   msg.resize(sizeof(ePlotAction));
+   unsigned int totalMsgSize = MSG_SIZE_PARAM_NUM_BYTES + sizeof(ePlotAction);
+
+   msg.resize(totalMsgSize);
    ePlotAction temp = E_RESET_PLOT;
-   memcpy(&msg[0], &temp, sizeof(temp));
+
+   unsigned int curCopyIndex = 0;
+   copyAndIncIndex(&msg[0], &curCopyIndex, &totalMsgSize, MSG_SIZE_PARAM_NUM_BYTES);
+   copyAndIncIndex(&msg[0], &curCopyIndex, &temp, sizeof(temp));
 }
 void pack1dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSamp, ePlotDataTypes yAxisType, void* yAxisSamples)
 {
-   unsigned int totalMsgSize = 
+   unsigned int totalMsgSize = MSG_SIZE_PARAM_NUM_BYTES +
       sizeof(ePlotAction) + name.size() + 1 + sizeof(numSamp) + 
       sizeof(yAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
 
@@ -353,6 +358,7 @@ void pack1dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSam
    ePlotAction temp = E_PLOT_1D;
 
    unsigned int curCopyIndex = 0;
+   copyAndIncIndex(&msg[0], &curCopyIndex, &totalMsgSize, MSG_SIZE_PARAM_NUM_BYTES);
    copyAndIncIndex(&msg[0], &curCopyIndex, &temp, sizeof(temp));
    copyAndIncIndex(&msg[0], &curCopyIndex, name.c_str(), name.size()+1);
    copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));
@@ -362,7 +368,7 @@ void pack1dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSam
 }
 void pack2dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSamp, ePlotDataTypes xAxisType, ePlotDataTypes yAxisType, void* xAxisSamples, void* yAxisSamples)
 {
-   unsigned int totalMsgSize = 
+   unsigned int totalMsgSize = MSG_SIZE_PARAM_NUM_BYTES +
       sizeof(ePlotAction) + name.size() + 1 + sizeof(numSamp) + 
       sizeof(xAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]) +
       sizeof(yAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
@@ -371,6 +377,7 @@ void pack2dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSam
    ePlotAction temp = E_PLOT_2D;
 
    unsigned int curCopyIndex = 0;
+   copyAndIncIndex(&msg[0], &curCopyIndex, &totalMsgSize, MSG_SIZE_PARAM_NUM_BYTES);
    copyAndIncIndex(&msg[0], &curCopyIndex, &temp, sizeof(temp));
    copyAndIncIndex(&msg[0], &curCopyIndex, name.c_str(), name.size()+1);
    copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));

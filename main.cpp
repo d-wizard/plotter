@@ -16,35 +16,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef TCPMsgReader_h
-#define TCPMsgReader_h
+#include <QtGui/QApplication>
+#include "plotguimain.h"
 
-#include "TCPThreads.h"
-#include "DataTypes.h"
-#include "PackUnpackPlotMsg.h"
-
-class plotGuiMain;
-
-class TCPMsgReader
+int main(int argc, char *argv[])
 {
-public:
-   TCPMsgReader(plotGuiMain* parent, int port);
-   ~TCPMsgReader();
+    QApplication a(argc, argv);
 
-   plotGuiMain* m_parent;
-   GetEntirePlotMsg m_plotMsgGetter;
-   
-private:
-   dServerSocket m_servSock;
-
-
-   static void RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size);
-   
-   
-   TCPMsgReader();
-   
-};
-
-
-#endif
-
+    plotGuiMain pgm;
+    pgm.hide();
+    
+    return a.exec();
+}

@@ -94,7 +94,7 @@ private:
     PlotZoom* m_plotZoom;
     maxMinXY maxMin;
 
-    TCPMsgReader* m_tcpMsgReader;
+    //TCPMsgReader* m_tcpMsgReader;
     int m_tcpPort;
 
     QList<tMenuActionMapper> m_selectedCursorActions;

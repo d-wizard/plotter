@@ -104,14 +104,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionSelect_Point->setIcon(QIcon("CheckBox.png"));
 
     resetPlot();
-    add1dCurve("Curve1", md_y);
-    add1dCurve("Curve2", md_x);
-    add1dCurve("Curve3", md_z);
+    //add1dCurve("Curve1", md_y);
+    //add1dCurve("Curve2", md_x);
+    //add1dCurve("Curve3", md_z);
     //add2dCurve("Curve1", md_x, md_y);
     //add2dCurve("Curve2", md_x1, md_y1);
 
 
-    m_tcpMsgReader = new TCPMsgReader(this, 2000);
+    //m_tcpMsgReader = new TCPMsgReader(this, 2000);
 
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete m_tcpMsgReader;
+    //delete m_tcpMsgReader;
     delete ui;
 
     if(m_qwtPlot != NULL)

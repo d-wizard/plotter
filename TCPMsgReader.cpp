@@ -17,10 +17,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "TCPMsgReader.h"
-#include "mainwindow.h"
+#include "plotGuiMain.h"
 
-
-TCPMsgReader::TCPMsgReader(MainWindow* parent, int port):
+TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
     m_parent(parent)
 {
    memset(&m_servSock, 0, sizeof(m_servSock));
@@ -38,20 +37,16 @@ TCPMsgReader::~TCPMsgReader()
 
 char* packetAddr = NULL;
 
+// probably need to make a map of clients, in case multiple clients are talking at the same time
+// do not want packets to be inter mixed.
 void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)
 {
     TCPMsgReader* _this = (TCPMsgReader*)inPtr;
-    switch(_this->m_plotMsgUnpacker.Unpack(packet, size))
+    char* plotMsg = NULL;
+    unsigned int plotMsgSize = 0;
+    _this->m_plotMsgGetter.ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
+    if(plotMsg != NULL)
     {
-        case E_RESET_PLOT:
-            _this->m_parent->resetPlot();
-            _this->m_plotMsgUnpacker.reset();
-        break;
-        case E_PLOT_1D:
-            _this->m_parent->add1dCurve(_this->m_plotMsgUnpacker.m_plotName, _this->m_plotMsgUnpacker.m_yAxisValues);
-            _this->m_plotMsgUnpacker.reset();
-        break;
-        case E_PLOT_2D:
-        break;
+        _this->m_parent->readPlotMsg(plotMsg, plotMsgSize);
     }
 }

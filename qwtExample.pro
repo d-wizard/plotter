@@ -17,7 +17,8 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     TCPThreads.cpp \
     TCPMsgReader.cpp \
-    PackUnpackPlotMsg.cpp
+    PackUnpackPlotMsg.cpp \
+    plotguimain.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -27,9 +28,11 @@ HEADERS  += mainwindow.h \
     PlotZoom.h \
     PlotHelperTypes.h \
     Cursor.h \
-    CurveData.h
+    CurveData.h \
+    plotguimain.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    plotguimain.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR
