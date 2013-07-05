@@ -43,13 +43,14 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
 
     if(_this->m_msgReaderMap.find(client) == _this->m_msgReaderMap.end())
     {
-       _this->m_msgReaderMap[client] = GetEntirePlotMsg();
+       _this->m_msgReaderMap[client] = new GetEntirePlotMsg();
     }
 
-    _this->m_msgReaderMap[client].ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
+    _this->m_msgReaderMap[client]->ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
     if(plotMsg != NULL)
     {
         _this->m_parent->readPlotMsg(plotMsg, plotMsgSize);
+        delete _this->m_msgReaderMap.find(client)->second;
         _this->m_msgReaderMap.erase(_this->m_msgReaderMap.find(client));
     }
 }

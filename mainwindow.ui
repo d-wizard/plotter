@@ -454,6 +454,8 @@
     <addaction name="actionDelta_Cursor"/>
     <addaction name="separator"/>
     <addaction name="actionReset_Zoom"/>
+    <addaction name="separator"/>
+    <addaction name="actionNormalize_Curves"/>
    </widget>
    <widget class="QMenu" name="menuCurves">
     <property name="title">
@@ -488,6 +490,11 @@
   <action name="actionDelta_Cursor">
    <property name="text">
     <string>Delta Cursor</string>
+   </property>
+  </action>
+  <action name="actionNormalize_Curves">
+   <property name="text">
+    <string>Normalize Curves</string>
    </property>
   </action>
  </widget>

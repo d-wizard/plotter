@@ -52,7 +52,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_selectMode(E_CURSOR),
     m_qwtGrid(NULL),
     m_plotZoom(NULL),
-    m_selectedCurveIndex(0)
+    m_selectedCurveIndex(0),
+    m_normalizeCurves(false)
 {
     ui->setupUi(this);
 
@@ -72,18 +73,17 @@ MainWindow::MainWindow(QWidget *parent) :
     // init test samples.
     md_x.resize(mi_size);
     md_y.resize(mi_size);
-    md_x1.resize(mi_size);
-    md_y1.resize(mi_size);
-    md_z.resize(mi_size/2);
+    md_z.resize(mi_size);
+    md_x1.resize(mi_size/2);
+    md_y1.resize(mi_size/2);
+    //md_z.resize(mi_size/2);
 
 
     for(int i_index = 0; i_index < mi_size; ++i_index)
     {
-        md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        //md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+        md_x[i_index] = 4.0 *cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
+        md_y[i_index] = 2.0 * sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+        md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
     }
 
     for(int i_index = 0; i_index < mi_size/2; ++i_index)
@@ -92,7 +92,9 @@ MainWindow::MainWindow(QWidget *parent) :
         //md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
         //md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
         //md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+        md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
+        md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
+        //md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
     }
 
 
@@ -101,13 +103,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSelect_Point, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
     connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(ui->actionDelta_Cursor, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
+    connect(ui->actionNormalize_Curves, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
 
     ui->actionSelect_Point->setIcon(m_checkedIcon);
 
     resetPlot();
-    add1dCurve("Curve1", md_y);
-    add1dCurve("Curve2", md_x);
-    add1dCurve("Curve3", md_z);
+    //add1dCurve("Curve1", md_y);
+    //add1dCurve("Curve2", md_x);
+    //add1dCurve("Curve3", md_z);
     //add2dCurve("Curve1", md_x, md_y);
     //add2dCurve("Curve2", md_x1, md_y1);
 
@@ -434,6 +437,21 @@ void MainWindow::resetZoom()
     m_plotZoom->SetZoom(m_maxMin);
 }
 
+void MainWindow::normalizeCurves()
+{
+    m_normalizeCurves = !m_normalizeCurves;
+    if(m_normalizeCurves)
+    {
+        ui->actionNormalize_Curves->setIcon(m_checkedIcon);
+    }
+    else
+    {
+        ui->actionNormalize_Curves->setIcon(QIcon());
+    }
+    replotNormalized();
+}
+
+
 void MainWindow::visibleCursorMenuSelect(int index)
 {
     m_qwtCurves[index]->displayed = !m_qwtCurves[index]->displayed;
@@ -470,26 +488,27 @@ void MainWindow::calcMaxMin()
     }
     if(i < m_qwtCurves.size())
     {
-        m_maxMin = m_qwtCurves[i]->maxMin;
+        m_maxMin = m_qwtCurves[i]->GetMaxMinXYOfCurve();
         while(i < m_qwtCurves.size())
         {
             if(m_qwtCurves[i]->displayed)
             {
-                if(m_maxMin.minX > m_qwtCurves[i]->maxMin.minX)
+                maxMinXY curveMaxMinXY = m_qwtCurves[i]->GetMaxMinXYOfCurve();
+                if(m_maxMin.minX > curveMaxMinXY.minX)
                 {
-                    m_maxMin.minX = m_qwtCurves[i]->maxMin.minX;
+                    m_maxMin.minX = curveMaxMinXY.minX;
                 }
-                if(m_maxMin.minY > m_qwtCurves[i]->maxMin.minY)
+                if(m_maxMin.minY > curveMaxMinXY.minY)
                 {
-                    m_maxMin.minY = m_qwtCurves[i]->maxMin.minY;
+                    m_maxMin.minY = curveMaxMinXY.minY;
                 }
-                if(m_maxMin.maxX < m_qwtCurves[i]->maxMin.maxX)
+                if(m_maxMin.maxX < curveMaxMinXY.maxX)
                 {
-                    m_maxMin.maxX = m_qwtCurves[i]->maxMin.maxX;
+                    m_maxMin.maxX = curveMaxMinXY.maxX;
                 }
-                if(m_maxMin.maxY < m_qwtCurves[i]->maxMin.maxY)
+                if(m_maxMin.maxY < curveMaxMinXY.maxY)
                 {
-                    m_maxMin.maxY = m_qwtCurves[i]->maxMin.maxY;
+                    m_maxMin.maxY = curveMaxMinXY.maxY;
                 }
             }
             ++i;
@@ -886,5 +905,26 @@ void MainWindow::setSelectedCurveIndex(int index)
         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
         m_selectedCurveIndex = index;
+        if(m_normalizeCurves)
+        {
+            replotNormalized();
+        }
     }
+}
+
+void MainWindow::replotNormalized()
+{
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_normalizeCurves)
+        {
+            m_qwtCurves[i]->setNormalizeFactor(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+        }
+        else
+        {
+            m_qwtCurves[i]->resetNormalizeFactor();
+        }
+        m_qwtCurves[i]->setCurveSamples();
+    }
+    m_qwtPlot->replot();
 }

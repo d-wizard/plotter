@@ -272,6 +272,11 @@ public:
         SetZoom(zoom);
     }
 
+    void ResetZoom()
+    {
+        SetZoom(m_zoomDimensions);
+    }
+
 
 private:
    QwtPlot* m_qwtPlot;

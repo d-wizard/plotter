@@ -96,6 +96,8 @@ private:
 
     QIcon m_checkedIcon;
 
+    bool m_normalizeCurves;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     bool eventFilter(QObject *obj, QEvent *event);
@@ -114,6 +116,8 @@ private:
 
     void setSelectedCurveIndex(int index);
 
+    void replotNormalized();
+
     // Key Press Functions
     bool keyPressModifyZoom(int key);
     bool keyPressModifyCursor(int key);
@@ -128,6 +132,7 @@ private slots:
     void deltaCursorMode();
     void zoomMode();
     void resetZoom();
+    void normalizeCurves();
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);
@@ -135,12 +140,10 @@ private slots:
     void on_verticalScrollBar_sliderMoved(int position);
     void on_horizontalScrollBar_sliderMoved(int position);
 
-
-// Functions that could be called from a thread, but modify ui
     void on_verticalScrollBar_actionTriggered(int action);
-
     void on_horizontalScrollBar_actionTriggered(int action);
 
+// Functions that could be called from a thread, but modify ui
 public slots:
     void updateCursorMenus();
 signals:

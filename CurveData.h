@@ -28,16 +28,12 @@ class CurveData
 public:
     CurveData(const std::string& curveName, const dubVect& newYPoints, const QColor& curveColor):
         yPoints(newYPoints),
-        numPoints(0),
         plotType(E_PLOT_TYPE_1D),
         curve(new QwtPlotCurve(curveName.c_str())),
-        pointLabel(NULL),
-        curveAction(NULL),
-        mapper(NULL),
-        displayed(false),
         title(curveName),
         color(curveColor)
         {
+            init();
             numPoints = yPoints.size();
             fill1DxPoints();
             findMaxMin();
@@ -46,16 +42,12 @@ public:
     CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
         xPoints(newXPoints),
         yPoints(newYPoints),
-        numPoints(0),
         plotType(E_PLOT_TYPE_2D),
         curve(new QwtPlotCurve(curveName.c_str())),
-        pointLabel(NULL),
-        curveAction(NULL),
-        mapper(NULL),
-        displayed(false),
         title(curveName),
         color(curveColor)
         {
+            init();
             if(xPoints.size() > yPoints.size())
             {
                 xPoints.resize(yPoints.size());
@@ -79,7 +71,6 @@ public:
     }
 
     QwtPlotCurve* curve;
-    maxMinXY maxMin;
     ePlotType plotType;
     unsigned int numPoints;
     std::string title;
@@ -161,17 +152,139 @@ public:
     void initCurve()
     {
         curve->setPen(color);
-        curve->setSamples( &xPoints[0],
-                           &yPoints[0],
-                           yPoints.size());
+        setCurveSamples();
+    }
+
+    void setNormalizeFactor(maxMinXY desiredScale)
+    {
+        if(desiredScale.maxX == maxMin.maxX && desiredScale.minX == maxMin.minX)
+        {
+            normalizeM_X = 1.0;
+            normalizeB_X = 0.0;
+            xNormalized = false;
+        }
+        else
+        {
+            normalizeM_X = (desiredScale.maxX - desiredScale.minX) / (maxMin.maxX - maxMin.minX);
+            normalizeB_X = desiredScale.maxX - (normalizeM_X * maxMin.maxX);
+            xNormalized = true;
+        }
+        if(desiredScale.maxY == maxMin.maxY && desiredScale.minY == maxMin.minY)
+        {
+            normalizeM_Y = 1.0;
+            normalizeB_Y = 0.0;
+            yNormalized = false;
+        }
+        else
+        {
+            normalizeM_Y = (desiredScale.maxY - desiredScale.minY) / (maxMin.maxY - maxMin.minY);
+            normalizeB_Y = desiredScale.maxY - (normalizeM_Y * maxMin.maxY);
+            yNormalized = true;
+        }
+
+    }
+
+    void resetNormalizeFactor()
+    {
+        normalizeM_X = 1.0;
+        normalizeB_X = 0.0;
+        xNormalized = false;
+
+        normalizeM_Y = 1.0;
+        normalizeB_Y = 0.0;
+        yNormalized = false;
+    }
+
+    void setCurveSamples()
+    {
+        dubVect normX;
+        dubVect normY;
+        if(xNormalized)
+        {
+            normX.resize(numPoints);
+            for(int i = 0; i < numPoints; ++i)
+            {
+                normX[i] = (normalizeM_X * xPoints[i]) + normalizeB_X;
+            }
+        }
+        if(yNormalized)
+        {
+            normY.resize(numPoints);
+            for(int i = 0; i < numPoints; ++i)
+            {
+                normY[i] = (normalizeM_Y * yPoints[i]) + normalizeB_Y;
+            }
+        }
+
+        if(xNormalized && yNormalized)
+        {
+            curve->setSamples( &normX[0],
+                               &normY[0],
+                               numPoints);
+        }
+        else if(xNormalized)
+        {
+            curve->setSamples( &normX[0],
+                               &yPoints[0],
+                               numPoints);
+        }
+        else if(yNormalized)
+        {
+            curve->setSamples( &xPoints[0],
+                               &normY[0],
+                               numPoints);
+        }
+        else
+        {
+            curve->setSamples( &xPoints[0],
+                               &yPoints[0],
+                               numPoints);
+        }
+    }
+
+    maxMinXY GetMaxMinXYOfCurve()
+    {
+        maxMinXY retVal;
+        retVal.maxX = curve->maxXValue();
+        retVal.minX = curve->minXValue();
+        retVal.maxY = curve->maxYValue();
+        retVal.minY = curve->minYValue();
+        return retVal;
+    }
+
+    maxMinXY GetMaxMinXYOfData()
+    {
+        return maxMin;
     }
 
 
 private:
     CurveData();
+    void init()
+    {
+        numPoints = 0;
+        pointLabel = NULL;
+        curveAction = NULL;
+        mapper = NULL;
+        displayed = false;
+
+        resetNormalizeFactor();
+
+    }
 
     dubVect xPoints;
     dubVect yPoints;
+    maxMinXY maxMin;
+
+    // Normalize parameters
+    double normalizeM_X;
+    double normalizeB_X;
+    double normalizeM_Y;
+    double normalizeB_Y;
+
+    bool xNormalized;
+    bool yNormalized;
+
 };
 
 #endif

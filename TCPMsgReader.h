@@ -24,6 +24,7 @@
 #include "PackUnpackPlotMsg.h"
 
 #include <map>
+#include <QSharedPointer>
 
 class plotGuiMain;
 
@@ -35,7 +36,7 @@ public:
 
    plotGuiMain* m_parent;
 
-   std::map<struct sockaddr_storage*, GetEntirePlotMsg> m_msgReaderMap;
+   std::map<struct sockaddr_storage*, GetEntirePlotMsg*> m_msgReaderMap;
    
 private:
    dServerSocket m_servSock;

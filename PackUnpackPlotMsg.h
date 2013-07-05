@@ -24,13 +24,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_PLOT_VALUE_SIZE (8)
-
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
 typedef enum
 {
-   E_RESET_PLOT,
    E_PLOT_1D,
    E_PLOT_2D,
    E_INVALID_PLOT_ACTION
@@ -50,121 +47,80 @@ typedef enum
    E_FLOAT_64
 }ePlotDataTypes;
 
-
+#define NUM_PACKET_SAVE (3)
 class GetEntirePlotMsg
 {
 public:
-    GetEntirePlotMsg():
-        m_msgSize(0),
-        m_numMsgBytesRead(0),
-        m_bytesNeededForMsgSize(MSG_SIZE_PARAM_NUM_BYTES){}
+   GetEntirePlotMsg();
+   ~GetEntirePlotMsg();
 
-    void ReadPlotPacket(char* packet, unsigned int packetSize, char** retValMsgPtr, unsigned int* retValMsgSize)
-    {
-        unsigned int numBytesInPacketRemaining = packetSize;
-        *retValMsgPtr = NULL;
-        *retValMsgSize = 0;
-        if(m_bytesNeededForMsgSize > 0)
-        {
-            unsigned int bytesToCopyToMsgSize =
-               std::min(numBytesInPacketRemaining, m_bytesNeededForMsgSize);
-            memcpy( ((char*)&m_msgSize)+(MSG_SIZE_PARAM_NUM_BYTES - m_bytesNeededForMsgSize),
-                    packet,
-                    bytesToCopyToMsgSize);
+   void ReadPlotPacket(const char *inBytes, unsigned int numBytes, char** retValMsgPtr, unsigned int* retValMsgSize);
+   
+   void finishedReadMsg();
 
-            numBytesInPacketRemaining -= bytesToCopyToMsgSize;
-            m_bytesNeededForMsgSize -= bytesToCopyToMsgSize;
-            if(m_bytesNeededForMsgSize == 0)
-            {
-                m_msgSize -= MSG_SIZE_PARAM_NUM_BYTES;
-                m_msg.resize(m_msgSize);
-                m_numMsgBytesRead = 0;
-            }
-        }
-        if(numBytesInPacketRemaining)
-        {
-            unsigned int bytesToCopy =
-               std::min(numBytesInPacketRemaining, (m_msgSize-m_numMsgBytesRead));
-            memcpy( &m_msg[m_numMsgBytesRead],
-                    packet+(packetSize-numBytesInPacketRemaining),
-                    bytesToCopy);
-
-            m_numMsgBytesRead += bytesToCopy;
-            if(m_numMsgBytesRead >= m_msgSize)
-            {
-                *retValMsgPtr = &m_msg[0];
-                *retValMsgSize = m_msgSize;
-                m_bytesNeededForMsgSize = MSG_SIZE_PARAM_NUM_BYTES;
-            }
-        }
-    }
-
-private:
-    unsigned int m_msgSize;
-    unsigned int m_bytesNeededForMsgSize;
-    unsigned int m_numMsgBytesRead;
-    std::vector<char> m_msg;
-};
-
-
-
-class UnpackPlotMsg
-{
-public:
-   UnpackPlotMsg();
-   ~UnpackPlotMsg();
-
-   ePlotAction Unpack(const char *inBytes, unsigned int numBytes);
-   void reset();
-
-
-   std::string m_plotName;
-   std::vector<double> m_xAxisValues;
-   std::vector<double> m_yAxisValues;
 private:
 
    typedef enum
    {
       E_READ_ACTION,
-      E_READ_NAME,
-      E_READ_NUM_SAMP,
-      E_READ_X_AXIS_DATA_TYPE,
-      E_READ_Y_AXIS_DATA_TYPE,
-      E_READ_X_AXIS_VALUE,
-      E_READ_Y_AXIS_VALUE
+      E_READ_SIZE,
+      E_READ_REST_OF_MSG
    }eMsgUnpackState;
 
-
    bool ReadOneByte(char inByte);
-
+   bool validPlotAction(ePlotAction in);
+   void setNextState(eMsgUnpackState state, void* ptrToFill, unsigned int numBytesToFill);
+   void initNextWriteMsg();
+   void reset();
 
    eMsgUnpackState m_unpackState;
 
    ePlotAction m_curAction;
-   unsigned int m_numSamplesInPlot;
-   ePlotDataTypes m_xAxisDataType;
-   ePlotDataTypes m_yAxisDataType;
-   unsigned int m_sampleIndex;
-
+   unsigned int m_curMsgSize;
+   std::vector<char> m_msgs[NUM_PACKET_SAVE];
+   unsigned int m_msgsWriteIndex;
+   unsigned int m_msgsReadIndex;
 
    char*        m_curPtrToFill;
    unsigned int m_curValueNumBytesFilled;
    unsigned int m_bytesNeededForCurValue;
 
-   char m_tempRead[MAX_PLOT_VALUE_SIZE];
-
-   bool validPlotAction(ePlotAction in);
-   bool validPlotDataTypes(ePlotDataTypes in);
-
-   void setNextState(eMsgUnpackState state, void* ptrToFill, unsigned int numBytesToFill);
-
-   double readSampleValue(ePlotDataTypes dataType);
-
 };
 
+class UnpackPlotMsg
+{
+public:
+   UnpackPlotMsg(const char* msg, unsigned int size);
+   ~UnpackPlotMsg();
+
+   ePlotAction m_plotAction;
+   std::string m_plotName;
+   std::string m_curveName;
+   std::vector<double> m_xAxisValues;
+   std::vector<double> m_yAxisValues;
+private:
+   UnpackPlotMsg();
+   
+   void unpack(void* dst, unsigned int size);
+   void unpackStr(std::string* dst);
+   
+   bool validPlotDataTypes(ePlotDataTypes in);
+   double readSampleValue(ePlotDataTypes dataType);
+   
+   
+   const char* m_msg;
+   unsigned int m_msgSize;
+   unsigned int m_msgReadIndex;
+
+   unsigned int m_numSamplesInPlot;
+   ePlotDataTypes m_xAxisDataType;
+   ePlotDataTypes m_yAxisDataType;
+};
+
+
 void packResetPlotMsg(std::vector<char>& msg);
-void pack1dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSamp, ePlotDataTypes yAxisType, void* yAxisSamples);
-void pack2dPlotMsg(std::vector<char>& msg, std::string name, unsigned int numSamp, ePlotDataTypes xAxisType, ePlotDataTypes yAxisType, void* xAxisSamples, void* yAxisSamples);
+void pack1dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes yAxisType, void* yAxisSamples);
+void pack2dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes xAxisType, ePlotDataTypes yAxisType, void* xAxisSamples, void* yAxisSamples);
 
 
 
