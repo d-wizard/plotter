@@ -3,6 +3,7 @@
 # Project created by QtCreator 2013-06-21T22:30:17
 #
 #-------------------------------------------------
+RC_FILE = mainwindow.rc
 QWTDIR = F:/qwt-6.1
 PTHREADDIR = F:/Projects/pthread32
 include ( F:/qwt-6.1/qwt.prf )

@@ -16,17 +16,55 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <QtGui/QApplication>
-#include "plotguimain.h"
+#ifndef PLOTGUIMAIN_H
+#define PLOTGUIMAIN_H
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
+#include <string>
 
-    a.setQuitOnLastWindowClosed(false);
+#include <QList>
+#include <QMainWindow>
+#include <QSystemTrayIcon>
+#include <QMenu>
+#include <QAction>
 
-    plotGuiMain pgm;
-    pgm.hide();
+#include "mainwindow.h"
+#include "TCPMsgReader.h"
+#include "PlotHelperTypes.h"
 
-    return a.exec();
+#include <map>
+
+namespace Ui {
+class plotGuiMain;
 }
+
+class plotGuiMain : public QMainWindow
+{
+    Q_OBJECT
+    
+public:
+    explicit plotGuiMain(QWidget *parent = 0);
+    ~plotGuiMain();
+    std::map<std::string, MainWindow*> m_plotGuis;
+
+    void readPlotMsg(const char *msg, unsigned int size);
+    
+private:
+    Ui::plotGuiMain *ui;
+    TCPMsgReader* m_tcpMsgReader;
+
+    void removeHiddenPlotWindows();
+
+
+    QSystemTrayIcon* m_trayIcon;
+    QAction* m_trayExitAction;
+    QMenu* m_trayMenu;
+
+
+
+public slots:
+    void readPlotMsgSlot(const char *msg, unsigned int size);
+signals:
+    void readPlotMsgSignal(const char*, unsigned int);
+};
+
+#endif // PLOTGUIMAIN_H
