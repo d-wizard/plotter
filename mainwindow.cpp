@@ -638,6 +638,11 @@ void MainWindow::displayPointLabels()
     {
         if(m_qwtCurves[i]->displayed && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->numPoints)
         {
+            if(m_qwtCurves[i]->pointLabel != NULL)
+            {
+                delete m_qwtCurves[i]->pointLabel;
+                m_qwtCurves[i]->pointLabel = NULL;
+            }
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
             std::stringstream lblText;
@@ -660,6 +665,11 @@ void MainWindow::displayDeltaLabel()
     clearPointLabels();
     if(m_qwtCurves[m_selectedCurveIndex]->displayed)
     {
+        if(m_qwtCurves[m_selectedCurveIndex]->pointLabel != NULL)
+        {
+            delete m_qwtCurves[m_selectedCurveIndex]->pointLabel;
+            m_qwtCurves[m_selectedCurveIndex]->pointLabel = NULL;
+        }
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
         std::stringstream lblText;
