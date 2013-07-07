@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_selectMode(E_CURSOR),
     m_selectedCurveIndex(0),
     m_plotZoom(NULL),
-    m_checkedIcon("CheckBox.png"),
+    m_checkedIcon("check.png"),
     m_normalizeCurves(false),
     m_legendDisplayed(false),
     m_zoomAction("Zoom", this),
