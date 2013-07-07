@@ -33,6 +33,12 @@ TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
 TCPMsgReader::~TCPMsgReader()
 {
    dServerSocket_killAll(&m_servSock);
+
+   std::map<struct sockaddr_storage*, GetEntirePlotMsg*>::iterator iter;
+   for(iter = m_msgReaderMap.begin(); iter != m_msgReaderMap.end(); ++iter)
+   {
+       delete iter->second;
+   }
 }
 
 void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)

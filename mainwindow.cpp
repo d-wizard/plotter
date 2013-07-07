@@ -148,12 +148,30 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
-
-    if(m_qwtPlot != NULL)
+    for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
-        delete m_qwtPlot;
-        m_qwtPlot = NULL;
+        // No need to check against NULL. All values in the list
+        // will be valid pointers.
+        delete m_selectedCursorActions[i].action;
+        delete m_selectedCursorActions[i].mapper;
+    }
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i] != NULL)
+        {
+            delete m_qwtCurves[i];
+            m_qwtCurves[i] = NULL;
+        }
+    }
+    if(m_qwtGrid != NULL)
+    {
+        delete m_qwtGrid;
+        m_qwtGrid = NULL;
+    }
+    if(m_qwtPicker != NULL)
+    {
+        delete m_qwtPicker;
+        m_qwtPicker = NULL;
     }
     if(m_plotZoom != NULL)
     {
@@ -170,14 +188,13 @@ MainWindow::~MainWindow()
         delete m_qwtSelectedSampleDelta;
         m_qwtSelectedSampleDelta = NULL;
     }
-    //if(m_qwtGrid != NULL)
-    //{
-    //    delete m_qwtGrid;
-    //}
-    //if(m_qwtPicker != NULL)
-    //{
-    //    delete m_qwtPicker;
-    //}
+
+    if(m_qwtPlot != NULL)
+    {
+        delete m_qwtPlot;
+        m_qwtPlot = NULL;
+    }
+    delete ui;
 
 
  }
@@ -192,6 +209,7 @@ void MainWindow::resetPlot()
     m_qwtPlot = new QwtPlot(this);
 
     m_qwtPlot->setContextMenuPolicy(Qt::CustomContextMenu);
+    // TODO: Do I need to disconnect the action
     connect(m_qwtPlot, SIGNAL(customContextMenuRequested(const QPoint&)),
         this, SLOT(ShowContextMenu(const QPoint&)));
 
@@ -230,15 +248,12 @@ void MainWindow::resetPlot()
     {
         delete m_qwtPicker;
     }
-    m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
-    m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());
-    //m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
-    //m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
 
-    //m_qwtPicker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
-    //    QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
-    //    m_qwtPlot->canvas() );
-    //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
+    m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
+
+    // setStateMachine wants to be called with new and handles delete.
+    m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerDragPointMachine());//
+
     m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
     m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtPicker->setTrackerPen( QColor( Qt::white ) );
@@ -246,9 +261,7 @@ void MainWindow::resetPlot()
     m_qwtPlot->show();
     m_qwtGrid->show();
 
-    //m_qwtMagnifier = new QwtPlotMagnifier(m_qwtPlot->canvas());
-    //m_qwtMagnifier->setMouseButton(Qt::MidButton);
-
+    // TODO: Do I need to disconnect the action
     connect(m_qwtPicker, SIGNAL(appended(QPointF)),
             this, SLOT(pointSelected(QPointF)));
     connect(m_qwtPicker, SIGNAL(selected(QRectF)),
@@ -259,8 +272,6 @@ void MainWindow::updateCursorMenus()
 {
     int numDisplayedCurves = 0;
 
-
-    // TODO: make this thread safe
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         m_visibleCurvesMenu.removeAction(m_qwtCurves[i]->curveAction);
@@ -269,10 +280,12 @@ void MainWindow::updateCursorMenus()
         if(m_qwtCurves[i]->curveAction != NULL)
         {
             delete m_qwtCurves[i]->curveAction;
+            m_qwtCurves[i]->curveAction = NULL;
         }
         if(m_qwtCurves[i]->mapper != NULL)
         {
             delete m_qwtCurves[i]->mapper;
+            m_qwtCurves[i]->mapper = NULL;
         }
 
         if(m_qwtCurves[i]->displayed)

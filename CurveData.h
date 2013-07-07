@@ -65,9 +65,24 @@ public:
     {
         if(curve != NULL)
         {
-            //delete curve;
+            delete curve;
+            curve = NULL;
         }
-        //delete pointLabel;
+        if(pointLabel != NULL)
+        {
+            delete pointLabel;
+            pointLabel = NULL;
+        }
+        if(curveAction != NULL)
+        {
+            delete curveAction;
+            curveAction = NULL;
+        }
+        if(mapper != NULL)
+        {
+            delete mapper;
+            mapper = NULL;
+        }
     }
 
     QwtPlotCurve* curve;

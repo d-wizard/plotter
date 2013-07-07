@@ -38,7 +38,6 @@ public:
         isAttached(false),
         outOfRange(false),
         m_curve(NULL),
-        m_symbol(NULL),
         m_xPoint(0),
         m_yPoint(0),
         m_pointIndex(0)
@@ -49,7 +48,7 @@ public:
     {
         if(m_curve != NULL)
         {
-            //delete m_curve;
+            delete m_curve;
             m_curve = NULL;
         }
     }
@@ -129,12 +128,15 @@ public:
         hideCursor();
         if(m_pointIndex < m_parentCurve->numPoints)
         {
-            m_symbol = new QwtSymbol( m_style,
-               QBrush( m_parentCurve->color ), QPen( m_parentCurve->color, 2 ), QSize( 8, 8 ) );
-
             m_xPoint = m_parentCurve->getXPoints()[m_pointIndex];
             m_yPoint = m_parentCurve->getYPoints()[m_pointIndex];
-            m_curve->setSymbol( m_symbol );
+
+            // QwtPlotCurve wants to be called with new and deletes the symbol on its own.
+            m_curve->setSymbol( new QwtSymbol( m_style,
+                                               QBrush(m_parentCurve->color),
+                                               QPen(m_parentCurve->color, 2),
+                                               QSize(8, 8) ) );
+
             m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
 
             outOfRange = false;
@@ -155,12 +157,6 @@ public:
             m_curve->detach();
             isAttached = false;
         }
-
-        if(m_symbol != NULL)
-        {
-            //delete m_symbol;
-            m_symbol = NULL;
-        }
     }
 
     double m_xPoint;
@@ -174,7 +170,6 @@ public:
 
 private:
     QwtPlotCurve* m_curve;
-    QwtSymbol* m_symbol;
 
     QwtPlot* m_plot;
 

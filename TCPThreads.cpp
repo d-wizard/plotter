@@ -331,20 +331,3 @@ void dServerSocket_killAll(dServerSocket* dSock)
    }
 }
 
-void RxPacketCallback(struct sockaddr_storage* client, char* packet, unsigned int size)
-{
-   // Debug Print Code
-   if(size > 0)
-   {
-      packet[size-1] = 0;
-      if(packet[size-2] == '\r')
-      {
-         packet[size-2] = '\n';
-      }
-      printf("%d|%s", size, packet);
-   }
-   else
-   {
-      printf("0 Size Packet");
-   }
-}
