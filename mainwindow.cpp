@@ -377,7 +377,7 @@ void MainWindow::updateCursorMenus()
 
 }
 
-void MainWindow::add1dCurve(std::string name, dubVect yPoints)
+void MainWindow::add1dCurve(std::string name, dubVect &yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
@@ -400,7 +400,7 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 }
 
 
-void MainWindow::add2dCurve(std::string name, dubVect xPoints, dubVect yPoints)
+void MainWindow::add2dCurve(std::string name, dubVect &xPoints, dubVect &yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);

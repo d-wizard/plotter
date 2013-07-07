@@ -70,6 +70,22 @@ void GetEntirePlotMsg::initNextWriteMsg()
    m_msgs[m_msgsWriteIndex].clear();
 }
 
+bool GetEntirePlotMsg::ReadPlotPackets(char** retValMsgPtr, unsigned int* retValMsgSize)
+{
+   bool validMsg = (m_msgsReadIndex != m_msgsWriteIndex);
+   if(validMsg)
+   {
+       *retValMsgPtr = &m_msgs[m_msgsReadIndex][0];
+       *retValMsgSize = m_msgs[m_msgsReadIndex].size();
+   }
+   else
+   {
+       retValMsgPtr = NULL;
+       retValMsgSize = 0;
+   }
+   return validMsg;
+}
+
 void GetEntirePlotMsg::finishedReadMsg()
 {
    if(m_msgsReadIndex != m_msgsWriteIndex)
@@ -82,7 +98,7 @@ void GetEntirePlotMsg::finishedReadMsg()
    }
 }
 
-void GetEntirePlotMsg::ReadPlotPacket(const char* inBytes, unsigned int numBytes, char **retValMsgPtr, unsigned int *retValMsgSize)
+void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBytes)
 {
    for(unsigned int i = 0; i < numBytes; ++i)
    {
@@ -114,8 +130,6 @@ void GetEntirePlotMsg::ReadPlotPacket(const char* inBytes, unsigned int numBytes
             }
             break;
             case E_READ_REST_OF_MSG:
-               *retValMsgPtr = &m_msgs[m_msgsWriteIndex][0];
-               *retValMsgSize = m_curMsgSize;
                reset();
                initNextWriteMsg();
             break;
@@ -144,24 +158,6 @@ bool GetEntirePlotMsg::ReadOneByte(char inByte)
 
    return valueFilled;
 }
-
-
-bool GetEntirePlotMsg::validPlotAction(ePlotAction in)
-{
-   bool valid = false;
-   switch(in)
-   {
-   case E_PLOT_1D:
-   case E_PLOT_2D:
-      valid = true;
-      break;
-   default:
-      break;
-   }
-   return valid;
-}
-
-
 
 
 
@@ -244,29 +240,6 @@ void UnpackPlotMsg::unpackStr(std::string* dst)
 {
    *dst = m_msg+m_msgReadIndex;
    m_msgReadIndex += (dst->size()+1);
-}
-
-
-
-bool UnpackPlotMsg::validPlotDataTypes(ePlotDataTypes in)
-{
-   bool valid = false;
-   switch(in)
-   {
-   case E_CHAR:
-   case E_UCHAR:
-   case E_INT_16:
-   case E_UINT_16:
-   case E_INT_32:
-   case E_UINT_32:
-   case E_INT_64:
-   case E_UINT_64:
-   case E_FLOAT_32:
-   case E_FLOAT_64:
-      valid = true;
-      break;
-   }
-   return valid;
 }
 
 double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)

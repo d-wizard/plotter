@@ -52,10 +52,16 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
        _this->m_msgReaderMap[client] = new GetEntirePlotMsg();
     }
 
-    _this->m_msgReaderMap[client]->ReadPlotPacket(packet,size, &plotMsg, &plotMsgSize);
-    if(plotMsg != NULL)
+    _this->m_msgReaderMap[client]->ProcessPlotPacket(packet, size);
+    while(_this->m_msgReaderMap[client]->ReadPlotPackets(&plotMsg, &plotMsgSize))
     {
         _this->m_parent->readPlotMsg(plotMsg, plotMsgSize);
+        _this->m_msgReaderMap[client]->finishedReadMsg();
+    }
+
+    // If not in the middle of receiving a message, remove the message reader.
+    if(!_this->m_msgReaderMap[client]->isActiveReceive())
+    {
         delete _this->m_msgReaderMap.find(client)->second;
         _this->m_msgReaderMap.erase(_this->m_msgReaderMap.find(client));
     }

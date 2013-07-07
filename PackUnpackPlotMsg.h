@@ -26,12 +26,28 @@
 
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
+
 typedef enum
 {
    E_PLOT_1D,
    E_PLOT_2D,
    E_INVALID_PLOT_ACTION
 }ePlotAction;
+
+inline bool validPlotAction(ePlotAction in)
+{
+   bool valid = false;
+   switch(in)
+   {
+   case E_PLOT_1D:
+   case E_PLOT_2D:
+      valid = true;
+      break;
+   default:
+      break;
+   }
+   return valid;
+}
 
 typedef enum
 {
@@ -47,15 +63,39 @@ typedef enum
    E_FLOAT_64
 }ePlotDataTypes;
 
-#define NUM_PACKET_SAVE (3)
+inline bool validPlotDataTypes(ePlotDataTypes in)
+{
+   bool valid = false;
+   switch(in)
+   {
+   case E_CHAR:
+   case E_UCHAR:
+   case E_INT_16:
+   case E_UINT_16:
+   case E_INT_32:
+   case E_UINT_32:
+   case E_INT_64:
+   case E_UINT_64:
+   case E_FLOAT_32:
+   case E_FLOAT_64:
+      valid = true;
+      break;
+   }
+   return valid;
+}
+
+
+#define NUM_PACKET_SAVE (5)
 class GetEntirePlotMsg
 {
 public:
    GetEntirePlotMsg();
    ~GetEntirePlotMsg();
 
-   void ReadPlotPacket(const char *inBytes, unsigned int numBytes, char** retValMsgPtr, unsigned int* retValMsgSize);
-   
+   // If reading an action and no bytes have been filled in, then not active.
+   bool isActiveReceive(){ return (m_unpackState != E_READ_ACTION || m_curValueNumBytesFilled != 0); }
+   void ProcessPlotPacket(const char *inBytes, unsigned int numBytes);
+   bool ReadPlotPackets(char** retValMsgPtr, unsigned int* retValMsgSize);
    void finishedReadMsg();
 
 private:
@@ -68,7 +108,6 @@ private:
    }eMsgUnpackState;
 
    bool ReadOneByte(char inByte);
-   bool validPlotAction(ePlotAction in);
    void setNextState(eMsgUnpackState state, void* ptrToFill, unsigned int numBytesToFill);
    void initNextWriteMsg();
    void reset();
@@ -103,8 +142,7 @@ private:
    
    void unpack(void* dst, unsigned int size);
    void unpackStr(std::string* dst);
-   
-   bool validPlotDataTypes(ePlotDataTypes in);
+
    double readSampleValue(ePlotDataTypes dataType);
    
    

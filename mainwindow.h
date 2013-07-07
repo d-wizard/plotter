@@ -75,8 +75,8 @@ public:
 
 
     void resetPlot();
-    void add1dCurve(std::string name, dubVect yPoints);
-    void add2dCurve(std::string name, dubVect xPoints, dubVect yPoints);
+    void add1dCurve(std::string name, dubVect& yPoints);
+    void add2dCurve(std::string name, dubVect& xPoints, dubVect& yPoints);
 
 private:
     Ui::MainWindow *ui;
