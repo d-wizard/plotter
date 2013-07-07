@@ -74,10 +74,6 @@ MainWindow::MainWindow(QWidget *parent) :
     palette.setColor( QPalette::Text, Qt::white);
     this->setPalette(palette);
 
-
-    connect(this, SIGNAL(updateCursorMenusSignal()),
-            this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
-
     // init test samples.
     md_x.resize(mi_size);
     md_y.resize(mi_size);
@@ -399,7 +395,7 @@ void MainWindow::add1dCurve(std::string name, dubVect &yPoints)
     }
 
     m_qwtPlot->replot();
-    emit updateCursorMenusSignal();
+    updateCursorMenus();
 }
 
 
@@ -422,7 +418,7 @@ void MainWindow::add2dCurve(std::string name, dubVect &xPoints, dubVect &yPoints
     }
 
     m_qwtPlot->replot();
-    emit updateCursorMenusSignal();
+    updateCursorMenus();
 }
 
 
@@ -520,7 +516,7 @@ void MainWindow::visibleCursorMenuSelect(int index)
     updatePointDisplay();
     m_qwtPlot->replot();
     calcMaxMin();
-    emit updateCursorMenusSignal();
+    updateCursorMenus();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -529,7 +525,7 @@ void MainWindow::selectedCursorMenuSelect(int index)
     {
         setSelectedCurveIndex(index);
         updateCursors();
-        emit updateCursorMenusSignal();
+        updateCursorMenus();
     }
 }
 
@@ -907,7 +903,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
             setSelectedCurveIndex(displayedCurves[newIndexOfSelectedCursor]);
             updateCursors();
         }
-        emit updateCursorMenusSignal();
+        updateCursorMenus();
     }
 
 }
