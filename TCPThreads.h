@@ -34,6 +34,8 @@
 
 #define MAX_CONNECTIONS (10)
 
+#define INVALID_FD (0xFFFFFFFF)
+
 typedef struct
 {
    pthread_t thread;

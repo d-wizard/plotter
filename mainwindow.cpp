@@ -44,20 +44,20 @@ QColor curveColors[] =
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_checkedIcon("CheckBox.png"),
     m_qwtPlot(NULL),
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
-    m_selectMode(E_CURSOR),
     m_qwtGrid(NULL),
-    m_plotZoom(NULL),
+    m_selectMode(E_CURSOR),
     m_selectedCurveIndex(0),
+    m_plotZoom(NULL),
+    m_checkedIcon("CheckBox.png"),
     m_normalizeCurves(false),
     m_zoomAction(this),
     m_cursorAction(this),
-    m_resetZoomAction(this),
     m_deltaCursorAction(this),
+    m_resetZoomAction(this),
     m_normalizeAction(this)
 {
     ui->setupUi(this);
@@ -381,7 +381,6 @@ void MainWindow::add1dCurve(std::string name, dubVect yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
-    int vectSize = yPoints.size();
 
     m_qwtCurves.push_back(new CurveData(name, yPoints, curveColors[colorLookupIndex]));
 
@@ -405,7 +404,6 @@ void MainWindow::add2dCurve(std::string name, dubVect xPoints, dubVect yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
-    int vectSize = yPoints.size();
 
     m_qwtCurves.push_back(new CurveData(name, xPoints, yPoints, curveColors[colorLookupIndex]));
 
@@ -745,7 +743,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                 QWheelEvent *wheelEvent = static_cast<QWheelEvent *> (event);
 
-                int i = wheelEvent->delta();
                 QSize cavasSize = m_qwtPlot->canvas()->frameSize();
                 QPoint mousePos = m_qwtPlot->canvas()->mapFromGlobal(m_qwtPlot->cursor().pos());
 
@@ -765,6 +762,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 {
                     m_plotZoom->Zoom(1.1, relMousePos);
                 }
+                return true;
+            }
+            else
+            {
+                // standard event processing
+                return QObject::eventFilter(obj, event);
             }
 
         }
@@ -849,7 +852,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
         std::vector<int> displayedCurves;
         int indexOfSelectedCursor = -1;
 
-        int modDeltaAbs = (int)abs(modDelta);
+        unsigned int modDeltaAbs = (unsigned int)abs(modDelta);
 
         for(int i = 0; i < m_qwtCurves.size(); ++i)
         {
@@ -870,7 +873,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
             {
                 newIndexOfSelectedCursor += displayedCurves.size();
             }
-            else if(newIndexOfSelectedCursor >= displayedCurves.size())
+            else if((unsigned int)newIndexOfSelectedCursor >= displayedCurves.size())
             {
                 newIndexOfSelectedCursor -= displayedCurves.size();
             }
@@ -895,7 +898,7 @@ void MainWindow::modifyCursorPos(int modDelta)
             {
                 newXPos += m_qwtSelectedSample->getCurve()->numPoints;
             }
-            while(newXPos >= m_qwtSelectedSample->getCurve()->numPoints)
+            while((unsigned int)newXPos >= m_qwtSelectedSample->getCurve()->numPoints)
             {
                 newXPos -= m_qwtSelectedSample->getCurve()->numPoints;
             }

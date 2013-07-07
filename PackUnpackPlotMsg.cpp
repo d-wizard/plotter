@@ -37,9 +37,9 @@ static int PLOT_DATA_TYPE_SIZES[]=
 GetEntirePlotMsg::GetEntirePlotMsg():
    m_unpackState(E_READ_ACTION),
    m_curAction(E_INVALID_PLOT_ACTION),
+   m_curMsgSize(0),
    m_msgsWriteIndex(0),
    m_msgsReadIndex(0),
-   m_curMsgSize(0),
    m_curValueNumBytesFilled(0),
    m_bytesNeededForCurValue(sizeof(ePlotAction))
 {
@@ -155,6 +155,8 @@ bool GetEntirePlotMsg::validPlotAction(ePlotAction in)
    case E_PLOT_2D:
       valid = true;
       break;
+   default:
+      break;
    }
    return valid;
 }
@@ -165,12 +167,12 @@ bool GetEntirePlotMsg::validPlotAction(ePlotAction in)
 
 
 UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
-   m_msg(msg),
-   m_msgSize(size),
-   m_msgReadIndex(0),
    m_plotAction(E_INVALID_PLOT_ACTION),
    m_plotName(""),
    m_curveName(""),
+   m_msg(msg),
+   m_msgSize(size),
+   m_msgReadIndex(0),
    m_numSamplesInPlot(0),
    m_xAxisDataType(E_FLOAT_64),
    m_yAxisDataType(E_FLOAT_64)

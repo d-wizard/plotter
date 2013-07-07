@@ -32,15 +32,15 @@ class Cursor
 {
 public:
     Cursor(QwtPlot* plot, QwtSymbol::Style style):
-        m_plot(plot),
-        m_parentCurve(NULL),
-        m_style(style),
-        isAttached(false),
-        outOfRange(false),
-        m_curve(NULL),
         m_xPoint(0),
         m_yPoint(0),
-        m_pointIndex(0)
+        m_parentCurve(NULL),
+        m_pointIndex(0),
+        isAttached(false),
+        outOfRange(false),
+        m_plot(plot),
+        m_curve(NULL),
+        m_style(style)
     {
         m_curve = new QwtPlotCurve("");
     }
@@ -74,16 +74,17 @@ public:
         if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
         {
             // 1d assumed
-            m_pointIndex = (int)(pos.x() + 0.5);
+            int checkIndex = (int)(pos.x() + 0.5);
 
-            if(m_pointIndex < 0)
+            if(checkIndex < 0)
             {
-                m_pointIndex = 0;
+                checkIndex = 0;
             }
-            else if(m_pointIndex >= m_parentCurve->numPoints)
+            else if((unsigned int)checkIndex >= m_parentCurve->numPoints)
             {
-                m_pointIndex = m_parentCurve->numPoints-1;
+                checkIndex = m_parentCurve->numPoints-1;
             }
+            m_pointIndex = checkIndex;
         }
         else
         {
@@ -163,15 +164,15 @@ public:
     double m_yPoint;
 
     CurveData* m_parentCurve;
-    int m_pointIndex;
+    unsigned int m_pointIndex;
 
     bool isAttached;
     bool outOfRange;
 
 private:
-    QwtPlotCurve* m_curve;
-
     QwtPlot* m_plot;
+
+    QwtPlotCurve* m_curve;
 
     QwtSymbol::Style m_style;
 

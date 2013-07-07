@@ -60,7 +60,7 @@ void dServerSocket_readAllPackets(dClientConnection* dConn)
 void dServerSocket_initClientConn(dClientConnection* dConn, dServerSocket* dSock)
 {
    memset(dConn, 0, sizeof(dClientConnection));
-   dConn->fd = -1;
+   dConn->fd = INVALID_FD;
    dConn->rxBuff.maxPacketSize = MAX_PACKET_SIZE;
    dConn->rxBuff.buffPtr = (char*)dConn->rxBuff.buff;
    dConn->rxPacketCallback = dSock->rxPacketCallback;
@@ -108,7 +108,7 @@ void* dServerSocket_acceptThread(void* voidDSock)
       {
          socklen_t sockStoreSize = sizeof(clientAddr);
          connectionFd = accept(dSock->socketFd, (struct sockaddr*)&clientAddr, &sockStoreSize);
-         if(connectionFd != -1)
+         if(connectionFd != INVALID_FD)
          {
             dServerSocket_newClientConn(dSock, connectionFd, &clientAddr);
          }
@@ -190,7 +190,7 @@ void* dServer_killThreads(void* voidDSock)
       sem_wait(&dSock->killThreadSem);
       for(index = 0; index < MAX_CONNECTIONS; ++index)
       {
-         if( dSock->clients[index].fd != -1 && 
+         if( dSock->clients[index].fd != INVALID_FD &&
              dSock->clients[index].rxThread.active == 0 && 
              dSock->clients[index].rxThread.kill == 1 )
          {
@@ -224,7 +224,7 @@ void dServerSocket_bind(dServerSocket* dSock)
 
    int success = 0;
 
-   dSock->socketFd = -1;
+   dSock->socketFd = INVALID_FD;
 
    memset(&hints, 0, sizeof(hints));
    hints.ai_family = AF_INET;// AF_UNSPEC; IPv4 only for now
@@ -240,7 +240,7 @@ void dServerSocket_bind(dServerSocket* dSock)
          socketFd = socket( serverInfo->ai_family,
                             serverInfo->ai_socktype,
                             serverInfo->ai_protocol );
-         if(socketFd != -1)
+         if(socketFd != INVALID_FD)
          {
             int numParam = 1;
             if( setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, (char*)&numParam, sizeof(numParam)) != -1 )
@@ -277,7 +277,7 @@ dClientConnection* dServerSocket_findAvailableClientConn(dServerSocket* dSock)
    unsigned int index = 0;
    for(index = 0; index < MAX_CONNECTIONS; ++index)
    {
-      if(dSock->clients[index].fd == -1)
+      if(dSock->clients[index].fd == INVALID_FD)
       {
          return &dSock->clients[index];
       }

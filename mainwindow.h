@@ -105,8 +105,8 @@ private:
     QAction m_zoomAction;
     QAction m_cursorAction;
     QAction m_deltaCursorAction;
-    QAction m_normalizeAction;
     QAction m_resetZoomAction;
+    QAction m_normalizeAction;
     QMenu m_rightClickMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;

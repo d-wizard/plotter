@@ -27,11 +27,11 @@ class CurveData
 {
 public:
     CurveData(const std::string& curveName, const dubVect& newYPoints, const QColor& curveColor):
-        yPoints(newYPoints),
         plotType(E_PLOT_TYPE_1D),
         curve(new QwtPlotCurve(curveName.c_str())),
         title(curveName),
-        color(curveColor)
+        color(curveColor),
+        yPoints(newYPoints)
         {
             init();
             numPoints = yPoints.size();
@@ -40,12 +40,12 @@ public:
             initCurve();
         }
     CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
-        xPoints(newXPoints),
-        yPoints(newYPoints),
         plotType(E_PLOT_TYPE_2D),
         curve(new QwtPlotCurve(curveName.c_str())),
         title(curveName),
-        color(curveColor)
+        color(curveColor),
+        xPoints(newXPoints),
+        yPoints(newYPoints)
         {
             init();
             if(xPoints.size() > yPoints.size())
@@ -85,8 +85,8 @@ public:
         }
     }
 
-    QwtPlotCurve* curve;
     ePlotType plotType;
+    QwtPlotCurve* curve;
     unsigned int numPoints;
     std::string title;
 
@@ -106,7 +106,7 @@ public:
     void fill1DxPoints()
     {
         xPoints.resize(yPoints.size());
-        for(int i = 0; i < xPoints.size(); ++i)
+        for(unsigned int i = 0; i < xPoints.size(); ++i)
         {
             xPoints[i] = (double)i;
         }
@@ -217,7 +217,7 @@ public:
         if(xNormalized)
         {
             normX.resize(numPoints);
-            for(int i = 0; i < numPoints; ++i)
+            for(unsigned int i = 0; i < numPoints; ++i)
             {
                 normX[i] = (normalizeM_X * xPoints[i]) + normalizeB_X;
             }
@@ -225,7 +225,7 @@ public:
         if(yNormalized)
         {
             normY.resize(numPoints);
-            for(int i = 0; i < numPoints; ++i)
+            for(unsigned int i = 0; i < numPoints; ++i)
             {
                 normY[i] = (normalizeM_Y * yPoints[i]) + normalizeB_Y;
             }

@@ -33,8 +33,8 @@ public:
        m_vertScroll(vertScroll),
        m_horzScroll(horzScroll),
        m_plotWidth(0),
-       m_zoomWidth(0),
        m_plotHeight(0),
+       m_zoomWidth(0),
        m_zoomHeight(0),
        m_xAxisM(0),
        m_xAxisB(0),
@@ -152,7 +152,7 @@ public:
 
     void ModSliderPos(QScrollBar* scroll, int posMod)
     {
-        if(scroll == m_vertScroll || scroll == m_horzScroll && posMod != 0)
+        if((scroll == m_vertScroll || scroll == m_horzScroll) && posMod != 0)
         {
             int newPos = scroll->sliderPosition() + posMod;
 
