@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <QSignalMapper>
 #include <QKeyEvent>
+#include <sstream>
 
 int mi_size;
 dubVect md_x;
@@ -639,11 +640,11 @@ void MainWindow::displayPointLabels()
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
-            char tempText[100];
-            snprintf(tempText, sizeof(tempText), "(%f,%f)",
-                     (float)m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex],
-                     (float)m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex]);
-            m_qwtCurves[i]->pointLabel->setText(tempText);
+            std::stringstream lblText;
+            lblText << "(" <<
+                m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex] << "," <<
+                m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex] << ")";
+            m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
 
             QPalette palette = this->palette();
             palette.setColor( QPalette::WindowText, m_qwtCurves[i]->color);
@@ -661,16 +662,16 @@ void MainWindow::displayDeltaLabel()
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
-        char tempText[100];
-        snprintf(tempText, sizeof(tempText), "(%f,%f) : (%f,%f) d (%f,%f)",
-                 (float)m_qwtSelectedSampleDelta->m_xPoint,
-                 (float)m_qwtSelectedSampleDelta->m_yPoint,
-                 (float)m_qwtSelectedSample->m_xPoint,
-                 (float)m_qwtSelectedSample->m_yPoint,
-                 (float)(m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint),
-                 (float)(m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint));
+        std::stringstream lblText;
+        lblText << "(" <<
+            m_qwtSelectedSampleDelta->m_xPoint << "," <<
+            m_qwtSelectedSampleDelta->m_yPoint << ") : (" <<
+            m_qwtSelectedSample->m_xPoint << "," <<
+            m_qwtSelectedSample->m_yPoint << ") d (" <<
+            (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << "," <<
+            (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
 
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(tempText);
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
         QPalette palette = this->palette();
         palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->color);
         palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->color);
