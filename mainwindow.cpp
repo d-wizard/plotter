@@ -53,7 +53,12 @@ MainWindow::MainWindow(QWidget *parent) :
     m_qwtGrid(NULL),
     m_plotZoom(NULL),
     m_selectedCurveIndex(0),
-    m_normalizeCurves(false)
+    m_normalizeCurves(false),
+    m_zoomAction(this),
+    m_cursorAction(this),
+    m_resetZoomAction(this),
+    m_deltaCursorAction(this),
+    m_normalizeAction(this)
 {
     ui->setupUi(this);
 
@@ -99,13 +104,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // Connect menu commands
-    connect(ui->actionZoom, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
-    connect(ui->actionSelect_Point, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
-    connect(ui->actionReset_Zoom, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
-    connect(ui->actionDelta_Cursor, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
-    connect(ui->actionNormalize_Curves, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
+    connect(&m_zoomAction, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
+    connect(&m_cursorAction, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
+    connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
+    connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
+    connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
 
-    ui->actionSelect_Point->setIcon(m_checkedIcon);
+    m_cursorAction.setIcon(m_checkedIcon);
 
     resetPlot();
     //add1dCurve("Curve1", md_y);
@@ -121,19 +126,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
 
+    m_zoomAction.setText("Zoom");
+    m_cursorAction.setText("Cursor");
+    m_resetZoomAction.setText("Reset Zoom");
+    m_deltaCursorAction.setText("Delta Cursor");
+    m_normalizeAction.setText("Normalize Curves");
+    m_visibleCurvesMenu.setTitle("Visible Curves");
+    m_selectedCurvesMenu.setTitle("Selected Curve");
+    m_rightClickMenu.addAction(&m_zoomAction);
+    m_rightClickMenu.addAction(&m_cursorAction);
+    m_rightClickMenu.addAction(&m_deltaCursorAction);
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_resetZoomAction);
+    m_rightClickMenu.addAction(&m_normalizeAction);
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
+    m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
+
+
 }
 
-void MainWindow::onApplicationFocusChanged(QWidget* old, QWidget* now)
-{
-  if(isActiveWindow())
-  {
-      QCoreApplication::instance()->installEventFilter(this);
-  }
-  else
-  {
-      QCoreApplication::instance()->removeEventFilter(this);
-  }
-}
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -178,6 +190,10 @@ void MainWindow::resetPlot()
         delete m_qwtPlot;
     }
     m_qwtPlot = new QwtPlot(this);
+
+    m_qwtPlot->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_qwtPlot, SIGNAL(customContextMenuRequested(const QPoint&)),
+        this, SLOT(ShowContextMenu(const QPoint&)));
 
     if(m_plotZoom != NULL)
     {
@@ -247,7 +263,7 @@ void MainWindow::updateCursorMenus()
     // TODO: make this thread safe
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        ui->menuCurves->removeAction(m_qwtCurves[i]->curveAction);
+        m_visibleCurvesMenu.removeAction(m_qwtCurves[i]->curveAction);
 
         // TODO: Do I need to disconnect the action / mapper?
         if(m_qwtCurves[i]->curveAction != NULL)
@@ -267,7 +283,7 @@ void MainWindow::updateCursorMenus()
 
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
-        ui->menuSelected->removeAction(m_selectedCursorActions[i].action);
+        m_selectedCurvesMenu.removeAction(m_selectedCursorActions[i].action);
         // TODO: Do I need to disconnect the action / mapper?
         delete m_selectedCursorActions[i].action;
         delete m_selectedCursorActions[i].mapper;
@@ -318,7 +334,7 @@ void MainWindow::updateCursorMenus()
         connect(m_qwtCurves[i]->curveAction,SIGNAL(triggered()),
                          m_qwtCurves[i]->mapper,SLOT(map()));
 
-        ui->menuCurves->addAction(m_qwtCurves[i]->curveAction);
+        m_visibleCurvesMenu.addAction(m_qwtCurves[i]->curveAction);
         connect( m_qwtCurves[i]->mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 
         if(m_qwtCurves[i]->displayed)
@@ -338,7 +354,7 @@ void MainWindow::updateCursorMenus()
             connect(actionMapper.action,SIGNAL(triggered()),
                              actionMapper.mapper,SLOT(map()));
 
-            ui->menuSelected->addAction(actionMapper.action);
+            m_selectedCurvesMenu.addAction(actionMapper.action);
             connect( actionMapper.mapper, SIGNAL(mapped(int)), SLOT(selectedCursorMenuSelect(int)) );
 
             m_selectedCursorActions.push_back(actionMapper);
@@ -405,9 +421,9 @@ void MainWindow::toggleLegend()
 void MainWindow::cursorMode()
 {
     m_selectMode = E_CURSOR;
-    ui->actionSelect_Point->setIcon(m_checkedIcon);
-    ui->actionZoom->setIcon(QIcon());
-    ui->actionDelta_Cursor->setIcon(QIcon());
+    m_cursorAction.setIcon(m_checkedIcon);
+    m_zoomAction.setIcon(QIcon());
+    m_deltaCursorAction.setIcon(QIcon());
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
     m_qwtSelectedSampleDelta->hideCursor();
     updatePointDisplay();
@@ -418,9 +434,9 @@ void MainWindow::cursorMode()
 void MainWindow::deltaCursorMode()
 {
     m_selectMode = E_DELTA_CURSOR;
-    ui->actionDelta_Cursor->setIcon(m_checkedIcon);
-    ui->actionZoom->setIcon(QIcon());
-    ui->actionSelect_Point->setIcon(QIcon());
+    m_deltaCursorAction.setIcon(m_checkedIcon);
+    m_zoomAction.setIcon(QIcon());
+    m_cursorAction.setIcon(QIcon());
 
     m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
     m_qwtSelectedSampleDelta->showCursor(
@@ -435,9 +451,9 @@ void MainWindow::deltaCursorMode()
 void MainWindow::zoomMode()
 {
     m_selectMode = E_ZOOM;
-    ui->actionZoom->setIcon(m_checkedIcon);
-    ui->actionSelect_Point->setIcon(QIcon());
-    ui->actionDelta_Cursor->setIcon(QIcon());
+    m_zoomAction.setIcon(m_checkedIcon);
+    m_cursorAction.setIcon(QIcon());
+    m_deltaCursorAction.setIcon(QIcon());
     //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
 }
 
@@ -453,11 +469,11 @@ void MainWindow::normalizeCurves()
     m_normalizeCurves = !m_normalizeCurves;
     if(m_normalizeCurves)
     {
-        ui->actionNormalize_Curves->setIcon(m_checkedIcon);
+        m_normalizeAction.setIcon(m_checkedIcon);
     }
     else
     {
-        ui->actionNormalize_Curves->setIcon(QIcon());
+        m_normalizeAction.setIcon(QIcon());
     }
     replotNormalized();
 }
@@ -946,4 +962,21 @@ void MainWindow::replotNormalized()
         m_qwtCurves[i]->setCurveSamples();
     }
     m_qwtPlot->replot();
+}
+
+void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
+{
+    m_rightClickMenu.exec(m_qwtPlot->mapToGlobal(pos));
+}
+
+void MainWindow::onApplicationFocusChanged(QWidget* old, QWidget* now)
+{
+  if(isActiveWindow())
+  {
+      QCoreApplication::instance()->installEventFilter(this);
+  }
+  else
+  {
+      QCoreApplication::instance()->removeEventFilter(this);
+  }
 }

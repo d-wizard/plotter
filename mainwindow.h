@@ -35,6 +35,8 @@
 #include <QLabel>
 #include <QSignalMapper>
 #include <QList>
+#include <QMenu>
+#include <QAction>
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -100,6 +102,15 @@ private:
 
     QList<tMenuActionMapper> m_selectedCursorActions;
 
+    QAction m_zoomAction;
+    QAction m_cursorAction;
+    QAction m_deltaCursorAction;
+    QAction m_normalizeAction;
+    QAction m_resetZoomAction;
+    QMenu m_rightClickMenu;
+    QMenu m_selectedCurvesMenu;
+    QMenu m_visibleCurvesMenu;
+
     bool eventFilter(QObject *obj, QEvent *event);
 
     void calcMaxMin();
@@ -143,8 +154,8 @@ private slots:
     void on_horizontalScrollBar_actionTriggered(int action);
 
 
-  void onApplicationFocusChanged(QWidget* old, QWidget* now);
-
+    void onApplicationFocusChanged(QWidget* old, QWidget* now);
+    void ShowContextMenu(const QPoint& pos);
 
 // Functions that could be called from a thread, but modify ui
 public slots:
