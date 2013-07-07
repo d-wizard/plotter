@@ -121,7 +121,6 @@ private:
     // Key Press Functions
     bool keyPressModifyZoom(int key);
     bool keyPressModifyCursor(int key);
-
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -142,6 +141,10 @@ private slots:
 
     void on_verticalScrollBar_actionTriggered(int action);
     void on_horizontalScrollBar_actionTriggered(int action);
+
+
+  void onApplicationFocusChanged(QWidget* old, QWidget* now);
+
 
 // Functions that could be called from a thread, but modify ui
 public slots:

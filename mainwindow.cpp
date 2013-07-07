@@ -118,11 +118,22 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
 
-    // For multi-window will probably need to do this whenever the window get focus.
-    QCoreApplication::instance()->installEventFilter(this);
+    connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
+      this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
 
 }
 
+void MainWindow::onApplicationFocusChanged(QWidget* old, QWidget* now)
+{
+  if(isActiveWindow())
+  {
+      QCoreApplication::instance()->installEventFilter(this);
+  }
+  else
+  {
+      QCoreApplication::instance()->removeEventFilter(this);
+  }
+}
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -666,65 +677,73 @@ void MainWindow::updateCursors()
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::KeyPress)
+    if(isActiveWindow())
     {
-        bool validKey = true;
-        QKeyEvent *KeyEvent = (QKeyEvent*)event;
-
-        switch(m_selectMode)
+        if (event->type() == QEvent::KeyPress)
         {
-        case E_ZOOM:
-            validKey = keyPressModifyZoom(KeyEvent->key());
-            break;
-        case E_CURSOR:
-        case E_DELTA_CURSOR:
-            validKey = keyPressModifyCursor(KeyEvent->key());
-            break;
-        default:
-            validKey = false;
-            break;
+            bool validKey = true;
+            QKeyEvent *KeyEvent = (QKeyEvent*)event;
+
+            switch(m_selectMode)
+            {
+            case E_ZOOM:
+                validKey = keyPressModifyZoom(KeyEvent->key());
+                break;
+            case E_CURSOR:
+            case E_DELTA_CURSOR:
+                validKey = keyPressModifyCursor(KeyEvent->key());
+                break;
+            default:
+                validKey = false;
+                break;
+            }
+
+
+            if(validKey)
+            {
+                return true;
+            }
+            else
+            {
+                // standard event processing
+                return QObject::eventFilter(obj, event);
+            }
         }
-
-
-        if(validKey)
+        else if(event->type() == QEvent::Wheel)
         {
-            return true;
+            QKeyEvent *KeyEvent = (QKeyEvent*)event;
+            if(KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+                QWheelEvent *wheelEvent = static_cast<QWheelEvent *> (event);
+
+                int i = wheelEvent->delta();
+                QSize cavasSize = m_qwtPlot->canvas()->frameSize();
+                QPoint mousePos = m_qwtPlot->canvas()->mapFromGlobal(m_qwtPlot->cursor().pos());
+
+                const int OFFSET = 6;
+
+                // Map position relative to the curve's canvas.
+                // Y axis needs to be inverted so the 0 point is at the bottom.
+                QPointF relMousePos(
+                    (double)(mousePos.x() - OFFSET) / (double)(cavasSize.width() - 2*OFFSET),
+                    1.0 - (double)(mousePos.y() - OFFSET) / (double)(cavasSize.height() - 2*OFFSET));
+
+                if(wheelEvent->delta() > 0)
+                {
+                    m_plotZoom->Zoom(0.9, relMousePos);
+                }
+                else if(wheelEvent->delta() < 0)
+                {
+                    m_plotZoom->Zoom(1.1, relMousePos);
+                }
+            }
+
         }
         else
         {
             // standard event processing
             return QObject::eventFilter(obj, event);
         }
-    }
-    else if(event->type() == QEvent::Wheel)
-    {
-        QKeyEvent *KeyEvent = (QKeyEvent*)event;
-        if(KeyEvent->modifiers().testFlag(Qt::ControlModifier))
-        {
-            QWheelEvent *wheelEvent = static_cast<QWheelEvent *> (event);
-
-            int i = wheelEvent->delta();
-            QSize cavasSize = m_qwtPlot->canvas()->frameSize();
-            QPoint mousePos = m_qwtPlot->canvas()->mapFromGlobal(m_qwtPlot->cursor().pos());
-
-            const int OFFSET = 6;
-
-            // Map position relative to the curve's canvas.
-            // Y axis needs to be inverted so the 0 point is at the bottom.
-            QPointF relMousePos(
-                (double)(mousePos.x() - OFFSET) / (double)(cavasSize.width() - 2*OFFSET),
-                1.0 - (double)(mousePos.y() - OFFSET) / (double)(cavasSize.height() - 2*OFFSET));
-
-            if(wheelEvent->delta() > 0)
-            {
-                m_plotZoom->Zoom(0.9, relMousePos);
-            }
-            else if(wheelEvent->delta() < 0)
-            {
-                m_plotZoom->Zoom(1.1, relMousePos);
-            }
-        }
-
     }
     else
     {

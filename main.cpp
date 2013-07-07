@@ -23,8 +23,12 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    plotGuiMain pgm;
-    pgm.hide();
-    
-    return a.exec();
+    while(1)
+    {
+        plotGuiMain pgm;
+        pgm.hide();
+
+        a.exec();
+    }
+    return 0;
 }
