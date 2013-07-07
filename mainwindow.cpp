@@ -54,11 +54,13 @@ MainWindow::MainWindow(QWidget *parent) :
     m_plotZoom(NULL),
     m_checkedIcon("CheckBox.png"),
     m_normalizeCurves(false),
-    m_zoomAction(this),
-    m_cursorAction(this),
-    m_deltaCursorAction(this),
-    m_resetZoomAction(this),
-    m_normalizeAction(this)
+    m_legendDisplayed(false),
+    m_zoomAction("Zoom", this),
+    m_cursorAction("Cursor", this),
+    m_deltaCursorAction("Delta Cursor", this),
+    m_resetZoomAction("Reset Zoom", this),
+    m_normalizeAction("Normalize Curves", this),
+    m_toggleLegendAction("Legend", this)
 {
     ui->setupUi(this);
 
@@ -109,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
+    connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
 
     m_cursorAction.setIcon(m_checkedIcon);
 
@@ -126,11 +129,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
 
-    m_zoomAction.setText("Zoom");
-    m_cursorAction.setText("Cursor");
-    m_resetZoomAction.setText("Reset Zoom");
-    m_deltaCursorAction.setText("Delta Cursor");
-    m_normalizeAction.setText("Normalize Curves");
     m_visibleCurvesMenu.setTitle("Visible Curves");
     m_selectedCurvesMenu.setTitle("Selected Curve");
     m_rightClickMenu.addAction(&m_zoomAction);
@@ -139,6 +137,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_resetZoomAction);
     m_rightClickMenu.addAction(&m_normalizeAction);
+    m_rightClickMenu.addAction(&m_toggleLegendAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
@@ -212,6 +211,9 @@ void MainWindow::resetPlot()
     // TODO: Do I need to disconnect the action
     connect(m_qwtPlot, SIGNAL(customContextMenuRequested(const QPoint&)),
         this, SLOT(ShowContextMenu(const QPoint&)));
+
+    m_legendDisplayed = false;
+    m_qwtPlot->insertLegend(NULL);
 
     if(m_plotZoom != NULL)
     {
@@ -425,7 +427,20 @@ void MainWindow::add2dCurve(std::string name, dubVect &xPoints, dubVect &yPoints
 
 void MainWindow::toggleLegend()
 {
-
+    m_legendDisplayed = !m_legendDisplayed;
+    if(m_legendDisplayed)
+    {
+        m_toggleLegendAction.setIcon(m_checkedIcon);
+        // The QWT plot handles delete of QwtLegend.
+        m_qwtPlot->insertLegend(new QwtLegend());
+        m_qwtPlot->updateLegend();
+    }
+    else
+    {
+        m_toggleLegendAction.setIcon(QIcon());
+        m_qwtPlot->insertLegend(NULL);
+        m_qwtPlot->updateLegend();
+    }
 }
 
 

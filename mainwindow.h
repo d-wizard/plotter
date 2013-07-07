@@ -100,6 +100,8 @@ private:
 
     bool m_normalizeCurves;
 
+    bool m_legendDisplayed;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
@@ -107,6 +109,7 @@ private:
     QAction m_deltaCursorAction;
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
+    QAction m_toggleLegendAction;
     QMenu m_rightClickMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
