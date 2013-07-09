@@ -294,11 +294,11 @@ void MainWindow::updateCursorMenus()
     {
         if(m_qwtCurves[i]->displayed)
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->title.c_str(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->title, this);
         }
         else
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->title.c_str(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->title, this);
         }
         m_qwtCurves[i]->mapper = new QSignalMapper(this);
 
@@ -314,11 +314,11 @@ void MainWindow::updateCursorMenus()
             tMenuActionMapper actionMapper;
             if(i == m_selectedCurveIndex)
             {
-                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->title.c_str(), this);
+                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->title, this);
             }
             else
             {
-                actionMapper.action = new QAction(m_qwtCurves[i]->title.c_str(), this);
+                actionMapper.action = new QAction(m_qwtCurves[i]->title, this);
             }
             actionMapper.mapper = new QSignalMapper(this);
 
@@ -336,7 +336,7 @@ void MainWindow::updateCursorMenus()
 
 }
 
-void MainWindow::add1dCurve(std::string name, dubVect &yPoints)
+void MainWindow::add1dCurve(QString name, dubVect &yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
@@ -359,7 +359,7 @@ void MainWindow::add1dCurve(std::string name, dubVect &yPoints)
 }
 
 
-void MainWindow::add2dCurve(std::string name, dubVect &xPoints, dubVect &yPoints)
+void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 {
     int curveIndex = m_qwtCurves.size();
     int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);

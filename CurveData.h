@@ -26,9 +26,9 @@
 class CurveData
 {
 public:
-    CurveData(const std::string& curveName, const dubVect& newYPoints, const QColor& curveColor):
+    CurveData(const QString& curveName, const dubVect& newYPoints, const QColor& curveColor):
         plotType(E_PLOT_TYPE_1D),
-        curve(new QwtPlotCurve(curveName.c_str())),
+        curve(new QwtPlotCurve(curveName)),
         title(curveName),
         color(curveColor),
         yPoints(newYPoints)
@@ -39,9 +39,9 @@ public:
             findMaxMin();
             initCurve();
         }
-    CurveData(const std::string& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
+    CurveData(const QString& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
         plotType(E_PLOT_TYPE_2D),
-        curve(new QwtPlotCurve(curveName.c_str())),
+        curve(new QwtPlotCurve(curveName)),
         title(curveName),
         color(curveColor),
         xPoints(newXPoints),
@@ -88,7 +88,7 @@ public:
     ePlotType plotType;
     QwtPlotCurve* curve;
     unsigned int numPoints;
-    std::string title;
+    QString title;
 
     QColor color;
 

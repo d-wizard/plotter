@@ -105,10 +105,10 @@ plotGuiMain::~plotGuiMain()
 
     delete m_trayIcon;
 
-    std::map<std::string, MainWindow*>::iterator iter;
+    QMap<std::string, MainWindow*>::iterator iter;
     for(iter = m_plotGuis.begin(); iter != m_plotGuis.end(); ++iter)
     {
-        delete iter->second;
+        delete iter.value();
     }
 
     delete ui;
@@ -116,12 +116,12 @@ plotGuiMain::~plotGuiMain()
 
 void plotGuiMain::removeHiddenPlotWindows()
 {
-    std::map<std::string, MainWindow*>::iterator iter = m_plotGuis.begin();
+    QMap<std::string, MainWindow*>::iterator iter = m_plotGuis.begin();
     while(iter != m_plotGuis.end())
     {
-        if(iter->second->isVisible() == false)
+        if(iter.value()->isVisible() == false)
         {
-            delete iter->second;
+            delete iter.value();
             m_plotGuis.erase(iter++);
         }
         else
@@ -154,11 +154,11 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
         switch(msgUnpacker.m_plotAction)
         {
         case E_PLOT_1D:
-            m_plotGuis[msgUnpacker.m_plotName]->add1dCurve(msgUnpacker.m_curveName, msgUnpacker.m_yAxisValues);
+            m_plotGuis[msgUnpacker.m_plotName]->add1dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_yAxisValues);
             m_plotGuis[msgUnpacker.m_plotName]->show();
             break;
         case E_PLOT_2D:
-            m_plotGuis[msgUnpacker.m_plotName]->add2dCurve(msgUnpacker.m_curveName, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
+            m_plotGuis[msgUnpacker.m_plotName]->add2dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
             m_plotGuis[msgUnpacker.m_plotName]->show();
             break;
         default:

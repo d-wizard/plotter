@@ -37,6 +37,7 @@
 #include <QList>
 #include <QMenu>
 #include <QAction>
+#include <QString>
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -75,8 +76,8 @@ public:
 
 
     void resetPlot();
-    void add1dCurve(std::string name, dubVect& yPoints);
-    void add2dCurve(std::string name, dubVect& xPoints, dubVect& yPoints);
+    void add1dCurve(QString name, dubVect& yPoints);
+    void add2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
 
 private:
     Ui::MainWindow *ui;

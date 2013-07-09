@@ -31,7 +31,7 @@
 #include "TCPMsgReader.h"
 #include "PlotHelperTypes.h"
 
-#include <map>
+#include <QMap>
 
 namespace Ui {
 class plotGuiMain;
@@ -44,7 +44,7 @@ class plotGuiMain : public QMainWindow
 public:
     explicit plotGuiMain(QWidget *parent = 0);
     ~plotGuiMain();
-    std::map<std::string, MainWindow*> m_plotGuis;
+    QMap<std::string, MainWindow*> m_plotGuis;
 
     void readPlotMsg(const char *msg, unsigned int size);
     
