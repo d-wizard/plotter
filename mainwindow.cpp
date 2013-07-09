@@ -23,12 +23,6 @@
 #include <QKeyEvent>
 #include <sstream>
 
-int mi_size;
-dubVect md_x;
-dubVect md_y;
-dubVect md_z;
-dubVect md_x1;
-dubVect md_y1;
 
 QColor curveColors[] =
 {
@@ -61,46 +55,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_deltaCursorAction("Delta Cursor", this),
     m_resetZoomAction("Reset Zoom", this),
     m_normalizeAction("Normalize Curves", this),
-    m_toggleLegendAction("Legend", this)
+    m_toggleLegendAction("Legend", this),
+    m_selectedCurvesMenu("Selected Curve"),
+    m_visibleCurvesMenu("Visible Curves")
 {
     ui->setupUi(this);
 
     srand((unsigned)time(0));
 
-    mi_size = 1000;
-
     QPalette palette = this->palette();
     palette.setColor( QPalette::WindowText, Qt::white);
     palette.setColor( QPalette::Text, Qt::white);
     this->setPalette(palette);
-
-    // init test samples.
-    md_x.resize(mi_size);
-    md_y.resize(mi_size);
-    md_z.resize(mi_size);
-    md_x1.resize(mi_size/2);
-    md_y1.resize(mi_size/2);
-    //md_z.resize(mi_size/2);
-
-
-    for(int i_index = 0; i_index < mi_size; ++i_index)
-    {
-        md_x[i_index] = 4.0 *cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y[i_index] = 2.0 * sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-
-    for(int i_index = 0; i_index < mi_size/2; ++i_index)
-    {
-        //md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        //md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        //md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        //md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        //md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-
 
     // Connect menu commands
     connect(&m_zoomAction, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
@@ -113,12 +79,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_cursorAction.setIcon(m_checkedIcon);
 
     resetPlot();
-    //add1dCurve("Curve1", md_y);
-    //add1dCurve("Curve2", md_x);
-    //add1dCurve("Curve3", md_z);
-    //add2dCurve("Curve1", md_x, md_y);
-    //add2dCurve("Curve2", md_x1, md_y1);
-
 
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
@@ -126,8 +86,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
 
-    m_visibleCurvesMenu.setTitle("Visible Curves");
-    m_selectedCurvesMenu.setTitle("Selected Curve");
     m_rightClickMenu.addAction(&m_zoomAction);
     m_rightClickMenu.addAction(&m_cursorAction);
     m_rightClickMenu.addAction(&m_deltaCursorAction);
@@ -138,7 +96,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
-
 
 }
 
