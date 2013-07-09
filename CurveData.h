@@ -29,7 +29,6 @@ public:
     CurveData(const QString& curveName, const dubVect& newYPoints, const QColor& curveColor):
         plotType(E_PLOT_TYPE_1D),
         curve(new QwtPlotCurve(curveName)),
-        title(curveName),
         color(curveColor),
         yPoints(newYPoints)
         {
@@ -42,7 +41,6 @@ public:
     CurveData(const QString& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
         plotType(E_PLOT_TYPE_2D),
         curve(new QwtPlotCurve(curveName)),
-        title(curveName),
         color(curveColor),
         xPoints(newXPoints),
         yPoints(newYPoints)
@@ -88,7 +86,6 @@ public:
     ePlotType plotType;
     QwtPlotCurve* curve;
     unsigned int numPoints;
-    QString title;
 
     QColor color;
 
@@ -270,6 +267,11 @@ public:
     maxMinXY GetMaxMinXYOfData()
     {
         return maxMin;
+    }
+
+    QString GetCurveTitle()
+    {
+        return curve->title().text();
     }
 
 

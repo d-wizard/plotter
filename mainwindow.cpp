@@ -294,11 +294,11 @@ void MainWindow::updateCursorMenus()
     {
         if(m_qwtCurves[i]->displayed)
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->title, this);
+            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->GetCurveTitle(), this);
         }
         else
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->title, this);
+            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->GetCurveTitle(), this);
         }
         m_qwtCurves[i]->mapper = new QSignalMapper(this);
 
@@ -314,11 +314,11 @@ void MainWindow::updateCursorMenus()
             tMenuActionMapper actionMapper;
             if(i == m_selectedCurveIndex)
             {
-                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->title, this);
+                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->GetCurveTitle(), this);
             }
             else
             {
-                actionMapper.action = new QAction(m_qwtCurves[i]->title, this);
+                actionMapper.action = new QAction(m_qwtCurves[i]->GetCurveTitle(), this);
             }
             actionMapper.mapper = new QSignalMapper(this);
 
@@ -371,6 +371,7 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 
         if(oldDisplayed)
         {
+            m_qwtCurves[titleMatchIndex]->displayed = true;
             m_qwtCurves[titleMatchIndex]->curve->attach(m_qwtPlot);
             calcMaxMin();
         }
@@ -1006,7 +1007,7 @@ int MainWindow::findMatchingCurve(const QString& curveTitle)
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->title == curveTitle)
+        if(m_qwtCurves[i]->GetCurveTitle() == curveTitle)
         {
             return i;
         }
