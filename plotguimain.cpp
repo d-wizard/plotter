@@ -105,7 +105,7 @@ plotGuiMain::~plotGuiMain()
 
     delete m_trayIcon;
 
-    QMap<std::string, MainWindow*>::iterator iter;
+    QMap<QString, MainWindow*>::iterator iter;
     for(iter = m_plotGuis.begin(); iter != m_plotGuis.end(); ++iter)
     {
         delete iter.value();
@@ -116,7 +116,7 @@ plotGuiMain::~plotGuiMain()
 
 void plotGuiMain::removeHiddenPlotWindows()
 {
-    QMap<std::string, MainWindow*>::iterator iter = m_plotGuis.begin();
+    QMap<QString, MainWindow*>::iterator iter = m_plotGuis.begin();
     while(iter != m_plotGuis.end())
     {
         if(iter.value()->isVisible() == false)
@@ -146,20 +146,21 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
 
     if(validPlotAction(msgUnpacker.m_plotAction))
     {
-        if(m_plotGuis.find(msgUnpacker.m_plotName) == m_plotGuis.end())
+        QString plotName(msgUnpacker.m_plotName.c_str());
+        if(m_plotGuis.find(plotName) == m_plotGuis.end())
         {
-           m_plotGuis[msgUnpacker.m_plotName] = new MainWindow();
-           m_plotGuis[msgUnpacker.m_plotName]->setWindowTitle(msgUnpacker.m_plotName.c_str());
+           m_plotGuis[plotName] = new MainWindow();
+           m_plotGuis[plotName]->setWindowTitle(msgUnpacker.m_plotName.c_str());
         }
         switch(msgUnpacker.m_plotAction)
         {
         case E_PLOT_1D:
-            m_plotGuis[msgUnpacker.m_plotName]->add1dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_yAxisValues);
-            m_plotGuis[msgUnpacker.m_plotName]->show();
+            m_plotGuis[plotName]->add1dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_yAxisValues);
+            m_plotGuis[plotName]->show();
             break;
         case E_PLOT_2D:
-            m_plotGuis[msgUnpacker.m_plotName]->add2dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-            m_plotGuis[msgUnpacker.m_plotName]->show();
+            m_plotGuis[plotName]->add2dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
+            m_plotGuis[plotName]->show();
             break;
         default:
             break;

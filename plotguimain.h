@@ -44,7 +44,7 @@ class plotGuiMain : public QMainWindow
 public:
     explicit plotGuiMain(QWidget *parent = 0);
     ~plotGuiMain();
-    QMap<std::string, MainWindow*> m_plotGuis;
+    QMap<QString, MainWindow*> m_plotGuis;
 
     void readPlotMsg(const char *msg, unsigned int size);
     
