@@ -68,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
     palette.setColor( QPalette::Text, Qt::white);
     this->setPalette(palette);
 
+    connect(this, SIGNAL(updateCursorMenusSignal()),
+            this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
+
     // Connect menu commands
     connect(&m_zoomAction, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
     connect(&m_cursorAction, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
@@ -351,8 +354,8 @@ void MainWindow::add1dCurve(std::string name, dubVect &yPoints)
         setSelectedCurveIndex(curveIndex);
     }
 
-    m_qwtPlot->replot();
-    updateCursorMenus();
+    replotMainPlot();
+    emit updateCursorMenusSignal();
 }
 
 
@@ -374,8 +377,8 @@ void MainWindow::add2dCurve(std::string name, dubVect &xPoints, dubVect &yPoints
         setSelectedCurveIndex(curveIndex);
     }
 
-    m_qwtPlot->replot();
-    updateCursorMenus();
+    replotMainPlot();
+    emit updateCursorMenusSignal();
 }
 
 
@@ -407,7 +410,7 @@ void MainWindow::cursorMode()
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
     m_qwtSelectedSampleDelta->hideCursor();
     updatePointDisplay();
-    m_qwtPlot->replot();
+    replotMainPlot();
 }
 
 
@@ -424,7 +427,7 @@ void MainWindow::deltaCursorMode()
 
     m_qwtSelectedSample->hideCursor();
     updatePointDisplay();
-    m_qwtPlot->replot();
+    replotMainPlot();
 }
 
 
@@ -434,7 +437,6 @@ void MainWindow::zoomMode()
     m_zoomAction.setIcon(m_checkedIcon);
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
-    //m_qwtPicker->setStateMachine( new QwtPickerDragPointMachine() );
 }
 
 
@@ -455,7 +457,8 @@ void MainWindow::normalizeCurves()
     {
         m_normalizeAction.setIcon(QIcon());
     }
-    replotNormalized();
+    replotMainPlot();
+    resetZoom();
 }
 
 
@@ -471,9 +474,9 @@ void MainWindow::visibleCursorMenuSelect(int index)
         m_qwtCurves[index]->curve->attach(m_qwtPlot);
     }
     updatePointDisplay();
-    m_qwtPlot->replot();
+    replotMainPlot();
     calcMaxMin();
-    updateCursorMenus();
+    emit updateCursorMenusSignal();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -482,7 +485,7 @@ void MainWindow::selectedCursorMenuSelect(int index)
     {
         setSelectedCurveIndex(index);
         updateCursors();
-        updateCursorMenus();
+        emit updateCursorMenusSignal();
     }
 }
 
@@ -540,7 +543,7 @@ void MainWindow::pointSelected(const QPointF &pos)
         m_qwtSelectedSample->showCursor(pos);
 
         updatePointDisplay();
-        m_qwtPlot->replot();
+        replotMainPlot();
 
     }
 
@@ -677,7 +680,7 @@ void MainWindow::updateCursors()
     updatePointDisplay();
     if(m_qwtSelectedSample->isAttached || m_qwtSelectedSampleDelta->isAttached)
     {
-        m_qwtPlot->replot();
+        replotMainPlot();
     }
 }
 
@@ -860,7 +863,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
             setSelectedCurveIndex(displayedCurves[newIndexOfSelectedCursor]);
             updateCursors();
         }
-        updateCursorMenus();
+        emit updateCursorMenusSignal();
     }
 
 }
@@ -937,12 +940,12 @@ void MainWindow::setSelectedCurveIndex(int index)
         m_selectedCurveIndex = index;
         if(m_normalizeCurves)
         {
-            replotNormalized();
+            replotMainPlot();
         }
     }
 }
 
-void MainWindow::replotNormalized()
+void MainWindow::replotMainPlot()
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {

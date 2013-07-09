@@ -130,9 +130,7 @@ private:
 
     void setSelectedCurveIndex(int index);
 
-    void replotNormalized();
-
-    void updateCursorMenus();
+    void replotMainPlot();
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);
@@ -162,6 +160,11 @@ private slots:
     void onApplicationFocusChanged(QWidget* old, QWidget* now);
     void ShowContextMenu(const QPoint& pos);
 
+// Functions that could be called from a thread, but modify ui
+public slots:
+    void updateCursorMenus();
+signals:
+    void updateCursorMenusSignal();
 
 };
 
