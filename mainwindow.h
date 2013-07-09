@@ -115,6 +115,8 @@ private:
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
 
+    void addCurve(QString& name, dubVect* xPoints, dubVect* yPoints);
+
     bool eventFilter(QObject *obj, QEvent *event);
 
     void calcMaxMin();
@@ -132,6 +134,8 @@ private:
     void setSelectedCurveIndex(int index);
 
     void replotMainPlot();
+
+    int findMatchingCurve(const QString& curveTitle);
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);

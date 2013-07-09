@@ -338,43 +338,66 @@ void MainWindow::updateCursorMenus()
 
 void MainWindow::add1dCurve(QString name, dubVect &yPoints)
 {
-    int curveIndex = m_qwtCurves.size();
-    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
-
-    m_qwtCurves.push_back(new CurveData(name, yPoints, curveColors[colorLookupIndex]));
-
-    QwtPlotCurve* curve = m_qwtCurves[curveIndex]->getCurve();
-
-    m_qwtCurves[curveIndex]->displayed = true;
-    curve->attach(m_qwtPlot);
-    calcMaxMin();
-
-    if(m_qwtSelectedSample->getCurve() == NULL)
-    {
-        setSelectedCurveIndex(curveIndex);
-    }
-
-    replotMainPlot();
-    emit updateCursorMenusSignal();
+    addCurve(name, NULL, &yPoints);
 }
 
 
 void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 {
-    int curveIndex = m_qwtCurves.size();
-    int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+    addCurve(name, &xPoints, &yPoints);
+}
 
-    m_qwtCurves.push_back(new CurveData(name, xPoints, yPoints, curveColors[colorLookupIndex]));
-
-    QwtPlotCurve* curve = m_qwtCurves[curveIndex]->getCurve();
-
-    m_qwtCurves[curveIndex]->displayed = true;
-    curve->attach(m_qwtPlot);
-    calcMaxMin();
-
-    if(m_qwtSelectedSample->getCurve() == NULL)
+void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
+{
+    int titleMatchIndex = findMatchingCurve(name);
+    if(titleMatchIndex >= 0)
     {
-        setSelectedCurveIndex(curveIndex);
+        QColor oldColor = m_qwtCurves[titleMatchIndex]->color;
+        bool oldDisplayed = m_qwtCurves[titleMatchIndex]->displayed;
+        if(oldDisplayed)
+        {
+            m_qwtCurves[titleMatchIndex]->curve->detach();
+        }
+        delete m_qwtCurves[titleMatchIndex];
+
+        if(xPoints == NULL)
+        {
+            m_qwtCurves[titleMatchIndex] = new CurveData(name, *yPoints, oldColor);
+        }
+        else
+        {
+            m_qwtCurves[titleMatchIndex] = new CurveData(name, *xPoints, *yPoints, oldColor);
+        }
+
+        if(oldDisplayed)
+        {
+            m_qwtCurves[titleMatchIndex]->curve->attach(m_qwtPlot);
+            calcMaxMin();
+        }
+    }
+    else
+    {
+
+        int curveIndex = m_qwtCurves.size();
+        int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+
+        if(xPoints == NULL)
+        {
+            m_qwtCurves.push_back(new CurveData(name, *yPoints, curveColors[colorLookupIndex]));
+        }
+        else
+        {
+            m_qwtCurves.push_back(new CurveData(name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
+        }
+
+        m_qwtCurves[curveIndex]->displayed = true;
+        m_qwtCurves[curveIndex]->curve->attach(m_qwtPlot);
+        calcMaxMin();
+
+        if(m_qwtSelectedSample->getCurve() == NULL)
+        {
+            setSelectedCurveIndex(curveIndex);
+        }
     }
 
     replotMainPlot();
@@ -978,3 +1001,17 @@ void MainWindow::onApplicationFocusChanged(QWidget* old, QWidget* now)
       QCoreApplication::instance()->removeEventFilter(this);
   }
 }
+
+int MainWindow::findMatchingCurve(const QString& curveTitle)
+{
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i]->title == curveTitle)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
