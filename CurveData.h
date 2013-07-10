@@ -274,6 +274,23 @@ public:
         return curve->title().text();
     }
 
+    void SetNewCurveSamples(dubVect& newYPoints)
+    {
+        yPoints = newYPoints;
+        numPoints = yPoints.size();
+        fill1DxPoints();
+        findMaxMin();
+        setCurveSamples();
+    }
+    void SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
+    {
+        xPoints = newXPoints;
+        yPoints = newYPoints;
+        numPoints = yPoints.size();
+        findMaxMin();
+        setCurveSamples();
+    }
+
 
 private:
     CurveData();

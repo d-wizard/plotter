@@ -349,37 +349,21 @@ void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 
 void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 {
-    int titleMatchIndex = findMatchingCurve(name);
-    if(titleMatchIndex >= 0)
+    int curveIndex = findMatchingCurve(name);
+    if(curveIndex >= 0)
     {
-        QColor oldColor = m_qwtCurves[titleMatchIndex]->color;
-        bool oldDisplayed = m_qwtCurves[titleMatchIndex]->displayed;
-        if(oldDisplayed)
-        {
-            m_qwtCurves[titleMatchIndex]->curve->detach();
-        }
-        delete m_qwtCurves[titleMatchIndex];
-
         if(xPoints == NULL)
         {
-            m_qwtCurves[titleMatchIndex] = new CurveData(name, *yPoints, oldColor);
+            m_qwtCurves[curveIndex]->SetNewCurveSamples(*yPoints);
         }
         else
         {
-            m_qwtCurves[titleMatchIndex] = new CurveData(name, *xPoints, *yPoints, oldColor);
-        }
-
-        if(oldDisplayed)
-        {
-            m_qwtCurves[titleMatchIndex]->displayed = true;
-            m_qwtCurves[titleMatchIndex]->curve->attach(m_qwtPlot);
-            calcMaxMin();
+            m_qwtCurves[curveIndex]->SetNewCurveSamples(*xPoints, *yPoints);
         }
     }
     else
     {
-
-        int curveIndex = m_qwtCurves.size();
+        curveIndex = m_qwtCurves.size();
         int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
 
         if(xPoints == NULL)
@@ -393,14 +377,14 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 
         m_qwtCurves[curveIndex]->displayed = true;
         m_qwtCurves[curveIndex]->curve->attach(m_qwtPlot);
-        calcMaxMin();
-
-        if(m_qwtSelectedSample->getCurve() == NULL)
-        {
-            setSelectedCurveIndex(curveIndex);
-        }
     }
 
+    calcMaxMin();
+
+    if(m_qwtSelectedSample->getCurve() == NULL)
+    {
+        setSelectedCurveIndex(curveIndex);
+    }
     replotMainPlot();
     emit updateCursorMenusSignal();
 }

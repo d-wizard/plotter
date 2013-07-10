@@ -153,13 +153,32 @@ private:
    unsigned int m_numSamplesInPlot;
    ePlotDataTypes m_xAxisDataType;
    ePlotDataTypes m_yAxisDataType;
+
+   int m_xShiftFactor;
+   int m_yShiftFactor;
 };
 
 
 void packResetPlotMsg(std::vector<char>& msg);
-void pack1dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes yAxisType, void* yAxisSamples);
-void pack2dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes xAxisType, ePlotDataTypes yAxisType, void* xAxisSamples, void* yAxisSamples);
 
+void pack1dPlotMsg( std::vector<char>& msg,
+                    std::string plotName,
+                    std::string curveName,
+                    unsigned int numSamp,
+                    ePlotDataTypes yAxisType,
+                    int yShiftValue,
+                    void* yAxisSamples);
+
+void pack2dPlotMsg( std::vector<char>& msg,
+                    std::string plotName,
+                    std::string curveName,
+                    unsigned int numSamp,
+                    ePlotDataTypes xAxisType,
+                    int xShiftValue,
+                    ePlotDataTypes yAxisType,
+                    int yShiftValue,
+                    void* xAxisSamples,
+                    void* yAxisSamples);
 
 
 #endif

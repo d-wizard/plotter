@@ -184,12 +184,32 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
             unpackStr(&m_curveName);
             unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
             unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+            unpack(&m_yShiftFactor, sizeof(m_yShiftFactor));
             if(validPlotDataTypes(m_yAxisDataType))
             {
                m_yAxisValues.resize(m_numSamplesInPlot);
-               for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+               if(m_yShiftFactor == 0)
                {
-                  m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  }
+               }
+               else if(m_yShiftFactor > 0)
+               {
+                  double divideFactor = (double)(1 << m_yShiftFactor);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) / divideFactor;
+                  }
+               }
+               else
+               {
+                  double multiplyFactor = (double)(1 << (-m_yShiftFactor));
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * multiplyFactor;
+                  }
                }
             }
          break;
@@ -198,18 +218,59 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
             unpackStr(&m_curveName);
             unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
             unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
+            unpack(&m_xShiftFactor, sizeof(m_xShiftFactor));
             unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+            unpack(&m_yShiftFactor, sizeof(m_yShiftFactor));
             if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
             {
                m_xAxisValues.resize(m_numSamplesInPlot);
                m_yAxisValues.resize(m_numSamplesInPlot);
-               for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+               if(m_xShiftFactor == 0)
                {
-                  m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                  }
                }
-               for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+               else if(m_xShiftFactor > 0)
                {
-                  m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  double divideFactor = (double)(1 << m_xShiftFactor);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType) / divideFactor;
+                  }
+               }
+               else
+               {
+                  double multiplyFactor = (double)(1 << (-m_xShiftFactor));
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType) * multiplyFactor;
+                  }
+               }
+               
+               if(m_yShiftFactor == 0)
+               {
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  }
+               }
+               else if(m_yShiftFactor > 0)
+               {
+                  double divideFactor = (double)(1 << m_yShiftFactor);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) / divideFactor;
+                  }
+               }
+               else
+               {
+                  double multiplyFactor = (double)(1 << (-m_yShiftFactor));
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  {
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * multiplyFactor;
+                  }
                }
             }
          break;
@@ -331,11 +392,23 @@ inline void copyAndIncIndex(char* baseWritePtr, unsigned int* index, const void*
    (*index) += copySize;
 }
 
-void pack1dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes yAxisType, void* yAxisSamples)
+void pack1dPlotMsg( std::vector<char>& msg,
+                    std::string plotName,
+                    std::string curveName,
+                    unsigned int numSamp,
+                    ePlotDataTypes yAxisType,
+                    int yShiftValue,
+                    void* yAxisSamples)
 {
-   unsigned int totalMsgSize = sizeof(ePlotAction) + MSG_SIZE_PARAM_NUM_BYTES +
-      plotName.size() + 1 + curveName.size() + 1 + sizeof(numSamp) + 
-      sizeof(yAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
+   unsigned int totalMsgSize =
+      sizeof(ePlotAction) +
+      MSG_SIZE_PARAM_NUM_BYTES +
+      plotName.size() + 1 +
+      curveName.size() + 1 +
+      sizeof(numSamp) +
+      sizeof(yAxisType) +
+      sizeof(yShiftValue) +
+      (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
 
    msg.resize(totalMsgSize);
    ePlotAction temp = E_PLOT_1D;
@@ -347,15 +420,33 @@ void pack1dPlotMsg(std::vector<char>& msg, std::string plotName, std::string cur
    copyAndIncIndex(&msg[0], &curCopyIndex, curveName.c_str(), curveName.size()+1);
    copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));
    copyAndIncIndex(&msg[0], &curCopyIndex, &yAxisType, sizeof(yAxisType));
+   copyAndIncIndex(&msg[0], &curCopyIndex, &yShiftValue, sizeof(yShiftValue));
    copyAndIncIndex(&msg[0], &curCopyIndex, yAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]));
 
 }
-void pack2dPlotMsg(std::vector<char>& msg, std::string plotName, std::string curveName, unsigned int numSamp, ePlotDataTypes xAxisType, ePlotDataTypes yAxisType, void* xAxisSamples, void* yAxisSamples)
+void pack2dPlotMsg( std::vector<char>& msg,
+                    std::string plotName,
+                    std::string curveName,
+                    unsigned int numSamp,
+                    ePlotDataTypes xAxisType,
+                    int xShiftValue,
+                    ePlotDataTypes yAxisType,
+                    int yShiftValue,
+                    void* xAxisSamples,
+                    void* yAxisSamples)
 {
-   unsigned int totalMsgSize = sizeof(ePlotAction) + MSG_SIZE_PARAM_NUM_BYTES +
-      plotName.size() + 1 + curveName.size() + 1 + sizeof(numSamp) + 
-      sizeof(xAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]) +
-      sizeof(yAxisType) + (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
+   unsigned int totalMsgSize =
+           sizeof(ePlotAction) +
+           MSG_SIZE_PARAM_NUM_BYTES +
+           plotName.size() + 1 +
+           curveName.size() + 1 +
+           sizeof(numSamp) +
+           sizeof(xAxisType) +
+           sizeof(xShiftValue) +
+           sizeof(yAxisType) +
+           sizeof(yShiftValue) +
+           (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]) +
+           (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
 
    msg.resize(totalMsgSize);
    ePlotAction temp = E_PLOT_2D;
@@ -367,7 +458,9 @@ void pack2dPlotMsg(std::vector<char>& msg, std::string plotName, std::string cur
    copyAndIncIndex(&msg[0], &curCopyIndex, curveName.c_str(), curveName.size()+1);
    copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));
    copyAndIncIndex(&msg[0], &curCopyIndex, &xAxisType, sizeof(xAxisType));
+   copyAndIncIndex(&msg[0], &curCopyIndex, &xShiftValue, sizeof(xShiftValue));
    copyAndIncIndex(&msg[0], &curCopyIndex, &yAxisType, sizeof(yAxisType));
+   copyAndIncIndex(&msg[0], &curCopyIndex, &yShiftValue, sizeof(yShiftValue));
    copyAndIncIndex(&msg[0], &curCopyIndex, xAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]));
    copyAndIncIndex(&msg[0], &curCopyIndex, yAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]));
 }
