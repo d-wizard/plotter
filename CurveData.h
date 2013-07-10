@@ -276,6 +276,7 @@ public:
 
     void SetNewCurveSamples(dubVect& newYPoints)
     {
+        plotType = E_PLOT_TYPE_1D;
         yPoints = newYPoints;
         numPoints = yPoints.size();
         fill1DxPoints();
@@ -284,6 +285,7 @@ public:
     }
     void SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
     {
+        plotType = E_PLOT_TYPE_2D;
         xPoints = newXPoints;
         yPoints = newYPoints;
         numPoints = yPoints.size();
