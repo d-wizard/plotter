@@ -37,9 +37,9 @@ plotGuiMain::plotGuiMain(QWidget *parent) :
                      this, SLOT(readPlotMsgSlot(const char*, unsigned int)), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
-    std::string plotName = "Test Plot";
+    QString plotName = "Test Plot";
     m_plotGuis[plotName] = new MainWindow();
-    m_plotGuis[plotName]->setWindowTitle(plotName.c_str());
+    m_plotGuis[plotName]->setWindowTitle(plotName);
     m_plotGuis[plotName]->show();
 
 
