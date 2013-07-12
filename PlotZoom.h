@@ -20,6 +20,7 @@
 #define PlotZoom_h
 
 #include <QScrollBar>
+#include <QVector>
 #include "PlotHelperTypes.h"
 #include <qwt_plot.h>
 
@@ -43,7 +44,8 @@ public:
        m_scrollBarResXAxis(10000),
        m_scrollBarResYAxis(10000),
        m_curXScrollPos(-1),
-       m_curYScrollPos(-1)
+       m_curYScrollPos(-1),
+       m_zoomDimIndex(0)
    {
        m_plotDimensions.minX = 0;
        m_plotDimensions.minY = 0;
@@ -65,60 +67,10 @@ public:
         m_zoomWidth = m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
         m_zoomHeight = m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
    }
-   
+
    void SetZoom(maxMinXY zoomDimensions)
    {
-       BoundZoom(zoomDimensions);
-       double zoomWidth = zoomDimensions.maxX - zoomDimensions.minX;
-       double zoomHeight = zoomDimensions.maxY - zoomDimensions.minY;
-
-       if(zoomWidth > 0.0 && zoomHeight > 0.0)
-       {
-           m_zoomDimensions = zoomDimensions;
-           m_zoomWidth = zoomWidth;
-           m_zoomHeight = zoomHeight;
-
-           m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
-           m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
-
-           m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
-           m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
-           m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
-           m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
-
-           m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
-           m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
-
-
-           if( m_zoomDimensions.minX == m_plotDimensions.minX &&
-               m_zoomDimensions.maxX == m_plotDimensions.maxX )
-           {
-               m_horzScroll->setRange(0, 0);
-               m_curXScrollPos = -1;
-           }
-           else
-           {
-               m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
-               BoundScroll(m_horzScroll, m_curXScrollPos);
-               m_horzScroll->setSliderPosition(m_curXScrollPos);
-           }
-
-           if( m_zoomDimensions.minY == m_plotDimensions.minY &&
-               m_zoomDimensions.maxY == m_plotDimensions.maxY )
-           {
-               m_vertScroll->setRange(0, 0);
-               m_curYScrollPos = -1;
-           }
-           else
-           {
-               m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
-               BoundScroll(m_vertScroll, m_curYScrollPos);
-               m_vertScroll->setSliderPosition(m_curYScrollPos);
-           }
-
-           m_qwtPlot->replot();
-       }
-
+       SetZoom(zoomDimensions, true);
    }
 
    void VertSliderMoved()
@@ -275,12 +227,34 @@ public:
             }
         }
 
-        SetZoom(zoom);
+        SetZoom(zoom, false);
     }
 
     void ResetZoom()
     {
-        SetZoom(m_zoomDimensions);
+        SetZoom(m_zoomDimensions, true);
+    }
+
+    void changeZoomFromSavedZooms(int changeZoomDelta)
+    {
+        if(m_zoomDimSave.size() > 0)
+        {
+            int newZoomIndex = m_zoomDimIndex + changeZoomDelta;
+            if(newZoomIndex < 0)
+            {
+                newZoomIndex = 0;
+            }
+            else if( newZoomIndex >= m_zoomDimSave.size())
+            {
+                newZoomIndex = m_zoomDimSave.size() - 1;
+            }
+
+            if((unsigned int)newZoomIndex != m_zoomDimIndex)
+            {
+                m_zoomDimIndex = newZoomIndex;
+                SetZoom(m_zoomDimSave[m_zoomDimIndex], false);
+            }
+        }
     }
 
 
@@ -308,7 +282,82 @@ private:
 
    int m_curXScrollPos;
    int m_curYScrollPos;
-   
+
+   QVector<maxMinXY> m_zoomDimSave;
+   unsigned int m_zoomDimIndex;
+
+   void SetZoom(maxMinXY zoomDimensions, bool saveZoom)
+   {
+       // Nothing in the save zoom vector, initialize it with current zoom value.
+       if(saveZoom == true && m_zoomDimSave.size() == 0)
+       {
+           m_zoomDimSave.resize(1);
+           m_zoomDimIndex = 0;
+           m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
+
+       }
+
+       BoundZoom(zoomDimensions);
+       double zoomWidth = zoomDimensions.maxX - zoomDimensions.minX;
+       double zoomHeight = zoomDimensions.maxY - zoomDimensions.minY;
+
+       if(zoomWidth > 0.0 && zoomHeight > 0.0)
+       {
+           m_zoomDimensions = zoomDimensions;
+           m_zoomWidth = zoomWidth;
+           m_zoomHeight = zoomHeight;
+
+           m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
+           m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
+
+           m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
+           m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
+           m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
+           m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
+
+           m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
+           m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
+
+
+           if( m_zoomDimensions.minX == m_plotDimensions.minX &&
+               m_zoomDimensions.maxX == m_plotDimensions.maxX )
+           {
+               m_horzScroll->setRange(0, 0);
+               m_curXScrollPos = -1;
+           }
+           else
+           {
+               m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
+               BoundScroll(m_horzScroll, m_curXScrollPos);
+               m_horzScroll->setSliderPosition(m_curXScrollPos);
+           }
+
+           if( m_zoomDimensions.minY == m_plotDimensions.minY &&
+               m_zoomDimensions.maxY == m_plotDimensions.maxY )
+           {
+               m_vertScroll->setRange(0, 0);
+               m_curYScrollPos = -1;
+           }
+           else
+           {
+               m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
+               BoundScroll(m_vertScroll, m_curYScrollPos);
+               m_vertScroll->setSliderPosition(m_curYScrollPos);
+           }
+
+           // Remove any next zooms and set the current zoom.
+           if(saveZoom == true)
+           {
+               ++m_zoomDimIndex;
+               m_zoomDimSave.resize(m_zoomDimIndex+1);
+               m_zoomDimSave[m_zoomDimIndex] = m_zoomDimensions;
+           }
+
+           m_qwtPlot->replot();
+       }
+
+   }
+
    PlotZoom();
 };
 

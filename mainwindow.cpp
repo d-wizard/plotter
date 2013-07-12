@@ -707,18 +707,29 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             bool validKey = true;
             QKeyEvent *KeyEvent = (QKeyEvent*)event;
 
-            switch(m_selectMode)
+            if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
-            case E_ZOOM:
-                validKey = keyPressModifyZoom(KeyEvent->key());
-                break;
-            case E_CURSOR:
-            case E_DELTA_CURSOR:
-                validKey = keyPressModifyCursor(KeyEvent->key());
-                break;
-            default:
-                validKey = false;
-                break;
+                m_plotZoom->changeZoomFromSavedZooms(-1);
+            }
+            else if(KeyEvent->key() == Qt::Key_Y && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+                m_plotZoom->changeZoomFromSavedZooms(1);
+            }
+            else
+            {
+                switch(m_selectMode)
+                {
+                case E_ZOOM:
+                    validKey = keyPressModifyZoom(KeyEvent->key());
+                    break;
+                case E_CURSOR:
+                case E_DELTA_CURSOR:
+                    validKey = keyPressModifyCursor(KeyEvent->key());
+                    break;
+                default:
+                    validKey = false;
+                    break;
+                }
             }
 
 
