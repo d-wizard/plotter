@@ -205,6 +205,12 @@ public:
         }
     }
 
+    void Zoom(double zoomFactor)
+    {
+        // Keep current zoom center point the center
+        Zoom(zoomFactor, QPointF(0.5,0.5));
+    }
+
 
     // relativeMousePos is the % (0 to 1) of where the mouse is when zoom is requested
     // Keep the relative point point at the same poisition in the canvas as before the zoom.

@@ -217,6 +217,9 @@ void MainWindow::resetPlot()
     m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtPicker->setTrackerPen( QColor( Qt::white ) );
 
+    // Initialize in cursor mode
+    cursorMode();
+
     m_qwtPlot->show();
     m_qwtGrid->show();
 
@@ -417,6 +420,7 @@ void MainWindow::cursorMode()
     m_deltaCursorAction.setIcon(QIcon());
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
     m_qwtSelectedSampleDelta->hideCursor();
+    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     updatePointDisplay();
     replotMainPlot();
 }
@@ -433,6 +437,7 @@ void MainWindow::deltaCursorMode()
     m_qwtSelectedSampleDelta->showCursor(
         QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint));
 
+    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtSelectedSample->hideCursor();
     updatePointDisplay();
     replotMainPlot();
@@ -445,6 +450,7 @@ void MainWindow::zoomMode()
     m_zoomAction.setIcon(m_checkedIcon);
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
+    m_qwtPicker->setRubberBand( QwtPicker::RectRubberBand);
 }
 
 
@@ -752,6 +758,22 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 {
                     m_plotZoom->Zoom(1.1, relMousePos);
                 }
+                return true;
+            }
+            else
+            {
+                // standard event processing
+                return QObject::eventFilter(obj, event);
+            }
+
+        }
+        else if(event->type() == QEvent::MouseButtonRelease)
+        {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            if(mouseEvent->button() == Qt::LeftButton && keyEvent->modifiers().testFlag(Qt::ShiftModifier))
+            {
+                m_plotZoom->Zoom(1.1);
                 return true;
             }
             else
