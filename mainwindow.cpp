@@ -473,7 +473,7 @@ void MainWindow::normalizeCurves()
         m_normalizeAction.setIcon(QIcon());
     }
     replotMainPlot();
-    resetZoom();
+    m_plotZoom->ResetZoom();
 }
 
 
@@ -544,7 +544,7 @@ void MainWindow::calcMaxMin()
         // TODO: Should do something when there are no curves displayed
     }
 
-    m_plotZoom->SetPlotDimensions(m_maxMin);
+    //m_plotZoom->SetPlotDimensions(m_maxMin);
 
 }
 
@@ -985,6 +985,7 @@ void MainWindow::setSelectedCurveIndex(int index)
         if(m_normalizeCurves)
         {
             replotMainPlot();
+            m_plotZoom->ResetZoom();
         }
     }
 }
@@ -1002,6 +1003,15 @@ void MainWindow::replotMainPlot()
             m_qwtCurves[i]->resetNormalizeFactor();
         }
         m_qwtCurves[i]->setCurveSamples();
+    }
+
+    if(m_normalizeCurves)
+    {
+        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+    }
+    else
+    {
+        m_plotZoom->SetPlotDimensions(m_maxMin);
     }
     m_qwtPlot->replot();
 }

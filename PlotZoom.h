@@ -264,23 +264,32 @@ public:
 
     void changeZoomFromSavedZooms(int changeZoomDelta)
     {
+        bool resetZoom = true;
+
         if(m_zoomDimSave.size() > 0)
         {
             int newZoomIndex = m_zoomDimIndex + changeZoomDelta;
+            resetZoom = false;
             if(newZoomIndex < 0)
             {
                 newZoomIndex = 0;
+                resetZoom = true;
             }
             else if( newZoomIndex >= m_zoomDimSave.size())
             {
                 newZoomIndex = m_zoomDimSave.size() - 1;
             }
 
-            if((unsigned int)newZoomIndex != m_zoomDimIndex)
+            if(resetZoom == false && (unsigned int)newZoomIndex != m_zoomDimIndex)
             {
                 m_zoomDimIndex = newZoomIndex;
                 SetZoom(m_zoomDimSave[m_zoomDimIndex], false);
             }
+        }
+
+        if(resetZoom)
+        {
+            ResetZoom();
         }
     }
 
