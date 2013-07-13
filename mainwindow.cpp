@@ -388,6 +388,7 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
     {
         setSelectedCurveIndex(curveIndex);
     }
+    m_plotZoom->ResetZoom();
     replotMainPlot();
     emit updateCursorMenusSignal();
 }
@@ -457,7 +458,7 @@ void MainWindow::zoomMode()
 void MainWindow::resetZoom()
 {
     calcMaxMin();
-    m_plotZoom->SetZoom(m_maxMin);
+    m_plotZoom->ResetZoom();
 }
 
 void MainWindow::normalizeCurves()

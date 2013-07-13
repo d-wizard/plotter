@@ -26,6 +26,9 @@
 
 #include <math.h>
 
+#define EXTRA_ZOOM (0.02)
+
+
 class PlotZoom
 {
 public:
@@ -63,9 +66,29 @@ public:
 
    void SetPlotDimensions(maxMinXY plotDimensions)
    {
-        m_plotDimensions = m_plotDimensions = plotDimensions;
-        m_zoomWidth = m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
-        m_zoomHeight = m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
+        double width = plotDimensions.maxX - plotDimensions.minX;
+        double height = plotDimensions.maxY - plotDimensions.minY;
+
+        m_plotDimensions.maxX = plotDimensions.maxX + width * EXTRA_ZOOM;
+        m_plotDimensions.minX = plotDimensions.minX - width * EXTRA_ZOOM;
+        m_plotDimensions.maxY = plotDimensions.maxY + height * EXTRA_ZOOM;
+        m_plotDimensions.minY = plotDimensions.minY - height * EXTRA_ZOOM;
+
+        m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
+        m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
+
+        if(m_zoomWidth == 0)
+        {
+            m_zoomWidth = m_plotWidth;
+            m_zoomDimensions.minX = m_plotDimensions.minX;
+            m_zoomDimensions.maxX = m_plotDimensions.maxX;
+        }
+        if(m_zoomHeight == 0)
+        {
+            m_zoomHeight = m_plotHeight;
+            m_zoomDimensions.minY = m_plotDimensions.minY;
+            m_zoomDimensions.maxY = m_plotDimensions.maxY;
+        }
    }
 
    void SetZoom(maxMinXY zoomDimensions)
@@ -232,7 +255,7 @@ public:
 
     void ResetZoom()
     {
-        SetZoom(m_zoomDimensions, true);
+        SetZoom(m_plotDimensions, false);
     }
 
     void changeZoomFromSavedZooms(int changeZoomDelta)
