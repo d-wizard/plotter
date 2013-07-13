@@ -701,11 +701,13 @@ void MainWindow::updateCursors()
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
+    bool usedEvent = false;
     if(isActiveWindow())
     {
+        // Start assuming the event is going to be used
+        usedEvent = true;
         if (event->type() == QEvent::KeyPress)
         {
-            bool validKey = true;
             QKeyEvent *KeyEvent = (QKeyEvent*)event;
 
             if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
@@ -718,30 +720,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
             else
             {
+                // Key stroke wasn't anything more specific. Pass to some functions to see if
+                // the key stroke was valid.
                 switch(m_selectMode)
                 {
                 case E_ZOOM:
-                    validKey = keyPressModifyZoom(KeyEvent->key());
+                    usedEvent = keyPressModifyZoom(KeyEvent->key());
                     break;
                 case E_CURSOR:
                 case E_DELTA_CURSOR:
-                    validKey = keyPressModifyCursor(KeyEvent->key());
+                    usedEvent = keyPressModifyCursor(KeyEvent->key());
                     break;
                 default:
-                    validKey = false;
+                    usedEvent = false;
                     break;
                 }
-            }
-
-
-            if(validKey)
-            {
-                return true;
-            }
-            else
-            {
-                // standard event processing
-                return QObject::eventFilter(obj, event);
             }
         }
         else if(event->type() == QEvent::Wheel)
@@ -770,12 +763,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 {
                     m_plotZoom->Zoom(1.1, relMousePos);
                 }
-                return true;
             }
             else
             {
-                // standard event processing
-                return QObject::eventFilter(obj, event);
+                usedEvent = false;
             }
 
         }
@@ -786,26 +777,37 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             if(mouseEvent->button() == Qt::LeftButton && keyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
                 m_plotZoom->Zoom(1.1);
-                return true;
+            }
+            else if(mouseEvent->button() == Qt::XButton1)
+            {
+                m_plotZoom->changeZoomFromSavedZooms(-1);
+            }
+            else if(mouseEvent->button() == Qt::XButton2)
+            {
+                m_plotZoom->changeZoomFromSavedZooms(1);
             }
             else
             {
-                // standard event processing
-                return QObject::eventFilter(obj, event);
+                usedEvent = false;
             }
 
         }
         else
         {
-            // standard event processing
-            return QObject::eventFilter(obj, event);
+            usedEvent = false;
         }
+    }
+
+    if(usedEvent)
+    {
+        return true;
     }
     else
     {
         // standard event processing
         return QObject::eventFilter(obj, event);
     }
+
 }
 
 bool MainWindow::keyPressModifyZoom(int key)
