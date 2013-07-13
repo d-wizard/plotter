@@ -26,8 +26,12 @@
 
 #include <math.h>
 
-#define EXTRA_ZOOM (0.02)
-
+#define ZOOM_OUT_PAD (0.02)
+#define ZOOM_SCROLL_RESOLUTION (10000)
+#define ZOOM_SCROLL_CHANGE_SMALL (50)
+#define ZOOM_SCROLL_CHANGE_BIG (250)
+#define ZOOM_IN_PERCENT (0.9)
+#define ZOOM_OUT_PERCENT (1.1)
 
 class PlotZoom
 {
@@ -44,8 +48,8 @@ public:
        m_xAxisB(0),
        m_yAxisM(0),
        m_yAxisB(0),
-       m_scrollBarResXAxis(10000),
-       m_scrollBarResYAxis(10000),
+       m_scrollBarResXAxis(ZOOM_SCROLL_RESOLUTION),
+       m_scrollBarResYAxis(ZOOM_SCROLL_RESOLUTION),
        m_curXScrollPos(-1),
        m_curYScrollPos(-1),
        m_zoomDimIndex(0)
@@ -69,10 +73,10 @@ public:
         double width = plotDimensions.maxX - plotDimensions.minX;
         double height = plotDimensions.maxY - plotDimensions.minY;
 
-        m_plotDimensions.maxX = plotDimensions.maxX + width * EXTRA_ZOOM;
-        m_plotDimensions.minX = plotDimensions.minX - width * EXTRA_ZOOM;
-        m_plotDimensions.maxY = plotDimensions.maxY + height * EXTRA_ZOOM;
-        m_plotDimensions.minY = plotDimensions.minY - height * EXTRA_ZOOM;
+        m_plotDimensions.maxX = plotDimensions.maxX + (width * ZOOM_OUT_PAD);
+        m_plotDimensions.minX = plotDimensions.minX - (width * ZOOM_OUT_PAD);
+        m_plotDimensions.maxY = plotDimensions.maxY + (height * ZOOM_OUT_PAD);
+        m_plotDimensions.minY = plotDimensions.minY - (height * ZOOM_OUT_PAD);
 
         m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
         m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;

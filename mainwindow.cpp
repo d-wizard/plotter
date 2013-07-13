@@ -757,11 +757,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
                 if(wheelEvent->delta() > 0)
                 {
-                    m_plotZoom->Zoom(0.9, relMousePos);
+                    m_plotZoom->Zoom(ZOOM_IN_PERCENT, relMousePos);
                 }
                 else if(wheelEvent->delta() < 0)
                 {
-                    m_plotZoom->Zoom(1.1, relMousePos);
+                    m_plotZoom->Zoom(ZOOM_OUT_PERCENT, relMousePos);
                 }
             }
             else
@@ -776,7 +776,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
             if(mouseEvent->button() == Qt::LeftButton && keyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
-                m_plotZoom->Zoom(1.1);
+                m_plotZoom->Zoom(ZOOM_OUT_PERCENT);
             }
             else if(mouseEvent->button() == Qt::XButton1)
             {
@@ -942,16 +942,16 @@ void MainWindow::on_verticalScrollBar_actionTriggered(int action)
     switch(action)
     {
     case QAbstractSlider::SliderSingleStepAdd:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, 1);
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderSingleStepSub:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -1);
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderPageStepAdd:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, 10);
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, ZOOM_SCROLL_CHANGE_BIG);
         break;
     case QAbstractSlider::SliderPageStepSub:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -10);
+        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -ZOOM_SCROLL_CHANGE_BIG);
         break;
     }
 }
@@ -961,16 +961,16 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
     switch(action)
     {
     case QAbstractSlider::SliderSingleStepAdd:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, 1);
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderSingleStepSub:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -1);
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderPageStepAdd:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, 10);
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, ZOOM_SCROLL_CHANGE_BIG);
         break;
     case QAbstractSlider::SliderPageStepSub:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -10);
+        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -ZOOM_SCROLL_CHANGE_BIG);
         break;
     }
 }
