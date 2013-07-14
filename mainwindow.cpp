@@ -429,17 +429,21 @@ void MainWindow::cursorMode()
 
 void MainWindow::deltaCursorMode()
 {
+    eSelectMode prevMode = m_selectMode;
     m_selectMode = E_DELTA_CURSOR;
     m_deltaCursorAction.setIcon(m_checkedIcon);
     m_zoomAction.setIcon(QIcon());
     m_cursorAction.setIcon(QIcon());
 
-    m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
-    m_qwtSelectedSampleDelta->showCursor(
-        QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint));
+    if(prevMode != E_ZOOM)
+    {
+        m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
+        m_qwtSelectedSampleDelta->showCursor(
+            QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint));
 
-    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
-    m_qwtSelectedSample->hideCursor();
+        m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+        m_qwtSelectedSample->hideCursor();
+    }
     updatePointDisplay();
     replotMainPlot();
 }
