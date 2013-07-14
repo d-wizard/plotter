@@ -66,6 +66,8 @@ public:
 
        m_vertScroll->setRange(0,0);
        m_horzScroll->setRange(0,0);
+       m_vertScroll->setVisible(false);
+       m_horzScroll->setVisible(false);
    }
 
    void SetPlotDimensions(maxMinXY plotDimensions)
@@ -364,11 +366,13 @@ private:
                m_zoomDimensions.maxX == m_plotDimensions.maxX )
            {
                m_horzScroll->setRange(0, 0);
+               m_horzScroll->setVisible(false);
                m_curXScrollPos = -1;
            }
            else
            {
                m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
+               m_horzScroll->setVisible(true);
                BoundScroll(m_horzScroll, m_curXScrollPos);
                m_horzScroll->setSliderPosition(m_curXScrollPos);
            }
@@ -377,11 +381,13 @@ private:
                m_zoomDimensions.maxY == m_plotDimensions.maxY )
            {
                m_vertScroll->setRange(0, 0);
+               m_vertScroll->setVisible(false);
                m_curYScrollPos = -1;
            }
            else
            {
                m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
+               m_vertScroll->setVisible(true);
                BoundScroll(m_vertScroll, m_curYScrollPos);
                m_vertScroll->setSliderPosition(m_curYScrollPos);
            }

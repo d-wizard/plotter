@@ -60,6 +60,14 @@ MainWindow::MainWindow(QWidget *parent) :
     palette.setColor( QPalette::Text, Qt::white);
     this->setPalette(palette);
 
+    // Set scroll bar colors, only seems to matter in Windows Classic display
+    palette = this->palette();
+    palette.setColor( QPalette::Shadow, QColor(0x505050));
+    palette.setColor( QPalette::Button, QColor(0x707070));
+    palette.setColor( QPalette::Light, QColor(0x505050));
+    ui->verticalScrollBar->setPalette(palette);
+    ui->horizontalScrollBar->setPalette(palette);
+
     connect(this, SIGNAL(updateCursorMenusSignal()),
             this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
 
@@ -77,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->verticalScrollBar->setRange(0,0);
     ui->horizontalScrollBar->setRange(0,0);
+    ui->verticalScrollBar->setVisible(false);
+    ui->horizontalScrollBar->setVisible(false);
 
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
