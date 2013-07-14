@@ -24,16 +24,8 @@
 #include <sstream>
 
 
-QColor curveColors[] =
-{
-    QColor(0,255,255),
-    QColor(255,0,255),
-    QColor(255,255,0),
-    QColor(255,128,128),
-    QColor(128,255,128),
-    QColor(128,128,255)
-};
-
+// curveColors array is created from .h file, probably should be made into its own class at some point.
+#include "curveColors.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
