@@ -471,6 +471,7 @@ void MainWindow::normalizeCurves()
     else
     {
         m_normalizeAction.setIcon(QIcon());
+        m_plotZoom->SetPlotDimensions(m_maxMin);
     }
     replotMainPlot();
     m_plotZoom->ResetZoom();
@@ -979,13 +980,31 @@ void MainWindow::setSelectedCurveIndex(int index)
 {
     if(index >= 0 && index < m_qwtCurves.size())
     {
+        int oldSelectCursor = m_selectedCurveIndex;
         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
         m_selectedCurveIndex = index;
         if(m_normalizeCurves)
         {
+            if(oldSelectCursor >= 0 && oldSelectCursor < m_qwtCurves.size())
+            {
+                maxMinXY newZoom;
+                maxMinXY oldMaxMinXY = m_plotZoom->getCurZoom();
+                tLinearXYAxis newCursorScale = m_qwtCurves[m_selectedCurveIndex]->getNormFactor();
+                newZoom.maxX = (oldMaxMinXY.maxX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
+                newZoom.minX = (oldMaxMinXY.minX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
+                newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
+                newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
+
+                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+                m_plotZoom->SetZoom(newZoom);
+            }
+            else
+            {
+                m_plotZoom->ResetZoom();
+            }
             replotMainPlot();
-            m_plotZoom->ResetZoom();
+
         }
     }
 }

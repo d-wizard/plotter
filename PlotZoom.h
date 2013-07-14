@@ -293,6 +293,11 @@ public:
         }
     }
 
+    maxMinXY getCurZoom()
+    {
+        return m_zoomDimensions;
+    }
+
 
 private:
    QwtPlot* m_qwtPlot;

@@ -171,26 +171,26 @@ public:
     {
         if(desiredScale.maxX == maxMin.maxX && desiredScale.minX == maxMin.minX)
         {
-            normalizeM_X = 1.0;
-            normalizeB_X = 0.0;
+            normFactor.xAxis.m = 1.0;
+            normFactor.xAxis.b = 0.0;
             xNormalized = false;
         }
         else
         {
-            normalizeM_X = (desiredScale.maxX - desiredScale.minX) / (maxMin.maxX - maxMin.minX);
-            normalizeB_X = desiredScale.maxX - (normalizeM_X * maxMin.maxX);
+            normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin.maxX - maxMin.minX);
+            normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin.maxX);
             xNormalized = true;
         }
         if(desiredScale.maxY == maxMin.maxY && desiredScale.minY == maxMin.minY)
         {
-            normalizeM_Y = 1.0;
-            normalizeB_Y = 0.0;
+            normFactor.yAxis.m = 1.0;
+            normFactor.yAxis.b = 0.0;
             yNormalized = false;
         }
         else
         {
-            normalizeM_Y = (desiredScale.maxY - desiredScale.minY) / (maxMin.maxY - maxMin.minY);
-            normalizeB_Y = desiredScale.maxY - (normalizeM_Y * maxMin.maxY);
+            normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin.maxY - maxMin.minY);
+            normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin.maxY);
             yNormalized = true;
         }
 
@@ -198,12 +198,12 @@ public:
 
     void resetNormalizeFactor()
     {
-        normalizeM_X = 1.0;
-        normalizeB_X = 0.0;
+        normFactor.xAxis.m = 1.0;
+        normFactor.xAxis.b = 0.0;
         xNormalized = false;
 
-        normalizeM_Y = 1.0;
-        normalizeB_Y = 0.0;
+        normFactor.yAxis.m = 1.0;
+        normFactor.yAxis.b = 0.0;
         yNormalized = false;
     }
 
@@ -216,7 +216,7 @@ public:
             normX.resize(numPoints);
             for(unsigned int i = 0; i < numPoints; ++i)
             {
-                normX[i] = (normalizeM_X * xPoints[i]) + normalizeB_X;
+                normX[i] = (normFactor.xAxis.m * xPoints[i]) + normFactor.xAxis.b;
             }
         }
         if(yNormalized)
@@ -224,7 +224,7 @@ public:
             normY.resize(numPoints);
             for(unsigned int i = 0; i < numPoints; ++i)
             {
-                normY[i] = (normalizeM_Y * yPoints[i]) + normalizeB_Y;
+                normY[i] = (normFactor.yAxis.m * yPoints[i]) + normFactor.yAxis.b;
             }
         }
 
@@ -293,6 +293,11 @@ public:
         setCurveSamples();
     }
 
+    tLinearXYAxis getNormFactor()
+    {
+        return normFactor;
+    }
+
 
 private:
     CurveData();
@@ -313,10 +318,7 @@ private:
     maxMinXY maxMin;
 
     // Normalize parameters
-    double normalizeM_X;
-    double normalizeB_X;
-    double normalizeM_Y;
-    double normalizeB_Y;
+    tLinearXYAxis normFactor;
 
     bool xNormalized;
     bool yNormalized;

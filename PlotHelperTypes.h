@@ -39,7 +39,17 @@ typedef enum
     E_PLOT_TYPE_2D
 }ePlotType;
 
+typedef struct
+{
+    double m;
+    double b;
+}tLinear;
 
+typedef struct
+{
+    tLinear xAxis;
+    tLinear yAxis;
+}tLinearXYAxis;
 
 #endif
 
