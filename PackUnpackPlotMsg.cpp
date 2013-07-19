@@ -118,15 +118,22 @@ void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBy
             break;
             case E_READ_SIZE:
             {
-               m_msgs[m_msgsWriteIndex].resize(m_curMsgSize);
-               
-               // Got to add the beginning of the message to the message buffer.
-               unsigned int bytesAlreadyRead = 0;
-               memcpy(&m_msgs[m_msgsWriteIndex][bytesAlreadyRead], &m_curAction, sizeof(m_curAction));
-               bytesAlreadyRead += sizeof(m_curAction);
-               memcpy(&m_msgs[m_msgsWriteIndex][bytesAlreadyRead], &m_curMsgSize, sizeof(m_curMsgSize));
-               bytesAlreadyRead += sizeof(m_curMsgSize);
-               setNextState(E_READ_REST_OF_MSG, &m_msgs[m_msgsWriteIndex][bytesAlreadyRead], m_curMsgSize - bytesAlreadyRead);
+               if(m_curMsgSize > (sizeof(m_curAction) + sizeof(m_curMsgSize)))
+               {
+                  m_msgs[m_msgsWriteIndex].resize(m_curMsgSize);
+                  
+                  // Got to add the beginning of the message to the message buffer.
+                  unsigned int bytesAlreadyRead = 0;
+                  memcpy(&m_msgs[m_msgsWriteIndex][bytesAlreadyRead], &m_curAction, sizeof(m_curAction));
+                  bytesAlreadyRead += sizeof(m_curAction);
+                  memcpy(&m_msgs[m_msgsWriteIndex][bytesAlreadyRead], &m_curMsgSize, sizeof(m_curMsgSize));
+                  bytesAlreadyRead += sizeof(m_curMsgSize);
+                  setNextState(E_READ_REST_OF_MSG, &m_msgs[m_msgsWriteIndex][bytesAlreadyRead], m_curMsgSize - bytesAlreadyRead);
+               }
+               else
+               {
+                  reset();
+               }
             }
             break;
             case E_READ_REST_OF_MSG:
