@@ -332,12 +332,12 @@ void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, d
       // The end
       clientListPtr->prev->next = NULL;
    }
+
+   pthread_mutex_unlock(&dSock->mutex);
    
    sem_destroy(&clientListPtr->cur.sem);
 
    free(clientListPtr);
-
-   pthread_mutex_unlock(&dSock->mutex);
 }
 
 
