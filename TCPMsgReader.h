@@ -43,6 +43,8 @@ private:
 
 
    static void RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size);
+   static void ClientStartCallback(void* inPtr, struct sockaddr_storage* client);
+   static void ClientEndCallback(void* inPtr, struct sockaddr_storage* client);
    
    
    TCPMsgReader();

@@ -75,11 +75,18 @@ void dServerSocket_wsaInit()
    WSAStartup(0x0101, &wsda);
 }
 
-void dServerSocket_init(dServerSocket* dSock, unsigned short port, dRxPacketCallback rxPacketCallback, void* inputPtr)
+void dServerSocket_init(dServerSocket* dSock,
+                        unsigned short port,
+                        dRxPacketCallback rxPacketCallback,
+                        dClientConnStartCallback clientConnStartCallback,
+                        dClientConnEndCallback clientConnEndCallback,
+                        void* inputPtr)
 {
    memset(dSock, 0, sizeof(dSock));
    dSock->port = port;
    dSock->rxPacketCallback = rxPacketCallback;
+   dSock->clientConnStartCallback = clientConnStartCallback;
+   dSock->clientConnEndCallback = clientConnEndCallback;
    dSock->callbackInputPtr = inputPtr;
 
    sem_init(&dSock->killThreadSem, 0, 0);
@@ -337,17 +344,30 @@ void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, d
    
    sem_destroy(&clientListPtr->cur.sem);
 
+   // inform parent that a client has been disconnected
+   if(dSock->clientConnEndCallback != NULL)
+   {
+      dSock->clientConnEndCallback(dSock->callbackInputPtr, &clientListPtr->cur.info);
+   }
    free(clientListPtr);
 }
 
 
 void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct sockaddr_storage* clientAddr)
 {
+   // setup the new client connection structure
    dClientConnection* dConn = dServerSocket_createNewClientConn(dSock);
    dServerSocket_initClientConn(dConn, dSock);
    dConn->fd = clientFd;
    dConn->info = *clientAddr;
    sem_init(&dConn->sem, 0, 0);
+
+   // inform parent that a new client has connected
+   if(dSock->clientConnStartCallback != NULL)
+   {
+      dSock->clientConnStartCallback(dSock->callbackInputPtr, &dConn->info);
+   }
+
    pthread_create((pthread_t*)&dConn->rxThread, NULL, dServerSocket_rxThread, dConn);
    pthread_create((pthread_t*)&dConn->procThread, NULL, dServerSocket_procThread, dConn);
    printf("New Client %d\n", clientFd);

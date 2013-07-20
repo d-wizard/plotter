@@ -57,6 +57,8 @@ typedef struct
 
 
 typedef void (*dRxPacketCallback)(void*, struct sockaddr_storage*, char*, unsigned int);
+typedef void (*dClientConnStartCallback)(void*, struct sockaddr_storage*);
+typedef void (*dClientConnEndCallback)(void*, struct sockaddr_storage*);
 
 typedef struct
 {
@@ -86,6 +88,8 @@ typedef struct
    dSocketThread killThread;
    sem_t killThreadSem;
    dRxPacketCallback rxPacketCallback;
+   dClientConnStartCallback clientConnStartCallback;
+   dClientConnEndCallback clientConnEndCallback;
    void* callbackInputPtr;
    struct dClientConnList* clientList;
    pthread_mutex_t mutex;
@@ -95,7 +99,12 @@ typedef struct
 
 void dServerSocket_initClientConn(dClientConnection* dConn, dServerSocket* dSock);
 void dServerSocket_wsaInit();
-void dServerSocket_init(dServerSocket* dSock, unsigned short port, dRxPacketCallback rxPacketCallback, void* inputPtr);
+void dServerSocket_init(dServerSocket* dSock,
+                        unsigned short port,
+                        dRxPacketCallback rxPacketCallback,
+                        dClientConnStartCallback clientConnStartCallback,
+                        dClientConnEndCallback clientConnEndCallback,
+                        void* inputPtr);
 void* dServerSocket_acceptThread(void* voidDSock);
 void* dServerSocket_rxThread(void* voidDClientConn);
 void* dServerSocket_procThread(void* voidDClientConn);

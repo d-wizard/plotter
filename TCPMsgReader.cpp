@@ -24,7 +24,13 @@ TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
 {
    memset(&m_servSock, 0, sizeof(m_servSock));
 
-   dServerSocket_init(&m_servSock, port, RxPacketCallback, this);
+   dServerSocket_init(&m_servSock,
+                      port,
+                      RxPacketCallback,
+                      ClientStartCallback,
+                      ClientEndCallback,
+                      this);
+
    dServerSocket_bind(&m_servSock);
 
    dServerSocket_accept(&m_servSock);
@@ -41,16 +47,30 @@ TCPMsgReader::~TCPMsgReader()
    }
 }
 
+void TCPMsgReader::ClientStartCallback(void* inPtr, struct sockaddr_storage* client)
+{
+   TCPMsgReader* _this = (TCPMsgReader*)inPtr;
+   if(_this->m_msgReaderMap.find(client) == _this->m_msgReaderMap.end())
+   {
+      _this->m_msgReaderMap[client] = new GetEntirePlotMsg();
+   }
+}
+
+void TCPMsgReader::ClientEndCallback(void* inPtr, struct sockaddr_storage* client)
+{
+   TCPMsgReader* _this = (TCPMsgReader*)inPtr;
+   if(_this->m_msgReaderMap.find(client) != _this->m_msgReaderMap.end())
+   {
+      delete _this->m_msgReaderMap.find(client)->second;
+      _this->m_msgReaderMap.erase(_this->m_msgReaderMap.find(client));
+   }
+}
+
 void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)
 {
     TCPMsgReader* _this = (TCPMsgReader*)inPtr;
     char* plotMsg = NULL;
     unsigned int plotMsgSize = 0;
-
-    if(_this->m_msgReaderMap.find(client) == _this->m_msgReaderMap.end())
-    {
-       _this->m_msgReaderMap[client] = new GetEntirePlotMsg();
-    }
 
     _this->m_msgReaderMap[client]->ProcessPlotPacket(packet, size);
     while(_this->m_msgReaderMap[client]->ReadPlotPackets(&plotMsg, &plotMsgSize))
@@ -59,10 +79,4 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
         _this->m_msgReaderMap[client]->finishedReadMsg();
     }
 
-    // If not in the middle of receiving a message, remove the message reader.
-    if(!_this->m_msgReaderMap[client]->isActiveReceive())
-    {
-        delete _this->m_msgReaderMap.find(client)->second;
-        _this->m_msgReaderMap.erase(_this->m_msgReaderMap.find(client));
-    }
 }
