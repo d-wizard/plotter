@@ -77,18 +77,15 @@ void dServerSocket_wsaInit()
 
 void dServerSocket_init(dServerSocket* dSock, unsigned short port, dRxPacketCallback rxPacketCallback, void* inputPtr)
 {
-   unsigned int index;
    memset(dSock, 0, sizeof(dSock));
    dSock->port = port;
    dSock->rxPacketCallback = rxPacketCallback;
    dSock->callbackInputPtr = inputPtr;
 
    sem_init(&dSock->killThreadSem, 0, 0);
+   pthread_mutex_init(&dSock->mutex, NULL);
 
-   for(index = 0; index < MAX_CONNECTIONS; ++index)
-   {
-      dServerSocket_initClientConn(&dSock->clients[index], dSock);
-   }
+   dSock->clientList = NULL;
 
    dServerSocket_wsaInit();
 }
@@ -167,11 +164,13 @@ void* dServerSocket_procThread(void* voidDClientConn)
    dClientConnection* dClientConn = (dClientConnection*)voidDClientConn;
    dClientConn->procThread.active = 1;
    printf("procThread start\n");
-   while(!dClientConn->procThread.kill)
+
+   do
    {
       sem_wait(&dClientConn->sem);
       dServerSocket_readAllPackets(dClientConn);
-   }
+   }while(!dClientConn->procThread.kill);
+
    dClientConn->procThread.active = 0;
    printf("procThread end\n");
 
@@ -181,28 +180,35 @@ void* dServerSocket_procThread(void* voidDClientConn)
 void* dServer_killThreads(void* voidDSock)
 {
    dServerSocket* dSock = (dServerSocket*)voidDSock;
-   unsigned int index = 0;
    
    dSock->killThread.active = 1;
    printf("killThread Start\n");
    while(!dSock->killThread.kill)
    {
       sem_wait(&dSock->killThreadSem);
-      for(index = 0; index < MAX_CONNECTIONS; ++index)
+      struct dClientConnList* clientListPtr = dSock->clientList;
+      struct dClientConnList* cur = NULL;
+      while(clientListPtr != NULL)
       {
-         if( dSock->clients[index].fd != INVALID_FD &&
-             dSock->clients[index].rxThread.active == 0 && 
-             dSock->clients[index].rxThread.kill == 1 )
+         if( clientListPtr->cur.fd != INVALID_FD &&
+             clientListPtr->cur.rxThread.active == 0 && 
+             clientListPtr->cur.rxThread.kill == 1 )
          {
-            pthread_join(dSock->clients[index].rxThread.thread, NULL);
-            if(dSock->clients[index].procThread.active)
-            {
-               dSock->clients[index].procThread.kill = 1;
-               sem_post(&dSock->clients[index].sem);
-               pthread_join(dSock->clients[index].procThread.thread, NULL);
-            }
+            pthread_join(clientListPtr->cur.rxThread.thread, NULL);
 
-            dServerSocket_initClientConn(&dSock->clients[index], dSock);
+            while(clientListPtr->cur.procThread.active == 0);
+            clientListPtr->cur.procThread.kill = 1;
+            sem_post(&clientListPtr->cur.sem);
+            pthread_join(clientListPtr->cur.procThread.thread, NULL);
+            
+            cur = clientListPtr;
+            clientListPtr = clientListPtr->next;
+            dServerSocket_removeClientFromList(cur, dSock);
+            
+         }
+         else
+         {
+            clientListPtr = clientListPtr->next;
          }
       }
    }
@@ -272,22 +278,73 @@ void dServerSocket_accept(dServerSocket* dSock)
    pthread_create(&dSock->killThread.thread, NULL, dServer_killThreads, dSock);
 }
 
-dClientConnection* dServerSocket_findAvailableClientConn(dServerSocket* dSock)
+dClientConnection* dServerSocket_createNewClientConn(dServerSocket* dSock)
 {
-   unsigned int index = 0;
-   for(index = 0; index < MAX_CONNECTIONS; ++index)
+   pthread_mutex_lock(&dSock->mutex);
+
+   struct dClientConnList* newDClientConn = (struct dClientConnList*)malloc(sizeof(struct dClientConnList));
+   if(dSock->clientList == NULL)
    {
-      if(dSock->clients[index].fd == INVALID_FD)
-      {
-         return &dSock->clients[index];
-      }
+      dSock->clientList = newDClientConn;
+      dSock->clientList->prev = NULL;
+      dSock->clientList->next = NULL;
    }
-   return dSock->clients;
+   else
+   {
+      struct dClientConnList* findMaxPtr = dSock->clientList;
+      while(findMaxPtr->next != NULL)
+      {
+         findMaxPtr = findMaxPtr->next;
+      }
+      newDClientConn->next = NULL;
+      newDClientConn->prev = findMaxPtr;
+      findMaxPtr->next = newDClientConn;
+   }
+
+   pthread_mutex_unlock(&dSock->mutex);
+
+   return &newDClientConn->cur;
 }
+
+void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, dServerSocket* dSock)
+{
+   pthread_mutex_lock(&dSock->mutex);
+
+   if(clientListPtr->prev != NULL && clientListPtr->next != NULL)
+   {
+      // Not the beginning or the end
+      clientListPtr->prev->next = clientListPtr->next;
+      clientListPtr->next->prev = clientListPtr->prev;
+   }
+   else if(clientListPtr->prev == NULL && clientListPtr->next == NULL)
+   {
+      // The beginning and the end
+      dSock->clientList = NULL;
+   }
+   else if(clientListPtr->prev == NULL)
+   {
+      // The beginning
+      dSock->clientList = clientListPtr->next;
+      clientListPtr->next->prev = NULL;
+   }
+   else
+   {
+      // The end
+      clientListPtr->prev->next = NULL;
+   }
+   
+   sem_destroy(&clientListPtr->cur.sem);
+
+   free(clientListPtr);
+
+   pthread_mutex_unlock(&dSock->mutex);
+}
+
 
 void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct sockaddr_storage* clientAddr)
 {
-   dClientConnection* dConn = dServerSocket_findAvailableClientConn(dSock);
+   dClientConnection* dConn = dServerSocket_createNewClientConn(dSock);
+   dServerSocket_initClientConn(dConn, dSock);
    dConn->fd = clientFd;
    dConn->info = *clientAddr;
    sem_init(&dConn->sem, 0, 0);
@@ -298,22 +355,28 @@ void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct s
 
 void dServerSocket_killAll(dServerSocket* dSock)
 {
-   unsigned int index = 0;
    // Kill All Client Threads
-   for(index = 0; index < MAX_CONNECTIONS; ++index)
+   struct dClientConnList* clientListPtr = dSock->clientList;
+   struct dClientConnList* cur = NULL;
+   while(clientListPtr != NULL)
    {
-      if(dSock->clients[index].procThread.active)
+      if(clientListPtr->cur.procThread.active)
       {
-         dSock->clients[index].procThread.kill = 1;
-         sem_post(&dSock->clients[index].sem);
-         pthread_join(dSock->clients[index].procThread.thread, NULL);
+         clientListPtr->cur.procThread.kill = 1;
+         sem_post(&clientListPtr->cur.sem);
       }
-      if(dSock->clients[index].rxThread.active)
+      pthread_join(clientListPtr->cur.procThread.thread, NULL);
+
+      if(clientListPtr->cur.rxThread.active)
       {
-         dSock->clients[index].rxThread.kill = 1;
-         closesocket(dSock->clients[index].fd);
-         pthread_join(dSock->clients[index].rxThread.thread, NULL);
+         clientListPtr->cur.rxThread.kill = 1;
+         closesocket(clientListPtr->cur.fd);
       }
+      pthread_join(clientListPtr->cur.rxThread.thread, NULL);
+
+      cur = clientListPtr;
+      clientListPtr = clientListPtr->next;
+      dServerSocket_removeClientFromList(cur, dSock);
    }
 
    // Kill remaining threads
@@ -329,5 +392,9 @@ void dServerSocket_killAll(dServerSocket* dSock)
       closesocket(dSock->socketFd);
       pthread_join(dSock->acceptThread.thread, NULL);
    }
+
+   sem_destroy(&dSock->killThreadSem);
+   pthread_mutex_destroy(&dSock->mutex);
+
 }
 

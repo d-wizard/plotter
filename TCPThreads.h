@@ -32,8 +32,6 @@
 #define MAX_PACKETS (2048)
 #define MAX_STORED_PACKETS (2048)
 
-#define MAX_CONNECTIONS (10)
-
 #define INVALID_FD (0xFFFFFFFF)
 
 typedef struct
@@ -73,6 +71,12 @@ typedef struct
    sem_t* killThisThreadSem;
 }dClientConnection;
 
+struct dClientConnList
+{
+   struct dClientConnList* prev;
+   dClientConnection cur;
+   struct dClientConnList* next;
+};
 
 typedef struct
 {
@@ -83,8 +87,8 @@ typedef struct
    sem_t killThreadSem;
    dRxPacketCallback rxPacketCallback;
    void* callbackInputPtr;
-   dClientConnection clients[MAX_CONNECTIONS];
-
+   struct dClientConnList* clientList;
+   pthread_mutex_t mutex;
 }dServerSocket;
 
 
@@ -98,7 +102,8 @@ void* dServerSocket_procThread(void* voidDClientConn);
 void* dServer_killThreads(void* voidDSock);
 void dServerSocket_bind(dServerSocket* dSock);
 void dServerSocket_accept(dServerSocket* dSock);
-dClientConnection* dServerSocket_findAvailableClientConn(dServerSocket* dSock);
+dClientConnection* dServerSocket_createNewClientConn(dServerSocket* dSock);
+void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, dServerSocket *dSock);
 void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct sockaddr_storage* clientAddr);
 void dServerSocket_killAll(dServerSocket* dSock);
 void dServerSocket_writeNewPacket(dClientConnection* dConn, char* packet, unsigned int size);
