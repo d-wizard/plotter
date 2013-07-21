@@ -24,7 +24,7 @@
 
 //#define TEST_CURVES
 
-plotGuiMain::plotGuiMain(QWidget *parent) :
+plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     QMainWindow(parent),
     ui(new Ui::plotGuiMain),
     m_trayIcon(NULL),
@@ -82,7 +82,7 @@ plotGuiMain::plotGuiMain(QWidget *parent) :
     //m_plotGuis[plotName]->add2dCurve("Curve2", md_x1, md_y1);
 #endif
 
-    m_tcpMsgReader = new TCPMsgReader(this, 2000);
+    m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
 
     m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
     m_trayExitAction = new QAction("Exit", this);

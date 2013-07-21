@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     TCPThreads.cpp \
     TCPMsgReader.cpp \
     PackUnpackPlotMsg.cpp \
-    plotguimain.cpp
+    plotguimain.cpp \
+    dString.cpp \
+    FileSystemOperations.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -30,7 +32,9 @@ HEADERS  += mainwindow.h \
     PlotHelperTypes.h \
     Cursor.h \
     CurveData.h \
-    plotguimain.h
+    plotguimain.h \
+    dString.h \
+    FileSystemOperations.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui

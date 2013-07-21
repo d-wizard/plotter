@@ -18,15 +18,68 @@
  */
 #include <QtGui/QApplication>
 #include "plotguimain.h"
+#include "dString.h"
+#include "FileSystemOperations.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    int dummyArgc = 0;
+    bool validPort = false;
+    unsigned short port = 0xFFFF;
 
-    a.setQuitOnLastWindowClosed(false);
+    if(argc >= 2)
+    {
+        unsigned int cmdLinePort = atoi(argv[1]);
+        if(cmdLinePort > 0 && cmdLinePort <= 0xFFFF)
+        {
+            validPort = true;
+            port = cmdLinePort;
+        }
+    }
 
-    plotGuiMain pgm;
-    pgm.hide();
+    if(validPort == false)
+    {
+        std::string iniName(fso::GetFileNameNoExt(argv[0]));
+        iniName.append(".ini");
 
-    return a.exec();
+        std::string iniFile = fso::ReadFile(iniName);
+
+        // If the ini file is empty, don't do anything.
+        if(dString::Compare(iniFile, "") == false)
+        {
+            // convert windows line ending to linux
+            iniFile = dString::Replace(iniFile, "\r\n", "\n");
+
+            // suround with new line for easier searching
+            std::string temp = "\n";
+            iniFile = temp.append(iniFile).append("\n");
+
+            std::string portFromIni = dString::GetMiddle(&iniFile, "\nport=", "\n");
+            unsigned int iniPort = atoi(portFromIni.c_str());
+            if(iniPort > 0 && iniPort <= 0xFFFF)
+            {
+                validPort = true;
+                port = iniPort;
+            }
+        }
+
+    }
+
+    if(validPort == true)
+    {
+        QApplication a(dummyArgc, NULL);
+
+        a.setQuitOnLastWindowClosed(false);
+
+        plotGuiMain pgm(NULL, port);
+        pgm.hide();
+
+        return a.exec();
+    }
+    else
+    {
+        QApplication::quit();
+        return -1;
+    }
+
 }

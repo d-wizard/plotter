@@ -16,55 +16,37 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef PLOTGUIMAIN_H
-#define PLOTGUIMAIN_H
+#ifndef FileSystemOperations_h
+#define FileSystemOperations_h
 
 #include <string>
+#include <list>
 
-#include <QList>
-#include <QMainWindow>
-#include <QSystemTrayIcon>
-#include <QMenu>
-#include <QAction>
-
-#include "mainwindow.h"
-#include "TCPMsgReader.h"
-#include "PlotHelperTypes.h"
-
-#include <QMap>
-
-namespace Ui {
-class plotGuiMain;
+namespace fso
+{
+   typedef struct
+   {
+      std::string t_path;
+      bool b_isDir;
+   }tDirListing;
+   typedef std::list<tDirListing> tDirContents;
+      
+   void GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_recursive);
+   
+   bool DirExists(std::string t_dir);
+   bool FileExists(std::string t_path);
+   bool createDir(std::string t_dir);
+   bool recursiveCreateDir(std::string t_dir);
+   std::string GetDir(std::string t_path);
+   std::string GetFile(std::string t_path);
+   std::string GetExt(std::string t_path);
+   std::string GetFileNameNoExt(std::string t_path);
+   std::string ReadFile(std::string t_path);
+   void WriteFile(std::string t_path, std::string t_fileText);
+   void WriteFile(std::string t_path, char* pc_fileText, int i_outSizeBytes);
+   void AppendFile(std::string t_path, std::string t_fileText);
+   
+   bool ComparePath(tDirListing t_comp1, tDirListing t_comp2);
 }
 
-class plotGuiMain : public QMainWindow
-{
-    Q_OBJECT
-    
-public:
-    explicit plotGuiMain(QWidget *parent = 0, unsigned short tcpPort = 0);
-    ~plotGuiMain();
-    QMap<QString, MainWindow*> m_plotGuis;
-
-    void readPlotMsg(const char *msg, unsigned int size);
-    
-private:
-    Ui::plotGuiMain *ui;
-    TCPMsgReader* m_tcpMsgReader;
-
-    void removeHiddenPlotWindows();
-
-
-    QSystemTrayIcon* m_trayIcon;
-    QAction* m_trayExitAction;
-    QMenu* m_trayMenu;
-
-
-
-public slots:
-    void readPlotMsgSlot(const char *msg, unsigned int size);
-signals:
-    void readPlotMsgSignal(const char*, unsigned int);
-};
-
-#endif // PLOTGUIMAIN_H
+#endif
