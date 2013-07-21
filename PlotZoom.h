@@ -23,6 +23,7 @@
 #include <QVector>
 #include "PlotHelperTypes.h"
 #include <qwt_plot.h>
+#include <qwt_scale_engine.h>
 
 #include <math.h>
 
@@ -102,6 +103,20 @@ public:
        SetZoom(zoomDimensions, true);
    }
 
+   void ResetPlotAxisScale()
+   {
+      QwtScaleDiv div;
+      QwtLinearScaleEngine lineSE;
+
+      div = lineSE.divideScale(m_zoomDimensions.minY, m_zoomDimensions.maxY, 12,4);
+      m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
+      m_qwtPlot->setAxisScaleDiv(QwtPlot::yLeft, div);
+
+      div = lineSE.divideScale(m_zoomDimensions.minX, m_zoomDimensions.maxX, 12,4);
+      m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
+      m_qwtPlot->setAxisScaleDiv(QwtPlot::xBottom, div);
+   }
+
    void VertSliderMoved()
    {
        if(m_curYScrollPos != m_vertScroll->sliderPosition())
@@ -112,7 +127,7 @@ public:
 
            BoundZoom(m_zoomDimensions);
 
-           m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
+           ResetPlotAxisScale();
            m_qwtPlot->replot();
        }
    }
@@ -126,7 +141,7 @@ public:
 
            BoundZoom(m_zoomDimensions);
 
-           m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
+           ResetPlotAxisScale();
            m_qwtPlot->replot();
        }
    }
@@ -350,8 +365,7 @@ private:
            m_zoomWidth = zoomWidth;
            m_zoomHeight = zoomHeight;
 
-           m_qwtPlot->setAxisScale(QwtPlot::yLeft, m_zoomDimensions.minY, m_zoomDimensions.maxY);
-           m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
+           ResetPlotAxisScale();
 
            m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
            m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;

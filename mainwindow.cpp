@@ -551,9 +551,6 @@ void MainWindow::calcMaxMin()
     {
         // TODO: Should do something when there are no curves displayed
     }
-
-    //m_plotZoom->SetPlotDimensions(m_maxMin);
-
 }
 
 
