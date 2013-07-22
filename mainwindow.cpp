@@ -22,6 +22,8 @@
 #include <QSignalMapper>
 #include <QKeyEvent>
 #include <sstream>
+#include <QBitmap>
+#include <qwt_plot_canvas.h>
 
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
@@ -40,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_selectedCurveIndex(0),
     m_plotZoom(NULL),
     m_checkedIcon("check.png"),
+    m_zoomCursor(NULL),
     m_normalizeCurves(false),
     m_legendDisplayed(false),
     m_zoomAction("Zoom", this),
@@ -54,6 +57,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     srand((unsigned)time(0));
+
+    QPixmap zoomCursor("zoomCursor.png");
+    zoomCursor.setMask(zoomCursor.createMaskFromColor(QColor(0,255,0)));
+    m_zoomCursor = new QCursor(zoomCursor, 5,5);
 
     QPalette palette = this->palette();
     palette.setColor( QPalette::WindowText, Qt::white);
@@ -152,6 +159,9 @@ MainWindow::~MainWindow()
         delete m_qwtPlot;
         m_qwtPlot = NULL;
     }
+
+    delete m_zoomCursor;
+
     delete ui;
 
 
@@ -218,6 +228,8 @@ void MainWindow::resetPlot()
     m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
     m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtPicker->setTrackerPen( QColor( Qt::white ) );
+
+    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
 
     // Initialize in cursor mode
     cursorMode();
@@ -425,6 +437,7 @@ void MainWindow::cursorMode()
     m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
     m_qwtSelectedSampleDelta->hideCursor();
     m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
     updatePointDisplay();
     replotMainPlot();
 }
@@ -447,6 +460,7 @@ void MainWindow::deltaCursorMode()
         m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
     }
+    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
     updatePointDisplay();
     replotMainPlot();
 }
@@ -459,6 +473,7 @@ void MainWindow::zoomMode()
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
     m_qwtPicker->setRubberBand( QwtPicker::RectRubberBand);
+    m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
 }
 
 

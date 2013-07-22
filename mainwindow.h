@@ -38,6 +38,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QString>
+#include <QCursor>
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -98,6 +99,7 @@ private:
     maxMinXY m_maxMin;
 
     QIcon m_checkedIcon;
+    QCursor* m_zoomCursor;
 
     bool m_normalizeCurves;
 
