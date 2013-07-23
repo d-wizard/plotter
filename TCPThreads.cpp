@@ -194,24 +194,28 @@ void* dServer_killThreads(void* voidDSock)
    {
       sem_wait(&dSock->killThreadSem);
       struct dClientConnList* clientListPtr = dSock->clientList;
-      struct dClientConnList* cur = NULL;
+      struct dClientConnList* curClient = NULL;
       while(clientListPtr != NULL)
       {
          if( clientListPtr->cur.fd != INVALID_FD &&
              clientListPtr->cur.rxThread.active == 0 && 
              clientListPtr->cur.rxThread.kill == 1 )
          {
-            pthread_join(clientListPtr->cur.rxThread.thread, NULL);
 
-            while(clientListPtr->cur.procThread.active == 0);
-            clientListPtr->cur.procThread.kill = 1;
-            sem_post(&clientListPtr->cur.sem);
-            pthread_join(clientListPtr->cur.procThread.thread, NULL);
-            
-            cur = clientListPtr;
+            pthread_mutex_lock(&dSock->mutex);
+            curClient = clientListPtr;
             clientListPtr = clientListPtr->next;
-            dServerSocket_removeClientFromList(cur, dSock);
+            dServerSocket_removeClientFromList(curClient, dSock);
+            pthread_mutex_unlock(&dSock->mutex);
+
+            pthread_join(curClient->cur.rxThread.thread, NULL);
+
+            while(curClient->cur.procThread.active == 0);
+            curClient->cur.procThread.kill = 1;
+            sem_post(&curClient->cur.sem);
+            pthread_join(curClient->cur.procThread.thread, NULL);
             
+            dServerSocket_deleteClient(curClient, dSock);
          }
          else
          {
@@ -315,8 +319,6 @@ dClientConnection* dServerSocket_createNewClientConn(dServerSocket* dSock)
 
 void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, dServerSocket* dSock)
 {
-   pthread_mutex_lock(&dSock->mutex);
-
    if(clientListPtr->prev != NULL && clientListPtr->next != NULL)
    {
       // Not the beginning or the end
@@ -340,8 +342,10 @@ void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, d
       clientListPtr->prev->next = NULL;
    }
 
-   pthread_mutex_unlock(&dSock->mutex);
-   
+}
+
+void dServerSocket_deleteClient(struct dClientConnList* clientListPtr, dServerSocket* dSock)
+{
    sem_destroy(&clientListPtr->cur.sem);
 
    // inform parent that a client has been disconnected
@@ -351,7 +355,6 @@ void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, d
    }
    free(clientListPtr);
 }
-
 
 void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct sockaddr_storage* clientAddr)
 {
@@ -375,46 +378,48 @@ void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct s
 
 void dServerSocket_killAll(dServerSocket* dSock)
 {
+   // Kill the accept thread. TODO handle early exit of this thread.
+   while(dSock->acceptThread.active == 0);
+   dSock->acceptThread.kill = 1;
+   closesocket(dSock->socketFd);
+   pthread_join(dSock->acceptThread.thread, NULL);
+
+   pthread_mutex_lock(&dSock->mutex);
    // Kill All Client Threads
    struct dClientConnList* clientListPtr = dSock->clientList;
-   struct dClientConnList* cur = NULL;
+
    while(clientListPtr != NULL)
    {
-      if(clientListPtr->cur.procThread.active)
-      {
-         clientListPtr->cur.procThread.kill = 1;
-         sem_post(&clientListPtr->cur.sem);
-      }
-      pthread_join(clientListPtr->cur.procThread.thread, NULL);
+      // Close Socket will trigger the kill thread to kill any finished connections.
+      pthread_mutex_unlock(&dSock->mutex);
+      closesocket(clientListPtr->cur.fd);
 
-      if(clientListPtr->cur.rxThread.active)
-      {
-         clientListPtr->cur.rxThread.kill = 1;
-         closesocket(clientListPtr->cur.fd);
-      }
-      pthread_join(clientListPtr->cur.rxThread.thread, NULL);
+      // Update to the oldest still valid connection in the list.
+      // TODO: need to compare list ptr with client list that will change
+      // in other thread without tricking the optimizer.
+      while(dServerSocket_antiOptimizer_PtrCompare(&clientListPtr) ==
+            dServerSocket_antiOptimizer_PtrCompare(&dSock->clientList));
+      pthread_mutex_lock(&dSock->mutex);
+      clientListPtr = dSock->clientList;
 
-      cur = clientListPtr;
-      clientListPtr = clientListPtr->next;
-      dServerSocket_removeClientFromList(cur, dSock);
    }
 
-   // Kill remaining threads
-   if(dSock->killThread.active)
-   {
-      dSock->killThread.kill = 1;
-      sem_post(&dSock->killThreadSem);
-      pthread_join(dSock->killThread.thread, NULL);
-   }
-   if(dSock->acceptThread.active)
-   {
-      dSock->acceptThread.kill = 1;
-      closesocket(dSock->socketFd);
-      pthread_join(dSock->acceptThread.thread, NULL);
-   }
+   pthread_mutex_unlock(&dSock->mutex);
+
+   // Kill the kill thread
+   while(dSock->killThread.active == 0);
+   dSock->killThread.kill = 1;
+   sem_post(&dSock->killThreadSem);
+   pthread_join(dSock->killThread.thread, NULL);
 
    sem_destroy(&dSock->killThreadSem);
    pthread_mutex_destroy(&dSock->mutex);
 
 }
+
+void* dServerSocket_antiOptimizer_PtrCompare(void* ptrInOut)
+{
+   return (ptrInOut);
+}
+
 

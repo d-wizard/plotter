@@ -114,11 +114,14 @@ void dServerSocket_bind(dServerSocket* dSock);
 void dServerSocket_accept(dServerSocket* dSock);
 dClientConnection* dServerSocket_createNewClientConn(dServerSocket* dSock);
 void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, dServerSocket *dSock);
+void dServerSocket_deleteClient(struct dClientConnList* clientListPtr, dServerSocket* dSock);
 void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct sockaddr_storage* clientAddr);
 void dServerSocket_killAll(dServerSocket* dSock);
 void dServerSocket_writeNewPacket(dClientConnection* dConn, char* packet, unsigned int size);
 void dServerSocket_readAllPackets(dClientConnection* dConn);
 void dServerSocket_updateIndexForNextPacket(dSocketRxBuff* rxBuff);
+
+void* dServerSocket_antiOptimizer_PtrCompare(void* ptrInOut);
 
 #endif
 
