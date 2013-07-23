@@ -23,9 +23,26 @@
 #include <fstream>
 #include <algorithm>
 
-static const std::string DIR_SEP = "/";
+
+#if defined _WIN32 or defined _WIN64
+   static const std::string DIR_SEP = "\\";
+#else
+   static const std::string DIR_SEP = "/";
+#endif
 static const std::string CUR_DIR = ".";
 static const std::string UP_DIR = "..";
+
+std::string fso::dirSepToOS(std::string t_path)
+{
+   if(DIR_SEP == "\\")
+   {
+      return dString::Replace(t_path, "/", "\\");
+   }
+   else
+   {
+      return dString::Replace(t_path, "\\", "/");
+   }
+}
 
 bool fso::ComparePath(tDirListing t_comp1, tDirListing t_comp2)
 {
@@ -124,6 +141,8 @@ bool fso::ComparePath(tDirListing t_comp1, tDirListing t_comp2)
 
 void fso::GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_recursive)
 {
+   t_dir = dirSepToOS(t_dir);
+
    DIR* pt_dir;
    struct dirent* pt_dirListing;
 
@@ -189,6 +208,8 @@ void fso::GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_
 
 bool fso::DirExists(std::string t_dir)
 {
+   t_dir = dirSepToOS(t_dir);
+
    bool b_retVal = false;
    DIR* pt_dir;
    struct dirent* pt_dirListing;
@@ -211,6 +232,8 @@ bool fso::DirExists(std::string t_dir)
 
 bool fso::FileExists(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    bool b_retVal = false;
 
    // Check if there is only a file name, but no path
@@ -260,6 +283,7 @@ bool fso::FileExists(std::string t_path)
 
 bool fso::createDir(std::string t_dir)
 {
+   t_dir = dirSepToOS(t_dir);
 #if 0
    #ifdef UNICODE
       return (::CreateDirectory(dString::StringToWString(t_dir).c_str(), NULL) != FALSE);
@@ -273,6 +297,8 @@ bool fso::createDir(std::string t_dir)
 
 bool fso::recursiveCreateDir(std::string t_dir)
 {
+   t_dir = dirSepToOS(t_dir);
+
    std::string path = "";
    bool success = true;
 
@@ -306,6 +332,8 @@ bool fso::recursiveCreateDir(std::string t_dir)
 
 std::string fso::ReadFile(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_retVal = "";
    if(FileExists(t_path) == true)
    {
@@ -345,6 +373,8 @@ std::string fso::ReadFile(std::string t_path)
 
 void fso::WriteFile(std::string t_path, std::string t_fileText)
 {
+   t_path = dirSepToOS(t_path);
+
    std::ofstream t_outStream;
    t_outStream.open(t_path.c_str(), std::ios::binary);
    t_outStream.write(t_fileText.c_str(), dString::Len(t_fileText));
@@ -353,6 +383,8 @@ void fso::WriteFile(std::string t_path, std::string t_fileText)
 
 void fso::WriteFile(std::string t_path, char* pc_fileText, int i_outSizeBytes)
 {
+   t_path = dirSepToOS(t_path);
+
    std::ofstream t_outStream;
    t_outStream.open(t_path.c_str(), std::ios::binary);
    t_outStream.write(pc_fileText, i_outSizeBytes);
@@ -361,6 +393,8 @@ void fso::WriteFile(std::string t_path, char* pc_fileText, int i_outSizeBytes)
 
 void fso::AppendFile(std::string t_path, std::string t_fileText)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_outText = ReadFile(t_path);
    t_outText.append(t_fileText);
    WriteFile(t_path, t_outText);
@@ -368,6 +402,8 @@ void fso::AppendFile(std::string t_path, std::string t_fileText)
 
 std::string fso::GetDir(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_retVal = "";
 
    if(dString::InStr(t_path, DIR_SEP))
@@ -380,6 +416,8 @@ std::string fso::GetDir(std::string t_path)
 
 std::string fso::GetFile(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_retVal = "";
 
    if(dString::InStr(t_path, DIR_SEP))
@@ -396,6 +434,8 @@ std::string fso::GetFile(std::string t_path)
 
 std::string fso::GetExt(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_retVal = "";
    t_retVal = dString::SplitBackRight(t_path, ".");
    if(dString::InStr(t_retVal, DIR_SEP) > 0)
@@ -407,6 +447,8 @@ std::string fso::GetExt(std::string t_path)
 
 std::string fso::GetFileNameNoExt(std::string t_path)
 {
+   t_path = dirSepToOS(t_path);
+
    std::string t_retVal = "";
    t_retVal = GetFile(t_path);
    t_retVal = dString::SplitBackLeft(t_retVal, ".");

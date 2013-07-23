@@ -31,6 +31,8 @@ namespace fso
    }tDirListing;
    typedef std::list<tDirListing> tDirContents;
       
+   std::string dirSepToOS(std::string t_path);
+
    void GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_recursive);
    
    bool DirExists(std::string t_dir);
