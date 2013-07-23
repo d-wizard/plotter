@@ -37,8 +37,9 @@
 typedef struct
 {
    pthread_t thread;
-   int active;
-   int kill;
+   // Multiple threads could read/write to these parameters, so make them volatile.
+   volatile int active;
+   volatile int kill;
 }dSocketThread;
 
 typedef struct
