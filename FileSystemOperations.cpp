@@ -199,7 +199,7 @@ bool fso::DirExists(std::string t_dir)
    pt_dirListing = readdir(pt_dir);
    
    // If it is an existing directory the first listing read will not be NULL
-   if( pt_dirListing->d_name != NULL )
+   if( pt_dirListing != NULL && pt_dirListing->d_name != NULL )
    {
       b_retVal = true;
    }
@@ -267,7 +267,7 @@ bool fso::createDir(std::string t_dir)
       return (::CreateDirectory(t_dir.c_str(), NULL) != FALSE);
    #endif
 #else
-    return false;
+   return mkdir(t_dir.c_str()) != -1;
 #endif
 }
 
@@ -307,7 +307,7 @@ bool fso::recursiveCreateDir(std::string t_dir)
 std::string fso::ReadFile(std::string t_path)
 {
    std::string t_retVal = "";
-   //if(FileExists(t_path) == true)
+   if(FileExists(t_path) == true)
    {
       int length;
       char* buffer;
@@ -321,23 +321,23 @@ std::string fso::ReadFile(std::string t_path)
 
       if(length >= 0)
       {
-          is.seekg (0, std::ios::beg);
+         is.seekg (0, std::ios::beg);
 
-          // allocate memory:
-          buffer = new char [length+1];
+         // allocate memory:
+         buffer = new char [length+1];
 
-          // read data as a block:
-          is.read (buffer,length);
-          is.close();
+         // read data as a block:
+         is.read (buffer,length);
+         is.close();
 
-          buffer[length] = '\0';
-          t_retVal = buffer;
+         buffer[length] = '\0';
+         t_retVal = buffer;
 
-          delete[] buffer;
+         delete[] buffer;
       }
       else
       {
-          is.close();
+         is.close();
       }
    }
    return t_retVal;
@@ -388,7 +388,7 @@ std::string fso::GetFile(std::string t_path)
    }
    else
    {
-       t_retVal = t_path;
+      t_retVal = t_path;
    }
    
    return t_retVal;
