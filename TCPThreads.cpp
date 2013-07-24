@@ -190,7 +190,10 @@ void* dServer_killThreads(void* voidDSock)
    
    dSock->killThread.active = 1;
    printf("killThread Start\n");
-   while(!dSock->killThread.kill)
+
+   // Make sure all the client connection threads have been
+   // closed before exiting this thread.
+   while(!dSock->killThread.kill || dSock->clientList != NULL)
    {
       sem_wait(&dSock->killThreadSem);
       struct dClientConnList* clientListPtr = dSock->clientList;
@@ -378,32 +381,22 @@ void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct s
 
 void dServerSocket_killAll(dServerSocket* dSock)
 {
-   // Kill the accept thread. TODO handle early exit of this thread.
-   while(dSock->acceptThread.active == 0);
+   struct dClientConnList* clientListPtr = NULL;
+
+   // Kill the accept thread.
+   while(dSock->acceptThread.active == 0 && dSock->acceptThread.kill == 0);
    dSock->acceptThread.kill = 1;
    closesocket(dSock->socketFd);
    pthread_join(dSock->acceptThread.thread, NULL);
 
+   // Close all the client connections still active.
    pthread_mutex_lock(&dSock->mutex);
-   // Kill All Client Threads
-   struct dClientConnList* clientListPtr = dSock->clientList;
-
+   clientListPtr = dSock->clientList;
    while(clientListPtr != NULL)
    {
-      // Close Socket will trigger the kill thread to kill any finished connections.
-      pthread_mutex_unlock(&dSock->mutex);
       closesocket(clientListPtr->cur.fd);
-
-      // Update to the oldest still valid connection in the list.
-      // TODO: need to compare list ptr with client list that will change
-      // in other thread without tricking the optimizer.
-      while(dServerSocket_antiOptimizer_PtrCompare(&clientListPtr) ==
-            dServerSocket_antiOptimizer_PtrCompare(&dSock->clientList));
-      pthread_mutex_lock(&dSock->mutex);
-      clientListPtr = dSock->clientList;
-
+      clientListPtr = clientListPtr->next;
    }
-
    pthread_mutex_unlock(&dSock->mutex);
 
    // Kill the kill thread
@@ -416,10 +409,4 @@ void dServerSocket_killAll(dServerSocket* dSock)
    pthread_mutex_destroy(&dSock->mutex);
 
 }
-
-void* dServerSocket_antiOptimizer_PtrCompare(void* ptrInOut)
-{
-   return (ptrInOut);
-}
-
 

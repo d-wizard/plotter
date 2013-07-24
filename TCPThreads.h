@@ -121,7 +121,5 @@ void dServerSocket_writeNewPacket(dClientConnection* dConn, char* packet, unsign
 void dServerSocket_readAllPackets(dClientConnection* dConn);
 void dServerSocket_updateIndexForNextPacket(dSocketRxBuff* rxBuff);
 
-void* dServerSocket_antiOptimizer_PtrCompare(void* ptrInOut);
-
 #endif
 
