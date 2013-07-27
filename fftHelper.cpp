@@ -27,31 +27,39 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
 
    unsigned int N = std::min(inRe.size(), inIm.size());
 
-   in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-   out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-
-   for(unsigned int i = 0; i < N; ++i)
+   if(N > 0)
    {
-      in[i][0] = inRe[i];
-      in[i][1] = inIm[i];
-   }
+       in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+       out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
-   p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+       for(unsigned int i = 0; i < N; ++i)
+       {
+          in[i][0] = inRe[i];
+          in[i][1] = inIm[i];
+       }
 
-   fftw_execute(p);
+       p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
-   fftw_destroy_plan(p);
+       fftw_execute(p);
 
-   outRe.resize(N);
-   outIm.resize(N);
-   for(unsigned int i = 0; i < N; ++i)
+       fftw_destroy_plan(p);
+
+       outRe.resize(N);
+       outIm.resize(N);
+       for(unsigned int i = 0; i < N; ++i)
+       {
+          outRe[i] = out[i][0];
+          outIm[i] = out[i][1];
+       }
+
+       fftw_free(in);
+       fftw_free(out);
+    }
+   else
    {
-      outRe[i] = out[i][0];
-      outIm[i] = out[i][1];
+       outRe.clear();
+       outIm.clear();
    }
-
-   fftw_free(in);
-   fftw_free(out);
 }
 
 void realFFT(const dubVect& inRe, dubVect& outRe)
@@ -60,59 +68,74 @@ void realFFT(const dubVect& inRe, dubVect& outRe)
    fftw_plan p;
 
    unsigned int N = inRe.size();
-   unsigned int halfN = N >> 1;
-   if((N & 1) == 0)
+
+   if(N > 0)
    {
-      --halfN;
+       unsigned int halfN = N >> 1;
+       if((N & 1) == 0)
+       {
+          --halfN;
+       }
+
+       in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+       out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+
+       for(unsigned int i = 0; i < N; ++i)
+       {
+          in[i][0] = inRe[i];
+          in[i][1] = inRe[i];
+       }
+
+       p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+       fftw_execute(p);
+
+       fftw_destroy_plan(p);
+
+       outRe.resize(halfN);
+       outRe[0] = fabs(out[0][0]);
+       for(unsigned int i = 1; i < halfN; ++i)
+       {
+          outRe[i] = fabs(out[i][0]) + fabs(out[N-i][0]);
+       }
+
+       fftw_free(in);
+       fftw_free(out);
    }
-
-   in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-   out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-
-   for(unsigned int i = 0; i < N; ++i)
+   else
    {
-      in[i][0] = inRe[i];
-      in[i][1] = inRe[i];
+       outRe.clear();
    }
-
-   p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-
-   fftw_execute(p);
-
-   fftw_destroy_plan(p);
-
-   outRe.resize(halfN);
-   outRe[0] = fabs(out[0][0]);
-   for(unsigned int i = 1; i < halfN; ++i)
-   {
-      outRe[i] = fabs(out[i][0]) + fabs(out[N-i][0]);
-   }
-
-   fftw_free(in);
-   fftw_free(out);
 }
 
 void getFFTXAxisValues(dubVect& xAxis, unsigned int numPoints)
 {
-   int halfPoints = (int)(numPoints >> 1);
-   int start = -halfPoints;
-   unsigned int end = halfPoints;
-   if((numPoints & 1) == 0)
-   {
-      --end;
-   }
+    if(numPoints > 0)
+    {
+        int halfPoints = (int)(numPoints >> 1);
+        int start = -halfPoints;
+        unsigned int end = halfPoints;
+        if((numPoints & 1) == 0)
+        {
+           --end;
+        }
 
-   if(xAxis.size() != numPoints)
-   {
-      xAxis.resize(numPoints);
-   }
+        if(xAxis.size() != numPoints)
+        {
+           xAxis.resize(numPoints);
+        }
 
-   for(unsigned int i = 0; i <= end; ++i)
-   {
-      xAxis[i] = i;
-   }
-   for(unsigned int i = (end+1); i < numPoints; ++i)
-   {
-      xAxis[i] = start++;
-   }
+        for(unsigned int i = 0; i <= end; ++i)
+        {
+           xAxis[i] = i;
+        }
+        for(unsigned int i = (end+1); i < numPoints; ++i)
+        {
+           xAxis[i] = start++;
+        }
+    }
+    else
+    {
+        xAxis.clear();
+    }
 }
