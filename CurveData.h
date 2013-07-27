@@ -19,6 +19,11 @@
 #ifndef CurveData_h
 #define CurveData_h
 
+#include <QLabel>
+#include <QSignalMapper>
+#include <QAction>
+#include <QColor>
+
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include "PlotHelperTypes.h"
