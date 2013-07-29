@@ -48,8 +48,8 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
        outIm.resize(N);
        for(unsigned int i = 0; i < N; ++i)
        {
-          outRe[i] = out[i][0];
-          outIm[i] = out[i][1];
+          outRe[i] = out[i][0] / (double)N;
+          outIm[i] = out[i][1] / (double)N;
        }
 
        fftw_free(in);
@@ -93,10 +93,10 @@ void realFFT(const dubVect& inRe, dubVect& outRe)
        fftw_destroy_plan(p);
 
        outRe.resize(halfN);
-       outRe[0] = fabs(out[0][0]);
+       outRe[0] = fabs(out[0][0] / (double)N);
        for(unsigned int i = 1; i < halfN; ++i)
        {
-          outRe[i] = fabs(out[i][0]) + fabs(out[N-i][0]);
+          outRe[i] = (fabs(out[i][0]) + fabs(out[N-i][0])) / (double)N;
        }
 
        fftw_free(in);

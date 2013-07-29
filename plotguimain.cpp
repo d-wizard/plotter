@@ -103,12 +103,15 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_trayRealFFTAction = new QAction("Create Real FFT", this);
     connect(m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
 
-    m_trayIcon->show();
-
     m_trayMenu->addAction(m_trayRealFFTAction);
     m_trayMenu->addAction(m_trayComplexFFTAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(m_trayExitAction);
+
+    m_trayRealFFTAction->setEnabled(false);
+    m_trayComplexFFTAction->setEnabled(false);
+
+    m_trayIcon->show();
 
     QObject::connect(this, SIGNAL(createFftGuiFinishedSignal()),
                      this, SLOT(createFftGuiFinishedSlot()), Qt::QueuedConnection);
@@ -232,10 +235,19 @@ void plotGuiMain::plotWindowCloseSlot(QString plotName)
 {
     removeHiddenPlotWindows();
     removeFromFFTList(plotName);
-    if(m_createFFTPlotGUI != NULL)
+
+    if(m_curveCommander.getCurveCommanderInfo().size() == 0)
+    {
+        m_trayRealFFTAction->setEnabled(false);
+        m_trayComplexFFTAction->setEnabled(false);
+        createFftGuiFinishedSlot();
+    }
+    else if(m_createFFTPlotGUI != NULL)
     {
         m_createFFTPlotGUI->plotsCurvesChanged(m_curveCommander.getCurveCommanderInfo());
     }
+
+
 }
 
 
@@ -246,6 +258,11 @@ void plotGuiMain::curveUpdated(QString plotName, QString curveName, CurveData* c
     if(m_createFFTPlotGUI != NULL)
     {
         m_createFFTPlotGUI->plotsCurvesChanged(m_curveCommander.getCurveCommanderInfo());
+    }
+    if(m_curveCommander.getCurveCommanderInfo().size() > 0)
+    {
+        m_trayRealFFTAction->setEnabled(true);
+        m_trayComplexFFTAction->setEnabled(true);
     }
 }
 

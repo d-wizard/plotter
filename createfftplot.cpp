@@ -28,8 +28,6 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
 const QString NEW_PLOT_TEXT = "<New>";
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
-const QString RE_FFT_APPEND = ".real";
-const QString IM_FFT_APPEND = ".imag";
 
 createFFTPlot::createFFTPlot(plotGuiMain *guiParent, tCurveCommanderInfo& initPlotsCurves, eFFTType fftType, QWidget *parent) :
     QWidget(parent),
@@ -163,12 +161,12 @@ void createFFTPlot::updateGui()
                 yAxisName.append(Y_AXIS_APPEND);
 
                 ui->cmbReCurve->addItem(xAxisName);
-                if(matchingPlotReNameIndex > 0 && oldCurveReNameCount > 0 && xAxisName == oldCurveReName)
+                if(matchingPlotReNameIndex >= 0 && oldCurveReNameCount > 0 && xAxisName == oldCurveReName)
                 {
                     matchingCurveReNameIndex = itemIndex;
                 }
                 ui->cmbReCurve->addItem(yAxisName);
-                if(matchingPlotReNameIndex > 0 && oldCurveReNameCount > 0 && yAxisName == oldCurveReName)
+                if(matchingPlotReNameIndex >= 0 && oldCurveReNameCount > 0 && yAxisName == oldCurveReName)
                 {
                     matchingCurveReNameIndex = itemIndex;
                 }
@@ -177,7 +175,7 @@ void createFFTPlot::updateGui()
             else if(curveData->plotType == E_PLOT_TYPE_1D)
             {
                 ui->cmbReCurve->addItem(curveData->GetCurveTitle());
-                if(matchingPlotReNameIndex > 0 && oldCurveReNameCount > 0 && curveData->GetCurveTitle() == oldCurveReName)
+                if(matchingPlotReNameIndex >= 0 && oldCurveReNameCount > 0 && curveData->GetCurveTitle() == oldCurveReName)
                 {
                     matchingCurveReNameIndex = itemIndex;
                 }
@@ -204,12 +202,12 @@ void createFFTPlot::updateGui()
                 yAxisName.append(Y_AXIS_APPEND);
 
                 ui->cmbImCurve->addItem(xAxisName);
-                if(matchingPlotImNameIndex > 0 && oldCurveImNameCount > 0 && xAxisName == oldCurveImName)
+                if(matchingPlotImNameIndex >= 0 && oldCurveImNameCount > 0 && xAxisName == oldCurveImName)
                 {
                     matchingCurveImNameIndex = itemIndex;
                 }
                 ui->cmbImCurve->addItem(yAxisName);
-                if(matchingPlotImNameIndex > 0 && oldCurveImNameCount > 0 && yAxisName == oldCurveImName)
+                if(matchingPlotImNameIndex >= 0 && oldCurveImNameCount > 0 && yAxisName == oldCurveImName)
                 {
                     matchingCurveImNameIndex = itemIndex;
                 }
@@ -218,7 +216,7 @@ void createFFTPlot::updateGui()
             else if(curveData->plotType == E_PLOT_TYPE_1D)
             {
                 ui->cmbImCurve->addItem(curveData->GetCurveTitle());
-                if(matchingPlotImNameIndex > 0 && oldCurveImNameCount > 0 && curveData->GetCurveTitle() == oldCurveImName)
+                if(matchingPlotImNameIndex >= 0 && oldCurveImNameCount > 0 && curveData->GetCurveTitle() == oldCurveImName)
                 {
                     matchingCurveImNameIndex = itemIndex;
                 }
