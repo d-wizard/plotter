@@ -71,55 +71,62 @@ public:
 
     void showCursor(QPointF pos)
     {
+        double xPos = pos.x();
+        double yPos = pos.y();
+
+        const double* xPoints = m_parentCurve->getXPoints();
+        const double* yPoints = m_parentCurve->getYPoints();
+
+        // Initialize for 2D plot
+        int minPointIndex = 0;
+
         if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
         {
-            // 1d assumed
-            int checkIndex = (int)(pos.x() + 0.5);
-
-            if(checkIndex < 0)
-            {
-                checkIndex = 0;
-            }
-            else if((unsigned int)checkIndex >= m_parentCurve->numPoints)
-            {
-                checkIndex = m_parentCurve->numPoints-1;
-            }
-            m_pointIndex = checkIndex;
+            // Since 1D plot, assume the X position the user selected is close to the curve
+            minPointIndex = (int)(pos.x() + 0.5);
         }
-        else
+
+        double xDelta = fabs(xPoints[minPointIndex] - xPos);
+        double yDelta = fabs(yPoints[minPointIndex] - yPos);
+        double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+
+        // Initialize for 2D plot
+        int startIndex = 1;
+        int endIndex = m_parentCurve->numPoints;
+
+        if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
         {
-            double xPos = pos.x();
-            double yPos = pos.y();
-
-            const double* xPoints = m_parentCurve->getXPoints();
-            const double* yPoints = m_parentCurve->getYPoints();
-
-            double xDelta = fabs(xPoints[0] - xPos);
-            double yDelta = fabs(yPoints[0] - yPos);
-            double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
-            int minPointIndex = 0;
-
-            double curPointDist = 0.0;
-            int numPoints = m_parentCurve->numPoints;
-
-            for(int i = 1; i < numPoints; ++i)
+            int roundDownMinDist = (int)minDist;
+            startIndex = minPointIndex - roundDownMinDist;
+            endIndex = minPointIndex + roundDownMinDist;
+            if(startIndex < 0)
             {
-                xDelta = fabs(xPoints[i] - xPos);
-                yDelta = fabs(yPoints[i] - yPos);
-                if(xDelta < minDist && yDelta < minDist)
+                startIndex = 0;
+            }
+            if(endIndex > (int)m_parentCurve->numPoints)
+            {
+                endIndex = (int)m_parentCurve->numPoints;
+            }
+        }
+
+        for(int i = startIndex; i < endIndex; ++i)
+        {
+            xDelta = fabs(xPoints[i] - xPos);
+            yDelta = fabs(yPoints[i] - yPos);
+            // Don't do sqrt if its already known that it won't be smaller than curPointDist
+            if(xDelta < minDist && yDelta < minDist)
+            {
+                double curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+                if(curPointDist < minDist)
                 {
-                    curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
-                    if(curPointDist < minDist)
-                    {
-                        minDist = curPointDist;
-                        minPointIndex = i;
-                    }
+                    minDist = curPointDist;
+                    minPointIndex = i;
                 }
             }
-
-            m_pointIndex = minPointIndex;
-
         }
+
+        m_pointIndex = minPointIndex;
+
 
         showCursor();
     }
