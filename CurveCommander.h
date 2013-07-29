@@ -16,76 +16,36 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef PlotHelperTypes_h
-#define PlotHelperTypes_h
+#ifndef CurveCommander_h
+#define CurveCommander_h
 
-#include <vector>
-
-
+#include <QMap>
 #include <QString>
-#include <QList>
 #include <QVector>
-#include <QString>
+#include <CurveData.h>
 
+typedef QMap<QString, CurveData*> tCurveDataInfo;
+typedef QMap<QString, tCurveDataInfo> tCurveCommanderInfo;
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
-typedef std::vector<double> dubVect;
-
-typedef struct
+class CurveCommander
 {
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
-}maxMinXY;
+public:
+    CurveCommander();
+    ~CurveCommander();
 
-typedef enum
-{
-    E_PLOT_TYPE_1D,
-    E_PLOT_TYPE_2D
-}ePlotType;
+    void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
+    void plotRemoved(QString plotName);
 
-typedef struct
-{
-    double m;
-    double b;
-}tLinear;
+    bool validPlot(QString plotName);
+    bool validCurve(QString plotName, QString curveName);
+    CurveData* getCurveData(QString plotName, QString curveName);
 
-typedef struct
-{
-    tLinear xAxis;
-    tLinear yAxis;
-}tLinearXYAxis;
-
-typedef enum
-{
-    E_FFT_REAL,
-    E_FFT_COMPLEX
-}eFFTType;
-
-typedef enum
-{
-    E_X_AXIS,
-    E_Y_AXIS
-}eAxis;
+    tCurveCommanderInfo& getCurveCommanderInfo();
 
 
-typedef struct
-{
-    QString plotName;
-    QString curveName;
-
-    eFFTType fftType;
-
-    QString srcRePlotName;
-    QString srcReCurveName;
-    eAxis   srcReAxis;
-
-    QString srcImPlotName;
-    QString srcImCurveName;
-    eAxis   srcImAxis;
-}tFFTCurve;
+private:
+    tCurveCommanderInfo m_allCurves;
+};
 
 
 #endif

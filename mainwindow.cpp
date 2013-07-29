@@ -25,14 +25,16 @@
 #include <QBitmap>
 #include <qwt_plot_canvas.h>
 
+#include "plotguimain.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
 
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(plotGuiMain *plotGuiParent, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    m_plotGuiMain(plotGuiParent),
     m_qwtPlot(NULL),
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
@@ -366,6 +368,11 @@ void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 
 void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 {
+    if( yPoints == NULL || (xPoints != NULL && xPoints->size() <= 0) || yPoints->size() <= 0)
+    {
+        return;
+    }
+
     int curveIndex = findMatchingCurve(name);
     if(curveIndex >= 0)
     {
@@ -406,6 +413,8 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
     m_plotZoom->ResetZoom();
     replotMainPlot();
     emit updateCursorMenusSignal();
+
+    m_plotGuiMain->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->GetCurveTitle(), m_qwtCurves[curveIndex]);
 }
 
 
@@ -1074,3 +1083,7 @@ int MainWindow::findMatchingCurve(const QString& curveTitle)
 }
 
 
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    m_plotGuiMain->plotWindowClose(this->windowTitle());
+}

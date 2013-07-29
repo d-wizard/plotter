@@ -22,6 +22,9 @@
 #include "plotguimain.h"
 #include "ui_plotguimain.h"
 
+#include "createfftplot.h"
+#include "fftHelper.h"
+
 //#define TEST_CURVES
 
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
@@ -29,7 +32,10 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     ui(new Ui::plotGuiMain),
     m_trayIcon(NULL),
     m_trayExitAction(NULL),
-    m_trayMenu(NULL)
+    m_trayComplexFFTAction(NULL),
+    m_trayRealFFTAction(NULL),
+    m_trayMenu(NULL),
+    m_createFFTPlotGUI(NULL)
 {
     ui->setupUi(this);
 
@@ -38,7 +44,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
-    m_plotGuis[plotName] = new MainWindow();
+    m_plotGuis[plotName] = new MainWindow(this);
     m_plotGuis[plotName]->setWindowTitle(plotName);
     m_plotGuis[plotName]->show();
 
@@ -88,22 +94,43 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_trayExitAction = new QAction("Exit", this);
     m_trayMenu = new QMenu("Exit", this);
 
-    m_trayMenu->addAction(m_trayExitAction);
-
     m_trayIcon->setContextMenu(m_trayMenu);
 
     connect(m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
 
+    m_trayComplexFFTAction = new QAction("Create Complex FFT", this);
+    connect(m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
+    m_trayRealFFTAction = new QAction("Create Real FFT", this);
+    connect(m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
+
     m_trayIcon->show();
 
+    m_trayMenu->addAction(m_trayRealFFTAction);
+    m_trayMenu->addAction(m_trayComplexFFTAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(m_trayExitAction);
 
+    QObject::connect(this, SIGNAL(createFftGuiFinishedSignal()),
+                     this, SLOT(createFftGuiFinishedSlot()), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
+                     this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
 }
 
 plotGuiMain::~plotGuiMain()
 {
+    if(m_createFFTPlotGUI != NULL)
+    {
+        delete m_createFFTPlotGUI;
+    }
+
     delete m_tcpMsgReader;
 
     delete m_trayIcon;
+    delete m_trayExitAction;
+    delete m_trayComplexFFTAction;
+    delete m_trayRealFFTAction;
+    delete m_trayMenu;
+
 
     QMap<QString, MainWindow*>::iterator iter;
     for(iter = m_plotGuis.begin(); iter != m_plotGuis.end(); ++iter)
@@ -121,8 +148,9 @@ void plotGuiMain::removeHiddenPlotWindows()
     {
         if(iter.value()->isVisible() == false)
         {
+            m_curveCommander.plotRemoved(iter.key());
             delete iter.value();
-            m_plotGuis.erase(iter++);
+            iter = m_plotGuis.erase(iter);
         }
         else
         {
@@ -149,8 +177,8 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
         QString plotName(msgUnpacker.m_plotName.c_str());
         if(m_plotGuis.find(plotName) == m_plotGuis.end())
         {
-           m_plotGuis[plotName] = new MainWindow();
-           m_plotGuis[plotName]->setWindowTitle(msgUnpacker.m_plotName.c_str());
+            m_plotGuis[plotName] = new MainWindow(this);
+            m_plotGuis[plotName]->setWindowTitle(msgUnpacker.m_plotName.c_str());
         }
         switch(msgUnpacker.m_plotAction)
         {
@@ -168,5 +196,193 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
     }
 
     delete[] msg;
+}
+
+void plotGuiMain::createComplexFFT()
+{
+    if(m_createFFTPlotGUI == NULL)
+    {
+        m_createFFTPlotGUI = new createFFTPlot(this, m_curveCommander.getCurveCommanderInfo(), E_FFT_COMPLEX);
+    }
+}
+
+void plotGuiMain::createRealFFT()
+{
+    if(m_createFFTPlotGUI == NULL)
+    {
+        m_createFFTPlotGUI = new createFFTPlot(this, m_curveCommander.getCurveCommanderInfo(), E_FFT_REAL);
+    }
+}
+
+void plotGuiMain::createFftGuiFinishedSlot()
+{
+    if(m_createFFTPlotGUI != NULL)
+    {
+        tFFTCurve temp;
+        if(m_createFFTPlotGUI->getFFTData(temp) == true)
+        {
+            makeFFTPlot(temp);
+        }
+        delete m_createFFTPlotGUI;
+        m_createFFTPlotGUI = NULL;
+    }
+}
+
+void plotGuiMain::plotWindowCloseSlot(QString plotName)
+{
+    removeHiddenPlotWindows();
+    removeFromFFTList(plotName);
+    if(m_createFFTPlotGUI != NULL)
+    {
+        m_createFFTPlotGUI->plotsCurvesChanged(m_curveCommander.getCurveCommanderInfo());
+    }
+}
+
+
+void plotGuiMain::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
+{
+    m_curveCommander.curveUpdated(plotName, curveName, curveData);
+    updateFFTPlot(plotName, curveName);
+    if(m_createFFTPlotGUI != NULL)
+    {
+        m_createFFTPlotGUI->plotsCurvesChanged(m_curveCommander.getCurveCommanderInfo());
+    }
+}
+
+void plotGuiMain::makeFFTPlot(tFFTCurve fftCurve)
+{
+    dubVect rePoints;
+    dubVect imPoints;
+
+    CurveData* srcRe = m_curveCommander.getCurveData(fftCurve.srcRePlotName, fftCurve.srcReCurveName);
+    CurveData* srcIm = m_curveCommander.getCurveData(fftCurve.srcImPlotName, fftCurve.srcImCurveName);
+
+    if(fftCurve.fftType == E_FFT_REAL)
+    {
+        if(srcRe != NULL)
+        {
+            if(fftCurve.srcReAxis == E_X_AXIS)
+            {
+                srcRe->getXPoints(rePoints);
+            }
+            else
+            {
+                srcRe->getYPoints(rePoints);
+            }
+            updateFFTList(fftCurve);
+            if(m_plotGuis.find(fftCurve.plotName) == m_plotGuis.end())
+            {
+                m_plotGuis[fftCurve.plotName] = new MainWindow(this);
+                m_plotGuis[fftCurve.plotName]->setWindowTitle(fftCurve.plotName);
+            }
+
+            realFFT(rePoints, rePoints);
+            m_plotGuis[fftCurve.plotName]->add1dCurve(fftCurve.curveName, rePoints);
+            m_plotGuis[fftCurve.plotName]->show();
+        }
+    }
+    else if(fftCurve.fftType == E_FFT_COMPLEX)
+    {
+        if(srcRe != NULL && srcIm != NULL)
+        {
+            if(fftCurve.srcReAxis == E_X_AXIS)
+            {
+                srcRe->getXPoints(rePoints);
+            }
+            else
+            {
+                srcRe->getYPoints(rePoints);
+            }
+            if(fftCurve.srcImAxis == E_X_AXIS)
+            {
+                srcIm->getXPoints(imPoints);
+            }
+            else
+            {
+                srcIm->getYPoints(imPoints);
+            }
+            updateFFTList(fftCurve);
+            if(m_plotGuis.find(fftCurve.plotName) == m_plotGuis.end())
+            {
+                m_plotGuis[fftCurve.plotName] = new MainWindow(this);
+                m_plotGuis[fftCurve.plotName]->setWindowTitle(fftCurve.plotName);
+            }
+            dubVect fftXPoints;
+
+            complexFFT(rePoints, imPoints, rePoints, imPoints);
+            getFFTXAxisValues(fftXPoints, rePoints.size());
+
+            QString curveNameRe = fftCurve.curveName;
+            QString curveNameIm = fftCurve.curveName;
+            curveNameRe.append(" FFT Real");
+            curveNameIm.append(" FFT Imag");
+
+            m_plotGuis[fftCurve.plotName]->add2dCurve(curveNameRe, fftXPoints, rePoints);
+            m_plotGuis[fftCurve.plotName]->add2dCurve(curveNameIm, fftXPoints, imPoints);
+            m_plotGuis[fftCurve.plotName]->show();
+        }
+    }
+}
+
+void plotGuiMain::updateFFTPlot(QString srcPlotName, QString srcCurveName)
+{
+    for(int i = 0; i < m_fftCurves.size(); ++i)
+    {
+        if( (m_fftCurves[i].srcRePlotName == srcPlotName && m_fftCurves[i].srcReCurveName == srcCurveName) ||
+            (m_fftCurves[i].srcImPlotName == srcPlotName && m_fftCurves[i].srcImCurveName == srcCurveName) )
+        {
+            makeFFTPlot(m_fftCurves[i]);
+        }
+    }
+}
+
+void plotGuiMain::updateFFTList(const tFFTCurve& fftCurve)
+{
+    bool matchFound = false;
+    for(int i = 0; i < m_fftCurves.size(); ++i)
+    {
+        if(m_fftCurves[i].plotName == fftCurve.plotName && m_fftCurves[i].curveName == fftCurve.curveName)
+        {
+            m_fftCurves[i] = fftCurve;
+            matchFound = true;
+            break;
+        }
+    }
+    if(matchFound == false)
+    {
+        m_fftCurves.push_back(fftCurve);
+    }
+}
+
+void plotGuiMain::removeFromFFTList(QString plotName, QString curveName)
+{
+    QVector<tFFTCurve>::Iterator iter = m_fftCurves.begin();
+    while(iter != m_fftCurves.end())
+    {
+        if(iter->plotName == plotName && iter->curveName == curveName)
+        {
+            iter = m_fftCurves.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+}
+
+void plotGuiMain::removeFromFFTList(QString plotName)
+{
+    QVector<tFFTCurve>::Iterator iter = m_fftCurves.begin();
+    while(iter != m_fftCurves.end())
+    {
+        if(iter->plotName == plotName)
+        {
+            iter = m_fftCurves.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 

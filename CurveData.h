@@ -303,6 +303,9 @@ public:
         return normFactor;
     }
 
+    void getXPoints(dubVect& ioXPoints){ioXPoints = xPoints;}
+    void getYPoints(dubVect& ioYPoints){ioYPoints = yPoints;}
+
 
 private:
     CurveData();

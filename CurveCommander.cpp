@@ -16,77 +16,65 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef PlotHelperTypes_h
-#define PlotHelperTypes_h
+#include "CurveCommander.h"
 
-#include <vector>
-
-
-#include <QString>
-#include <QList>
-#include <QVector>
-#include <QString>
-
-
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
-typedef std::vector<double> dubVect;
-
-typedef struct
+CurveCommander::CurveCommander()
 {
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
-}maxMinXY;
 
-typedef enum
+}
+
+CurveCommander::~CurveCommander()
 {
-    E_PLOT_TYPE_1D,
-    E_PLOT_TYPE_2D
-}ePlotType;
 
-typedef struct
+}
+
+
+void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
 {
-    double m;
-    double b;
-}tLinear;
+    m_allCurves[plotName][curveName] = curveData;
+}
 
-typedef struct
+void CurveCommander::plotRemoved(QString plotName)
 {
-    tLinear xAxis;
-    tLinear yAxis;
-}tLinearXYAxis;
+    if(validPlot(plotName) == true)
+    {
+        m_allCurves.erase(m_allCurves.find(plotName));
+    }
+}
 
-typedef enum
+
+bool CurveCommander::validPlot(QString plotName)
 {
-    E_FFT_REAL,
-    E_FFT_COMPLEX
-}eFFTType;
+    return m_allCurves.find(plotName) != m_allCurves.end();
+}
 
-typedef enum
+bool CurveCommander::validCurve(QString plotName, QString curveName)
 {
-    E_X_AXIS,
-    E_Y_AXIS
-}eAxis;
+    if(validPlot(plotName) == true)
+    {
+        return m_allCurves[plotName].find(curveName) != m_allCurves[plotName].end();
+    }
+    else
+    {
+        return false;
+    }
+}
 
-
-typedef struct
+CurveData* CurveCommander::getCurveData(QString plotName, QString curveName)
 {
-    QString plotName;
-    QString curveName;
+    if(validCurve(plotName, curveName) == true)
+    {
+        return m_allCurves[plotName][curveName];
+    }
+    else
+    {
+        return NULL;
+    }
+}
 
-    eFFTType fftType;
+tCurveCommanderInfo& CurveCommander::getCurveCommanderInfo()
+{
+    return m_allCurves;
+}
 
-    QString srcRePlotName;
-    QString srcReCurveName;
-    eAxis   srcReAxis;
-
-    QString srcImPlotName;
-    QString srcImCurveName;
-    eAxis   srcImAxis;
-}tFFTCurve;
-
-
-#endif
 

@@ -23,7 +23,9 @@ SOURCES += main.cpp\
     plotguimain.cpp \
     dString.cpp \
     FileSystemOperations.cpp \
-    fftHelper.cpp
+    fftHelper.cpp \
+    createfftplot.cpp \
+    CurveCommander.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -36,10 +38,14 @@ HEADERS  += mainwindow.h \
     CurveData.h \
     plotguimain.h \
     dString.h \
-    FileSystemOperations.h
+    FileSystemOperations.h \
+    createfftplot.h \
+    fftHelper.h \
+    CurveCommander.h
 
 FORMS    += mainwindow.ui \
-    plotguimain.ui
+    plotguimain.ui \
+    createfftplot.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR

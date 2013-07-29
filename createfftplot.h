@@ -16,77 +16,56 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef PlotHelperTypes_h
-#define PlotHelperTypes_h
+#ifndef CREATEFFTPLOT_H
+#define CREATEFFTPLOT_H
 
-#include <vector>
+#include <QWidget>
+
+#include "PlotHelperTypes.h"
+#include "CurveCommander.h"
+
+class plotGuiMain;
 
 
-#include <QString>
-#include <QList>
-#include <QVector>
-#include <QString>
+namespace Ui {
+class createFFTPlot;
+}
 
-
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
-typedef std::vector<double> dubVect;
-
-typedef struct
+class createFFTPlot : public QWidget
 {
-    double minX;
-    double minY;
-    double maxX;
-    double maxY;
-}maxMinXY;
+    Q_OBJECT
+    
+public:
+    explicit createFFTPlot(plotGuiMain* guiParent, tCurveCommanderInfo &initPlotsCurves, eFFTType fftType, QWidget *parent = 0);
+    ~createFFTPlot();
 
-typedef enum
-{
-    E_PLOT_TYPE_1D,
-    E_PLOT_TYPE_2D
-}ePlotType;
-
-typedef struct
-{
-    double m;
-    double b;
-}tLinear;
-
-typedef struct
-{
-    tLinear xAxis;
-    tLinear yAxis;
-}tLinearXYAxis;
-
-typedef enum
-{
-    E_FFT_REAL,
-    E_FFT_COMPLEX
-}eFFTType;
-
-typedef enum
-{
-    E_X_AXIS,
-    E_Y_AXIS
-}eAxis;
+    void plotsCurvesChanged(const tCurveCommanderInfo &pc);
+    bool getFFTData(tFFTCurve& fftCurveData);
 
 
-typedef struct
-{
-    QString plotName;
-    QString curveName;
+private slots:
+    void on_cmdOk_clicked();
+    void on_cmdCancel_clicked();
 
-    eFFTType fftType;
+    void on_cmbRePlot_currentIndexChanged(int index);
 
-    QString srcRePlotName;
-    QString srcReCurveName;
-    eAxis   srcReAxis;
+    void on_cmbImPlot_currentIndexChanged(int index);
 
-    QString srcImPlotName;
-    QString srcImCurveName;
-    eAxis   srcImAxis;
-}tFFTCurve;
+    void on_cmbOutPlot_currentIndexChanged(int index);
 
+private:
+    Ui::createFFTPlot *ui;
+    plotGuiMain* m_guiMainParent;
+    tCurveCommanderInfo m_plotsAndCurves;
 
-#endif
+    bool m_guiChanging;
 
+    void updateGui();
+
+    bool m_validUserInput;
+    tFFTCurve m_fftCurveData;
+
+    void closeEvent(QCloseEvent* event);
+};
+
+#endif // CREATEFFTPLOT_H

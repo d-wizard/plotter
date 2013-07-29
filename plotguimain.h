@@ -26,12 +26,16 @@
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QAction>
+#include <QMap>
 
 #include "mainwindow.h"
 #include "TCPMsgReader.h"
 #include "PlotHelperTypes.h"
+#include "CurveData.h"
+#include "CurveCommander.h"
 
-#include <QMap>
+
+class createFFTPlot;
 
 namespace Ui {
 class plotGuiMain;
@@ -47,24 +51,52 @@ public:
     QMap<QString, MainWindow*> m_plotGuis;
 
     void readPlotMsg(const char *msg, unsigned int size);
-    
+
+    void createFftGuiFinished(){emit createFftGuiFinishedSignal();}
+    void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
+
+    void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
+
+
 private:
-    Ui::plotGuiMain *ui;
-    TCPMsgReader* m_tcpMsgReader;
 
     void removeHiddenPlotWindows();
+    void makeFFTPlot(tFFTCurve fftCurve);
+    void updateFFTPlot(QString srcPlotName, QString srcCurveName);
+
+    void updateFFTList(const tFFTCurve &fftCurve);
+
+    void removeFromFFTList(QString plotName);
+    void removeFromFFTList(QString plotName, QString curveName);
+
+    Ui::plotGuiMain *ui;
+    TCPMsgReader* m_tcpMsgReader;
 
 
     QSystemTrayIcon* m_trayIcon;
     QAction* m_trayExitAction;
+    QAction* m_trayComplexFFTAction;
+    QAction* m_trayRealFFTAction;
     QMenu* m_trayMenu;
 
+    createFFTPlot* m_createFFTPlotGUI;
 
+    CurveCommander m_curveCommander;
+
+    QVector<tFFTCurve> m_fftCurves;
 
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
+    void createComplexFFT();
+    void createRealFFT();
+
+    void createFftGuiFinishedSlot();
+    void plotWindowCloseSlot(QString plotName);
+
 signals:
     void readPlotMsgSignal(const char*, unsigned int);
+    void createFftGuiFinishedSignal();
+    void plotWindowCloseSignal(QString plotName);
 };
 
 #endif // PLOTGUIMAIN_H

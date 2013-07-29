@@ -46,6 +46,9 @@
 #include "Cursor.h"
 #include "CurveData.h"
 
+
+class plotGuiMain;
+
 typedef struct
 {
     QAction* action;
@@ -72,7 +75,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(plotGuiMain* plotGuiParent = NULL, QWidget *parent = 0);
     ~MainWindow();
 
 
@@ -82,6 +85,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    plotGuiMain* m_plotGuiMain;
 
 
     QwtPlot* m_qwtPlot;
@@ -142,6 +147,10 @@ private:
     // Key Press Functions
     bool keyPressModifyZoom(int key);
     bool keyPressModifyCursor(int key);
+
+
+    void closeEvent(QCloseEvent* event);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
