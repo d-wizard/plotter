@@ -411,8 +411,21 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
     }
     m_plotZoom->ResetZoom();
     replotMainPlot();
+
+    // Make sure the cursors matches the updated point.
+    if(m_qwtSelectedSample->isAttached == true)
+    {
+        m_qwtSelectedSample->showCursor();
+    }
+    if(m_qwtSelectedSampleDelta->isAttached == true)
+    {
+        m_qwtSelectedSampleDelta->showCursor();
+    }
+    updatePointDisplay();
+
     emit updateCursorMenusSignal();
 
+    // inform parent that a curve has been added / changed
     m_plotGuiMain->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->GetCurveTitle(), m_qwtCurves[curveIndex]);
 }
 
