@@ -409,7 +409,6 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
     {
         setSelectedCurveIndex(curveIndex);
     }
-    m_plotZoom->SetPlotDimensions(m_maxMin);
     m_plotZoom->ResetZoom();
     replotMainPlot();
     emit updateCursorMenusSignal();
@@ -575,6 +574,7 @@ void MainWindow::calcMaxMin()
     {
         // TODO: Should do something when there are no curves displayed
     }
+    m_plotZoom->SetPlotDimensions(m_maxMin);
 }
 
 

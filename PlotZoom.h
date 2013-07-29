@@ -73,6 +73,7 @@ public:
 
    void SetPlotDimensions(maxMinXY plotDimensions)
    {
+        maxMinXY oldPlotDim = m_plotDimensions;
         double width = plotDimensions.maxX - plotDimensions.minX;
         double height = plotDimensions.maxY - plotDimensions.minY;
 
@@ -95,6 +96,76 @@ public:
             m_zoomHeight = m_plotHeight;
             m_zoomDimensions.minY = m_plotDimensions.minY;
             m_zoomDimensions.maxY = m_plotDimensions.maxY;
+        }
+
+        if(m_zoomDimensions == oldPlotDim)
+        {
+            // If not zoomed in set zoom to new plot dimensions
+            SetZoom(m_plotDimensions, false);
+        }
+        else
+        {
+            // Check if old zoom contains is within new plot dimensions
+            bool minXValid = false;
+            bool maxXValid = false;
+            bool minYValid = false;
+            bool maxYValid = false;
+
+            if(m_zoomDimensions.minX >= m_plotDimensions.minX && m_zoomDimensions.minX <= m_plotDimensions.maxX)
+            {
+                minXValid = true;
+            }
+            if(m_zoomDimensions.maxX >= m_plotDimensions.minX && m_zoomDimensions.maxX <= m_plotDimensions.maxX)
+            {
+                maxXValid = true;
+            }
+            if(m_zoomDimensions.minY >= m_plotDimensions.minY && m_zoomDimensions.minY <= m_plotDimensions.maxY)
+            {
+                minYValid = true;
+            }
+            if(m_zoomDimensions.maxY >= m_plotDimensions.minY && m_zoomDimensions.maxY <= m_plotDimensions.maxY)
+            {
+                maxYValid = true;
+            }
+
+            maxMinXY modZoomDim = m_zoomDimensions;
+
+            if(minXValid == false && maxXValid == false)
+            {
+                // Entire axis zoom out of range, reset to current plot dimensions
+                modZoomDim.maxX = m_plotDimensions.maxX;
+                modZoomDim.minX = m_plotDimensions.minX;
+            }
+            else if(minXValid == false)
+            {
+                // Min out of range, max in range, set min to plot dimension min
+                modZoomDim.minX = m_plotDimensions.minX;
+            }
+            else if(maxXValid == false)
+            {
+                // Max out of range, min in range, set max to plot dimension max
+                modZoomDim.maxX = m_plotDimensions.maxX;
+            }
+
+            if(minYValid == false && maxYValid == false)
+            {
+                // Entire axis zoom out of range, reset to current plot dimensions
+                modZoomDim.maxY = m_plotDimensions.maxY;
+                modZoomDim.minY = m_plotDimensions.minY;
+            }
+            else if(minYValid == false)
+            {
+                // Min out of range, max in range, set min to plot dimension min
+                modZoomDim.minY = m_plotDimensions.minY;
+            }
+            else if(maxYValid == false)
+            {
+                // Max out of range, min in range, set max to plot dimension max
+                modZoomDim.maxY = m_plotDimensions.maxY;
+            }
+
+            // Reset the zoom so it will be bound by new dimensions
+            SetZoom(modZoomDim, false);
         }
    }
 

@@ -32,12 +32,21 @@
 
 typedef std::vector<double> dubVect;
 
-typedef struct
+typedef struct tMaxMinXY
 {
     double minX;
     double minY;
     double maxX;
     double maxY;
+
+    bool operator==(const struct tMaxMinXY& rhs)
+    {
+        return (minX == rhs.minX) &&
+               (minY == rhs.minY) &&
+               (maxX == rhs.maxX) &&
+               (maxY == rhs.maxY);
+    }
+
 }maxMinXY;
 
 typedef enum
