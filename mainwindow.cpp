@@ -532,6 +532,23 @@ void MainWindow::visibleCursorMenuSelect(int index)
     {
         m_qwtCurves[index]->curve->attach(m_qwtPlot);
     }
+
+    // Detach all and re-attach visable curves, so as to retain curve order on gui
+    QList<CurveData*> visableCurves;
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i]->displayed == true)
+        {
+            visableCurves.push_back(m_qwtCurves[i]);
+            m_qwtCurves[i]->curve->detach();
+        }
+    }
+    for(int i = 0; i < visableCurves.size(); ++i)
+    {
+        visableCurves[i]->displayed = true;
+        visableCurves[i]->curve->attach(m_qwtPlot);
+    }
+
     updatePointDisplay();
     replotMainPlot();
     calcMaxMin();
