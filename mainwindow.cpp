@@ -47,6 +47,7 @@ MainWindow::MainWindow(plotGuiMain *plotGuiParent, QWidget *parent) :
     m_zoomCursor(NULL),
     m_normalizeCurves(false),
     m_legendDisplayed(false),
+    m_canvasXOverYRatio(1.0),
     m_zoomAction("Zoom", this),
     m_cursorAction("Cursor", this),
     m_deltaCursorAction("Delta Cursor", this),
@@ -476,7 +477,9 @@ void MainWindow::deltaCursorMode()
     {
         m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
         m_qwtSelectedSampleDelta->showCursor(
-            QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint));
+            QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint),
+            m_maxMin,
+            m_canvasXOverYRatio);
 
         m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
@@ -614,7 +617,7 @@ void MainWindow::pointSelected(const QPointF &pos)
 {
     if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
     {
-        m_qwtSelectedSample->showCursor(pos);
+        m_qwtSelectedSample->showCursor(pos, m_maxMin, m_canvasXOverYRatio);
 
         updatePointDisplay();
         replotMainPlot();
@@ -796,13 +799,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 QSize cavasSize = m_qwtPlot->canvas()->frameSize();
                 QPoint mousePos = m_qwtPlot->canvas()->mapFromGlobal(m_qwtPlot->cursor().pos());
 
-                const int OFFSET = 6;
-
                 // Map position relative to the curve's canvas.
                 // Y axis needs to be inverted so the 0 point is at the bottom.
                 QPointF relMousePos(
-                    (double)(mousePos.x() - OFFSET) / (double)(cavasSize.width() - 2*OFFSET),
-                    1.0 - (double)(mousePos.y() - OFFSET) / (double)(cavasSize.height() - 2*OFFSET));
+                    (double)(mousePos.x() - PLOT_CANVAS_OFFSET) / (double)(cavasSize.width() - 2*PLOT_CANVAS_OFFSET),
+                    1.0 - (double)(mousePos.y() - PLOT_CANVAS_OFFSET) / (double)(cavasSize.height() - 2*PLOT_CANVAS_OFFSET));
 
                 if(wheelEvent->delta() > 0)
                 {
@@ -1117,3 +1118,11 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
     m_plotGuiMain->plotWindowClose(this->windowTitle());
 }
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QSize cavasSize = m_qwtPlot->canvas()->frameSize();
+    m_canvasXOverYRatio = (cavasSize.width() - (2.0*PLOT_CANVAS_OFFSET)) / (cavasSize.height() - (2.0*PLOT_CANVAS_OFFSET));
+}
+
+

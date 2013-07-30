@@ -46,6 +46,7 @@
 #include "Cursor.h"
 #include "CurveData.h"
 
+#define PLOT_CANVAS_OFFSET (6)
 
 class plotGuiMain;
 
@@ -110,6 +111,8 @@ private:
 
     bool m_legendDisplayed;
 
+    double m_canvasXOverYRatio;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
@@ -124,7 +127,6 @@ private:
 
     void addCurve(QString& name, dubVect* xPoints, dubVect* yPoints);
 
-    bool eventFilter(QObject *obj, QEvent *event);
 
     void calcMaxMin();
 
@@ -149,7 +151,9 @@ private:
     bool keyPressModifyCursor(int key);
 
 
+    bool eventFilter(QObject *obj, QEvent *event);
     void closeEvent(QCloseEvent* event);
+    void resizeEvent(QResizeEvent* event);
 
 private slots:
     void pointSelected(const QPointF &pos);

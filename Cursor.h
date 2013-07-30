@@ -69,13 +69,20 @@ public:
         return m_parentCurve;
     }
 
-    void showCursor(QPointF pos)
+    void showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
     {
         double xPos = pos.x();
         double yPos = pos.y();
 
         const double* xPoints = m_parentCurve->getXPoints();
         const double* yPoints = m_parentCurve->getYPoints();
+
+        // The data will not be displayed on the plot 1:1, need to adjust
+        // delta calculation to make the x and y delta ratio 1:1
+        double width = (maxMin.maxX - maxMin.minX);
+        double height = (maxMin.maxY - maxMin.minY) * displayRatio;
+        double inverseWidth = 1.0/width;
+        double inverseHeight = 1.0/height;
 
         // Initialize for 2D plot
         int minPointIndex = 0;
@@ -86,8 +93,8 @@ public:
             minPointIndex = (int)(pos.x() + 0.5);
         }
 
-        double xDelta = fabs(xPoints[minPointIndex] - xPos);
-        double yDelta = fabs(yPoints[minPointIndex] - yPos);
+        double xDelta = fabs(xPoints[minPointIndex] - xPos)*inverseWidth;
+        double yDelta = fabs(yPoints[minPointIndex] - yPos)*inverseHeight;
         double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
 
         // Initialize for 2D plot
@@ -96,7 +103,7 @@ public:
 
         if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
         {
-            int roundDownMinDist = (int)minDist;
+            int roundDownMinDist = (int)(minDist * width) + 1;
             startIndex = minPointIndex - roundDownMinDist;
             endIndex = minPointIndex + roundDownMinDist;
             if(startIndex < 0)
@@ -111,8 +118,8 @@ public:
 
         for(int i = startIndex; i < endIndex; ++i)
         {
-            xDelta = fabs(xPoints[i] - xPos);
-            yDelta = fabs(yPoints[i] - yPos);
+            xDelta = fabs(xPoints[i] - xPos)*inverseWidth;
+            yDelta = fabs(yPoints[i] - yPos)*inverseHeight;
             // Don't do sqrt if its already known that it won't be smaller than curPointDist
             if(xDelta < minDist && yDelta < minDist)
             {
