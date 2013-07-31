@@ -74,9 +74,10 @@ private:
 
 
     QSystemTrayIcon* m_trayIcon;
-    QAction* m_trayExitAction;
-    QAction* m_trayComplexFFTAction;
-    QAction* m_trayRealFFTAction;
+    QAction m_trayExitAction;
+    QAction m_trayComplexFFTAction;
+    QAction m_trayRealFFTAction;
+    QAction m_trayEnDisNewCurvesAction;
     QMenu* m_trayMenu;
 
     createFFTPlot* m_createFFTPlotGUI;
@@ -85,10 +86,13 @@ private:
 
     QVector<tFFTCurve> m_fftCurves;
 
+    bool m_allowNewCurves;
+
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
     void createComplexFFT();
     void createRealFFT();
+    void enDisNewCurves();
 
     void createFftGuiFinishedSlot();
     void plotWindowCloseSlot(QString plotName);

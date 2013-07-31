@@ -31,11 +31,13 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     QMainWindow(parent),
     ui(new Ui::plotGuiMain),
     m_trayIcon(NULL),
-    m_trayExitAction(NULL),
-    m_trayComplexFFTAction(NULL),
-    m_trayRealFFTAction(NULL),
+    m_trayExitAction("Exit", this),
+    m_trayComplexFFTAction("Create Complex FFT", this),
+    m_trayRealFFTAction("Create Real FFT", this),
+    m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_trayMenu(NULL),
-    m_createFFTPlotGUI(NULL)
+    m_createFFTPlotGUI(NULL),
+    m_allowNewCurves(true)
 {
     ui->setupUi(this);
 
@@ -91,25 +93,25 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
 
     m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
-    m_trayExitAction = new QAction("Exit", this);
     m_trayMenu = new QMenu("Exit", this);
 
     m_trayIcon->setContextMenu(m_trayMenu);
 
-    connect(m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
+    connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
+    connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
+    connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
+    connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
 
-    m_trayComplexFFTAction = new QAction("Create Complex FFT", this);
-    connect(m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
-    m_trayRealFFTAction = new QAction("Create Real FFT", this);
-    connect(m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
 
-    m_trayMenu->addAction(m_trayRealFFTAction);
-    m_trayMenu->addAction(m_trayComplexFFTAction);
+    m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
-    m_trayMenu->addAction(m_trayExitAction);
+    m_trayMenu->addAction(&m_trayRealFFTAction);
+    m_trayMenu->addAction(&m_trayComplexFFTAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_trayExitAction);
 
-    m_trayRealFFTAction->setEnabled(false);
-    m_trayComplexFFTAction->setEnabled(false);
+    m_trayRealFFTAction.setEnabled(false);
+    m_trayComplexFFTAction.setEnabled(false);
 
     m_trayIcon->show();
 
@@ -129,9 +131,6 @@ plotGuiMain::~plotGuiMain()
     delete m_tcpMsgReader;
 
     delete m_trayIcon;
-    delete m_trayExitAction;
-    delete m_trayComplexFFTAction;
-    delete m_trayRealFFTAction;
     delete m_trayMenu;
 
 
@@ -164,9 +163,12 @@ void plotGuiMain::removeHiddenPlotWindows()
 
 void plotGuiMain::readPlotMsg(const char* msg, unsigned int size)
 {
-    char* msgCopy = new char[size];
-    memcpy(msgCopy, msg, size);
-    emit readPlotMsgSignal(msgCopy,size);
+   if(m_allowNewCurves == true)
+   {
+      char* msgCopy = new char[size];
+      memcpy(msgCopy, msg, size);
+      emit readPlotMsgSignal(msgCopy,size);
+   }
 }
 
 void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
@@ -217,6 +219,20 @@ void plotGuiMain::createRealFFT()
     }
 }
 
+void plotGuiMain::enDisNewCurves()
+{
+   m_allowNewCurves = !m_allowNewCurves;
+   if(m_allowNewCurves == true)
+   {
+      m_trayEnDisNewCurvesAction.setText("Disable New Curves");
+   }
+   else
+   {
+      m_trayEnDisNewCurvesAction.setText("Enable New Curves");
+   }
+}
+
+
 void plotGuiMain::createFftGuiFinishedSlot()
 {
     if(m_createFFTPlotGUI != NULL)
@@ -238,8 +254,8 @@ void plotGuiMain::plotWindowCloseSlot(QString plotName)
 
     if(m_curveCommander.getCurveCommanderInfo().size() == 0)
     {
-        m_trayRealFFTAction->setEnabled(false);
-        m_trayComplexFFTAction->setEnabled(false);
+        m_trayRealFFTAction.setEnabled(false);
+        m_trayComplexFFTAction.setEnabled(false);
         createFftGuiFinishedSlot();
     }
     else if(m_createFFTPlotGUI != NULL)
@@ -261,8 +277,8 @@ void plotGuiMain::curveUpdated(QString plotName, QString curveName, CurveData* c
     }
     if(m_curveCommander.getCurveCommanderInfo().size() > 0)
     {
-        m_trayRealFFTAction->setEnabled(true);
-        m_trayComplexFFTAction->setEnabled(true);
+        m_trayRealFFTAction.setEnabled(true);
+        m_trayComplexFFTAction.setEnabled(true);
     }
 }
 
