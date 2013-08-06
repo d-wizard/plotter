@@ -38,8 +38,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_trayMenu(NULL),
     m_createFFTPlotGUI(NULL),
-    m_allowNewCurves(true),
-    m_closingPlots(false)
+    m_allowNewCurves(true)
 {
     ui->setupUi(this);
 
@@ -150,9 +149,8 @@ plotGuiMain::~plotGuiMain()
 
 void plotGuiMain::closeAllPlots()
 {
-   m_closingPlots = true;
    emit closeAllPlotsSignal();
-   while(m_closingPlots == true);
+   m_sem.acquire();
 }
 
 void plotGuiMain::closeAllPlotsSlot()
@@ -164,7 +162,7 @@ void plotGuiMain::closeAllPlotsSlot()
       delete iter.value();
       iter = m_plotGuis.erase(iter);
    }
-   m_closingPlots = false;
+   m_sem.release();
 }
 
 void plotGuiMain::removeHiddenPlotWindows()

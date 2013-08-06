@@ -27,6 +27,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QMap>
+#include <QSemaphore>
 
 #include "mainwindow.h"
 #include "TCPMsgReader.h"
@@ -81,6 +82,8 @@ private:
     QAction m_trayEnDisNewCurvesAction;
     QMenu* m_trayMenu;
 
+    QSemaphore m_sem;
+
     createFFTPlot* m_createFFTPlotGUI;
 
     CurveCommander m_curveCommander;
@@ -88,8 +91,6 @@ private:
     QVector<tFFTCurve> m_fftCurves;
 
     bool m_allowNewCurves;
-
-    volatile bool m_closingPlots;
 
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
