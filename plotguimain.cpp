@@ -30,6 +30,7 @@
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     QMainWindow(parent),
     ui(new Ui::plotGuiMain),
+    m_tcpMsgReader(NULL),
     m_trayIcon(NULL),
     m_trayExitAction("Exit", this),
     m_trayComplexFFTAction("Create Complex FFT", this),
@@ -90,7 +91,10 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     //m_plotGuis[plotName]->add2dCurve("Curve2", md_x1, md_y1);
 #endif
 
-    m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
+    if(tcpPort != 0)
+    {
+        m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
+    }
 
     m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
     m_trayMenu = new QMenu("Exit", this);
@@ -128,7 +132,10 @@ plotGuiMain::~plotGuiMain()
         delete m_createFFTPlotGUI;
     }
 
-    delete m_tcpMsgReader;
+    if(m_tcpMsgReader != NULL)
+    {
+        delete m_tcpMsgReader;
+    }
 
     delete m_trayIcon;
     delete m_trayMenu;
