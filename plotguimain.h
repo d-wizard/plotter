@@ -54,6 +54,7 @@ public:
 
     void createFftGuiFinished(){emit createFftGuiFinishedSignal();}
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
+    void closeAllPlots();
 
     void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
 
@@ -88,6 +89,8 @@ private:
 
     bool m_allowNewCurves;
 
+    volatile bool m_closingPlots;
+
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
     void createComplexFFT();
@@ -96,11 +99,13 @@ public slots:
 
     void createFftGuiFinishedSlot();
     void plotWindowCloseSlot(QString plotName);
+    void closeAllPlotsSlot();
 
 signals:
     void readPlotMsgSignal(const char*, unsigned int);
     void createFftGuiFinishedSignal();
     void plotWindowCloseSignal(QString plotName);
+    void closeAllPlotsSignal();
 };
 
 #endif // PLOTGUIMAIN_H

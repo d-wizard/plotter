@@ -38,7 +38,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_trayMenu(NULL),
     m_createFFTPlotGUI(NULL),
-    m_allowNewCurves(true)
+    m_allowNewCurves(true),
+    m_closingPlots(false)
 {
     ui->setupUi(this);
 
@@ -123,6 +124,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
                      this, SLOT(createFftGuiFinishedSlot()), Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
                      this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(closeAllPlotsSignal()),
+                     this, SLOT(closeAllPlotsSlot()), Qt::QueuedConnection);
 }
 
 plotGuiMain::~plotGuiMain()
@@ -140,14 +143,28 @@ plotGuiMain::~plotGuiMain()
     delete m_trayIcon;
     delete m_trayMenu;
 
-
-    QMap<QString, MainWindow*>::iterator iter;
-    for(iter = m_plotGuis.begin(); iter != m_plotGuis.end(); ++iter)
-    {
-        delete iter.value();
-    }
+    closeAllPlots();
 
     delete ui;
+}
+
+void plotGuiMain::closeAllPlots()
+{
+   m_closingPlots = true;
+   emit closeAllPlotsSignal();
+   while(m_closingPlots == true);
+}
+
+void plotGuiMain::closeAllPlotsSlot()
+{
+   QMap<QString, MainWindow*>::iterator iter = m_plotGuis.begin();
+   while(iter != m_plotGuis.end())
+   {
+      m_curveCommander.plotRemoved(iter.key());
+      delete iter.value();
+      iter = m_plotGuis.erase(iter);
+   }
+   m_closingPlots = false;
 }
 
 void plotGuiMain::removeHiddenPlotWindows()

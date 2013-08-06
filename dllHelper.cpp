@@ -56,12 +56,12 @@ void stopPlotGui(void)
 {
    if(isRunning == true)
    {
-      qApp->thread()->quit();
-      qApp->thread()->wait();
       if(pgm != NULL)
       {
          delete pgm;
       }
+      qApp->thread()->quit();
+      qApp->thread()->wait();
    }
 }
 
