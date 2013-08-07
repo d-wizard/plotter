@@ -19,6 +19,10 @@
 #ifndef dllHelper_h
 #define dllHelper_h
 
+#include <windows.h>
+
+extern "C" Q_DECL_EXPORT BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpvReserved*/ );
+
 extern "C" Q_DECL_EXPORT void startPlotGui(void);
 extern "C" Q_DECL_EXPORT void stopPlotGui(void);
 

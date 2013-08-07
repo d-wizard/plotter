@@ -20,6 +20,9 @@
 #define TCPThreads_h
 
 #include <stdio.h>
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
 #define _WIN32_WINNT 0x501
 #include <winsock2.h>
 #include <windows.h>

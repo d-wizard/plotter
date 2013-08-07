@@ -42,6 +42,11 @@ public:
    AppThread(volatile bool* running):m_running(running){}
 };
 
+BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpvReserved*/ )
+{
+   return 0;
+}
+
 void startPlotGui(void)
 {
    if(isRunning == false)
