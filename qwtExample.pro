@@ -45,7 +45,6 @@ HEADERS  += mainwindow.h \
     CurveCommander.h
 
 FORMS    += mainwindow.ui \
-    plotguimain.ui \
     createfftplot.ui
 
 INCLUDEPATH += $$QWTDIR/src

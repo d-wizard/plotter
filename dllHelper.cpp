@@ -44,7 +44,7 @@ public:
 
 BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpvReserved*/ )
 {
-   return 0;
+   return TRUE;
 }
 
 void startPlotGui(void)
@@ -63,6 +63,9 @@ void stopPlotGui(void)
    {
       if(pgm != NULL)
       {
+         // Plots need to be closed outside this thread and
+         // before pgm's destructor is called.
+         pgm->closeAllPlotsEmit();
          delete pgm;
       }
       qApp->thread()->quit();

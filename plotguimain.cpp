@@ -28,8 +28,6 @@
 //#define TEST_CURVES
 
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
-    QMainWindow(parent),
-    ui(new Ui::plotGuiMain),
     m_tcpMsgReader(NULL),
     m_trayIcon(NULL),
     m_trayExitAction("Exit", this),
@@ -40,7 +38,6 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_createFFTPlotGUI(NULL),
     m_allowNewCurves(true)
 {
-    ui->setupUi(this);
 
     QObject::connect(this, SIGNAL(readPlotMsgSignal(const char*, unsigned int)),
                      this, SLOT(readPlotMsgSlot(const char*, unsigned int)), Qt::QueuedConnection);
@@ -143,17 +140,21 @@ plotGuiMain::~plotGuiMain()
     delete m_trayMenu;
 
     closeAllPlots();
-
-    delete ui;
 }
 
-void plotGuiMain::closeAllPlots()
+void plotGuiMain::closeAllPlotsEmit()
 {
    emit closeAllPlotsSignal();
    m_sem.acquire();
 }
 
 void plotGuiMain::closeAllPlotsSlot()
+{
+   closeAllPlots();
+   m_sem.release();
+}
+
+void plotGuiMain::closeAllPlots()
 {
    QMap<QString, MainWindow*>::iterator iter = m_plotGuis.begin();
    while(iter != m_plotGuis.end())
@@ -162,7 +163,6 @@ void plotGuiMain::closeAllPlotsSlot()
       delete iter.value();
       iter = m_plotGuis.erase(iter);
    }
-   m_sem.release();
 }
 
 void plotGuiMain::removeHiddenPlotWindows()

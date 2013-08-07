@@ -38,11 +38,7 @@
 
 class createFFTPlot;
 
-namespace Ui {
-class plotGuiMain;
-}
-
-class plotGuiMain : public QMainWindow
+class plotGuiMain : public QWidget
 {
     Q_OBJECT
     
@@ -55,7 +51,7 @@ public:
 
     void createFftGuiFinished(){emit createFftGuiFinishedSignal();}
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
-    void closeAllPlots();
+    void closeAllPlotsEmit();
 
     void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
 
@@ -71,7 +67,8 @@ private:
     void removeFromFFTList(QString plotName);
     void removeFromFFTList(QString plotName, QString curveName);
 
-    Ui::plotGuiMain *ui;
+    void closeAllPlots();
+
     TCPMsgReader* m_tcpMsgReader;
 
 
