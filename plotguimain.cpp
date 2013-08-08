@@ -36,6 +36,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_trayMenu(NULL),
     m_createFFTPlotGUI(NULL),
+    m_curveCommander(this),
     m_allowNewCurves(true)
 {
 
@@ -139,7 +140,7 @@ plotGuiMain::~plotGuiMain()
     delete m_trayIcon;
     delete m_trayMenu;
 
-    closeAllPlots();
+    m_curveCommander.destroyAllPlots();
 }
 
 void plotGuiMain::closeAllPlotsEmit()
@@ -150,37 +151,8 @@ void plotGuiMain::closeAllPlotsEmit()
 
 void plotGuiMain::closeAllPlotsSlot()
 {
-   closeAllPlots();
+   m_curveCommander.destroyAllPlots();
    m_sem.release();
-}
-
-void plotGuiMain::closeAllPlots()
-{
-   QMap<QString, MainWindow*>::iterator iter = m_plotGuis.begin();
-   while(iter != m_plotGuis.end())
-   {
-      m_curveCommander.plotRemoved(iter.key());
-      delete iter.value();
-      iter = m_plotGuis.erase(iter);
-   }
-}
-
-void plotGuiMain::removeHiddenPlotWindows()
-{
-    QMap<QString, MainWindow*>::iterator iter = m_plotGuis.begin();
-    while(iter != m_plotGuis.end())
-    {
-        if(iter.value()->isVisible() == false)
-        {
-            m_curveCommander.plotRemoved(iter.key());
-            delete iter.value();
-            iter = m_plotGuis.erase(iter);
-        }
-        else
-        {
-            ++iter;
-        }
-    }
 }
 
 void plotGuiMain::readPlotMsg(const char* msg, unsigned int size)
@@ -195,27 +167,18 @@ void plotGuiMain::readPlotMsg(const char* msg, unsigned int size)
 
 void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
 {
-    removeHiddenPlotWindows();
-
     UnpackPlotMsg msgUnpacker(msg, size);
 
     if(validPlotAction(msgUnpacker.m_plotAction))
     {
         QString plotName(msgUnpacker.m_plotName.c_str());
-        if(m_plotGuis.find(plotName) == m_plotGuis.end())
-        {
-            m_plotGuis[plotName] = new MainWindow(this);
-            m_plotGuis[plotName]->setWindowTitle(msgUnpacker.m_plotName.c_str());
-        }
         switch(msgUnpacker.m_plotAction)
         {
         case E_PLOT_1D:
-            m_plotGuis[plotName]->add1dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_yAxisValues);
-            m_plotGuis[plotName]->show();
+            m_curveCommander.add1dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_yAxisValues);
             break;
         case E_PLOT_2D:
-            m_plotGuis[plotName]->add2dCurve(msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-            m_plotGuis[plotName]->show();
+            m_curveCommander.add2dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
             break;
         default:
             break;
@@ -271,7 +234,7 @@ void plotGuiMain::createFftGuiFinishedSlot()
 
 void plotGuiMain::plotWindowCloseSlot(QString plotName)
 {
-    removeHiddenPlotWindows();
+    m_curveCommander.plotRemoved(plotName);
     removeFromFFTList(plotName);
 
     if(m_curveCommander.getCurveCommanderInfo().size() == 0)
@@ -325,15 +288,8 @@ void plotGuiMain::makeFFTPlot(tFFTCurve fftCurve)
                 srcRe->getYPoints(rePoints);
             }
             updateFFTList(fftCurve);
-            if(m_plotGuis.find(fftCurve.plotName) == m_plotGuis.end())
-            {
-                m_plotGuis[fftCurve.plotName] = new MainWindow(this);
-                m_plotGuis[fftCurve.plotName]->setWindowTitle(fftCurve.plotName);
-            }
-
             realFFT(rePoints, rePoints);
-            m_plotGuis[fftCurve.plotName]->add1dCurve(fftCurve.curveName, rePoints);
-            m_plotGuis[fftCurve.plotName]->show();
+            m_curveCommander.add1dCurve(fftCurve.plotName, fftCurve.curveName, rePoints);
         }
     }
     else if(fftCurve.fftType == E_FFT_COMPLEX)
@@ -357,11 +313,6 @@ void plotGuiMain::makeFFTPlot(tFFTCurve fftCurve)
                 srcIm->getYPoints(imPoints);
             }
             updateFFTList(fftCurve);
-            if(m_plotGuis.find(fftCurve.plotName) == m_plotGuis.end())
-            {
-                m_plotGuis[fftCurve.plotName] = new MainWindow(this);
-                m_plotGuis[fftCurve.plotName]->setWindowTitle(fftCurve.plotName);
-            }
             dubVect fftXPoints;
 
             complexFFT(rePoints, imPoints, rePoints, imPoints);
@@ -372,9 +323,8 @@ void plotGuiMain::makeFFTPlot(tFFTCurve fftCurve)
             curveNameRe.append(" FFT Real");
             curveNameIm.append(" FFT Imag");
 
-            m_plotGuis[fftCurve.plotName]->add2dCurve(curveNameRe, fftXPoints, rePoints);
-            m_plotGuis[fftCurve.plotName]->add2dCurve(curveNameIm, fftXPoints, imPoints);
-            m_plotGuis[fftCurve.plotName]->show();
+            m_curveCommander.add2dCurve(fftCurve.plotName, curveNameRe, fftXPoints, rePoints);
+            m_curveCommander.add2dCurve(fftCurve.plotName, curveNameIm, fftXPoints, imPoints);
         }
     }
 }

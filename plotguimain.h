@@ -45,7 +45,6 @@ class plotGuiMain : public QWidget
 public:
     explicit plotGuiMain(QWidget *parent = 0, unsigned short tcpPort = 0);
     ~plotGuiMain();
-    QMap<QString, MainWindow*> m_plotGuis;
 
     void readPlotMsg(const char *msg, unsigned int size);
 
@@ -58,7 +57,6 @@ public:
 
 private:
 
-    void removeHiddenPlotWindows();
     void makeFFTPlot(tFFTCurve fftCurve);
     void updateFFTPlot(QString srcPlotName, QString srcCurveName);
 
@@ -67,10 +65,7 @@ private:
     void removeFromFFTList(QString plotName);
     void removeFromFFTList(QString plotName, QString curveName);
 
-    void closeAllPlots();
-
     TCPMsgReader* m_tcpMsgReader;
-
 
     QSystemTrayIcon* m_trayIcon;
     QAction m_trayExitAction;

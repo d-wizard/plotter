@@ -17,8 +17,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "CurveCommander.h"
+#include "plotguimain.h"
 
-CurveCommander::CurveCommander()
+CurveCommander::CurveCommander(plotGuiMain *parent):
+   m_plotGuiMain(parent)
 {
 
 }
@@ -31,15 +33,17 @@ CurveCommander::~CurveCommander()
 
 void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
 {
-    m_allCurves[plotName][curveName] = curveData;
+    m_allCurves[plotName].curves[curveName] = curveData;
 }
 
 void CurveCommander::plotRemoved(QString plotName)
 {
-    if(validPlot(plotName) == true)
-    {
-        m_allCurves.erase(m_allCurves.find(plotName));
-    }
+   tCurveCommanderInfo::iterator iter = m_allCurves.find(plotName);
+   if(iter != m_allCurves.end())
+   {
+      delete iter.value().plotGui;
+      m_allCurves.erase(iter);
+   }
 }
 
 
@@ -52,7 +56,7 @@ bool CurveCommander::validCurve(QString plotName, QString curveName)
 {
     if(validPlot(plotName) == true)
     {
-        return m_allCurves[plotName].find(curveName) != m_allCurves[plotName].end();
+        return m_allCurves[plotName].curves.find(curveName) != m_allCurves[plotName].curves.end();
     }
     else
     {
@@ -64,7 +68,7 @@ CurveData* CurveCommander::getCurveData(QString plotName, QString curveName)
 {
     if(validCurve(plotName, curveName) == true)
     {
-        return m_allCurves[plotName][curveName];
+        return m_allCurves[plotName].curves[curveName];
     }
     else
     {
@@ -76,5 +80,39 @@ tCurveCommanderInfo& CurveCommander::getCurveCommanderInfo()
 {
     return m_allCurves;
 }
+
+void CurveCommander::createPlot(QString plotName)
+{
+   if(validPlot(plotName) == false)
+   {
+      m_allCurves[plotName].plotGui = new MainWindow(m_plotGuiMain);
+      m_allCurves[plotName].plotGui->setWindowTitle(plotName);
+   }
+}
+
+void CurveCommander::destroyAllPlots()
+{
+   tCurveCommanderInfo::iterator iter = m_allCurves.begin();
+   while(iter != m_allCurves.end())
+   {
+      delete iter.value().plotGui;
+      iter = m_allCurves.erase(iter);
+   }
+}
+
+void CurveCommander::add1dCurve(QString plotName, QString curveName, dubVect yPoints)
+{
+   createPlot(plotName);
+   m_allCurves[plotName].plotGui->add1dCurve(curveName, yPoints);
+   m_allCurves[plotName].plotGui->show();
+}
+
+void CurveCommander::add2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints)
+{
+   createPlot(plotName);
+   m_allCurves[plotName].plotGui->add2dCurve(curveName, xPoints, yPoints);
+   m_allCurves[plotName].plotGui->show();
+}
+
 
 

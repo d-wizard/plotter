@@ -149,7 +149,7 @@ void createFFTPlot::updateGui()
         itemIndex = 0;
         tCurveCommanderInfo::Iterator plotIter = m_plotsAndCurves.find(ui->cmbRePlot->currentText());
         tCurveDataInfo::Iterator curveIter;
-        for(curveIter = plotIter.value().begin(); curveIter != plotIter.value().end(); ++curveIter)
+        for(curveIter = plotIter.value().curves.begin(); curveIter != plotIter.value().curves.end(); ++curveIter)
         {
             CurveData* curveData = curveIter.value();
             if(curveData->plotType == E_PLOT_TYPE_2D)
@@ -190,7 +190,7 @@ void createFFTPlot::updateGui()
         itemIndex = 0;
         tCurveCommanderInfo::Iterator plotIter = m_plotsAndCurves.find(ui->cmbImPlot->currentText());
         tCurveDataInfo::Iterator curveIter;
-        for(curveIter = plotIter.value().begin(); curveIter != plotIter.value().end(); ++curveIter)
+        for(curveIter = plotIter.value().curves.begin(); curveIter != plotIter.value().curves.end(); ++curveIter)
         {
             CurveData* curveData = curveIter.value();
             if(curveData->plotType == E_PLOT_TYPE_2D)
@@ -272,7 +272,8 @@ void createFFTPlot::on_cmdOk_clicked()
     }
 
     // If curve name is invalid check against .xAxis or .yAxis
-    if(m_plotsAndCurves[m_fftCurveData.srcRePlotName].find(m_fftCurveData.srcReCurveName) == m_plotsAndCurves[m_fftCurveData.srcRePlotName].end())
+    if(m_plotsAndCurves[m_fftCurveData.srcRePlotName].curves.find(m_fftCurveData.srcReCurveName) ==
+       m_plotsAndCurves[m_fftCurveData.srcRePlotName].curves.end())
     {
         QString curveName = m_fftCurveData.srcReCurveName.left(m_fftCurveData.srcReCurveName.size() - axisAppendLen);
         QString curveAxis = m_fftCurveData.srcReCurveName.right(axisAppendLen);
@@ -296,7 +297,8 @@ void createFFTPlot::on_cmdOk_clicked()
     if(valid == true && m_fftCurveData.fftType == E_FFT_COMPLEX)
     {
         // If curve name is invalid check against .xAxis or .yAxis
-        if(m_plotsAndCurves[m_fftCurveData.srcImPlotName].find(m_fftCurveData.srcImCurveName) == m_plotsAndCurves[m_fftCurveData.srcImPlotName].end())
+        if(m_plotsAndCurves[m_fftCurveData.srcImPlotName].curves.find(m_fftCurveData.srcImCurveName) ==
+           m_plotsAndCurves[m_fftCurveData.srcImPlotName].curves.end())
         {
             QString curveName = m_fftCurveData.srcImCurveName.left(m_fftCurveData.srcImCurveName.size() - axisAppendLen);
             QString curveAxis = m_fftCurveData.srcImCurveName.right(axisAppendLen);

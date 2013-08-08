@@ -22,15 +22,19 @@
 #include <QMap>
 #include <QString>
 #include <QVector>
-#include <CurveData.h>
+#include "CurveData.h"
+#include "mainwindow.h"
 
 typedef QMap<QString, CurveData*> tCurveDataInfo;
-typedef QMap<QString, tCurveDataInfo> tCurveCommanderInfo;
+typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
+typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
+
+class plotGuiMain;
 
 class CurveCommander
 {
 public:
-    CurveCommander();
+    CurveCommander(plotGuiMain* parent);
     ~CurveCommander();
 
     void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
@@ -42,9 +46,18 @@ public:
 
     tCurveCommanderInfo& getCurveCommanderInfo();
 
+    void add1dCurve(QString plotName, QString curveName, dubVect yPoints);
+    void add2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints);
+    void destroyAllPlots();
+
 
 private:
+    CurveCommander();
+
+    void createPlot(QString plotName);
+
     tCurveCommanderInfo m_allCurves;
+    plotGuiMain* m_plotGuiMain;
 };
 
 
