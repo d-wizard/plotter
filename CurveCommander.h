@@ -31,8 +31,9 @@ typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
 
 class plotGuiMain;
 
-class CurveCommander
+class CurveCommander : public QWidget
 {
+    Q_OBJECT
 public:
     CurveCommander(plotGuiMain* parent);
     ~CurveCommander();
@@ -50,6 +51,7 @@ public:
     void add2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints);
     void destroyAllPlots();
 
+    void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
 
 private:
     CurveCommander();
@@ -58,6 +60,12 @@ private:
 
     tCurveCommanderInfo m_allCurves;
     plotGuiMain* m_plotGuiMain;
+
+public slots:
+    void plotWindowCloseSlot(QString plotName);
+
+signals:
+    void plotWindowCloseSignal(QString plotName);
 };
 
 

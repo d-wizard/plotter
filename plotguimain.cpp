@@ -118,8 +118,6 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
 
     m_trayIcon->show();
 
-    QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
-                     this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(closeAllPlotsSignal()),
                      this, SLOT(closeAllPlotsSlot()), Qt::QueuedConnection);
 }
@@ -206,9 +204,8 @@ void plotGuiMain::enDisNewCurves()
 }
 
 
-void plotGuiMain::plotWindowCloseSlot(QString plotName)
+void plotGuiMain::plotWindowClose(QString plotName)
 {
-    m_curveCommander.plotRemoved(plotName);
     m_fftPlots.removeFromFFTList(plotName);
 
     if(m_curveCommander.getCurveCommanderInfo().size() == 0)
@@ -226,9 +223,8 @@ void plotGuiMain::plotWindowCloseSlot(QString plotName)
 }
 
 
-void plotGuiMain::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
+void plotGuiMain::curveUpdated(QString plotName, QString curveName)
 {
-    m_curveCommander.curveUpdated(plotName, curveName, curveData);
     m_fftPlots.curveChanged(plotName, curveName);
     if(m_curveCommander.getCurveCommanderInfo().size() > 0)
     {

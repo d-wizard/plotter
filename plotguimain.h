@@ -49,10 +49,10 @@ public:
 
     void readPlotMsg(const char *msg, unsigned int size);
 
-    void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
+    void plotWindowClose(QString plotName);
     void closeAllPlots();
 
-    void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
+    void curveUpdated(QString plotName, QString curveName);
 
     CurveCommander& getCurveCommander(){return m_curveCommander;}
 
@@ -79,13 +79,10 @@ public slots:
     void createComplexFFT();
     void createRealFFT();
     void enDisNewCurves();
-
-    void plotWindowCloseSlot(QString plotName);
     void closeAllPlotsSlot();
 
 signals:
     void readPlotMsgSignal(const char*, unsigned int);
-    void plotWindowCloseSignal(QString plotName);
     void closeAllPlotsSignal();
 };
 

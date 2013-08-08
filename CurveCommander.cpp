@@ -22,18 +22,20 @@
 CurveCommander::CurveCommander(plotGuiMain *parent):
    m_plotGuiMain(parent)
 {
-
+   QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
+                    this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
 }
 
 CurveCommander::~CurveCommander()
 {
-
+   destroyAllPlots();
 }
 
 
 void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
 {
     m_allCurves[plotName].curves[curveName] = curveData;
+    m_plotGuiMain->curveUpdated(plotName, curveName);
 }
 
 void CurveCommander::plotRemoved(QString plotName)
@@ -85,7 +87,7 @@ void CurveCommander::createPlot(QString plotName)
 {
    if(validPlot(plotName) == false)
    {
-      m_allCurves[plotName].plotGui = new MainWindow(m_plotGuiMain);
+      m_allCurves[plotName].plotGui = new MainWindow(this);
       m_allCurves[plotName].plotGui->setWindowTitle(plotName);
    }
 }
@@ -114,5 +116,11 @@ void CurveCommander::add2dCurve(QString plotName, QString curveName, dubVect xPo
    m_allCurves[plotName].plotGui->show();
 }
 
+
+void CurveCommander::plotWindowCloseSlot(QString plotName)
+{
+    plotRemoved(plotName);
+    m_plotGuiMain->plotWindowClose(plotName);
+}
 
 

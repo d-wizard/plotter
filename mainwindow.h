@@ -48,7 +48,7 @@
 
 #define PLOT_CANVAS_OFFSET (6)
 
-class plotGuiMain;
+class CurveCommander;
 
 typedef struct
 {
@@ -76,7 +76,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(plotGuiMain* plotGuiParent = NULL, QWidget *parent = 0);
+    explicit MainWindow(CurveCommander* curveCmdrParent = NULL, QWidget *parent = 0);
     ~MainWindow();
 
 
@@ -87,7 +87,7 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    plotGuiMain* m_plotGuiMain;
+    CurveCommander* m_curveCommander;
 
 
     QwtPlot* m_qwtPlot;
