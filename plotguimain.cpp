@@ -27,7 +27,7 @@
 
 //#define TEST_CURVES
 
-plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
+plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon) :
     QWidget(parent),
     m_tcpMsgReader(NULL),
     m_trayIcon(NULL),
@@ -95,28 +95,31 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort) :
         m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
     }
 
-    m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
-    m_trayMenu = new QMenu("Exit", this);
+    if(showTrayIcon == true)
+    {
+       m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
+       m_trayMenu = new QMenu("Exit", this);
 
-    m_trayIcon->setContextMenu(m_trayMenu);
+       m_trayIcon->setContextMenu(m_trayMenu);
 
-    connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
-    connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
-    connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
-    connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
+       connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
+       connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
+       connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
+       connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
 
 
-    m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
-    m_trayMenu->addSeparator();
-    m_trayMenu->addAction(&m_trayRealFFTAction);
-    m_trayMenu->addAction(&m_trayComplexFFTAction);
-    m_trayMenu->addSeparator();
-    m_trayMenu->addAction(&m_trayExitAction);
+       m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
+       m_trayMenu->addSeparator();
+       m_trayMenu->addAction(&m_trayRealFFTAction);
+       m_trayMenu->addAction(&m_trayComplexFFTAction);
+       m_trayMenu->addSeparator();
+       m_trayMenu->addAction(&m_trayExitAction);
 
-    m_trayRealFFTAction.setEnabled(false);
-    m_trayComplexFFTAction.setEnabled(false);
+       m_trayRealFFTAction.setEnabled(false);
+       m_trayComplexFFTAction.setEnabled(false);
 
-    m_trayIcon->show();
+       m_trayIcon->show();
+    }
 
     QObject::connect(this, SIGNAL(closeAllPlotsSignal()),
                      this, SLOT(closeAllPlotsSlot()), Qt::QueuedConnection);
@@ -129,8 +132,15 @@ plotGuiMain::~plotGuiMain()
         delete m_tcpMsgReader;
     }
 
-    delete m_trayIcon;
-    delete m_trayMenu;
+    if(m_trayIcon != NULL)
+    {
+       delete m_trayIcon;
+    }
+
+    if(m_trayMenu != NULL)
+    {
+       delete m_trayMenu;
+    }
 
     m_curveCommander.destroyAllPlots();
 }

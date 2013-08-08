@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Create FFT Plot</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">

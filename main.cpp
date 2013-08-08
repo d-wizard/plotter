@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
         a.setQuitOnLastWindowClosed(false);
 
-        plotGuiMain pgm(NULL, port);
+        plotGuiMain pgm(NULL, port, true);
 
         return a.exec();
     }

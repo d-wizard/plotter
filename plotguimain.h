@@ -44,7 +44,7 @@ class plotGuiMain : public QWidget
     Q_OBJECT
     
 public:
-    explicit plotGuiMain(QWidget *parent = 0, unsigned short tcpPort = 0);
+    explicit plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon);
     ~plotGuiMain();
 
     void readPlotMsg(const char *msg, unsigned int size);

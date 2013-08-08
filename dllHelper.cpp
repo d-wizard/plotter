@@ -32,7 +32,7 @@ class AppThread : public QThread {
       int argc = 0;
       QApplication a(argc, NULL);
       a.setQuitOnLastWindowClosed(false);
-      pgm = new plotGuiMain(NULL, 0);
+      pgm = new plotGuiMain(NULL, 0, false);
       pgm->hide();
       *m_running = true;
       a.exec();
