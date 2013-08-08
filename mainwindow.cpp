@@ -26,15 +26,17 @@
 #include <qwt_plot_canvas.h>
 
 #include "CurveCommander.h"
+#include "plotguimain.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
 
 
-MainWindow::MainWindow(CurveCommander *curveCmdrParent, QWidget *parent) :
+MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_curveCommander(curveCmdrParent),
+    m_curveCommander(curveCmdr),
+    m_plotGuiMain(plotGui),
     m_qwtPlot(NULL),
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
@@ -55,7 +57,10 @@ MainWindow::MainWindow(CurveCommander *curveCmdrParent, QWidget *parent) :
     m_normalizeAction("Normalize Curves", this),
     m_toggleLegendAction("Legend", this),
     m_selectedCurvesMenu("Selected Curve"),
-    m_visibleCurvesMenu("Visible Curves")
+    m_visibleCurvesMenu("Visible Curves"),
+    m_fftMenu("Create FFT"),
+    m_fftCreateRealAction("Real FFT", this),
+    m_fftCreateComplexAction("Complex FFT", this)
 {
     ui->setupUi(this);
 
@@ -88,6 +93,8 @@ MainWindow::MainWindow(CurveCommander *curveCmdrParent, QWidget *parent) :
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
+    connect(&m_fftCreateRealAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateReal()));
+    connect(&m_fftCreateComplexAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateComplex()));
 
     m_cursorAction.setIcon(m_checkedIcon);
 
@@ -111,6 +118,11 @@ MainWindow::MainWindow(CurveCommander *curveCmdrParent, QWidget *parent) :
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addMenu(&m_fftMenu);
+
+    m_fftMenu.addAction(&m_fftCreateRealAction);
+    m_fftMenu.addAction(&m_fftCreateComplexAction);
 
 }
 
@@ -567,6 +579,17 @@ void MainWindow::selectedCursorMenuSelect(int index)
         emit updateCursorMenusSignal();
     }
 }
+
+void MainWindow::fftCreateReal()
+{
+   m_plotGuiMain->createRealFFT();
+}
+
+void MainWindow::fftCreateComplex()
+{
+   m_plotGuiMain->createComplexFFT();
+}
+
 
 void MainWindow::calcMaxMin()
 {

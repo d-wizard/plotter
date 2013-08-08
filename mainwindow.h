@@ -49,6 +49,7 @@
 #define PLOT_CANVAS_OFFSET (6)
 
 class CurveCommander;
+class plotGuiMain;
 
 typedef struct
 {
@@ -76,7 +77,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(CurveCommander* curveCmdrParent = NULL, QWidget *parent = 0);
+    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent = 0);
     ~MainWindow();
 
 
@@ -88,6 +89,7 @@ private:
     Ui::MainWindow *ui;
 
     CurveCommander* m_curveCommander;
+    plotGuiMain* m_plotGuiMain;
 
 
     QwtPlot* m_qwtPlot;
@@ -124,6 +126,10 @@ private:
     QMenu m_rightClickMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
+
+    QMenu m_fftMenu;
+    QAction m_fftCreateRealAction;
+    QAction m_fftCreateComplexAction;
 
     void addCurve(QString& name, dubVect* xPoints, dubVect* yPoints);
 
@@ -169,6 +175,9 @@ private slots:
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);
+
+    void fftCreateReal();
+    void fftCreateComplex();
 
     void on_verticalScrollBar_sliderMoved(int position);
     void on_horizontalScrollBar_sliderMoved(int position);

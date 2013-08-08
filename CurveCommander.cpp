@@ -87,7 +87,7 @@ void CurveCommander::createPlot(QString plotName)
 {
    if(validPlot(plotName) == false)
    {
-      m_allCurves[plotName].plotGui = new MainWindow(this);
+      m_allCurves[plotName].plotGui = new MainWindow(this, m_plotGuiMain);
       m_allCurves[plotName].plotGui->setWindowTitle(plotName);
    }
 }
