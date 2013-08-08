@@ -65,7 +65,7 @@ void stopPlotGui(void)
       {
          // Plots need to be closed outside this thread and
          // before pgm's destructor is called.
-         pgm->closeAllPlotsEmit();
+         pgm->closeAllPlots();
          delete pgm;
       }
       qApp->thread()->quit();

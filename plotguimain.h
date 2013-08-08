@@ -34,6 +34,7 @@
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
 #include "CurveCommander.h"
+#include "fftPlots.h"
 
 
 class createFFTPlot;
@@ -48,22 +49,14 @@ public:
 
     void readPlotMsg(const char *msg, unsigned int size);
 
-    void createFftGuiFinished(){emit createFftGuiFinishedSignal();}
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
-    void closeAllPlotsEmit();
+    void closeAllPlots();
 
     void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
 
+    CurveCommander& getCurveCommander(){return m_curveCommander;}
 
 private:
-
-    void makeFFTPlot(tFFTCurve fftCurve);
-    void updateFFTPlot(QString srcPlotName, QString srcCurveName);
-
-    void updateFFTList(const tFFTCurve &fftCurve);
-
-    void removeFromFFTList(QString plotName);
-    void removeFromFFTList(QString plotName, QString curveName);
 
     TCPMsgReader* m_tcpMsgReader;
 
@@ -76,11 +69,8 @@ private:
 
     QSemaphore m_sem;
 
-    createFFTPlot* m_createFFTPlotGUI;
-
     CurveCommander m_curveCommander;
-
-    QVector<tFFTCurve> m_fftCurves;
+    fftPlots m_fftPlots;
 
     bool m_allowNewCurves;
 
@@ -90,13 +80,11 @@ public slots:
     void createRealFFT();
     void enDisNewCurves();
 
-    void createFftGuiFinishedSlot();
     void plotWindowCloseSlot(QString plotName);
     void closeAllPlotsSlot();
 
 signals:
     void readPlotMsgSignal(const char*, unsigned int);
-    void createFftGuiFinishedSignal();
     void plotWindowCloseSignal(QString plotName);
     void closeAllPlotsSignal();
 };

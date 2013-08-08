@@ -19,7 +19,7 @@
 #include "createfftplot.h"
 #include "ui_createfftplot.h"
 
-#include "plotguimain.h"
+#include "fftPlots.h"
 #include "mainwindow.h"
 
 
@@ -29,10 +29,10 @@ const QString NEW_PLOT_TEXT = "<New>";
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
 
-createFFTPlot::createFFTPlot(plotGuiMain *guiParent, tCurveCommanderInfo& initPlotsCurves, eFFTType fftType, QWidget *parent) :
+createFFTPlot::createFFTPlot(fftPlots *fftPlotParent, tCurveCommanderInfo& initPlotsCurves, eFFTType fftType, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::createFFTPlot),
-    m_guiMainParent(guiParent),
+    m_parent(fftPlotParent),
     m_plotsAndCurves(initPlotsCurves),
     m_guiChanging(false),
     m_validUserInput(false)
@@ -323,19 +323,19 @@ void createFFTPlot::on_cmdOk_clicked()
     if(valid)
     {
         m_validUserInput = true;
-        m_guiMainParent->createFftGuiFinished();
+        m_parent->createFftGuiFinished();
     }
 
 }
 
 void createFFTPlot::on_cmdCancel_clicked()
 {
-    m_guiMainParent->createFftGuiFinished();
+    m_parent->createFftGuiFinished();
 }
 
 void createFFTPlot::closeEvent(QCloseEvent* event)
 {
-    m_guiMainParent->createFftGuiFinished();
+    m_parent->createFftGuiFinished();
 }
 
 

@@ -16,56 +16,50 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef CREATEFFTPLOT_H
-#define CREATEFFTPLOT_H
-
-#include <QWidget>
+#ifndef fftPlots_h
+#define fftPlots_h
 
 #include "PlotHelperTypes.h"
-#include "CurveCommander.h"
+#include "createfftplot.h"
 
-class fftPlots;
+class plotGuiMain;
 
-
-namespace Ui {
-class createFFTPlot;
-}
-
-class createFFTPlot : public QWidget
+class fftPlots : public QWidget
 {
     Q_OBJECT
-    
 public:
-    explicit createFFTPlot(fftPlots* fftPlotParent, tCurveCommanderInfo &initPlotsCurves, eFFTType fftType, QWidget *parent = 0);
-    ~createFFTPlot();
+   fftPlots(plotGuiMain *plotGuiParent);
+   ~fftPlots();
 
-    void plotsCurvesChanged(const tCurveCommanderInfo &pc);
-    bool getFFTData(tFFTCurve& fftCurveData);
+   void showCreateFftGui(eFFTType fftType);
+   void plotChanged();
+   void curveChanged(QString srcPlotName, QString srcCurveName);
 
+   void removeFromFFTList(QString plotName);
 
-private slots:
-    void on_cmdOk_clicked();
-    void on_cmdCancel_clicked();
-
-    void on_cmbRePlot_currentIndexChanged(int index);
-
-    void on_cmbImPlot_currentIndexChanged(int index);
-
-    void on_cmbOutPlot_currentIndexChanged(int index);
-
+   void createFftGuiFinished(){emit createFftGuiFinishedSignal();}
 private:
-    Ui::createFFTPlot *ui;
-    fftPlots* m_parent;
-    tCurveCommanderInfo m_plotsAndCurves;
+   plotGuiMain* m_plotGuiMain;
 
-    bool m_guiChanging;
+   createFFTPlot* m_createFFTPlotGUI;
 
-    void updateGui();
+   QVector<tFFTCurve> m_fftCurves;
 
-    bool m_validUserInput;
-    tFFTCurve m_fftCurveData;
 
-    void closeEvent(QCloseEvent* event);
+   fftPlots();
+   CurveCommander& getCurveCommander();
+
+   void makeFFTPlot(tFFTCurve fftCurve);
+
+   void updateFFTList(const tFFTCurve &fftCurve);
+public slots:
+    void createFftGuiFinishedSlot();
+
+signals:
+    void createFftGuiFinishedSignal();
 };
 
-#endif // CREATEFFTPLOT_H
+
+#endif
+
+
