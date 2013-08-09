@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     createfftplot.cpp \
     CurveCommander.cpp \
     PlotZoom.cpp \
-    fftPlots.cpp
+    fftPlots.cpp \
+    CurveData.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
