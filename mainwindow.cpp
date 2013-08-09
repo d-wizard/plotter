@@ -50,6 +50,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_normalizeCurves(false),
     m_legendDisplayed(false),
     m_canvasXOverYRatio(1.0),
+    m_allowNewCurves(true),
     m_zoomAction("Zoom", this),
     m_cursorAction("Cursor", this),
     m_deltaCursorAction("Delta Cursor", this),
@@ -60,7 +61,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_visibleCurvesMenu("Visible Curves"),
     m_fftMenu("Create FFT"),
     m_fftCreateRealAction("Real FFT", this),
-    m_fftCreateComplexAction("Complex FFT", this)
+    m_fftCreateComplexAction("Complex FFT", this),
+    m_enableDisablePlotUpdate("Disable New Curves", this)
 {
     ui->setupUi(this);
 
@@ -95,6 +97,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_fftCreateRealAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateReal()));
     connect(&m_fftCreateComplexAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateComplex()));
+    connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
 
     m_cursorAction.setIcon(m_checkedIcon);
 
@@ -119,10 +122,13 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
     m_rightClickMenu.addSeparator();
-    m_rightClickMenu.addMenu(&m_fftMenu);
 
+    m_rightClickMenu.addMenu(&m_fftMenu);
     m_fftMenu.addAction(&m_fftCreateRealAction);
     m_fftMenu.addAction(&m_fftCreateComplexAction);
+
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
 
 }
 
@@ -381,7 +387,11 @@ void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 
 void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 {
-    if( yPoints == NULL || (xPoints != NULL && xPoints->size() <= 0) || yPoints->size() <= 0)
+    // Check for any reason to not allow the adding of the new curve.
+    if( m_allowNewCurves == false ||
+        yPoints == NULL ||
+        (xPoints != NULL && xPoints->size() <= 0) ||
+        yPoints->size() <= 0 )
     {
         return;
     }
@@ -585,6 +595,18 @@ void MainWindow::fftCreateComplex()
    m_plotGuiMain->createComplexFFT();
 }
 
+void MainWindow::togglePlotUpdateAbility()
+{
+   m_allowNewCurves = !m_allowNewCurves;
+   if(m_allowNewCurves == true)
+   {
+      m_enableDisablePlotUpdate.setText("Disable New Curves");
+   }
+   else
+   {
+      m_enableDisablePlotUpdate.setText("Enable New Curves");
+   }
+}
 
 void MainWindow::calcMaxMin()
 {

@@ -115,6 +115,8 @@ private:
 
     double m_canvasXOverYRatio;
 
+    bool m_allowNewCurves;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
@@ -130,6 +132,8 @@ private:
     QMenu m_fftMenu;
     QAction m_fftCreateRealAction;
     QAction m_fftCreateComplexAction;
+
+    QAction m_enableDisablePlotUpdate;
 
     void addCurve(QString& name, dubVect* xPoints, dubVect* yPoints);
 
@@ -178,6 +182,8 @@ private slots:
 
     void fftCreateReal();
     void fftCreateComplex();
+
+    void togglePlotUpdateAbility();
 
     void on_verticalScrollBar_sliderMoved(int position);
     void on_horizontalScrollBar_sliderMoved(int position);
