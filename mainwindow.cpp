@@ -279,7 +279,7 @@ void MainWindow::updateCursorMenus()
             m_qwtCurves[i]->mapper = NULL;
         }
 
-        if(m_qwtCurves[i]->displayed)
+        if(m_qwtCurves[i]->isDisplayed())
         {
             ++numDisplayedCurves;
         }
@@ -296,7 +296,7 @@ void MainWindow::updateCursorMenus()
 
 
     // Handle situation where a cursor has been made invisible but it was the selected cursor
-    if(m_qwtCurves[m_selectedCurveIndex]->displayed == false && numDisplayedCurves > 0)
+    if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed() == false && numDisplayedCurves > 0)
     {
         int newSelectedCurveIndex = 0;
         for(int i = 1; i < m_qwtCurves.size(); ++i)
@@ -306,7 +306,7 @@ void MainWindow::updateCursorMenus()
             {
                 newSelectedCurveIndex += m_qwtCurves.size();
             }
-            if(m_qwtCurves[newSelectedCurveIndex]->displayed)
+            if(m_qwtCurves[newSelectedCurveIndex]->isDisplayed())
             {
 
                 setSelectedCurveIndex(newSelectedCurveIndex);
@@ -324,13 +324,13 @@ void MainWindow::updateCursorMenus()
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->displayed)
+        if(m_qwtCurves[i]->isDisplayed())
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->GetCurveTitle(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
         }
         else
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->GetCurveTitle(), this);
+            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
         }
         m_qwtCurves[i]->mapper = new QSignalMapper(this);
 
@@ -341,16 +341,16 @@ void MainWindow::updateCursorMenus()
         m_visibleCurvesMenu.addAction(m_qwtCurves[i]->curveAction);
         connect( m_qwtCurves[i]->mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 
-        if(m_qwtCurves[i]->displayed)
+        if(m_qwtCurves[i]->isDisplayed())
         {
             tMenuActionMapper actionMapper;
             if(i == m_selectedCurveIndex)
             {
-                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->GetCurveTitle(), this);
+                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
             }
             else
             {
-                actionMapper.action = new QAction(m_qwtCurves[i]->GetCurveTitle(), this);
+                actionMapper.action = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
             }
             actionMapper.mapper = new QSignalMapper(this);
 
@@ -405,15 +405,12 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
 
         if(xPoints == NULL)
         {
-            m_qwtCurves.push_back(new CurveData(name, *yPoints, curveColors[colorLookupIndex]));
+            m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *yPoints, curveColors[colorLookupIndex]));
         }
         else
         {
-            m_qwtCurves.push_back(new CurveData(name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
+            m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
         }
-
-        m_qwtCurves[curveIndex]->displayed = true;
-        m_qwtCurves[curveIndex]->curve->attach(m_qwtPlot);
     }
 
     calcMaxMin();
@@ -439,7 +436,7 @@ void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
     emit updateCursorMenusSignal();
 
     // inform parent that a curve has been added / changed
-    m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->GetCurveTitle(), m_qwtCurves[curveIndex]);
+    m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->getCurveTitle(), m_qwtCurves[curveIndex]);
 }
 
 
@@ -538,30 +535,28 @@ void MainWindow::normalizeCurves()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
-    m_qwtCurves[index]->displayed = !m_qwtCurves[index]->displayed;
-    if(!m_qwtCurves[index]->displayed)
+    if(m_qwtCurves[index]->isDisplayed())
     {
-        m_qwtCurves[index]->curve->detach();
+        m_qwtCurves[index]->detach();
     }
     else
     {
-        m_qwtCurves[index]->curve->attach(m_qwtPlot);
+        m_qwtCurves[index]->attach();
     }
 
     // Detach all and re-attach visable curves, so as to retain curve order on gui
     QList<CurveData*> visableCurves;
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->displayed == true)
+        if(m_qwtCurves[i]->isDisplayed() == true)
         {
             visableCurves.push_back(m_qwtCurves[i]);
-            m_qwtCurves[i]->curve->detach();
+            m_qwtCurves[i]->detach();
         }
     }
     for(int i = 0; i < visableCurves.size(); ++i)
     {
-        visableCurves[i]->displayed = true;
-        visableCurves[i]->curve->attach(m_qwtPlot);
+        visableCurves[i]->attach();
     }
 
     updatePointDisplay();
@@ -594,18 +589,18 @@ void MainWindow::fftCreateComplex()
 void MainWindow::calcMaxMin()
 {
     int i = 0;
-    while(i < m_qwtCurves.size() && m_qwtCurves[i]->displayed == false)
+    while(i < m_qwtCurves.size() && m_qwtCurves[i]->isDisplayed() == false)
     {
         ++i;
     }
     if(i < m_qwtCurves.size())
     {
-        m_maxMin = m_qwtCurves[i]->GetMaxMinXYOfCurve();
+        m_maxMin = m_qwtCurves[i]->getMaxMinXYOfCurve();
         while(i < m_qwtCurves.size())
         {
-            if(m_qwtCurves[i]->displayed)
+            if(m_qwtCurves[i]->isDisplayed())
             {
-                maxMinXY curveMaxMinXY = m_qwtCurves[i]->GetMaxMinXYOfCurve();
+                maxMinXY curveMaxMinXY = m_qwtCurves[i]->getMaxMinXYOfCurve();
                 if(m_maxMin.minX > curveMaxMinXY.minX)
                 {
                     m_maxMin.minX = curveMaxMinXY.minX;
@@ -692,7 +687,7 @@ void MainWindow::displayPointLabels()
     clearPointLabels();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->displayed && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->numPoints)
+        if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
@@ -703,8 +698,8 @@ void MainWindow::displayPointLabels()
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
 
             QPalette palette = this->palette();
-            palette.setColor( QPalette::WindowText, m_qwtCurves[i]->color);
-            palette.setColor( QPalette::Text, m_qwtCurves[i]->color);
+            palette.setColor( QPalette::WindowText, m_qwtCurves[i]->getColor());
+            palette.setColor( QPalette::Text, m_qwtCurves[i]->getColor());
             m_qwtCurves[i]->pointLabel->setPalette(palette);
 
             ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
@@ -714,7 +709,7 @@ void MainWindow::displayPointLabels()
 void MainWindow::displayDeltaLabel()
 {
     clearPointLabels();
-    if(m_qwtCurves[m_selectedCurveIndex]->displayed)
+    if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
@@ -729,8 +724,8 @@ void MainWindow::displayDeltaLabel()
 
         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
         QPalette palette = this->palette();
-        palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->color);
-        palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->color);
+        palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->getColor());
+        palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->getColor());
         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setPalette(palette);
 
         ui->InfoLayout->addWidget(m_qwtCurves[m_selectedCurveIndex]->pointLabel);
@@ -955,7 +950,7 @@ void MainWindow::modifySelectedCursor(int modDelta)
 
         for(int i = 0; i < m_qwtCurves.size(); ++i)
         {
-            if(m_qwtCurves[i]->displayed)
+            if(m_qwtCurves[i]->isDisplayed())
             {
                 if(i == m_selectedCurveIndex)
                 {
@@ -995,11 +990,11 @@ void MainWindow::modifyCursorPos(int modDelta)
 
             while(newXPos < 0)
             {
-                newXPos += m_qwtSelectedSample->getCurve()->numPoints;
+                newXPos += m_qwtSelectedSample->getCurve()->getNumPoints();
             }
-            while((unsigned int)newXPos >= m_qwtSelectedSample->getCurve()->numPoints)
+            while((unsigned int)newXPos >= m_qwtSelectedSample->getCurve()->getNumPoints())
             {
-                newXPos -= m_qwtSelectedSample->getCurve()->numPoints;
+                newXPos -= m_qwtSelectedSample->getCurve()->getNumPoints();
             }
 
             m_qwtSelectedSample->m_pointIndex = newXPos;
@@ -1068,7 +1063,7 @@ void MainWindow::setSelectedCurveIndex(int index)
                 newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
                 newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
 
-                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
                 m_plotZoom->SetZoom(newZoom);
             }
             else
@@ -1087,7 +1082,7 @@ void MainWindow::replotMainPlot()
     {
         if(m_normalizeCurves)
         {
-            m_qwtCurves[i]->setNormalizeFactor(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+            m_qwtCurves[i]->setNormalizeFactor(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
         }
         else
         {
@@ -1098,7 +1093,7 @@ void MainWindow::replotMainPlot()
 
     if(m_normalizeCurves)
     {
-        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->GetMaxMinXYOfData());
+        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
     }
     else
     {
@@ -1128,7 +1123,7 @@ int MainWindow::findMatchingCurve(const QString& curveTitle)
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->GetCurveTitle() == curveTitle)
+        if(m_qwtCurves[i]->getCurveTitle() == curveTitle)
         {
             return i;
         }

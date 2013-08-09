@@ -18,25 +18,35 @@
  */
 #include "CurveData.h"
 
-CurveData::CurveData(const QString& curveName, const dubVect& newYPoints, const QColor& curveColor):
+CurveData::CurveData( QwtPlot *parentPlot,
+                      const QString& curveName,
+                      const dubVect& newYPoints,
+                      const QColor& curveColor):
+   m_parentPlot(parentPlot),
+   yPoints(newYPoints),
    plotType(E_PLOT_TYPE_1D),
-   curve(new QwtPlotCurve(curveName)),
    color(curveColor),
-   yPoints(newYPoints)
+   curve(new QwtPlotCurve(curveName))
 {
    init();
    numPoints = yPoints.size();
    fill1DxPoints();
    findMaxMin();
    initCurve();
+   attach();
 }
 
-CurveData::CurveData(const QString& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor):
-   plotType(E_PLOT_TYPE_2D),
-   curve(new QwtPlotCurve(curveName)),
-   color(curveColor),
+CurveData::CurveData( QwtPlot* parentPlot,
+                      const QString& curveName,
+                      const dubVect& newXPoints,
+                      const dubVect& newYPoints,
+                      const QColor& curveColor):
+   m_parentPlot(parentPlot),
    xPoints(newXPoints),
-   yPoints(newYPoints)
+   yPoints(newYPoints),
+   plotType(E_PLOT_TYPE_2D),
+   color(curveColor),
+   curve(new QwtPlotCurve(curveName))
 {
    init();
    if(xPoints.size() > yPoints.size())
@@ -51,6 +61,7 @@ CurveData::CurveData(const QString& curveName, const dubVect& newXPoints, const 
    numPoints = yPoints.size();
    findMaxMin();
    initCurve();
+   attach();
 }
 
 CurveData::~CurveData()
@@ -77,10 +88,33 @@ CurveData::~CurveData()
    }
 }
 
-QwtPlotCurve* CurveData::getCurve()
+
+void CurveData::init()
 {
-   return curve;
+   numPoints = 0;
+   pointLabel = NULL;
+   curveAction = NULL;
+   mapper = NULL;
+   displayed = false;
+
+   resetNormalizeFactor();
 }
+
+void CurveData::initCurve()
+{
+   curve->setPen(color);
+   setCurveSamples();
+}
+
+void CurveData::fill1DxPoints()
+{
+   xPoints.resize(yPoints.size());
+   for(unsigned int i = 0; i < xPoints.size(); ++i)
+   {
+      xPoints[i] = (double)i;
+   }
+}
+
 
 const double* CurveData::getXPoints()
 {
@@ -92,12 +126,75 @@ const double* CurveData::getYPoints()
    return &yPoints[0];
 }
 
-void CurveData::fill1DxPoints()
+tLinearXYAxis CurveData::getNormFactor()
 {
-   xPoints.resize(yPoints.size());
-   for(unsigned int i = 0; i < xPoints.size(); ++i)
+   return normFactor;
+}
+
+void CurveData::getXPoints(dubVect& ioXPoints)
+{
+   ioXPoints = xPoints;
+}
+void CurveData::getYPoints(dubVect& ioYPoints)
+{
+   ioYPoints = yPoints;
+}
+
+QColor CurveData::getColor()
+{
+   return color;
+}
+
+ePlotType CurveData::getPlotType()
+{
+   return plotType;
+}
+
+unsigned int CurveData::getNumPoints()
+{
+   return numPoints;
+}
+
+maxMinXY CurveData::getMaxMinXYOfCurve()
+{
+   maxMinXY retVal;
+   retVal.maxX = curve->maxXValue();
+   retVal.minX = curve->minXValue();
+   retVal.maxY = curve->maxYValue();
+   retVal.minY = curve->minYValue();
+   return retVal;
+}
+
+maxMinXY CurveData::getMaxMinXYOfData()
+{
+   return maxMin;
+}
+
+QString CurveData::getCurveTitle()
+{
+   return curve->title().text();
+}
+
+bool CurveData::isDisplayed()
+{
+   return displayed;
+}
+
+void CurveData::attach()
+{
+   if(displayed == false)
    {
-      xPoints[i] = (double)i;
+      curve->attach(m_parentPlot);
+      displayed = true;
+   }
+}
+
+void CurveData::detach()
+{
+   if(displayed == true)
+   {
+      curve->detach();
+      displayed = false;
    }
 }
 
@@ -151,12 +248,6 @@ void CurveData::findMaxMin()
          }
       }
    }
-}
-
-void CurveData::initCurve()
-{
-   curve->setPen(color);
-   setCurveSamples();
 }
 
 void CurveData::setNormalizeFactor(maxMinXY desiredScale)
@@ -246,26 +337,6 @@ void CurveData::setCurveSamples()
    }
 }
 
-maxMinXY CurveData::GetMaxMinXYOfCurve()
-{
-   maxMinXY retVal;
-   retVal.maxX = curve->maxXValue();
-   retVal.minX = curve->minXValue();
-   retVal.maxY = curve->maxYValue();
-   retVal.minY = curve->minYValue();
-   return retVal;
-}
-
-maxMinXY CurveData::GetMaxMinXYOfData()
-{
-   return maxMin;
-}
-
-QString CurveData::GetCurveTitle()
-{
-   return curve->title().text();
-}
-
 void CurveData::SetNewCurveSamples(dubVect& newYPoints)
 {
    plotType = E_PLOT_TYPE_1D;
@@ -283,30 +354,5 @@ void CurveData::SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
    numPoints = yPoints.size();
    findMaxMin();
    setCurveSamples();
-}
-
-tLinearXYAxis CurveData::getNormFactor()
-{
-   return normFactor;
-}
-
-void CurveData::getXPoints(dubVect& ioXPoints)
-{
-   ioXPoints = xPoints;
-}
-void CurveData::getYPoints(dubVect& ioYPoints)
-{
-   ioYPoints = yPoints;
-}
-
-void CurveData::init()
-{
-   numPoints = 0;
-   pointLabel = NULL;
-   curveAction = NULL;
-   mapper = NULL;
-   displayed = false;
-   
-   resetNormalizeFactor();
 }
 

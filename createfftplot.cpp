@@ -152,10 +152,10 @@ void createFFTPlot::updateGui()
         for(curveIter = plotIter.value().curves.begin(); curveIter != plotIter.value().curves.end(); ++curveIter)
         {
             CurveData* curveData = curveIter.value();
-            if(curveData->plotType == E_PLOT_TYPE_2D)
+            if(curveData->getPlotType() == E_PLOT_TYPE_2D)
             {
-                QString xAxisName = curveData->GetCurveTitle();
-                QString yAxisName = curveData->GetCurveTitle();
+                QString xAxisName = curveData->getCurveTitle();
+                QString yAxisName = curveData->getCurveTitle();
 
                 xAxisName.append(X_AXIS_APPEND);
                 yAxisName.append(Y_AXIS_APPEND);
@@ -172,10 +172,10 @@ void createFFTPlot::updateGui()
                 }
 
             }
-            else if(curveData->plotType == E_PLOT_TYPE_1D)
+            else if(curveData->getPlotType() == E_PLOT_TYPE_1D)
             {
-                ui->cmbReCurve->addItem(curveData->GetCurveTitle());
-                if(matchingPlotReNameIndex >= 0 && oldCurveReNameCount > 0 && curveData->GetCurveTitle() == oldCurveReName)
+                ui->cmbReCurve->addItem(curveData->getCurveTitle());
+                if(matchingPlotReNameIndex >= 0 && oldCurveReNameCount > 0 && curveData->getCurveTitle() == oldCurveReName)
                 {
                     matchingCurveReNameIndex = itemIndex;
                 }
@@ -193,10 +193,10 @@ void createFFTPlot::updateGui()
         for(curveIter = plotIter.value().curves.begin(); curveIter != plotIter.value().curves.end(); ++curveIter)
         {
             CurveData* curveData = curveIter.value();
-            if(curveData->plotType == E_PLOT_TYPE_2D)
+            if(curveData->getPlotType() == E_PLOT_TYPE_2D)
             {
-                QString xAxisName = curveData->GetCurveTitle();
-                QString yAxisName = curveData->GetCurveTitle();
+                QString xAxisName = curveData->getCurveTitle();
+                QString yAxisName = curveData->getCurveTitle();
 
                 xAxisName.append(X_AXIS_APPEND);
                 yAxisName.append(Y_AXIS_APPEND);
@@ -213,10 +213,10 @@ void createFFTPlot::updateGui()
                 }
 
             }
-            else if(curveData->plotType == E_PLOT_TYPE_1D)
+            else if(curveData->getPlotType() == E_PLOT_TYPE_1D)
             {
-                ui->cmbImCurve->addItem(curveData->GetCurveTitle());
-                if(matchingPlotImNameIndex >= 0 && oldCurveImNameCount > 0 && curveData->GetCurveTitle() == oldCurveImName)
+                ui->cmbImCurve->addItem(curveData->getCurveTitle());
+                if(matchingPlotImNameIndex >= 0 && oldCurveImNameCount > 0 && curveData->getCurveTitle() == oldCurveImName)
                 {
                     matchingCurveImNameIndex = itemIndex;
                 }

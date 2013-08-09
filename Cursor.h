@@ -56,7 +56,7 @@ public:
     void setCurve(CurveData* curve)
     {
         m_parentCurve = curve;
-        if(isAttached && m_pointIndex >= m_parentCurve->numPoints)
+        if(isAttached && m_pointIndex >= m_parentCurve->getNumPoints())
         {
             outOfRange = true;
             hideCursor();
@@ -87,7 +87,7 @@ public:
         // Initialize for 2D plot
         int minPointIndex = 0;
 
-        if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
+        if(m_parentCurve->getPlotType() == E_PLOT_TYPE_1D)
         {
             // Since 1D plot, assume the X position the user selected is close to the curve
             minPointIndex = (int)(pos.x() + 0.5);
@@ -99,9 +99,9 @@ public:
 
         // Initialize for 2D plot
         int startIndex = 1;
-        int endIndex = m_parentCurve->numPoints;
+        int endIndex = m_parentCurve->getNumPoints();
 
-        if(m_parentCurve->plotType == E_PLOT_TYPE_1D)
+        if(m_parentCurve->getPlotType() == E_PLOT_TYPE_1D)
         {
             int roundDownMinDist = (int)(minDist * width) + 1;
             startIndex = minPointIndex - roundDownMinDist;
@@ -110,9 +110,9 @@ public:
             {
                 startIndex = 0;
             }
-            if(endIndex > (int)m_parentCurve->numPoints)
+            if(endIndex > (int)m_parentCurve->getNumPoints())
             {
-                endIndex = (int)m_parentCurve->numPoints;
+                endIndex = (int)m_parentCurve->getNumPoints();
             }
         }
 
@@ -141,15 +141,15 @@ public:
     void showCursor()
     {
         hideCursor();
-        if(m_pointIndex < m_parentCurve->numPoints)
+        if(m_pointIndex < m_parentCurve->getNumPoints())
         {
             m_xPoint = m_parentCurve->getXPoints()[m_pointIndex];
             m_yPoint = m_parentCurve->getYPoints()[m_pointIndex];
 
             // QwtPlotCurve wants to be called with new and deletes the symbol on its own.
             m_curve->setSymbol( new QwtSymbol( m_style,
-                                               QBrush(m_parentCurve->color),
-                                               QPen(m_parentCurve->color, 2),
+                                               QBrush(m_parentCurve->getColor()),
+                                               QPen(m_parentCurve->getColor(), 2),
                                                QSize(8, 8) ) );
 
             m_curve->setSamples( &m_xPoint, &m_yPoint, 1);

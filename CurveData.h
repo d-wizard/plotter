@@ -31,67 +31,68 @@
 class CurveData
 {
 public:
-    CurveData(const QString& curveName, const dubVect& newYPoints, const QColor& curveColor);
-    CurveData(const QString& curveName, const dubVect& newXPoints, const dubVect& newYPoints, const QColor& curveColor);
-    ~CurveData();
+   CurveData( QwtPlot* parentPlot,
+              const QString& curveName,
+              const dubVect& newYPoints,
+              const QColor& curveColor);
 
-    ePlotType plotType;
-    QwtPlotCurve* curve;
-    unsigned int numPoints;
+   CurveData( QwtPlot* parentPlot,
+              const QString& curveName,
+              const dubVect& newXPoints,
+              const dubVect& newYPoints,
+              const QColor& curveColor);
 
-    QColor color;
+   ~CurveData();
 
-    QLabel* pointLabel;
+   const double* getXPoints();
+   const double* getYPoints();
+   void getXPoints(dubVect& ioXPoints);
+   void getYPoints(dubVect& ioYPoints);
+   QColor getColor();
+   ePlotType getPlotType();
+   unsigned int getNumPoints();
+   maxMinXY getMaxMinXYOfCurve();
+   maxMinXY getMaxMinXYOfData();
+   QString getCurveTitle();
+   tLinearXYAxis getNormFactor();
+   bool isDisplayed();
 
-    QAction* curveAction;
-    QSignalMapper* mapper;
+   void attach();
+   void detach();
 
-    bool displayed;
+   void setNormalizeFactor(maxMinXY desiredScale);
+   void resetNormalizeFactor();
+   void setCurveSamples();
 
-    QwtPlotCurve* getCurve();
-    const double* getXPoints();
-    const double* getYPoints();
+   void SetNewCurveSamples(dubVect& newYPoints);
+   void SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
 
-    void fill1DxPoints();
-
-    void findMaxMin();
-
-    void initCurve();
-
-    void setNormalizeFactor(maxMinXY desiredScale);
-
-    void resetNormalizeFactor();
-
-    void setCurveSamples();
-
-    maxMinXY GetMaxMinXYOfCurve();
-
-    maxMinXY GetMaxMinXYOfData();
-
-    QString GetCurveTitle();
-    
-    void SetNewCurveSamples(dubVect& newYPoints);
-    void SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
-
-    tLinearXYAxis getNormFactor();
-
-    void getXPoints(dubVect& ioXPoints);
-    void getYPoints(dubVect& ioYPoints);
-
+   QLabel* pointLabel;
+   QAction* curveAction;
+   QSignalMapper* mapper;
 
 private:
-    CurveData();
-    void init();
+   CurveData();
+   void init();
+   void fill1DxPoints();
+   void findMaxMin();
+   void initCurve();
 
-    dubVect xPoints;
-    dubVect yPoints;
-    maxMinXY maxMin;
+   QwtPlot* m_parentPlot;
+   dubVect xPoints;
+   dubVect yPoints;
+   maxMinXY maxMin;
+   ePlotType plotType;
+   QColor color;
+   QwtPlotCurve* curve;
+   unsigned int numPoints;
+   bool displayed;
 
-    // Normalize parameters
-    tLinearXYAxis normFactor;
+   // Normalize parameters
+   tLinearXYAxis normFactor;
 
-    bool xNormalized;
-    bool yNormalized;
+   bool xNormalized;
+   bool yNormalized;
 
 };
 
