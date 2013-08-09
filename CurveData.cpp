@@ -351,7 +351,15 @@ void CurveData::SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
    plotType = E_PLOT_TYPE_2D;
    xPoints = newXPoints;
    yPoints = newYPoints;
-   numPoints = yPoints.size();
+   numPoints = std::min(xPoints.size(), yPoints.size());
+   if(xPoints.size() > numPoints)
+   {
+      xPoints.resize(numPoints);
+   }
+   if(yPoints.size() > numPoints)
+   {
+      yPoints.resize(numPoints);
+   }
    findMaxMin();
    setCurveSamples();
 }
