@@ -20,16 +20,39 @@
 #define TCPThreads_h
 
 #include <stdio.h>
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x501
-#include <winsock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
+#include <stdlib.h> 
 #include <string.h>
 #include <semaphore.h>
 #include <pthread.h>
+
+#if (defined(_WIN32) || defined(__WIN32__))
+   #define TCP_SERVER_THREADS_WIN_BUILD
+#else
+   #define TCP_SERVER_THREADS_LINUX_BUILD
+#endif
+
+#ifdef TCP_SERVER_THREADS_WIN_BUILD
+   #ifdef __MINGW32_VERSION
+      #ifdef _WIN32_WINNT
+      #undef _WIN32_WINNT
+      #endif
+      #define _WIN32_WINNT 0x501
+   #endif
+   #include <winsock2.h>
+   #include <windows.h>
+   #include <ws2tcpip.h>
+   
+#elif defined TCP_SERVER_THREADS_LINUX_BUILD
+   #include <unistd.h>
+   #include <string.h>
+   #include <netdb.h>
+   #include <sys/types.h>
+   #include <netinet/in.h>
+   #include <sys/socket.h>
+   
+   typedef int SOCKET;
+   #define closesocket(fd) close(fd)
+#endif
 
 #define MAX_PACKET_SIZE (20480)
 #define MAX_PACKETS (2048)

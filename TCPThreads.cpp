@@ -18,6 +18,15 @@
  */
 #include "TCPThreads.h"
 
+
+#if defined TCP_SERVER_THREADS_WIN_BUILD && !defined __MINGW32_VERSION
+   #ifdef __cplusplus
+      #define snprintf _snprintf_s
+   #else
+      #define snprintf _snprintf
+   #endif
+#endif
+
 void dServerSocket_updateIndexForNextPacket(dSocketRxBuff* rxBuff)
 {
    unsigned int buffIndex = (rxBuff->buffIndex + 3) & ((unsigned int)-4);
@@ -69,11 +78,13 @@ void dServerSocket_initClientConn(dClientConnection* dConn, dServerSocket* dSock
 
 }
 
+#ifdef TCP_SERVER_THREADS_WIN_BUILD
 void dServerSocket_wsaInit()
 {
    WSADATA wsda;
    WSAStartup(0x0101, &wsda);
 }
+#endif
 
 void dServerSocket_init(dServerSocket* dSock,
                         unsigned short port,
@@ -94,7 +105,9 @@ void dServerSocket_init(dServerSocket* dSock,
 
    dSock->clientList = NULL;
 
+#ifdef TCP_SERVER_THREADS_WIN_BUILD
    dServerSocket_wsaInit();
+#endif
 }
 
 void* dServerSocket_acceptThread(void* voidDSock)
@@ -187,17 +200,20 @@ void* dServerSocket_procThread(void* voidDClientConn)
 void* dServer_killThreads(void* voidDSock)
 {
    dServerSocket* dSock = (dServerSocket*)voidDSock;
+   struct dClientConnList* clientListPtr = NULL;
+   struct dClientConnList* curClient = NULL;
    
    dSock->killThread.active = 1;
    printf("killThread Start\n");
+
 
    // Make sure all the client connection threads have been
    // closed before exiting this thread.
    while(!dSock->killThread.kill || dSock->clientList != NULL)
    {
       sem_wait(&dSock->killThreadSem);
-      struct dClientConnList* clientListPtr = dSock->clientList;
-      struct dClientConnList* curClient = NULL;
+      clientListPtr = dSock->clientList;
+      curClient = NULL;
       while(clientListPtr != NULL)
       {
          if( clientListPtr->cur.fd != INVALID_FD &&
@@ -251,7 +267,7 @@ void dServerSocket_bind(dServerSocket* dSock)
    hints.ai_socktype = SOCK_STREAM;
    hints.ai_flags = AI_PASSIVE; // use my IP
 
-   _snprintf( portStr, sizeof(portStr), "%d", dSock->port);
+   snprintf( portStr, sizeof(portStr), "%d", dSock->port);
 
    if( !getaddrinfo(NULL, portStr, &hints, &serverInfoList) )
    {
@@ -294,9 +310,10 @@ void dServerSocket_accept(dServerSocket* dSock)
 
 dClientConnection* dServerSocket_createNewClientConn(dServerSocket* dSock)
 {
+   struct dClientConnList* newDClientConn = NULL;
    pthread_mutex_lock(&dSock->mutex);
 
-   struct dClientConnList* newDClientConn = (struct dClientConnList*)malloc(sizeof(struct dClientConnList));
+   newDClientConn = (struct dClientConnList*)malloc(sizeof(struct dClientConnList));
    if(dSock->clientList == NULL)
    {
       dSock->clientList = newDClientConn;
@@ -386,7 +403,11 @@ void dServerSocket_killAll(dServerSocket* dSock)
    // Kill the accept thread.
    while(dSock->acceptThread.active == 0 && dSock->acceptThread.kill == 0);
    dSock->acceptThread.kill = 1;
+#ifdef TCP_SERVER_THREADS_WIN_BUILD
    closesocket(dSock->socketFd);
+#elif defined TCP_SERVER_THREADS_LINUX_BUILD
+   shutdown(dSock->socketFd, 2);
+#endif
    pthread_join(dSock->acceptThread.thread, NULL);
 
    // Close all the client connections still active.
