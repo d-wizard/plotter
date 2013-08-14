@@ -24,11 +24,15 @@
 #include <algorithm>
 
 
-#if defined _WIN32 or defined _WIN64
+#if (defined(_WIN32) || defined(__WIN32__))
+   #define WIN_BUILD
    static const std::string DIR_SEP = "\\";
 #else
+   #define LINUX_BUILD
+   #include <sys/stat.h>
    static const std::string DIR_SEP = "/";
 #endif
+
 static const std::string CUR_DIR = ".";
 static const std::string UP_DIR = "..";
 
@@ -217,12 +221,15 @@ bool fso::DirExists(std::string t_dir)
    t_dir = dString::DontEndWithThis(t_dir, DIR_SEP).append(DIR_SEP);
 
    pt_dir = opendir(t_dir.c_str());
-   pt_dirListing = readdir(pt_dir);
-   
-   // If it is an existing directory the first listing read will not be NULL
-   if( pt_dirListing != NULL && pt_dirListing->d_name != NULL )
+   if(pt_dir != NULL)
    {
-      b_retVal = true;
+       pt_dirListing = readdir(pt_dir);
+
+       // If it is an existing directory the first listing read will not be NULL
+       if( pt_dirListing != NULL && pt_dirListing->d_name != NULL )
+       {
+          b_retVal = true;
+       }
    }
    
    closedir(pt_dir);
@@ -258,7 +265,7 @@ bool fso::FileExists(std::string t_path)
       do
       {
          pt_dirListing = readdir(pt_dir);
-         if(pt_dirListing->d_name == NULL)
+         if(pt_dirListing == NULL || pt_dirListing->d_name == NULL)
          {
             // Read all the directory listings in the folder, exit.
             break;
@@ -284,14 +291,16 @@ bool fso::FileExists(std::string t_path)
 bool fso::createDir(std::string t_dir)
 {
    t_dir = dirSepToOS(t_dir);
-#if 0
+#if defined WIN_BUILD && !defined __MINGW32_VERSION
    #ifdef UNICODE
       return (::CreateDirectory(dString::StringToWString(t_dir).c_str(), NULL) != FALSE);
    #else
       return (::CreateDirectory(t_dir.c_str(), NULL) != FALSE);
    #endif
-#else
+#elif defined WIN_BUILD
    return mkdir(t_dir.c_str()) != -1;
+#elif defined LINUX_BUILD
+   return mkdir(t_dir.c_str(), 0777) != -1;
 #endif
 }
 

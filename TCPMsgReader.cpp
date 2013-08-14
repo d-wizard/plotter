@@ -17,7 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "TCPMsgReader.h"
-#include "plotGuiMain.h"
+#include "plotguimain.h"
 
 TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
     m_parent(parent)

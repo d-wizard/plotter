@@ -20,7 +20,7 @@
 #include "PlotHelperTypes.h"
 
 #include "plotguimain.h"
-#include "ui_plotguimain.h"
+#include <QCoreApplication>
 
 #include "createfftplot.h"
 #include "fftHelper.h"
