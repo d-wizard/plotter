@@ -4,10 +4,10 @@
 #
 #-------------------------------------------------
 RC_FILE = mainwindow.rc
-QWTDIR = F:/qwt-6.1
-PTHREADDIR = F:/Projects/pthread32
-FFTWDIR = F:/fftw-3.3.3-dll32
-include ( F:/qwt-6.1/qwt.prf )
+QWTDIR = ../qwt-6.1
+PTHREADDIR = ../pthread32
+FFTWDIR = ../fftw-3.3.3-dll32
+include ( ../qwt-6.1/qwt.prf )
 
 QT       += core gui
 
