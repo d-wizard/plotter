@@ -153,10 +153,17 @@ void fso::GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_
    // Make sure the dir ends with the dir seperator.
    t_dir = dString::DontEndWithThis(t_dir, DIR_SEP).append(DIR_SEP);
    pt_dir = opendir(t_dir.c_str());
+   if(pt_dir == NULL)
+   {
+      // Invalid, early return
+      closedir(pt_dir);
+      return;
+   }
+
    do
    {
       pt_dirListing = readdir(pt_dir);
-      if(pt_dirListing->d_name == NULL)
+      if(pt_dirListing == NULL || pt_dirListing->d_name == NULL)
       {
          // Read everything out of the current dir, exit loop.
          break;
