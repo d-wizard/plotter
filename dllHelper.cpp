@@ -42,10 +42,12 @@ public:
    AppThread(volatile bool* running):m_running(running){}
 };
 
+#ifdef DLL_HELPER_WIN_BUILD
 BOOL WINAPI DllMain( HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpvReserved*/ )
 {
    return TRUE;
 }
+#endif
 
 void startPlotGui(void)
 {
