@@ -20,7 +20,7 @@
 #include "PlotHelperTypes.h"
 
 #include "plotguimain.h"
-#include <QCoreApplication>
+#include "ui_plotguimain.h"
 
 #include "createfftplot.h"
 #include "fftHelper.h"
@@ -28,7 +28,8 @@
 //#define TEST_CURVES
 
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon) :
-    QWidget(parent),
+    QMainWindow(parent),
+    ui(new Ui::plotGuiMain),
     m_tcpMsgReader(NULL),
     m_trayIcon(NULL),
     m_trayExitAction("Exit", this),
@@ -40,6 +41,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_fftPlots(this),
     m_allowNewCurves(true)
 {
+    ui->setupUi(this);
 
     QObject::connect(this, SIGNAL(readPlotMsgSignal(const char*, unsigned int)),
                      this, SLOT(readPlotMsgSlot(const char*, unsigned int)), Qt::QueuedConnection);
@@ -143,6 +145,7 @@ plotGuiMain::~plotGuiMain()
     }
 
     m_curveCommander.destroyAllPlots();
+    delete ui;
 }
 
 void plotGuiMain::closeAllPlots()
@@ -241,4 +244,9 @@ void plotGuiMain::curveUpdated(QString plotName, QString curveName)
         m_trayRealFFTAction.setEnabled(true);
         m_trayComplexFFTAction.setEnabled(true);
     }
+}
+
+void plotGuiMain::on_cmdClose_clicked()
+{
+    QApplication::quit();
 }

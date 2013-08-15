@@ -71,7 +71,13 @@ int main(int argc, char *argv[])
 
         a.setQuitOnLastWindowClosed(false);
 
+#if (defined(_WIN32) || defined(__WIN32__))
         plotGuiMain pgm(NULL, port, true);
+#else
+        // Linux doesn't seem to have a tray, so show the GUI with similar functions
+        plotGuiMain pgm(NULL, port, false);
+        pgm.show();
+#endif
 
         return a.exec();
     }

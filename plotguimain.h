@@ -39,7 +39,11 @@
 
 class createFFTPlot;
 
-class plotGuiMain : public QWidget
+namespace Ui {
+class plotGuiMain;
+}
+
+class plotGuiMain : public QMainWindow
 {
     Q_OBJECT
     
@@ -58,6 +62,7 @@ public:
 
 private:
 
+    Ui::plotGuiMain *ui;
     TCPMsgReader* m_tcpMsgReader;
 
     QSystemTrayIcon* m_trayIcon;
@@ -84,6 +89,8 @@ public slots:
 signals:
     void readPlotMsgSignal(const char*, unsigned int);
     void closeAllPlotsSignal();
+private slots:
+    void on_cmdClose_clicked();
 };
 
 #endif // PLOTGUIMAIN_H
