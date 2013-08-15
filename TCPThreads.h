@@ -50,7 +50,7 @@
    #include <netinet/in.h>
    #include <sys/socket.h>
    
-   typedef int SOCKET;
+   typedef unsigned int SOCKET;
    #define closesocket(fd) close(fd)
 #endif
 

@@ -333,13 +333,13 @@ void createFFTPlot::on_cmdCancel_clicked()
     m_parent->createFftGuiFinished();
 }
 
-void createFFTPlot::closeEvent(QCloseEvent* event)
+void createFFTPlot::closeEvent(QCloseEvent* /*event*/)
 {
     m_parent->createFftGuiFinished();
 }
 
 
-void createFFTPlot::on_cmbRePlot_currentIndexChanged(int index)
+void createFFTPlot::on_cmbRePlot_currentIndexChanged(int /*index*/)
 {
     if(m_guiChanging == false)
     {
@@ -347,7 +347,7 @@ void createFFTPlot::on_cmbRePlot_currentIndexChanged(int index)
     }
 }
 
-void createFFTPlot::on_cmbImPlot_currentIndexChanged(int index)
+void createFFTPlot::on_cmbImPlot_currentIndexChanged(int /*index*/)
 {
     if(m_guiChanging == false)
     {
@@ -355,7 +355,7 @@ void createFFTPlot::on_cmbImPlot_currentIndexChanged(int index)
     }
 }
 
-void createFFTPlot::on_cmbOutPlot_currentIndexChanged(int index)
+void createFFTPlot::on_cmbOutPlot_currentIndexChanged(int /*index*/)
 {
     if(m_guiChanging == false)
     {

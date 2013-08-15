@@ -682,12 +682,12 @@ void MainWindow::rectSelected(const QRectF &pos)
 
 }
 
-void MainWindow::on_verticalScrollBar_sliderMoved(int position)
+void MainWindow::on_verticalScrollBar_sliderMoved(int /*position*/)
 {
     m_plotZoom->VertSliderMoved();
 }
 
-void MainWindow::on_horizontalScrollBar_sliderMoved(int position)
+void MainWindow::on_horizontalScrollBar_sliderMoved(int /*position*/)
 {
     m_plotZoom->HorzSliderMoved();
 }
@@ -1129,7 +1129,7 @@ void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
     m_rightClickMenu.exec(m_qwtPlot->mapToGlobal(pos));
 }
 
-void MainWindow::onApplicationFocusChanged(QWidget* old, QWidget* now)
+void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
 {
   if(isActiveWindow())
   {
@@ -1154,12 +1154,12 @@ int MainWindow::findMatchingCurve(const QString& curveTitle)
 }
 
 
-void MainWindow::closeEvent(QCloseEvent* event)
+void MainWindow::closeEvent(QCloseEvent* /*event*/)
 {
     m_curveCommander->plotWindowClose(this->windowTitle());
 }
 
-void MainWindow::resizeEvent(QResizeEvent* event)
+void MainWindow::resizeEvent(QResizeEvent* /*event*/)
 {
     QSize cavasSize = m_qwtPlot->canvas()->frameSize();
     m_canvasXOverYRatio = (cavasSize.width() - (2.0*PLOT_CANVAS_OFFSET)) / (cavasSize.height() - (2.0*PLOT_CANVAS_OFFSET));

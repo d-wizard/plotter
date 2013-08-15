@@ -251,7 +251,7 @@ void plotGuiMain::on_cmdClose_clicked()
     QApplication::quit();
 }
 
-void plotGuiMain::closeEvent(QCloseEvent* event)
+void plotGuiMain::closeEvent(QCloseEvent* /*event*/)
 {
     QApplication::quit();
 }
