@@ -42,6 +42,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_allowNewCurves(true)
 {
     ui->setupUi(this);
+    this->setFixedSize(165, 95);
 
     QObject::connect(this, SIGNAL(readPlotMsgSignal(const char*, unsigned int)),
                      this, SLOT(readPlotMsgSlot(const char*, unsigned int)), Qt::QueuedConnection);
@@ -95,6 +96,15 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     if(tcpPort != 0)
     {
         m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
+
+        char tcpPortStr[10];
+        snprintf(tcpPortStr, sizeof(tcpPortStr), "%d", tcpPort);
+        ui->lblPort->setText(tcpPortStr);
+    }
+    else
+    {
+       ui->lblPort->setVisible(false);
+       ui->lblPortLable->setVisible(false);
     }
 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
