@@ -1,0 +1,7 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+    <file>./check.png</file>
+    <file>./zoomCursor.png</file>
+    <file>./plot.png</file>
+ </qresource>
+ </RCC>

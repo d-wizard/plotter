@@ -99,7 +99,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     if(showTrayIcon == true)
     {
-       m_trayIcon = new QSystemTrayIcon(QIcon("plot.png"), this);
+       m_trayIcon = new QSystemTrayIcon(QIcon(":/plot.png"), this);
        m_trayMenu = new QMenu("Exit", this);
 
        m_trayIcon->setContextMenu(m_trayMenu);

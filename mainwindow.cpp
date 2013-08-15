@@ -45,7 +45,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_selectMode(E_CURSOR),
     m_selectedCurveIndex(0),
     m_plotZoom(NULL),
-    m_checkedIcon("check.png"),
+    m_checkedIcon(":/check.png"),
     m_zoomCursor(NULL),
     m_normalizeCurves(false),
     m_legendDisplayed(false),
@@ -68,7 +68,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
 
     srand((unsigned)time(0));
 
-    QPixmap zoomCursor("zoomCursor.png");
+    QPixmap zoomCursor(":/zoomCursor.png");
     zoomCursor.setMask(zoomCursor.createMaskFromColor(QColor(0,255,0)));
     m_zoomCursor = new QCursor(zoomCursor, 5,5);
 

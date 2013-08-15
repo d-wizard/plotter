@@ -58,3 +58,6 @@ LIBS        += -L$$QWTDIR/lib -lqwt
 LIBS += -L$$PTHREADDIR -lpthreadGC2
 LIBS += -lws2_32
 LIBS += -L$$FFTWDIR -lfftw3-3
+
+RESOURCES += \
+    qtResource.qrc
