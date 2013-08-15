@@ -79,6 +79,8 @@ private:
 
     bool m_allowNewCurves;
 
+    void closeEvent(QCloseEvent* event);
+
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
     void createComplexFFT();
