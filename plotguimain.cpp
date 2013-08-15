@@ -97,29 +97,29 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
         m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
     }
 
+    connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
+    connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
+    connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
+    connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
+
+    m_trayMenu = new QMenu("Plot", this);
+
+    m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_trayRealFFTAction);
+    m_trayMenu->addAction(&m_trayComplexFFTAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_trayExitAction);
+
+    m_trayRealFFTAction.setEnabled(false);
+    m_trayComplexFFTAction.setEnabled(false);
+    
+    ui->menubar->addMenu(m_trayMenu);
+    
     if(showTrayIcon == true)
     {
        m_trayIcon = new QSystemTrayIcon(QIcon(":/plot.png"), this);
-       m_trayMenu = new QMenu("Exit", this);
-
        m_trayIcon->setContextMenu(m_trayMenu);
-
-       connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
-       connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
-       connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
-       connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
-
-
-       m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
-       m_trayMenu->addSeparator();
-       m_trayMenu->addAction(&m_trayRealFFTAction);
-       m_trayMenu->addAction(&m_trayComplexFFTAction);
-       m_trayMenu->addSeparator();
-       m_trayMenu->addAction(&m_trayExitAction);
-
-       m_trayRealFFTAction.setEnabled(false);
-       m_trayComplexFFTAction.setEnabled(false);
-
        m_trayIcon->show();
     }
 
