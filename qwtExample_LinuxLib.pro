@@ -5,8 +5,8 @@
 #-------------------------------------------------
 RC_FILE = mainwindow.rc
 QWTDIR = ../qwt-6.1
-PTHREADDIR = ../pthread32
-FFTWDIR = ../fftw-3.3.3-dll32
+FFTWDIR = ../fftw-3.3.3/api
+FFTWLIBDIR = /usr/local/lib
 include ( ../qwt-6.1/qwt.prf )
 
 QT       += core gui
@@ -50,12 +50,10 @@ HEADERS  += mainwindow.h \
     fftHelper.h
 
 FORMS    += mainwindow.ui \
+    plotguimain.ui \
     createfftplot.ui
 
 INCLUDEPATH += $$QWTDIR/src
-INCLUDEPATH += $$PTHREADDIR
 INCLUDEPATH += $$FFTWDIR
 LIBS        += -L$$QWTDIR/lib -lqwt
-LIBS += -L$$PTHREADDIR -lpthreadGC2
-LIBS += -lws2_32
-LIBS += -L$$FFTWDIR -lfftw3-3
+LIBS += -L$$FFTWLIBDIR -lfftw3
