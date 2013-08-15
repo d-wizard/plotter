@@ -57,3 +57,6 @@ INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$FFTWDIR
 LIBS        += -L$$QWTDIR/lib -lqwt
 LIBS += -L$$FFTWLIBDIR -lfftw3
+
+RESOURCES += \
+    qtResource.qrc
