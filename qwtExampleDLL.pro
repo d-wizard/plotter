@@ -50,6 +50,7 @@ HEADERS  += mainwindow.h \
     fftHelper.h
 
 FORMS    += mainwindow.ui \
+    plotguimain.ui \
     createfftplot.ui
 
 INCLUDEPATH += $$QWTDIR/src
