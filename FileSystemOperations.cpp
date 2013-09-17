@@ -26,6 +26,7 @@
 
 #if (defined(_WIN32) || defined(__WIN32__))
    #define WIN_BUILD
+   #include <windows.h>
    static const std::string DIR_SEP = "\\";
 #else
    #define LINUX_BUILD
@@ -298,14 +299,12 @@ bool fso::FileExists(std::string t_path)
 bool fso::createDir(std::string t_dir)
 {
    t_dir = dirSepToOS(t_dir);
-#if defined WIN_BUILD && !defined __MINGW32_VERSION
+#if defined WIN_BUILD
    #ifdef UNICODE
       return (::CreateDirectory(dString::StringToWString(t_dir).c_str(), NULL) != FALSE);
    #else
       return (::CreateDirectory(t_dir.c_str(), NULL) != FALSE);
    #endif
-#elif defined WIN_BUILD
-   return mkdir(t_dir.c_str()) != -1;
 #elif defined LINUX_BUILD
    return mkdir(t_dir.c_str(), 0777) != -1;
 #endif
