@@ -25,18 +25,10 @@
 #include <string.h>
 
 #include "DataTypes.h"
+#include "plotMsgPack.h"
 
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
-
-typedef enum
-{
-   E_CREATE_1D_PLOT,
-   E_CREATE_2D_PLOT,
-   E_UPDATE_1D_PLOT,
-   E_UPDATE_2D_PLOT,
-   E_INVALID_PLOT_ACTION
-}ePlotAction;
 
 inline bool validPlotAction(ePlotAction in)
 {
@@ -54,20 +46,6 @@ inline bool validPlotAction(ePlotAction in)
    }
    return valid;
 }
-
-typedef enum
-{
-   E_CHAR,
-   E_UCHAR,
-   E_INT_16,
-   E_UINT_16,
-   E_INT_32,
-   E_UINT_32,
-   E_INT_64,
-   E_UINT_64,
-   E_FLOAT_32,
-   E_FLOAT_64
-}ePlotDataTypes;
 
 inline bool validPlotDataTypes(ePlotDataTypes in)
 {

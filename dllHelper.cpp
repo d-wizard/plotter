@@ -19,7 +19,7 @@
 #include <QtGui/QApplication>
 #include <QThread>
 #include "dllHelper.h"
-#include "PackUnpackPlotMsg.h"
+#include "plotMsgPack.h"
 #include "plotguimain.h"
 
 plotGuiMain* pgm = NULL;
@@ -95,13 +95,17 @@ void create1dPlot( char* plotName,
    if(pgm != NULL)
    {
       std::vector<char> msg;
-      pack1dPlotMsg( msg,
-                     plotName,
-                     curveName,
-                     numSamp,
-                     (ePlotDataTypes)yAxisType,
-                     yShiftValue,
-                     yAxisSamples);
+      t1dPlot plotParam;
+
+      plotParam.plotName = plotName;
+      plotParam.curveName = curveName;
+      plotParam.numSamp = numSamp;
+      plotParam.yAxisType = (ePlotDataTypes)yAxisType;
+      plotParam.yShiftValue = yShiftValue;
+
+      msg.resize(getCreatePlot1dMsgSize(&plotParam));
+
+      packCreate1dPlotMsg(&plotParam, yAxisSamples, &msg[0]);
 
       pgm->readPlotMsg(&msg[0], msg.size());
    }
@@ -120,16 +124,80 @@ void create2dPlot( char* plotName,
    if(pgm != NULL)
    {
       std::vector<char> msg;
-      pack2dPlotMsg( msg,
-                     plotName,
-                     curveName,
-                     numSamp,
-                     (ePlotDataTypes)xAxisType,
-                     xShiftValue,
-                     (ePlotDataTypes)yAxisType,
-                     yShiftValue,
-                     xAxisSamples,
-                     yAxisSamples);
+      t2dPlot plotParam;
+
+      plotParam.plotName = plotName;
+      plotParam.curveName = curveName;
+      plotParam.numSamp = numSamp;
+      plotParam.xAxisType = (ePlotDataTypes)xAxisType;
+      plotParam.xShiftValue = xShiftValue;
+      plotParam.yAxisType = (ePlotDataTypes)yAxisType;
+      plotParam.yShiftValue = yShiftValue;
+
+      msg.resize(getCreatePlot2dMsgSize(&plotParam));
+
+      packCreate2dPlotMsg(&plotParam, xAxisSamples, yAxisSamples, &msg[0]);
+
+      pgm->readPlotMsg(&msg[0], msg.size());
+   }
+}
+
+
+void update1dPlot( char* plotName,
+                   char* curveName,
+                   unsigned int numSamp,
+                   unsigned int sampleStartIndex,
+                   int yAxisType,
+                   int yShiftValue,
+                   void* yAxisSamples)
+{
+   if(pgm != NULL)
+   {
+      std::vector<char> msg;
+      t1dPlot plotParam;
+
+      plotParam.plotName = plotName;
+      plotParam.curveName = curveName;
+      plotParam.numSamp = numSamp;
+      plotParam.yAxisType = (ePlotDataTypes)yAxisType;
+      plotParam.yShiftValue = yShiftValue;
+
+      msg.resize(getUpdatePlot1dMsgSize(&plotParam));
+
+      packUpdate1dPlotMsg(&plotParam, sampleStartIndex, yAxisSamples, &msg[0]);
+
+      pgm->readPlotMsg(&msg[0], msg.size());
+   }
+}
+
+void update2dPlot( char* plotName,
+                   char* curveName,
+                   unsigned int numSamp,
+                   unsigned int sampleStartIndex,
+                   int xAxisType,
+                   int xShiftValue,
+                   int yAxisType,
+                   int yShiftValue,
+                   void* xAxisSamples,
+                   void* yAxisSamples)
+{
+   if(pgm != NULL)
+   {
+      std::vector<char> msg;
+      t2dPlot plotParam;
+
+      plotParam.plotName = plotName;
+      plotParam.curveName = curveName;
+      plotParam.numSamp = numSamp;
+      plotParam.xAxisType = (ePlotDataTypes)xAxisType;
+      plotParam.xShiftValue = xShiftValue;
+      plotParam.yAxisType = (ePlotDataTypes)yAxisType;
+      plotParam.yShiftValue = yShiftValue;
+
+      msg.resize(getUpdatePlot2dMsgSize(&plotParam));
+
+      packUpdate2dPlotMsg(&plotParam, sampleStartIndex, xAxisSamples, yAxisSamples, &msg[0]);
+
       pgm->readPlotMsg(&msg[0], msg.size());
    }
 }

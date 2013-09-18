@@ -54,6 +54,27 @@ void create2dPlot( char* plotName,
                    void* xAxisSamples,
                    void* yAxisSamples);
 
+extern "C" Q_DECL_EXPORT
+void update1dPlot( char* plotName,
+                   char* curveName,
+                   unsigned int numSamp,
+                   unsigned int sampleStartIndex,
+                   int yAxisType,
+                   int yShiftValue,
+                   void* yAxisSamples);
+
+extern "C" Q_DECL_EXPORT
+void update2dPlot( char* plotName,
+                   char* curveName,
+                   unsigned int numSamp,
+                   unsigned int sampleStartIndex,
+                   int xAxisType,
+                   int xShiftValue,
+                   int yAxisType,
+                   int yShiftValue,
+                   void* xAxisSamples,
+                   void* yAxisSamples);
+
 #endif
 
 
