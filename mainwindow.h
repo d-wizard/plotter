@@ -82,8 +82,10 @@ public:
 
 
     void resetPlot();
-    void add1dCurve(QString name, dubVect& yPoints);
-    void add2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
+    void create1dCurve(QString name, dubVect& yPoints);
+    void create2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
+    void update1dCurve(QString name, unsigned int sampleStartIndex, dubVect& yPoints);
+    void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
 
 private:
     Ui::MainWindow *ui;
@@ -135,7 +137,7 @@ private:
 
     QAction m_enableDisablePlotUpdate;
 
-    void addCurve(QString& name, dubVect* xPoints, dubVect* yPoints);
+    void createUpdateCurve(QString& name, bool resetCurve, unsigned int sampleStartIndex, dubVect* xPoints, dubVect* yPoints);
 
 
     void calcMaxMin();

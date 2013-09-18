@@ -20,20 +20,6 @@
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 
-static int PLOT_DATA_TYPE_SIZES[]=
-{
-   sizeof(SCHAR),
-   sizeof(UCHAR),
-   sizeof(INT_16),
-   sizeof(UINT_16),
-   sizeof(INT_32),
-   sizeof(UINT_32),
-   sizeof(INT_64),
-   sizeof(UINT_64),
-   sizeof(FLOAT_32),
-   sizeof(FLOAT_64)
-};
-
 GetEntirePlotMsg::GetEntirePlotMsg():
    m_unpackState(E_READ_ACTION),
    m_curAction(E_INVALID_PLOT_ACTION),
@@ -173,6 +159,7 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
    m_plotAction(E_INVALID_PLOT_ACTION),
    m_plotName(""),
    m_curveName(""),
+   m_sampleStartIndex(0),
    m_msg(msg),
    m_msgSize(size),
    m_msgReadIndex(0),
@@ -186,10 +173,16 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
    {
       switch(m_plotAction)
       {
-         case E_PLOT_1D:
+         case E_CREATE_1D_PLOT:
+         case E_UPDATE_1D_PLOT:
             unpackStr(&m_plotName);
             unpackStr(&m_curveName);
             unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+            if(m_plotAction == E_UPDATE_1D_PLOT)
+            {
+               // Update action has an extra parameter to define where the samples should go
+               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
+            }
             unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
             unpack(&m_yShiftFactor, sizeof(m_yShiftFactor));
             if(validPlotDataTypes(m_yAxisDataType))
@@ -220,10 +213,16 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
                }
             }
          break;
-         case E_PLOT_2D:
+         case E_CREATE_2D_PLOT:
+         case E_UPDATE_2D_PLOT:
             unpackStr(&m_plotName);
             unpackStr(&m_curveName);
             unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+            if(m_plotAction == E_UPDATE_2D_PLOT)
+            {
+               // Update action has an extra parameter to define where the samples should go
+               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
+            }
             unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
             unpack(&m_xShiftFactor, sizeof(m_xShiftFactor));
             unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
@@ -389,89 +388,6 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
 
    return retVal;
 }
-
-
-//////////////////    PACK Functions ////////////////////
-
-inline void copyAndIncIndex(char* baseWritePtr, unsigned int* index, const void* srcPtr, unsigned int copySize)
-{
-   memcpy(&baseWritePtr[*index], srcPtr, copySize);
-   (*index) += copySize;
-}
-
-void pack1dPlotMsg( std::vector<char>& msg,
-                    std::string plotName,
-                    std::string curveName,
-                    unsigned int numSamp,
-                    ePlotDataTypes yAxisType,
-                    int yShiftValue,
-                    void* yAxisSamples)
-{
-   unsigned int totalMsgSize =
-      sizeof(ePlotAction) +
-      MSG_SIZE_PARAM_NUM_BYTES +
-      plotName.size() + 1 +
-      curveName.size() + 1 +
-      sizeof(numSamp) +
-      sizeof(yAxisType) +
-      sizeof(yShiftValue) +
-      (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
-
-   msg.resize(totalMsgSize);
-   ePlotAction temp = E_PLOT_1D;
-
-   unsigned int curCopyIndex = 0;
-   copyAndIncIndex(&msg[0], &curCopyIndex, &temp, sizeof(temp));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &totalMsgSize, MSG_SIZE_PARAM_NUM_BYTES);
-   copyAndIncIndex(&msg[0], &curCopyIndex, plotName.c_str(), plotName.size()+1);
-   copyAndIncIndex(&msg[0], &curCopyIndex, curveName.c_str(), curveName.size()+1);
-   copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &yAxisType, sizeof(yAxisType));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &yShiftValue, sizeof(yShiftValue));
-   copyAndIncIndex(&msg[0], &curCopyIndex, yAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]));
-
-}
-void pack2dPlotMsg( std::vector<char>& msg,
-                    std::string plotName,
-                    std::string curveName,
-                    unsigned int numSamp,
-                    ePlotDataTypes xAxisType,
-                    int xShiftValue,
-                    ePlotDataTypes yAxisType,
-                    int yShiftValue,
-                    void* xAxisSamples,
-                    void* yAxisSamples)
-{
-   unsigned int totalMsgSize =
-           sizeof(ePlotAction) +
-           MSG_SIZE_PARAM_NUM_BYTES +
-           plotName.size() + 1 +
-           curveName.size() + 1 +
-           sizeof(numSamp) +
-           sizeof(xAxisType) +
-           sizeof(xShiftValue) +
-           sizeof(yAxisType) +
-           sizeof(yShiftValue) +
-           (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]) +
-           (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]);
-
-   msg.resize(totalMsgSize);
-   ePlotAction temp = E_PLOT_2D;
-
-   unsigned int curCopyIndex = 0;
-   copyAndIncIndex(&msg[0], &curCopyIndex, &temp, sizeof(temp));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &totalMsgSize, MSG_SIZE_PARAM_NUM_BYTES);
-   copyAndIncIndex(&msg[0], &curCopyIndex, plotName.c_str(), plotName.size()+1);
-   copyAndIncIndex(&msg[0], &curCopyIndex, curveName.c_str(), curveName.size()+1);
-   copyAndIncIndex(&msg[0], &curCopyIndex, &numSamp, sizeof(numSamp));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &xAxisType, sizeof(xAxisType));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &xShiftValue, sizeof(xShiftValue));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &yAxisType, sizeof(yAxisType));
-   copyAndIncIndex(&msg[0], &curCopyIndex, &yShiftValue, sizeof(yShiftValue));
-   copyAndIncIndex(&msg[0], &curCopyIndex, xAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[xAxisType]));
-   copyAndIncIndex(&msg[0], &curCopyIndex, yAxisSamples, (numSamp*PLOT_DATA_TYPE_SIZES[yAxisType]));
-}
-
 
 
 

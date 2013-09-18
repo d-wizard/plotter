@@ -374,79 +374,113 @@ void MainWindow::updateCursorMenus()
 
 }
 
-void MainWindow::add1dCurve(QString name, dubVect &yPoints)
+void MainWindow::create1dCurve(QString name, dubVect &yPoints)
 {
-    addCurve(name, NULL, &yPoints);
+    createUpdateCurve(name, true, 0, NULL, &yPoints);
 }
 
 
-void MainWindow::add2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
+void MainWindow::create2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 {
-    addCurve(name, &xPoints, &yPoints);
+    createUpdateCurve(name, true, 0, &xPoints, &yPoints);
 }
 
-void MainWindow::addCurve(QString& name, dubVect* xPoints, dubVect* yPoints)
+void MainWindow::update1dCurve(QString name, unsigned int sampleStartIndex, dubVect& yPoints)
 {
-    // Check for any reason to not allow the adding of the new curve.
-    if( m_allowNewCurves == false ||
-        yPoints == NULL ||
-        (xPoints != NULL && xPoints->size() <= 0) ||
-        yPoints->size() <= 0 )
-    {
-        return;
-    }
+    createUpdateCurve(name, false, sampleStartIndex, NULL, &yPoints);
+}
 
-    int curveIndex = findMatchingCurve(name);
-    if(curveIndex >= 0)
-    {
-        if(xPoints == NULL)
-        {
-            m_qwtCurves[curveIndex]->SetNewCurveSamples(*yPoints);
-        }
-        else
-        {
-            m_qwtCurves[curveIndex]->SetNewCurveSamples(*xPoints, *yPoints);
-        }
-    }
-    else
-    {
-        curveIndex = m_qwtCurves.size();
-        int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
+{
+    createUpdateCurve(name, false, sampleStartIndex, &xPoints, &yPoints);
+}
 
-        if(xPoints == NULL)
-        {
-            m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *yPoints, curveColors[colorLookupIndex]));
-        }
-        else
-        {
-            m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
-        }
-    }
+void MainWindow::createUpdateCurve(QString& name, bool resetCurve, unsigned int sampleStartIndex, dubVect *xPoints, dubVect *yPoints)
+{
+   // Check for any reason to not allow the adding of the new curve.
+   if( m_allowNewCurves == false ||
+       yPoints == NULL ||
+       (xPoints != NULL && xPoints->size() <= 0) ||
+       yPoints->size() <= 0 )
+   {
+      return;
+   }
 
-    calcMaxMin();
+   int curveIndex = findMatchingCurve(name);
+   if(curveIndex >= 0)
+   {
+      if(resetCurve == true)
+      {
+         if(xPoints == NULL)
+         {
+            m_qwtCurves[curveIndex]->ResetCurveSamples(*yPoints);
+         }
+         else
+         {
+            m_qwtCurves[curveIndex]->ResetCurveSamples(*xPoints, *yPoints);
+         }
+      }
+      else
+      {
+         if(xPoints == NULL)
+         {
+            m_qwtCurves[curveIndex]->UpdateCurveSamples(*yPoints, sampleStartIndex);
+         }
+         else
+         {
+            m_qwtCurves[curveIndex]->UpdateCurveSamples(*xPoints, *yPoints, sampleStartIndex);
+         }
+      }
+   }
+   else
+   {
+      curveIndex = m_qwtCurves.size();
+      int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
 
-    if(m_qwtSelectedSample->getCurve() == NULL)
-    {
-        setSelectedCurveIndex(curveIndex);
-    }
-    m_plotZoom->ResetZoom();
-    replotMainPlot();
+      if(resetCurve == false && sampleStartIndex > 0)
+      {
+         // New curve, but starting in the middle. Prepend vector with zeros.
+         if(xPoints != NULL)
+         {
+            xPoints->insert(xPoints->begin(), sampleStartIndex, 0.0);
+         }
+         yPoints->insert(yPoints->begin(), sampleStartIndex, 0.0);
+      }
 
-    // Make sure the cursors matches the updated point.
-    if(m_qwtSelectedSample->isAttached == true)
-    {
-        m_qwtSelectedSample->showCursor();
-    }
-    if(m_qwtSelectedSampleDelta->isAttached == true)
-    {
-        m_qwtSelectedSampleDelta->showCursor();
-    }
-    updatePointDisplay();
+      if(xPoints == NULL)
+      {
+         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *yPoints, curveColors[colorLookupIndex]));
+      }
+      else
+      {
+         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
+      }
+   }
 
-    emit updateCursorMenusSignal();
+   calcMaxMin();
 
-    // inform parent that a curve has been added / changed
-    m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->getCurveTitle(), m_qwtCurves[curveIndex]);
+   if(m_qwtSelectedSample->getCurve() == NULL)
+   {
+      setSelectedCurveIndex(curveIndex);
+   }
+   m_plotZoom->ResetZoom();
+   replotMainPlot();
+
+   // Make sure the cursors matches the updated point.
+   if(m_qwtSelectedSample->isAttached == true)
+   {
+      m_qwtSelectedSample->showCursor();
+   }
+   if(m_qwtSelectedSampleDelta->isAttached == true)
+   {
+      m_qwtSelectedSampleDelta->showCursor();
+   }
+   updatePointDisplay();
+
+   emit updateCursorMenusSignal();
+
+   // inform parent that a curve has been added / changed
+   m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->getCurveTitle(), m_qwtCurves[curveIndex]);
 }
 
 

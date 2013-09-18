@@ -102,20 +102,33 @@ void CurveCommander::destroyAllPlots()
    }
 }
 
-void CurveCommander::add1dCurve(QString plotName, QString curveName, dubVect yPoints)
+void CurveCommander::create1dCurve(QString plotName, QString curveName, dubVect yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->add1dCurve(curveName, yPoints);
+   m_allCurves[plotName].plotGui->create1dCurve(curveName, yPoints);
    m_allCurves[plotName].plotGui->show();
 }
 
-void CurveCommander::add2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints)
+void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->add2dCurve(curveName, xPoints, yPoints);
+   m_allCurves[plotName].plotGui->create2dCurve(curveName, xPoints, yPoints);
    m_allCurves[plotName].plotGui->show();
 }
 
+void CurveCommander::update1dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect yPoints)
+{
+   createPlot(plotName);
+   m_allCurves[plotName].plotGui->update1dCurve(curveName, sampleStartIndex, yPoints);
+   m_allCurves[plotName].plotGui->show();
+}
+
+void CurveCommander::update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect xPoints, dubVect yPoints)
+{
+   createPlot(plotName);
+   m_allCurves[plotName].plotGui->update2dCurve(curveName, sampleStartIndex, xPoints, yPoints);
+   m_allCurves[plotName].plotGui->show();
+}
 
 void CurveCommander::plotWindowCloseSlot(QString plotName)
 {

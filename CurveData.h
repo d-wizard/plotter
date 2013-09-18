@@ -64,8 +64,11 @@ public:
    void resetNormalizeFactor();
    void setCurveSamples();
 
-   void SetNewCurveSamples(dubVect& newYPoints);
-   void SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
+   void ResetCurveSamples(dubVect& newYPoints);
+   void ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
+
+   void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex);
+   void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex);
 
    QLabel* pointLabel;
    QAction* curveAction;

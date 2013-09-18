@@ -24,13 +24,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "DataTypes.h"
+
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
 
 typedef enum
 {
-   E_PLOT_1D,
-   E_PLOT_2D,
+   E_CREATE_1D_PLOT,
+   E_CREATE_2D_PLOT,
+   E_UPDATE_1D_PLOT,
+   E_UPDATE_2D_PLOT,
    E_INVALID_PLOT_ACTION
 }ePlotAction;
 
@@ -39,8 +43,10 @@ inline bool validPlotAction(ePlotAction in)
    bool valid = false;
    switch(in)
    {
-   case E_PLOT_1D:
-   case E_PLOT_2D:
+   case E_CREATE_1D_PLOT:
+   case E_CREATE_2D_PLOT:
+   case E_UPDATE_1D_PLOT:
+   case E_UPDATE_2D_PLOT:
       valid = true;
       break;
    default:
@@ -135,6 +141,7 @@ public:
    ePlotAction m_plotAction;
    std::string m_plotName;
    std::string m_curveName;
+   UINT_32 m_sampleStartIndex;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
 private:
@@ -147,38 +154,16 @@ private:
    
    
    const char* m_msg;
-   unsigned int m_msgSize;
-   unsigned int m_msgReadIndex;
+   UINT_32 m_msgSize;
+   UINT_32 m_msgReadIndex;
 
-   unsigned int m_numSamplesInPlot;
+   UINT_32 m_numSamplesInPlot;
    ePlotDataTypes m_xAxisDataType;
    ePlotDataTypes m_yAxisDataType;
 
-   int m_xShiftFactor;
-   int m_yShiftFactor;
+   INT_32 m_xShiftFactor;
+   INT_32 m_yShiftFactor;
 };
-
-
-void packResetPlotMsg(std::vector<char>& msg);
-
-void pack1dPlotMsg( std::vector<char>& msg,
-                    std::string plotName,
-                    std::string curveName,
-                    unsigned int numSamp,
-                    ePlotDataTypes yAxisType,
-                    int yShiftValue,
-                    void* yAxisSamples);
-
-void pack2dPlotMsg( std::vector<char>& msg,
-                    std::string plotName,
-                    std::string curveName,
-                    unsigned int numSamp,
-                    ePlotDataTypes xAxisType,
-                    int xShiftValue,
-                    ePlotDataTypes yAxisType,
-                    int yShiftValue,
-                    void* xAxisSamples,
-                    void* yAxisSamples);
 
 
 #endif

@@ -93,7 +93,7 @@ void fftPlots::makeFFTPlot(tFFTCurve fftCurve)
             }
             updateFFTList(fftCurve);
             realFFT(rePoints, rePoints);
-            getCurveCommander().add1dCurve(fftCurve.plotName, fftCurve.curveName, rePoints);
+            getCurveCommander().create1dCurve(fftCurve.plotName, fftCurve.curveName, rePoints);
         }
     }
     else if(fftCurve.fftType == E_FFT_COMPLEX)
@@ -127,8 +127,8 @@ void fftPlots::makeFFTPlot(tFFTCurve fftCurve)
             curveNameRe.append(" FFT Real");
             curveNameIm.append(" FFT Imag");
 
-            getCurveCommander().add2dCurve(fftCurve.plotName, curveNameRe, fftXPoints, rePoints);
-            getCurveCommander().add2dCurve(fftCurve.plotName, curveNameIm, fftXPoints, imPoints);
+            getCurveCommander().create2dCurve(fftCurve.plotName, curveNameRe, fftXPoints, rePoints);
+            getCurveCommander().create2dCurve(fftCurve.plotName, curveNameIm, fftXPoints, imPoints);
         }
     }
 }

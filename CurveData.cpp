@@ -337,7 +337,7 @@ void CurveData::setCurveSamples()
    }
 }
 
-void CurveData::SetNewCurveSamples(dubVect& newYPoints)
+void CurveData::ResetCurveSamples(dubVect& newYPoints)
 {
    plotType = E_PLOT_TYPE_1D;
    yPoints = newYPoints;
@@ -346,7 +346,7 @@ void CurveData::SetNewCurveSamples(dubVect& newYPoints)
    findMaxMin();
    setCurveSamples();
 }
-void CurveData::SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
+void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
 {
    plotType = E_PLOT_TYPE_2D;
    xPoints = newXPoints;
@@ -363,4 +363,59 @@ void CurveData::SetNewCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
    findMaxMin();
    setCurveSamples();
 }
+
+
+void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex)
+{
+   if(plotType == E_PLOT_TYPE_1D)
+   {
+      bool resized = false;
+      if(yPoints.size() < (sampleStartIndex + newYPoints.size()))
+      {
+         resized = true;
+         yPoints.resize(sampleStartIndex + newYPoints.size());
+      }
+      memcpy(&yPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newYPoints.size());
+
+      if(resized == true)
+      {
+         // yPoints was resized to be bigger, need to update the xPoints.
+         fill1DxPoints();
+      }
+
+      numPoints = yPoints.size();
+
+      findMaxMin();
+      setCurveSamples();
+   }
+}
+
+void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex)
+{
+   if(plotType == E_PLOT_TYPE_2D)
+   {
+      unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
+
+      if(xPoints.size() < (sampleStartIndex + newPointsSize))
+      {
+         xPoints.resize(sampleStartIndex + newPointsSize);
+      }
+      memcpy(&xPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+
+      if(yPoints.size() < (sampleStartIndex + newPointsSize))
+      {
+         yPoints.resize(sampleStartIndex + newPointsSize);
+      }
+      memcpy(&yPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+
+      numPoints = std::min(xPoints.size(), yPoints.size()); // These should never be unequal, but take min anyway.
+
+      findMaxMin();
+      setCurveSamples();
+   }
+}
+
+
+
+
 
