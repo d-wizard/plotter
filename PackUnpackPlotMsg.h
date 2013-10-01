@@ -64,6 +64,9 @@ inline bool validPlotDataTypes(ePlotDataTypes in)
    case E_FLOAT_64:
       valid = true;
       break;
+   case E_INVALID_DATA_TYPE:
+       valid = false;
+       break;
    }
    return valid;
 }
@@ -141,6 +144,8 @@ private:
 
    INT_32 m_xShiftFactor;
    INT_32 m_yShiftFactor;
+
+   UCHAR m_interleaved;
 };
 
 

@@ -172,8 +172,7 @@ inline void packCreate2dPlotMsg(const t2dPlot* param, void* xPoints, void* yPoin
    PLOT_MSG_SIZE_TYPE totalMsgSize = 0;
    ePlotAction plotAction = E_CREATE_2D_PLOT;
    unsigned int index = 0;
-
-   param->interleaved = 0; // 0 = Not Interleaved
+   UCHAR interleaved = 0; // 0 = Not Interleaved
 
    totalMsgSize = getCreatePlot2dMsgSize(param);
 
@@ -186,7 +185,7 @@ inline void packCreate2dPlotMsg(const t2dPlot* param, void* xPoints, void* yPoin
    packPlotMsgParam(packedMsg, &index, &param->xShiftValue, sizeof(param->xShiftValue));
    packPlotMsgParam(packedMsg, &index, &param->yAxisType, sizeof(param->yAxisType));
    packPlotMsgParam(packedMsg, &index, &param->yShiftValue, sizeof(param->yShiftValue));
-   packPlotMsgParam(packedMsg, &index, &param->interleaved, sizeof(param->interleaved));
+   packPlotMsgParam(packedMsg, &index, &interleaved, sizeof(param->interleaved));
    packPlotMsgParam(packedMsg, &index, xPoints, (param->numSamp*PLOT_DATA_TYPE_SIZES[param->xAxisType]));
    packPlotMsgParam(packedMsg, &index, yPoints, (param->numSamp*PLOT_DATA_TYPE_SIZES[param->yAxisType]));
 }
@@ -196,8 +195,7 @@ inline void packCreate2dPlotMsg_Interleaved(const t2dPlot* param, void* xyPoints
    PLOT_MSG_SIZE_TYPE totalMsgSize = 0;
    ePlotAction plotAction = E_CREATE_2D_PLOT;
    unsigned int index = 0;
-
-   param->interleaved = 1; // 1 = Interleaved
+   UCHAR interleaved = 1; // 1 = Interleaved
 
    totalMsgSize = getCreatePlot2dMsgSize(param);
 
@@ -210,7 +208,7 @@ inline void packCreate2dPlotMsg_Interleaved(const t2dPlot* param, void* xyPoints
    packPlotMsgParam(packedMsg, &index, &param->xShiftValue, sizeof(param->xShiftValue));
    packPlotMsgParam(packedMsg, &index, &param->yAxisType, sizeof(param->yAxisType));
    packPlotMsgParam(packedMsg, &index, &param->yShiftValue, sizeof(param->yShiftValue));
-   packPlotMsgParam(packedMsg, &index, &param->interleaved, sizeof(param->interleaved));
+   packPlotMsgParam(packedMsg, &index, &interleaved, sizeof(param->interleaved));
    packPlotMsgParam(packedMsg, &index, xyPoints,
       (param->numSamp*PLOT_DATA_TYPE_SIZES[param->xAxisType]) +
       (param->numSamp*PLOT_DATA_TYPE_SIZES[param->yAxisType]) );
@@ -240,8 +238,7 @@ inline void packUpdate2dPlotMsg(const t2dPlot* param, UINT_32 sampleStartIndex, 
    PLOT_MSG_SIZE_TYPE totalMsgSize = 0;
    ePlotAction plotAction = E_UPDATE_2D_PLOT;
    unsigned int index = 0;
-
-   param->interleaved = 0; // 0 = Not Interleaved
+   UCHAR interleaved = 0; // 0 = Not Interleaved
 
    totalMsgSize = getUpdatePlot2dMsgSize(param);
 
@@ -255,7 +252,7 @@ inline void packUpdate2dPlotMsg(const t2dPlot* param, UINT_32 sampleStartIndex, 
    packPlotMsgParam(packedMsg, &index, &param->xShiftValue, sizeof(param->xShiftValue));
    packPlotMsgParam(packedMsg, &index, &param->yAxisType, sizeof(param->yAxisType));
    packPlotMsgParam(packedMsg, &index, &param->yShiftValue, sizeof(param->yShiftValue));
-   packPlotMsgParam(packedMsg, &index, &param->interleaved, sizeof(param->interleaved));
+   packPlotMsgParam(packedMsg, &index, &interleaved, sizeof(param->interleaved));
    packPlotMsgParam(packedMsg, &index, xPoints, (param->numSamp*PLOT_DATA_TYPE_SIZES[param->xAxisType]));
    packPlotMsgParam(packedMsg, &index, yPoints, (param->numSamp*PLOT_DATA_TYPE_SIZES[param->yAxisType]));
 }
@@ -265,8 +262,7 @@ inline void packUpdate2dPlotMsg_Interleaved(const t2dPlot* param, UINT_32 sample
    PLOT_MSG_SIZE_TYPE totalMsgSize = 0;
    ePlotAction plotAction = E_UPDATE_2D_PLOT;
    unsigned int index = 0;
-
-   param->interleaved = 1; // 1 = Interleaved
+   UCHAR interleaved = 1; // 1 = Interleaved
 
    totalMsgSize = getUpdatePlot2dMsgSize(param);
 
@@ -280,7 +276,7 @@ inline void packUpdate2dPlotMsg_Interleaved(const t2dPlot* param, UINT_32 sample
    packPlotMsgParam(packedMsg, &index, &param->xShiftValue, sizeof(param->xShiftValue));
    packPlotMsgParam(packedMsg, &index, &param->yAxisType, sizeof(param->yAxisType));
    packPlotMsgParam(packedMsg, &index, &param->yShiftValue, sizeof(param->yShiftValue));
-   packPlotMsgParam(packedMsg, &index, &param->interleaved, sizeof(param->interleaved));
+   packPlotMsgParam(packedMsg, &index, &interleaved, sizeof(param->interleaved));
    packPlotMsgParam(packedMsg, &index, xyPoints,
       (param->numSamp*PLOT_DATA_TYPE_SIZES[param->xAxisType]) + 
       (param->numSamp*PLOT_DATA_TYPE_SIZES[param->yAxisType]) );

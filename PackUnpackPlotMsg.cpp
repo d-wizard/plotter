@@ -227,56 +227,122 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
             unpack(&m_xShiftFactor, sizeof(m_xShiftFactor));
             unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
             unpack(&m_yShiftFactor, sizeof(m_yShiftFactor));
+            unpack(&m_interleaved, sizeof(m_interleaved));
+
             if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
             {
                m_xAxisValues.resize(m_numSamplesInPlot);
                m_yAxisValues.resize(m_numSamplesInPlot);
-               if(m_xShiftFactor == 0)
+               if(m_interleaved == false)
                {
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  // Not interleaved data, avoid if inside for loops to increase speed.
+                  if(m_xShiftFactor == 0)
                   {
-                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                     }
                   }
-               }
-               else if(m_xShiftFactor > 0)
-               {
-                  double divideFactor = (double)(1 << m_xShiftFactor);
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  else if(m_xShiftFactor > 0)
                   {
-                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType) / divideFactor;
+                     double divideFactor = (double)(1 << m_xShiftFactor);
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType) / divideFactor;
+                     }
                   }
-               }
+                  else
+                  {
+                     double multiplyFactor = (double)(1 << (-m_xShiftFactor));
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType) * multiplyFactor;
+                     }
+                  }
+                  
+                  if(m_yShiftFactor == 0)
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
+                  }
+                  else if(m_yShiftFactor > 0)
+                  {
+                     double divideFactor = (double)(1 << m_yShiftFactor);
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType) / divideFactor;
+                     }
+                  }
+                  else
+                  {
+                     double multiplyFactor = (double)(1 << (-m_yShiftFactor));
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * multiplyFactor;
+                     }
+                  }
+               } // end if(m_interleaved == false)
                else
                {
-                  double multiplyFactor = (double)(1 << (-m_xShiftFactor));
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  // Interleaved data
+                  double x_multFactor = 0.0;
+                  double y_multFactor = 0.0;
+
+                  if(m_xShiftFactor >= 0)
                   {
-                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType) * multiplyFactor;
+                     x_multFactor = 1.0 / (double)(1 << m_xShiftFactor);
                   }
-               }
-               
-               if(m_yShiftFactor == 0)
-               {
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  else
                   {
-                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     x_multFactor = (double)(1 << (-m_xShiftFactor));
                   }
-               }
-               else if(m_yShiftFactor > 0)
-               {
-                  double divideFactor = (double)(1 << m_yShiftFactor);
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  
+                  if(m_yShiftFactor >= 0)
                   {
-                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) / divideFactor;
+                     y_multFactor = 1.0 / (double)(1 << m_yShiftFactor);
                   }
-               }
-               else
-               {
-                  double multiplyFactor = (double)(1 << (-m_yShiftFactor));
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  else
                   {
-                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * multiplyFactor;
+                     y_multFactor = (double)(1 << (-m_yShiftFactor));
                   }
+                  
+                  // Try to avoid unnessecary calculations.
+                  // If both are have no shift factor there are far fewer calculations.
+                  if(m_xShiftFactor == 0 && m_yShiftFactor == 0)
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
+                  }
+                  else if(m_xShiftFactor != 0 && m_yShiftFactor != 0) // both need shifting
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType) * x_multFactor;
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * y_multFactor;
+                     }
+                  }
+                  else if(m_xShiftFactor != 0)
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType) * x_multFactor;
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
+                  }
+                  else // y needs shifting
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType) * y_multFactor;
+                     }
+                  }
+
                }
             }
          break;
@@ -383,6 +449,8 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
          unpack(&samp, sizeof(samp));
          retVal = (double)samp;
       }
+      break;
+      case E_INVALID_DATA_TYPE:
       break;
    }
 
