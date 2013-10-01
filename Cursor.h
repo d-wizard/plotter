@@ -149,8 +149,8 @@ public:
             // QwtPlotCurve wants to be called with new and deletes the symbol on its own.
             m_curve->setSymbol( new QwtSymbol( m_style,
                                                QBrush(m_parentCurve->getColor()),
-                                               QPen(m_parentCurve->getColor(), 2),
-                                               QSize(8, 8) ) );
+                                               QPen( Qt::black, 1),
+                                               QSize(9, 9) ) );
 
             m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
 
