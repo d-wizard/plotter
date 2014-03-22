@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -96,6 +96,7 @@ void CurveData::init()
    curveAction = NULL;
    mapper = NULL;
    displayed = false;
+   hidden = false;
 
    resetNormalizeFactor();
 }
@@ -177,7 +178,7 @@ QString CurveData::getCurveTitle()
 
 bool CurveData::isDisplayed()
 {
-   return displayed;
+   return displayed == true && hidden == false;
 }
 
 void CurveData::attach()

@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -330,45 +330,49 @@ void MainWindow::updateCursorMenus()
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->isDisplayed())
+        if(m_qwtCurves[i]->hidden == false)
         {
-            m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
-        }
-        else
-        {
-            m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
-        }
-        m_qwtCurves[i]->mapper = new QSignalMapper(this);
-
-        m_qwtCurves[i]->mapper->setMapping(m_qwtCurves[i]->curveAction, i);
-        connect(m_qwtCurves[i]->curveAction,SIGNAL(triggered()),
-                         m_qwtCurves[i]->mapper,SLOT(map()));
-
-        m_visibleCurvesMenu.addAction(m_qwtCurves[i]->curveAction);
-        connect( m_qwtCurves[i]->mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
-
-        if(m_qwtCurves[i]->isDisplayed())
-        {
-            tMenuActionMapper actionMapper;
-            if(i == m_selectedCurveIndex)
+            if(m_qwtCurves[i]->isDisplayed())
             {
-                actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
+                m_qwtCurves[i]->curveAction = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
             }
             else
             {
-                actionMapper.action = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
+                m_qwtCurves[i]->curveAction = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
             }
-            actionMapper.mapper = new QSignalMapper(this);
+            m_qwtCurves[i]->mapper = new QSignalMapper(this);
 
-            actionMapper.mapper->setMapping(actionMapper.action, i);
-            connect(actionMapper.action,SIGNAL(triggered()),
-                             actionMapper.mapper,SLOT(map()));
+            m_qwtCurves[i]->mapper->setMapping(m_qwtCurves[i]->curveAction, i);
+            connect(m_qwtCurves[i]->curveAction,SIGNAL(triggered()),
+                             m_qwtCurves[i]->mapper,SLOT(map()));
 
-            m_selectedCurvesMenu.addAction(actionMapper.action);
-            connect( actionMapper.mapper, SIGNAL(mapped(int)), SLOT(selectedCursorMenuSelect(int)) );
+            m_visibleCurvesMenu.addAction(m_qwtCurves[i]->curveAction);
+            connect( m_qwtCurves[i]->mapper, SIGNAL(mapped(int)), SLOT(visibleCursorMenuSelect(int)) );
 
-            m_selectedCursorActions.push_back(actionMapper);
-        }
+            if(m_qwtCurves[i]->isDisplayed())
+            {
+                tMenuActionMapper actionMapper;
+                if(i == m_selectedCurveIndex)
+                {
+                    actionMapper.action = new QAction(m_checkedIcon, m_qwtCurves[i]->getCurveTitle(), this);
+                }
+                else
+                {
+                    actionMapper.action = new QAction(m_qwtCurves[i]->getCurveTitle(), this);
+                }
+                actionMapper.mapper = new QSignalMapper(this);
+
+                actionMapper.mapper->setMapping(actionMapper.action, i);
+                connect(actionMapper.action,SIGNAL(triggered()),
+                                 actionMapper.mapper,SLOT(map()));
+
+                m_selectedCurvesMenu.addAction(actionMapper.action);
+                connect( actionMapper.mapper, SIGNAL(mapped(int)), SLOT(selectedCursorMenuSelect(int)) );
+
+                m_selectedCursorActions.push_back(actionMapper);
+            }
+
+        } // if(m_qwtCurves[i]->hidden == false)
 
     }
 

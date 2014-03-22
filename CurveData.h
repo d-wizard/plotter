@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -74,6 +74,10 @@ public:
    QAction* curveAction;
    QSignalMapper* mapper;
 
+   // Indicates whether the curve is avaiable to be displayed.
+   // If false, it is probably some other curve's parent.
+   // If a plot has no non-hidden curves, its GUI window will not be displayed.
+   bool hidden;
 private:
    CurveData();
    void init();
@@ -89,7 +93,7 @@ private:
    QColor color;
    QwtPlotCurve* curve;
    unsigned int numPoints;
-   bool displayed;
+   bool displayed; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
 
    // Normalize parameters
    tLinearXYAxis normFactor;

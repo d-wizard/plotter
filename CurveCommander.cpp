@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -106,28 +106,28 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, dubVect 
 {
    createPlot(plotName);
    m_allCurves[plotName].plotGui->create1dCurve(curveName, yPoints);
-   m_allCurves[plotName].plotGui->show();
+   showHidePlotGui(plotName);
 }
 
 void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints)
 {
    createPlot(plotName);
    m_allCurves[plotName].plotGui->create2dCurve(curveName, xPoints, yPoints);
-   m_allCurves[plotName].plotGui->show();
+   showHidePlotGui(plotName);
 }
 
 void CurveCommander::update1dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect yPoints)
 {
    createPlot(plotName);
    m_allCurves[plotName].plotGui->update1dCurve(curveName, sampleStartIndex, yPoints);
-   m_allCurves[plotName].plotGui->show();
+   showHidePlotGui(plotName);
 }
 
 void CurveCommander::update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect xPoints, dubVect yPoints)
 {
    createPlot(plotName);
    m_allCurves[plotName].plotGui->update2dCurve(curveName, sampleStartIndex, xPoints, yPoints);
-   m_allCurves[plotName].plotGui->show();
+   showHidePlotGui(plotName);
 }
 
 void CurveCommander::plotWindowCloseSlot(QString plotName)
@@ -136,4 +136,29 @@ void CurveCommander::plotWindowCloseSlot(QString plotName)
     m_plotGuiMain->plotWindowClose(plotName);
 }
 
+void CurveCommander::showHidePlotGui(QString plotName)
+{
+   bool allHidden = true;
+   if(validPlot(plotName) == true)
+   {
+      foreach( QString key, m_allCurves[plotName].curves.keys() )
+      {
+         if(m_allCurves[plotName].curves[key]->hidden == false)
+         {
+            allHidden = false;
+            break;
+         }
+      }
+
+      if(allHidden == false)
+      {
+         m_allCurves[plotName].plotGui->show();
+      }
+      else
+      {
+         m_allCurves[plotName].plotGui->hide();
+      }
+
+   }
+}
 
