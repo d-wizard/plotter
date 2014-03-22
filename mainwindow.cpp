@@ -623,16 +623,6 @@ void MainWindow::selectedCursorMenuSelect(int index)
     }
 }
 
-void MainWindow::fftCreateReal()
-{
-   m_plotGuiMain->createRealFFT();
-}
-
-void MainWindow::fftCreateComplex()
-{
-   m_plotGuiMain->createComplexFFT();
-}
-
 void MainWindow::togglePlotUpdateAbility()
 {
    m_allowNewCurves = !m_allowNewCurves;

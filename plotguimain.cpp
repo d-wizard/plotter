@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -33,12 +33,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_tcpMsgReader(NULL),
     m_trayIcon(NULL),
     m_trayExitAction("Exit", this),
-    m_trayComplexFFTAction("Create Complex FFT", this),
-    m_trayRealFFTAction("Create Real FFT", this),
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_trayMenu(NULL),
     m_curveCommander(this),
-    m_fftPlots(this),
     m_allowNewCurves(true)
 {
     ui->setupUi(this);
@@ -108,22 +105,14 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     }
 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
-    connect(&m_trayComplexFFTAction, SIGNAL(triggered(bool)), this, SLOT(createComplexFFT()));
-    connect(&m_trayRealFFTAction, SIGNAL(triggered(bool)), this, SLOT(createRealFFT()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
 
     m_trayMenu = new QMenu("Plot", this);
 
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
-    m_trayMenu->addAction(&m_trayRealFFTAction);
-    m_trayMenu->addAction(&m_trayComplexFFTAction);
-    m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayExitAction);
 
-    m_trayRealFFTAction.setEnabled(false);
-    m_trayComplexFFTAction.setEnabled(false);
-    
     ui->menubar->addMenu(m_trayMenu);
     
     if(showTrayIcon == true)
@@ -209,16 +198,6 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
     delete[] msg;
 }
 
-void plotGuiMain::createComplexFFT()
-{
-   m_fftPlots.showCreateFftGui(E_FFT_COMPLEX);
-}
-
-void plotGuiMain::createRealFFT()
-{
-   m_fftPlots.showCreateFftGui(E_FFT_REAL);
-}
-
 void plotGuiMain::enDisNewCurves()
 {
    m_allowNewCurves = !m_allowNewCurves;
@@ -235,31 +214,11 @@ void plotGuiMain::enDisNewCurves()
 
 void plotGuiMain::plotWindowClose(QString plotName)
 {
-    m_fftPlots.removeFromFFTList(plotName);
-
-    if(m_curveCommander.getCurveCommanderInfo().size() == 0)
-    {
-        m_trayRealFFTAction.setEnabled(false);
-        m_trayComplexFFTAction.setEnabled(false);
-        m_fftPlots.createFftGuiFinished();
-    }
-    else
-    {
-        m_fftPlots.plotChanged();
-    }
-
-
 }
 
 
 void plotGuiMain::curveUpdated(QString plotName, QString curveName)
 {
-    m_fftPlots.curveChanged(plotName, curveName);
-    if(m_curveCommander.getCurveCommanderInfo().size() > 0)
-    {
-        m_trayRealFFTAction.setEnabled(true);
-        m_trayComplexFFTAction.setEnabled(true);
-    }
 }
 
 void plotGuiMain::on_cmdClose_clicked()

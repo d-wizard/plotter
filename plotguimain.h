@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,7 +34,6 @@
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
 #include "CurveCommander.h"
-#include "fftPlots.h"
 
 
 class createFFTPlot;
@@ -67,15 +66,12 @@ private:
 
     QSystemTrayIcon* m_trayIcon;
     QAction m_trayExitAction;
-    QAction m_trayComplexFFTAction;
-    QAction m_trayRealFFTAction;
     QAction m_trayEnDisNewCurvesAction;
     QMenu* m_trayMenu;
 
     QSemaphore m_sem;
 
     CurveCommander m_curveCommander;
-    fftPlots m_fftPlots;
 
     bool m_allowNewCurves;
 
@@ -83,8 +79,6 @@ private:
 
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
-    void createComplexFFT();
-    void createRealFFT();
     void enDisNewCurves();
     void closeAllPlotsSlot();
 

@@ -24,10 +24,8 @@ SOURCES += main.cpp\
     dString.cpp \
     FileSystemOperations.cpp \
     fftHelper.cpp \
-    createfftplot.cpp \
     CurveCommander.cpp \
     PlotZoom.cpp \
-    fftPlots.cpp \
     CurveData.cpp \
     ChildCurves.cpp
 
@@ -43,15 +41,12 @@ HEADERS  += mainwindow.h \
     plotguimain.h \
     dString.h \
     FileSystemOperations.h \
-    createfftplot.h \
     CurveCommander.h \
-    fftPlots.h \
     fftHelper.h \
     ChildCurves.h
 
 FORMS    += mainwindow.ui \
-    plotguimain.ui \
-    createfftplot.ui
+    plotguimain.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR
