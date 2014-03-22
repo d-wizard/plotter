@@ -18,6 +18,7 @@
  */
 #include "CurveCommander.h"
 #include "plotguimain.h"
+#include "ChildCurves.h"
 
 CurveCommander::CurveCommander(plotGuiMain *parent):
    m_plotGuiMain(parent)
@@ -36,6 +37,8 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
 {
     m_allCurves[plotName].curves[curveName] = curveData;
     m_plotGuiMain->curveUpdated(plotName, curveName);
+
+    notifyChildCurvesOfParentChange(plotName, curveName);
 }
 
 void CurveCommander::plotRemoved(QString plotName)
@@ -46,6 +49,7 @@ void CurveCommander::plotRemoved(QString plotName)
       delete iter.value().plotGui;
       m_allCurves.erase(iter);
    }
+   removeOrphanedChildCurves();
 }
 
 
@@ -162,3 +166,60 @@ void CurveCommander::showHidePlotGui(QString plotName)
    }
 }
 
+
+void CurveCommander::createChildCurve(QString plotName, QString curveName, tParentCurveAxis yAxis) // 1D
+{
+   if(validCurve(plotName, curveName) == false)
+   {
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, yAxis) ));
+   }
+}
+
+void CurveCommander::createChildCurve(QString plotName, QString curveName, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
+{
+   if(validCurve(plotName, curveName) == false)
+   {
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, xAxis, yAxis)) );
+   }
+}
+
+void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName)
+{
+   QList<QSharedPointer<ChildCurve> >::iterator iter = m_childCurves.begin();
+
+   while(iter != m_childCurves.end()) // Iterate over all child curves
+   {
+      (*iter)->anotherCurveChanged(plotName, curveName);
+      ++iter;
+   }
+}
+
+void CurveCommander::removeOrphanedChildCurves()
+{
+   QList<QSharedPointer<ChildCurve> >::iterator iter = m_childCurves.begin();
+
+   while(iter != m_childCurves.end()) // Iterate over all child curves
+   {
+      // Check if the child curves parents exist.
+      QVector<tParentCurveAxis> parents = (*iter)->getParents();
+      bool parentExists = false;
+      for(int i = 0; i < parents.size(); ++i)
+      {
+         if(validCurve(parents[i].plotName, parents[i].curveName))
+         {
+            parentExists = true;
+            break;
+         }
+      }
+
+      if(parentExists == false)
+      {
+         // Parents have been removed, remove from child curve list.
+         m_childCurves.erase(iter++);
+      }
+      else
+      {
+         ++iter;
+      }
+   }
+}

@@ -22,6 +22,8 @@
 #include <QMap>
 #include <QString>
 #include <QVector>
+#include <QList>
+#include <QSharedPointer>
 #include "CurveData.h"
 #include "mainwindow.h"
 
@@ -30,6 +32,7 @@ typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
 typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
 
 class plotGuiMain;
+class ChildCurve;
 
 class CurveCommander : public QWidget
 {
@@ -56,14 +59,21 @@ public:
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
 
     void showHidePlotGui(QString plotName);
+
+    void createChildCurve(QString plotName, QString curveName, tParentCurveAxis yAxis); // 1D
+    void createChildCurve(QString plotName, QString curveName, tParentCurveAxis xAxis, tParentCurveAxis yAxis); // 2D
+
 private:
     CurveCommander();
 
     void createPlot(QString plotName);
+    void notifyChildCurvesOfParentChange(QString plotName, QString curveName);
+    void removeOrphanedChildCurves();
 
     tCurveCommanderInfo m_allCurves;
     plotGuiMain* m_plotGuiMain;
 
+    QList<QSharedPointer<ChildCurve> > m_childCurves;
 public slots:
     void plotWindowCloseSlot(QString plotName);
 

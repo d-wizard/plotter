@@ -75,7 +75,7 @@ public:
    QSignalMapper* mapper;
 
    // Indicates whether the curve is avaiable to be displayed.
-   // If false, it is probably some other curve's parent.
+   // If true, it is probably some other curve's parent.
    // If a plot has no non-hidden curves, its GUI window will not be displayed.
    bool hidden;
 private:

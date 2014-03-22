@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     CurveCommander.cpp \
     PlotZoom.cpp \
     fftPlots.cpp \
-    CurveData.cpp
+    CurveData.cpp \
+    ChildCurves.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -45,7 +46,8 @@ HEADERS  += mainwindow.h \
     createfftplot.h \
     CurveCommander.h \
     fftPlots.h \
-    fftHelper.h
+    fftHelper.h \
+    ChildCurves.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
