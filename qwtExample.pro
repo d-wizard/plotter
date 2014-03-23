@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     CurveCommander.cpp \
     PlotZoom.cpp \
     CurveData.cpp \
-    ChildCurves.cpp
+    ChildCurves.cpp \
+    curveproperties.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -43,10 +44,12 @@ HEADERS  += mainwindow.h \
     FileSystemOperations.h \
     CurveCommander.h \
     fftHelper.h \
-    ChildCurves.h
+    ChildCurves.h \
+    curveproperties.h
 
 FORMS    += mainwindow.ui \
-    plotguimain.ui
+    plotguimain.ui \
+    curveproperties.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR

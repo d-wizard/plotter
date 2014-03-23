@@ -18,10 +18,12 @@
  */
 #include "CurveCommander.h"
 #include "plotguimain.h"
+#include "curveproperties.h"
 #include "ChildCurves.h"
 
 CurveCommander::CurveCommander(plotGuiMain *parent):
-   m_plotGuiMain(parent)
+   m_plotGuiMain(parent),
+   m_curvePropGui(NULL)
 {
    QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
                     this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
@@ -223,3 +225,15 @@ void CurveCommander::removeOrphanedChildCurves()
       }
    }
 }
+
+void CurveCommander::showCurvePropertiesGui()
+{
+   if(m_curvePropGui == NULL)
+   {
+      m_curvePropGui = new curveProperties(this);
+   }
+   m_curvePropGui->show();
+}
+
+
+

@@ -20,21 +20,35 @@
 #define CURVEPROPERTIES_H
 
 #include <QWidget>
+#include "PlotHelperTypes.h"
 
 namespace Ui {
 class curveProperties;
 }
+
+class CurveCommander;
 
 class curveProperties : public QWidget
 {
    Q_OBJECT
    
 public:
-   explicit curveProperties(QWidget *parent = 0);
+   explicit curveProperties(CurveCommander* curveCmdr, QWidget *parent = 0);
    ~curveProperties();
    
+private slots:
+   void on_cmbPlotType_currentIndexChanged(int index);
+
+   void on_cmdApply_clicked();
+
 private:
+   void setCreateChildComboBoxes();
+
+   tParentCurveAxis getCreateChildCurveInfo(eAxis childAxis);
+
    Ui::curveProperties *ui;
+
+   CurveCommander* m_curveCmdr;
 };
 
 #endif // CURVEPROPERTIES_H

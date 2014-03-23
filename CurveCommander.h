@@ -32,6 +32,7 @@ typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
 typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
 
 class plotGuiMain;
+class curveProperties;
 class ChildCurve;
 
 class CurveCommander : public QWidget
@@ -70,8 +71,13 @@ private:
     void notifyChildCurvesOfParentChange(QString plotName, QString curveName);
     void removeOrphanedChildCurves();
 
+    void showCurvePropertiesGui();
+
+
     tCurveCommanderInfo m_allCurves;
     plotGuiMain* m_plotGuiMain;
+
+    curveProperties* m_curvePropGui;
 
     QList<QSharedPointer<ChildCurve> > m_childCurves;
 public slots:

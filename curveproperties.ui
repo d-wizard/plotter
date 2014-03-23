@@ -38,6 +38,9 @@
        <height>21</height>
       </rect>
      </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <item>
       <property name="text">
        <string>1D Plot</string>
@@ -49,7 +52,7 @@
       </property>
      </item>
     </widget>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lblPlotType">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -72,7 +75,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="lblXAxisSrc">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -95,7 +98,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_3">
+    <widget class="QLabel" name="lblYAxisSrc">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -108,7 +111,7 @@
       <string>Y Axis Source</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_4">
+    <widget class="QLabel" name="lblDestPlotName">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -134,7 +137,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QLabel" name="label_5">
+    <widget class="QLabel" name="lblDestCurveName">
      <property name="geometry">
       <rect>
        <x>10</x>
