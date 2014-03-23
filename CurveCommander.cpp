@@ -27,20 +27,34 @@ CurveCommander::CurveCommander(plotGuiMain *parent):
 {
    QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
                     this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
+   QObject::connect(this, SIGNAL(curvePropertiesGuiCloseSignal()),
+                    this, SLOT(curvePropertiesGuiCloseSlot()), Qt::QueuedConnection);
 }
 
 CurveCommander::~CurveCommander()
 {
+   curvePropertiesGuiCloseSlot(); // Close Curve Properties GUI (if it exists)
    destroyAllPlots();
 }
 
 
 void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
 {
-    m_allCurves[plotName].curves[curveName] = curveData;
-    m_plotGuiMain->curveUpdated(plotName, curveName);
+   bool newCurve = !validCurve(plotName, curveName);
+   m_allCurves[plotName].curves[curveName] = curveData;
+   m_plotGuiMain->curveUpdated(plotName, curveName);
 
-    notifyChildCurvesOfParentChange(plotName, curveName);
+   if(newCurve)
+   {
+      if(m_curvePropGui != NULL)
+      {
+         m_curvePropGui->setCreateChildComboBoxes();
+      }
+   }
+   else
+   {
+      notifyChildCurvesOfParentChange(plotName, curveName);
+   }
 }
 
 void CurveCommander::plotRemoved(QString plotName)
@@ -236,4 +250,12 @@ void CurveCommander::showCurvePropertiesGui(QString plotName, QString curveName)
 }
 
 
+void CurveCommander::curvePropertiesGuiCloseSlot()
+{
+   if(m_curvePropGui != NULL)
+   {
+      delete m_curvePropGui;
+      m_curvePropGui = NULL;
+   }
+}
 

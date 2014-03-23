@@ -33,7 +33,10 @@ const int CREATE_CHILD_CURVE_COMBO_2D = 1;
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
    ui(new Ui::curveProperties),
-   m_curveCmdr(curveCmdr)
+   m_curveCmdr(curveCmdr),
+   m_xAxisSrcCmbText(""),
+   m_yAxisSrcCmbText(""),
+   m_plotNameDestCmbText("")
 {
    ui->setupUi(this);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
@@ -48,6 +51,10 @@ curveProperties::~curveProperties()
 void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveName)
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
+
+   m_xAxisSrcCmbText = ui->cmbXAxisSrc->currentText();
+   m_yAxisSrcCmbText = ui->cmbYAxisSrc->currentText();
+   m_plotNameDestCmbText = ui->cmbDestPlotName->currentText();
 
    ui->cmbDestPlotName->clear();
    ui->cmbXAxisSrc->clear();
@@ -79,14 +86,26 @@ void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveNa
 
    if(plotName != "" && curveName != "")
    {
-      initComboIndexes(plotName, curveName);
+      setCombosToPlotCurve(plotName, curveName);
+   }
+   else
+   {
+      setCombosToPrevValues();
    }
 }
 
-void curveProperties::initComboIndexes(QString plotName, QString curveName)
+void curveProperties::setCombosToPrevValues()
+{
+   trySetComboItemIndex(ui->cmbXAxisSrc, m_xAxisSrcCmbText);
+   trySetComboItemIndex(ui->cmbYAxisSrc, m_yAxisSrcCmbText);
+
+   trySetComboItemIndex(ui->cmbDestPlotName, m_plotNameDestCmbText);
+}
+
+void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
 {
    QString plotCurveName1D = plotName + PLOT_CURVE_SEP + curveName;
-   QString plotCurveName2D = plotCurveName1D + X_AXIS_APPEND;
+   QString plotCurveName2D = plotCurveName1D + Y_AXIS_APPEND;
 
    QComboBox* cmbBox = ui->cmbXAxisSrc;
    if(trySetComboItemIndex(cmbBox, plotCurveName1D) == false)
@@ -203,4 +222,19 @@ tParentCurveAxis curveProperties::getCreateChildCurveInfo(eAxis childAxis)
 }
 
 
+
+void curveProperties::on_cmdDone_clicked()
+{
+   m_curveCmdr->curvePropertiesGuiClose();
+}
+
+void curveProperties::on_cmdCancel_clicked()
+{
+   m_curveCmdr->curvePropertiesGuiClose();
+}
+
+void curveProperties::closeEvent(QCloseEvent* /*event*/)
+{
+   m_curveCmdr->curvePropertiesGuiClose();
+}
 

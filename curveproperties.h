@@ -36,15 +36,22 @@ class curveProperties : public QWidget
 public:
    explicit curveProperties(CurveCommander* curveCmdr, QString plotName = "", QString curveName = "", QWidget *parent = 0);
    ~curveProperties();
+
+   void setCreateChildComboBoxes(QString plotName = "", QString curveName = "");
    
 private slots:
    void on_cmbPlotType_currentIndexChanged(int index);
-
    void on_cmdApply_clicked();
 
+   void on_cmdDone_clicked();
+
+   void on_cmdCancel_clicked();
+
 private:
-   void setCreateChildComboBoxes(QString plotName = "", QString curveName = "");
-   void initComboIndexes(QString plotName, QString curveName);
+   void closeEvent(QCloseEvent* event);
+
+   void setCombosToPrevValues();
+   void setCombosToPlotCurve(QString plotName, QString curveName);
    bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
    int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
 
@@ -54,6 +61,11 @@ private:
    Ui::curveProperties *ui;
 
    CurveCommander* m_curveCmdr;
+
+   QString m_xAxisSrcCmbText;
+   QString m_yAxisSrcCmbText;
+   QString m_plotNameDestCmbText;
+
 };
 
 #endif // CURVEPROPERTIES_H

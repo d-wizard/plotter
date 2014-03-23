@@ -58,6 +58,7 @@ public:
     void destroyAllPlots();
 
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
+    void curvePropertiesGuiClose(){emit curvePropertiesGuiCloseSignal();}
 
     void showHidePlotGui(QString plotName);
 
@@ -82,9 +83,11 @@ private:
     QList<QSharedPointer<ChildCurve> > m_childCurves;
 public slots:
     void plotWindowCloseSlot(QString plotName);
+    void curvePropertiesGuiCloseSlot();
 
 signals:
     void plotWindowCloseSignal(QString plotName);
+    void curvePropertiesGuiCloseSignal();
 };
 
 
