@@ -64,6 +64,7 @@ public:
     void createChildCurve(QString plotName, QString curveName, tParentCurveAxis yAxis); // 1D
     void createChildCurve(QString plotName, QString curveName, tParentCurveAxis xAxis, tParentCurveAxis yAxis); // 2D
 
+    void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
 private:
     CurveCommander();
 
@@ -71,7 +72,6 @@ private:
     void notifyChildCurvesOfParentChange(QString plotName, QString curveName);
     void removeOrphanedChildCurves();
 
-    void showCurvePropertiesGui();
 
 
     tCurveCommanderInfo m_allCurves;

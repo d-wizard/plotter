@@ -124,7 +124,7 @@
       <string>Plot Name</string>
      </property>
     </widget>
-    <widget class="QComboBox" name="cmdDestPlotName">
+    <widget class="QComboBox" name="cmbDestPlotName">
      <property name="geometry">
       <rect>
        <x>90</x>

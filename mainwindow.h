@@ -131,11 +131,9 @@ private:
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
 
-    QMenu m_fftMenu;
-    QAction m_fftCreateRealAction;
-    QAction m_fftCreateComplexAction;
-
     QAction m_enableDisablePlotUpdate;
+
+    QAction m_curveProperties;
 
     void createUpdateCurve(QString& name, bool resetCurve, unsigned int sampleStartIndex, dubVect* xPoints, dubVect* yPoints);
 
@@ -182,6 +180,7 @@ private slots:
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);
 
+    void showCurveProperties();
     void togglePlotUpdateAbility();
 
     void on_verticalScrollBar_sliderMoved(int position);

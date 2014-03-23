@@ -30,14 +30,14 @@ const int TAB_CREATE_CHILD_CURVE = 0;
 const int CREATE_CHILD_CURVE_COMBO_1D = 0;
 const int CREATE_CHILD_CURVE_COMBO_2D = 1;
 
-curveProperties::curveProperties(CurveCommander *curveCmdr, QWidget *parent) :
+curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
    ui(new Ui::curveProperties),
    m_curveCmdr(curveCmdr)
 {
    ui->setupUi(this);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
-   setCreateChildComboBoxes();
+   setCreateChildComboBoxes(plotName, curveName);
 }
 
 curveProperties::~curveProperties()
@@ -45,13 +45,18 @@ curveProperties::~curveProperties()
    delete ui;
 }
 
-void curveProperties::setCreateChildComboBoxes()
+void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveName)
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
+
+   ui->cmbDestPlotName->clear();
+   ui->cmbXAxisSrc->clear();
+   ui->cmbYAxisSrc->clear();
+
    foreach( QString plotName, allCurves.keys() )
    {
       // Add to dest plot name combo box
-      ui->cmdDestPlotName->addItem(plotName);
+      ui->cmbDestPlotName->addItem(plotName);
 
       tCurveDataInfo* curves = &(allCurves[plotName].curves);
       foreach( QString curveName, curves->keys() )
@@ -70,10 +75,62 @@ void curveProperties::setCreateChildComboBoxes()
             ui->cmbYAxisSrc->addItem(plotCurveName + Y_AXIS_APPEND);
          }
       }
+   }
 
+   if(plotName != "" && curveName != "")
+   {
+      initComboIndexes(plotName, curveName);
    }
 }
 
+void curveProperties::initComboIndexes(QString plotName, QString curveName)
+{
+   QString plotCurveName1D = plotName + PLOT_CURVE_SEP + curveName;
+   QString plotCurveName2D = plotCurveName1D + X_AXIS_APPEND;
+
+   QComboBox* cmbBox = ui->cmbXAxisSrc;
+   if(trySetComboItemIndex(cmbBox, plotCurveName1D) == false)
+   {
+      trySetComboItemIndex(cmbBox, plotCurveName2D);
+   }
+
+   cmbBox = ui->cmbYAxisSrc;
+   if(trySetComboItemIndex(cmbBox, plotCurveName1D) == false)
+   {
+      trySetComboItemIndex(cmbBox, plotCurveName2D);
+   }
+
+   cmbBox = ui->cmbDestPlotName;
+   trySetComboItemIndex(cmbBox, plotName);
+}
+
+bool curveProperties::trySetComboItemIndex(QComboBox* cmbBox, QString text)
+{
+   int cmbIndex = getMatchingComboItemIndex(cmbBox, text);
+   if(cmbIndex >= 0)
+   {
+      cmbBox->setCurrentIndex(cmbIndex);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
+{
+   int retVal = -1;
+   for(int i = 0; i < cmbBox->count(); ++i)
+   {
+      if(cmbBox->itemText(i) == text)
+      {
+         retVal = i;
+         break;
+      }
+   }
+   return retVal;
+}
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
@@ -96,13 +153,13 @@ void curveProperties::on_cmdApply_clicked()
    {
       if(ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_COMBO_1D)
       {
-         m_curveCmdr->createChildCurve( ui->cmdDestPlotName->currentText(),
+         m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         getCreateChildCurveInfo(E_Y_AXIS));
       }
       else
       {
-         m_curveCmdr->createChildCurve( ui->cmdDestPlotName->currentText(),
+         m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         getCreateChildCurveInfo(E_X_AXIS),
                                         getCreateChildCurveInfo(E_Y_AXIS));

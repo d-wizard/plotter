@@ -59,10 +59,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_toggleLegendAction("Legend", this),
     m_selectedCurvesMenu("Selected Curve"),
     m_visibleCurvesMenu("Visible Curves"),
-    m_fftMenu("Create FFT"),
-    m_fftCreateRealAction("Real FFT", this),
-    m_fftCreateComplexAction("Complex FFT", this),
-    m_enableDisablePlotUpdate("Disable New Curves", this)
+    m_enableDisablePlotUpdate("Disable New Curves", this),
+    m_curveProperties("Properties", this)
 {
     ui->setupUi(this);
 
@@ -95,9 +93,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
-    connect(&m_fftCreateRealAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateReal()));
-    connect(&m_fftCreateComplexAction, SIGNAL(triggered(bool)), this, SLOT(fftCreateComplex()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
+    connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
 
     m_cursorAction.setIcon(m_checkedIcon);
 
@@ -121,14 +118,12 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
-    m_rightClickMenu.addSeparator();
-
-    m_rightClickMenu.addMenu(&m_fftMenu);
-    m_fftMenu.addAction(&m_fftCreateRealAction);
-    m_fftMenu.addAction(&m_fftCreateComplexAction);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
+
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_curveProperties);
 
 }
 
@@ -621,6 +616,11 @@ void MainWindow::selectedCursorMenuSelect(int index)
         updateCursors();
         emit updateCursorMenusSignal();
     }
+}
+
+void MainWindow::showCurveProperties()
+{
+   m_curveCommander->showCurvePropertiesGui(windowTitle(), m_qwtCurves[m_selectedCurveIndex]->getCurveTitle());
 }
 
 void MainWindow::togglePlotUpdateAbility()

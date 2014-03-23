@@ -20,6 +20,7 @@
 #define CURVEPROPERTIES_H
 
 #include <QWidget>
+#include <QComboBox>
 #include "PlotHelperTypes.h"
 
 namespace Ui {
@@ -33,7 +34,7 @@ class curveProperties : public QWidget
    Q_OBJECT
    
 public:
-   explicit curveProperties(CurveCommander* curveCmdr, QWidget *parent = 0);
+   explicit curveProperties(CurveCommander* curveCmdr, QString plotName = "", QString curveName = "", QWidget *parent = 0);
    ~curveProperties();
    
 private slots:
@@ -42,9 +43,13 @@ private slots:
    void on_cmdApply_clicked();
 
 private:
-   void setCreateChildComboBoxes();
+   void setCreateChildComboBoxes(QString plotName = "", QString curveName = "");
+   void initComboIndexes(QString plotName, QString curveName);
+   bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
+   int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
 
    tParentCurveAxis getCreateChildCurveInfo(eAxis childAxis);
+
 
    Ui::curveProperties *ui;
 

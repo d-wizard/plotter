@@ -226,11 +226,11 @@ void CurveCommander::removeOrphanedChildCurves()
    }
 }
 
-void CurveCommander::showCurvePropertiesGui()
+void CurveCommander::showCurvePropertiesGui(QString plotName, QString curveName)
 {
    if(m_curvePropGui == NULL)
    {
-      m_curvePropGui = new curveProperties(this);
+      m_curvePropGui = new curveProperties(this, plotName, curveName);
    }
    m_curvePropGui->show();
 }
