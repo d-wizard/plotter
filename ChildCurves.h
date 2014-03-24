@@ -30,8 +30,8 @@ class ChildCurve : public QWidget
 {
    Q_OBJECT
 public:
-   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, tParentCurveAxis yAxis);
-   ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, tParentCurveAxis xAxis, tParentCurveAxis yAxis);
+   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, bool fft, tParentCurveAxis yAxis);
+   ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, bool fft, tParentCurveAxis xAxis, tParentCurveAxis yAxis);
 
    void anotherCurveChanged(QString plotName, QString curveName);
    QVector<tParentCurveAxis> getParents();
@@ -50,6 +50,8 @@ private:
    ePlotType m_plotType;
    tParentCurveAxis m_xAxis;
    tParentCurveAxis m_yAxis;
+
+   bool m_fft;
 };
 
 #endif

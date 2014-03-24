@@ -70,6 +70,8 @@ public:
    void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex);
    void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex);
 
+   void setMath(double sampleRate = 1.0);
+
    QLabel* pointLabel;
    QAction* curveAction;
    QSignalMapper* mapper;
@@ -85,9 +87,11 @@ private:
    void findMaxMin();
    void initCurve();
 
+   void performMathOnPoints();
+
    QwtPlot* m_parentPlot;
-   dubVect xPoints;
-   dubVect yPoints;
+   dubVect xOrigPoints;
+   dubVect yOrigPoints;
    maxMinXY maxMin;
    ePlotType plotType;
    QColor color;
@@ -101,6 +105,11 @@ private:
    bool xNormalized;
    bool yNormalized;
 
+   // Math Manipulations.
+   dubVect xPoints;
+   dubVect yPoints;
+
+   double samplePeriod;
 };
 
 #endif

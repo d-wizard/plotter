@@ -51,6 +51,16 @@
        <string>2D Plot</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Real FFT</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Complex FFT</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="lblPlotType">
      <property name="geometry">

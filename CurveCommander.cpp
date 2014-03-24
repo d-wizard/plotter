@@ -183,19 +183,19 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, tParentCurveAxis yAxis) // 1D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis yAxis) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, yAxis) ));
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, fft, yAxis) ));
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, xAxis, yAxis)) );
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, fft, xAxis, yAxis)) );
    }
 }
 

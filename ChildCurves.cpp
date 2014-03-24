@@ -18,16 +18,19 @@
  */
 #include "ChildCurves.h"
 #include "CurveCommander.h"
+#include "fftHelper.h"
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
+                        bool fft,
                         tParentCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
    m_plotType(E_PLOT_TYPE_1D),
-   m_yAxis(yAxis)
+   m_yAxis(yAxis),
+   m_fft(fft)
 {
    updateCurve();
 }
@@ -35,6 +38,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
+                        bool fft,
                         tParentCurveAxis xAxis,
                         tParentCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
@@ -42,7 +46,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_curveName(curveName),
    m_plotType(E_PLOT_TYPE_2D),
    m_xAxis(xAxis),
-   m_yAxis(yAxis)
+   m_yAxis(yAxis),
+   m_fft(fft)
 {
    updateCurve();
 }
@@ -65,31 +70,54 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 
 void ChildCurve::updateCurve()
 {
-   if(m_plotType == E_PLOT_TYPE_1D)
-   {
-      dubVect yPoints;
-      if(m_yAxis.axis == E_X_AXIS)
-         m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getXPoints(yPoints);
-      else
-         m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getYPoints(yPoints);
+   dubVect xPoints;
+   dubVect yPoints;
 
-      m_curveCmdr->create1dCurve(m_plotName, m_curveName, yPoints);
-   }
+   if(m_yAxis.axis == E_X_AXIS)
+      m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getXPoints(yPoints);
    else
+      m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getYPoints(yPoints);
+
+   if(m_plotType == E_PLOT_TYPE_2D)
    {
-      dubVect xPoints;
       if(m_xAxis.axis == E_X_AXIS)
          m_curveCmdr->getCurveData(m_xAxis.plotName, m_xAxis.curveName)->getXPoints(xPoints);
       else
          m_curveCmdr->getCurveData(m_xAxis.plotName, m_xAxis.curveName)->getYPoints(xPoints);
 
-      dubVect yPoints;
-      if(m_yAxis.axis == E_X_AXIS)
-         m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getXPoints(yPoints);
-      else
-         m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getYPoints(yPoints);
+   }
 
-      m_curveCmdr->create2dCurve(m_plotName, m_curveName, xPoints, yPoints);
+   if(m_fft)
+   {
+      if(m_plotType == E_PLOT_TYPE_1D)
+      {
+         dubVect realFFTOut;
+         realFFT(yPoints, realFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, realFFTOut);
+      }
+      else
+      {
+         dubVect realFFTOut;
+         dubVect imagFFTOut;
+         dubVect xAxis;
+
+         complexFFT(xPoints, yPoints, realFFTOut, imagFFTOut);
+         getFFTXAxisValues(xAxis, realFFTOut.size());
+
+         m_curveCmdr->create2dCurve(m_plotName, m_curveName + ".real", xAxis, realFFTOut);
+         m_curveCmdr->create2dCurve(m_plotName, m_curveName + ".imag", xAxis, imagFFTOut);
+      }
+   }
+   else
+   {
+      if(m_plotType == E_PLOT_TYPE_1D)
+      {
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, yPoints);
+      }
+      else
+      {
+         m_curveCmdr->create2dCurve(m_plotName, m_curveName, xPoints, yPoints);
+      }
    }
 }
 

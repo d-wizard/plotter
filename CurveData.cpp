@@ -23,11 +23,12 @@ CurveData::CurveData( QwtPlot *parentPlot,
                       const dubVect& newYPoints,
                       const QColor& curveColor):
    m_parentPlot(parentPlot),
-   yPoints(newYPoints),
+   yOrigPoints(newYPoints),
    plotType(E_PLOT_TYPE_1D),
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
 {
+   performMathOnPoints();
    init();
    numPoints = yPoints.size();
    fill1DxPoints();
@@ -42,12 +43,13 @@ CurveData::CurveData( QwtPlot* parentPlot,
                       const dubVect& newYPoints,
                       const QColor& curveColor):
    m_parentPlot(parentPlot),
-   xPoints(newXPoints),
-   yPoints(newYPoints),
+   xOrigPoints(newXPoints),
+   yOrigPoints(newYPoints),
    plotType(E_PLOT_TYPE_2D),
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
 {
+   performMathOnPoints();
    init();
    if(xPoints.size() > yPoints.size())
    {
@@ -98,6 +100,8 @@ void CurveData::init()
    displayed = false;
    hidden = false;
 
+   samplePeriod = 1.0;
+
    resetNormalizeFactor();
 }
 
@@ -110,9 +114,19 @@ void CurveData::initCurve()
 void CurveData::fill1DxPoints()
 {
    xPoints.resize(yPoints.size());
-   for(unsigned int i = 0; i < xPoints.size(); ++i)
+   if(samplePeriod == 1.0)
    {
-      xPoints[i] = (double)i;
+       for(unsigned int i = 0; i < xPoints.size(); ++i)
+       {
+          xPoints[i] = (double)i;
+       }
+   }
+   else
+   {
+       for(unsigned int i = 0; i < xPoints.size(); ++i)
+       {
+          xPoints[i] = (double)i * samplePeriod;
+       }
    }
 }
 
@@ -341,8 +355,9 @@ void CurveData::setCurveSamples()
 void CurveData::ResetCurveSamples(dubVect& newYPoints)
 {
    plotType = E_PLOT_TYPE_1D;
-   yPoints = newYPoints;
-   numPoints = yPoints.size();
+   yOrigPoints = newYPoints;
+   performMathOnPoints();
+   numPoints = yOrigPoints.size();
    fill1DxPoints();
    findMaxMin();
    setCurveSamples();
@@ -350,8 +365,9 @@ void CurveData::ResetCurveSamples(dubVect& newYPoints)
 void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
 {
    plotType = E_PLOT_TYPE_2D;
-   xPoints = newXPoints;
-   yPoints = newYPoints;
+   xOrigPoints = newXPoints;
+   yOrigPoints = newYPoints;
+   performMathOnPoints();
    numPoints = std::min(xPoints.size(), yPoints.size());
    if(xPoints.size() > numPoints)
    {
@@ -416,7 +432,16 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
    }
 }
 
+void CurveData::setMath(double sampleRate)
+{
+   samplePeriod = (double)1.0 / sampleRate;
+}
 
+void CurveData::performMathOnPoints()
+{
+   xPoints = xOrigPoints;
+   yPoints = yOrigPoints;
+}
 
 
 

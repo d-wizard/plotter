@@ -27,8 +27,10 @@ const QString PLOT_CURVE_SEP = "->";
 
 const int TAB_CREATE_CHILD_CURVE = 0;
 
-const int CREATE_CHILD_CURVE_COMBO_1D = 0;
-const int CREATE_CHILD_CURVE_COMBO_2D = 1;
+const int CREATE_CHILD_CURVE_COMBO_1D    = 0;
+const int CREATE_CHILD_CURVE_COMBO_2D    = 1;
+const int CREATE_CHILD_CURVE_FFT_REAL    = 2;
+const int CREATE_CHILD_CURVE_FFT_COMPLEX = 3;
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
@@ -153,33 +155,59 @@ int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
-   if(index == CREATE_CHILD_CURVE_COMBO_1D)
+   switch(index)
    {
-      ui->lblXAxisSrc->setVisible(false);
-      ui->cmbXAxisSrc->setVisible(false);
-   }
-   else
-   {
-      ui->lblXAxisSrc->setVisible(true);
-      ui->cmbXAxisSrc->setVisible(true);
-   }
+      case CREATE_CHILD_CURVE_COMBO_1D:
+         ui->lblYAxisSrc->setText("Y Axis Source");
+         ui->lblXAxisSrc->setVisible(false);
+         ui->cmbXAxisSrc->setVisible(false);
+         ui->lblYAxisSrc->setVisible(true);
+         ui->cmbYAxisSrc->setVisible(true);
+      break;
+      case CREATE_CHILD_CURVE_COMBO_2D:
+         ui->lblXAxisSrc->setText("X Axis Source");
+         ui->lblYAxisSrc->setText("Y Axis Source");
+         ui->lblXAxisSrc->setVisible(true);
+         ui->cmbXAxisSrc->setVisible(true);
+         ui->lblYAxisSrc->setVisible(true);
+         ui->cmbYAxisSrc->setVisible(true);
+      break;
+      case CREATE_CHILD_CURVE_FFT_REAL:
+         ui->lblXAxisSrc->setText("Real Source");
+         ui->lblXAxisSrc->setVisible(true);
+         ui->cmbXAxisSrc->setVisible(true);
+         ui->lblYAxisSrc->setVisible(false);
+         ui->cmbYAxisSrc->setVisible(false);
+      break;
+      case CREATE_CHILD_CURVE_FFT_COMPLEX:
+         ui->lblXAxisSrc->setText("Real Source");
+         ui->lblYAxisSrc->setText("Imag Source");
+         ui->lblXAxisSrc->setVisible(true);
+         ui->cmbXAxisSrc->setVisible(true);
+         ui->lblYAxisSrc->setVisible(true);
+         ui->cmbYAxisSrc->setVisible(true);
+      break;
 
+   }
 }
 
 void curveProperties::on_cmdApply_clicked()
 {
-   if(ui->tabWidget->tabPosition() == TAB_CREATE_CHILD_CURVE)
+   if(ui->tabWidget->currentIndex() == TAB_CREATE_CHILD_CURVE)
    {
-      if(ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_COMBO_1D)
+      if( ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_COMBO_1D ||
+          ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_REAL )
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
+                                        ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_REAL,
                                         getCreateChildCurveInfo(E_Y_AXIS));
       }
       else
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
+                                        ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_COMPLEX,
                                         getCreateChildCurveInfo(E_X_AXIS),
                                         getCreateChildCurveInfo(E_Y_AXIS));
       }
