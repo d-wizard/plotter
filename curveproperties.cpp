@@ -38,7 +38,8 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_curveCmdr(curveCmdr),
    m_xAxisSrcCmbText(""),
    m_yAxisSrcCmbText(""),
-   m_plotNameDestCmbText("")
+   m_plotNameDestCmbText(""),
+   m_mathSrcCmbText("")
 {
    ui->setupUi(this);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
@@ -57,10 +58,12 @@ void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveNa
    m_xAxisSrcCmbText = ui->cmbXAxisSrc->currentText();
    m_yAxisSrcCmbText = ui->cmbYAxisSrc->currentText();
    m_plotNameDestCmbText = ui->cmbDestPlotName->currentText();
+   m_mathSrcCmbText = ui->cmbSrcCurve_math->currentText();
 
    ui->cmbDestPlotName->clear();
    ui->cmbXAxisSrc->clear();
    ui->cmbYAxisSrc->clear();
+   ui->cmbSrcCurve_math->clear();
 
    foreach( QString plotName, allCurves.keys() )
    {
@@ -75,13 +78,17 @@ void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveNa
          {
             ui->cmbXAxisSrc->addItem(plotCurveName);
             ui->cmbYAxisSrc->addItem(plotCurveName);
+            ui->cmbSrcCurve_math->addItem(plotCurveName);
          }
          else
          {
             ui->cmbXAxisSrc->addItem(plotCurveName + X_AXIS_APPEND);
             ui->cmbYAxisSrc->addItem(plotCurveName + X_AXIS_APPEND);
+            ui->cmbSrcCurve_math->addItem(plotCurveName + X_AXIS_APPEND);
+
             ui->cmbXAxisSrc->addItem(plotCurveName + Y_AXIS_APPEND);
             ui->cmbYAxisSrc->addItem(plotCurveName + Y_AXIS_APPEND);
+            ui->cmbSrcCurve_math->addItem(plotCurveName + Y_AXIS_APPEND);
          }
       }
    }
@@ -102,6 +109,7 @@ void curveProperties::setCombosToPrevValues()
    trySetComboItemIndex(ui->cmbYAxisSrc, m_yAxisSrcCmbText);
 
    trySetComboItemIndex(ui->cmbDestPlotName, m_plotNameDestCmbText);
+   trySetComboItemIndex(ui->cmbSrcCurve_math, m_mathSrcCmbText);
 }
 
 void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
@@ -121,8 +129,13 @@ void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
       trySetComboItemIndex(cmbBox, plotCurveName2D);
    }
 
-   cmbBox = ui->cmbDestPlotName;
-   trySetComboItemIndex(cmbBox, plotName);
+   trySetComboItemIndex(ui->cmbDestPlotName, plotName);
+
+   cmbBox = ui->cmbSrcCurve_math;
+   if(trySetComboItemIndex(cmbBox, plotCurveName1D) == false)
+   {
+      trySetComboItemIndex(cmbBox, plotCurveName2D);
+   }
 }
 
 bool curveProperties::trySetComboItemIndex(QComboBox* cmbBox, QString text)
@@ -201,28 +214,24 @@ void curveProperties::on_cmdApply_clicked()
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_REAL,
-                                        getCreateChildCurveInfo(E_Y_AXIS));
+                                        getCreateChildCurveInfo(ui->cmbYAxisSrc));
       }
       else
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_COMPLEX,
-                                        getCreateChildCurveInfo(E_X_AXIS),
-                                        getCreateChildCurveInfo(E_Y_AXIS));
+                                        getCreateChildCurveInfo(ui->cmbXAxisSrc),
+                                        getCreateChildCurveInfo(ui->cmbYAxisSrc));
       }
    }
 }
 
 
 
-tParentCurveAxis curveProperties::getCreateChildCurveInfo(eAxis childAxis)
+tParentCurveAxis curveProperties::getCreateChildCurveInfo(QComboBox *cmbBox)
 {
-   std::string cmbText = "";
-   if(childAxis == E_X_AXIS)
-      cmbText = ui->cmbXAxisSrc->currentText().toStdString();
-   else
-      cmbText = ui->cmbYAxisSrc->currentText().toStdString();
+   std::string cmbText = cmbBox->currentText().toStdString();
 
    tParentCurveAxis retVal;
    int axisAppendLen = (int)X_AXIS_APPEND.size();

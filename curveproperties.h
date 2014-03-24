@@ -55,7 +55,7 @@ private:
    bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
    int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
 
-   tParentCurveAxis getCreateChildCurveInfo(eAxis childAxis);
+   tParentCurveAxis getCreateChildCurveInfo(QComboBox* cmbBox);
 
 
    Ui::curveProperties *ui;
@@ -65,7 +65,7 @@ private:
    QString m_xAxisSrcCmbText;
    QString m_yAxisSrcCmbText;
    QString m_plotNameDestCmbText;
-
+   QString m_mathSrcCmbText;
 };
 
 #endif // CURVEPROPERTIES_H
