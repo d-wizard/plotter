@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 #include <fftw3.h>
 #include <math.h>
 #include "PlotHelperTypes.h"
+#include "fftHelper.h"
 
 void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm)
 {
@@ -108,10 +109,44 @@ void realFFT(const dubVect& inRe, dubVect& outRe)
    }
 }
 
-void getFFTXAxisValues(dubVect& xAxis, unsigned int numPoints)
+void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampleRate)
+{
+   if(numPoints > 0)
+   {
+      if(xAxis.size() != numPoints)
+      {
+         xAxis.resize(numPoints);
+      }
+      if(sampleRate == 0.0)
+      {
+         for(unsigned int i = 0; i < numPoints; ++i)
+         {
+            xAxis[i] = (double)i;
+         }
+      }
+      else
+      {
+         // Real FFTs go from 0 to Fs/2.
+         double hzPerBin = (double)2.0 * sampleRate / (double)numPoints;
+         for(unsigned int i = 0; i < numPoints; ++i)
+         {
+            xAxis[i] = (double)i * hzPerBin;
+         }
+
+      }
+   }
+   else
+   {
+       xAxis.clear();
+   }
+
+}
+
+void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sampleRate)
 {
     if(numPoints > 0)
     {
+       // Complex FFTs go from -Fs/2 to Fs/2.
         int halfPoints = (int)(numPoints >> 1);
         int start = -halfPoints;
         unsigned int end = halfPoints;
@@ -125,13 +160,28 @@ void getFFTXAxisValues(dubVect& xAxis, unsigned int numPoints)
            xAxis.resize(numPoints);
         }
 
-        for(unsigned int i = 0; i <= end; ++i)
+        if(sampleRate == 0.0)
         {
-           xAxis[i] = i;
+           for(unsigned int i = 0; i <= end; ++i)
+           {
+              xAxis[i] = i;
+           }
+           for(unsigned int i = (end+1); i < numPoints; ++i)
+           {
+              xAxis[i] = start++;
+           }
         }
-        for(unsigned int i = (end+1); i < numPoints; ++i)
+        else
         {
-           xAxis[i] = start++;
+           double hzPerBin = sampleRate / (double)numPoints;
+           for(unsigned int i = 0; i <= end; ++i)
+           {
+              xAxis[i] = (double)i * hzPerBin;
+           }
+           for(unsigned int i = (end+1); i < numPoints; ++i)
+           {
+              xAxis[i] = ((double)start++) * hzPerBin;
+           }
         }
     }
     else

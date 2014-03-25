@@ -104,7 +104,8 @@ void CurveData::init()
    displayed = false;
    hidden = false;
 
-   samplePeriod = 1.0;
+   samplePeriod = 0.0;
+   sampleRate = 0.0;
 
    resetNormalizeFactor();
 }
@@ -121,7 +122,6 @@ void CurveData::fill1DxPoints()
    switch(plotType)
    {
       case E_PLOT_TYPE_1D:
-      case E_PLOT_TYPE_REAL_FFT:
       {
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {
@@ -140,9 +140,15 @@ void CurveData::fill1DxPoints()
       }
       break;
 
+      case E_PLOT_TYPE_REAL_FFT:
+      {
+         getFFTXAxisValues_real(xPoints, xPoints.size(), sampleRate);
+      }
+      break;
+
       case E_PLOT_TYPE_COMPLEX_FFT:
       {
-         getFFTXAxisValues(xPoints, yPoints.size());
+         getFFTXAxisValues_complex(xPoints, xPoints.size(), sampleRate);
       }
       break;
 
@@ -455,9 +461,17 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
    }
 }
 
-void CurveData::setMath(double sampleRate)
+void CurveData::setMath(double inSampleRate)
 {
-   samplePeriod = (double)1.0 / sampleRate;
+   sampleRate = inSampleRate;
+   if(sampleRate != 0.0)
+   {
+      samplePeriod = (double)1.0 / sampleRate;
+   }
+   else
+   {
+      samplePeriod = 0.0;
+   }
 }
 
 void CurveData::performMathOnPoints()

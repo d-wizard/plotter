@@ -83,7 +83,7 @@ void ChildCurve::updateCurve()
 {
    getDataFromParent(m_yAxis, m_ySrcData);
 
-   if(m_plotType == E_PLOT_TYPE_2D)
+   if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
    {
       getDataFromParent(m_xAxis, m_xSrcData);
    }

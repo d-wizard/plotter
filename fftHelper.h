@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +23,7 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
 
 void realFFT(const dubVect& inRe, dubVect& outRe);
 
-void getFFTXAxisValues(dubVect& xAxis, unsigned int numPoints);
+void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampleRate = 0.0);
+void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sampleRate = 0.0);
 
 #endif
