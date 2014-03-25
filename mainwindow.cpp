@@ -373,28 +373,32 @@ void MainWindow::updateCursorMenus()
 
 }
 
-void MainWindow::create1dCurve(QString name, dubVect &yPoints)
+void MainWindow::create1dCurve(QString name, ePlotType plotType, dubVect &yPoints)
 {
-    createUpdateCurve(name, true, 0, NULL, &yPoints);
+    createUpdateCurve(name, true, 0, plotType, NULL, &yPoints);
 }
-
 
 void MainWindow::create2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
 {
-    createUpdateCurve(name, true, 0, &xPoints, &yPoints);
+    createUpdateCurve(name, true, 0, E_PLOT_TYPE_2D, &xPoints, &yPoints);
 }
 
-void MainWindow::update1dCurve(QString name, unsigned int sampleStartIndex, dubVect& yPoints)
+void MainWindow::update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect& yPoints)
 {
-    createUpdateCurve(name, false, sampleStartIndex, NULL, &yPoints);
+    createUpdateCurve(name, false, sampleStartIndex, plotType, NULL, &yPoints);
 }
 
 void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
 {
-    createUpdateCurve(name, false, sampleStartIndex, &xPoints, &yPoints);
+    createUpdateCurve(name, false, sampleStartIndex, E_PLOT_TYPE_2D, &xPoints, &yPoints);
 }
 
-void MainWindow::createUpdateCurve(QString& name, bool resetCurve, unsigned int sampleStartIndex, dubVect *xPoints, dubVect *yPoints)
+void MainWindow::createUpdateCurve( QString& name,
+                                    bool resetCurve,
+                                    unsigned int sampleStartIndex,
+                                    ePlotType plotType,
+                                    dubVect *xPoints,
+                                    dubVect *yPoints )
 {
    // Check for any reason to not allow the adding of the new curve.
    if( m_allowNewCurves == false ||
@@ -448,7 +452,7 @@ void MainWindow::createUpdateCurve(QString& name, bool resetCurve, unsigned int 
 
       if(xPoints == NULL)
       {
-         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *yPoints, curveColors[colorLookupIndex]));
+         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, plotType, *yPoints, curveColors[colorLookupIndex]));
       }
       else
       {

@@ -122,10 +122,10 @@ void CurveCommander::destroyAllPlots()
    }
 }
 
-void CurveCommander::create1dCurve(QString plotName, QString curveName, dubVect yPoints)
+void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->create1dCurve(curveName, yPoints);
+   m_allCurves[plotName].plotGui->create1dCurve(curveName, plotType, yPoints);
    showHidePlotGui(plotName);
 }
 
@@ -136,10 +136,10 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect 
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::update1dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect yPoints)
+void CurveCommander::update1dCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->update1dCurve(curveName, sampleStartIndex, yPoints);
+   m_allCurves[plotName].plotGui->update1dCurve(curveName, sampleStartIndex, plotType, yPoints);
    showHidePlotGui(plotName);
 }
 
@@ -183,19 +183,19 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis yAxis) // 1D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis yAxis) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, fft, yAxis) ));
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, plotType, yAxis) ));
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, fft, xAxis, yAxis)) );
+      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, plotType, xAxis, yAxis)) );
    }
 }
 

@@ -23,14 +23,13 @@
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
-                        bool fft,
+                        ePlotType plotType,
                         tParentCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
-   m_plotType(E_PLOT_TYPE_1D),
-   m_yAxis(yAxis),
-   m_fft(fft)
+   m_plotType(plotType),
+   m_yAxis(yAxis)
 {
    updateCurve();
 }
@@ -38,16 +37,15 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
-                        bool fft,
+                        ePlotType plotType,
                         tParentCurveAxis xAxis,
                         tParentCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
-   m_plotType(E_PLOT_TYPE_2D),
+   m_plotType(plotType),
    m_xAxis(xAxis),
-   m_yAxis(yAxis),
-   m_fft(fft)
+   m_yAxis(yAxis)
 {
    updateCurve();
 }
@@ -56,7 +54,8 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 {
    bool curveIsYAxisParent = (m_yAxis.plotName == plotName) &&
                              (m_yAxis.curveName == curveName);
-   bool curveIsXAxisParent = (m_plotType == E_PLOT_TYPE_2D) &&
+   bool curveIsXAxisParent = ( m_plotType == E_PLOT_TYPE_2D ||
+                               m_plotType == E_PLOT_TYPE_COMPLEX_FFT ) &&
                              (m_xAxis.plotName == plotName) &&
                              (m_xAxis.curveName == curveName);
 
@@ -68,57 +67,55 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 
 }
 
+void ChildCurve::getDataFromParent(tParentCurveAxis& parentInfo, dubVect& data)
+{
+   CurveData* parent = m_curveCmdr->getCurveData(parentInfo.plotName, parentInfo.curveName);
+   if(parent != NULL)
+   {
+      if(parentInfo.axis == E_X_AXIS)
+         parent->getXPoints(data);
+      else
+         parent->getYPoints(data);
+   }
+}
+
 void ChildCurve::updateCurve()
 {
-   dubVect xPoints;
-   dubVect yPoints;
-
-   if(m_yAxis.axis == E_X_AXIS)
-      m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getXPoints(yPoints);
-   else
-      m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName)->getYPoints(yPoints);
+   getDataFromParent(m_yAxis, m_ySrcData);
 
    if(m_plotType == E_PLOT_TYPE_2D)
    {
-      if(m_xAxis.axis == E_X_AXIS)
-         m_curveCmdr->getCurveData(m_xAxis.plotName, m_xAxis.curveName)->getXPoints(xPoints);
-      else
-         m_curveCmdr->getCurveData(m_xAxis.plotName, m_xAxis.curveName)->getYPoints(xPoints);
-
+      getDataFromParent(m_xAxis, m_xSrcData);
    }
 
-   if(m_fft)
+   switch(m_plotType)
    {
-      if(m_plotType == E_PLOT_TYPE_1D)
+      case E_PLOT_TYPE_1D:
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, m_ySrcData);
+      break;
+      case E_PLOT_TYPE_2D:
+         m_curveCmdr->create2dCurve(m_plotName, m_curveName, m_xSrcData, m_ySrcData);
+      break;
+      case E_PLOT_TYPE_REAL_FFT:
       {
          dubVect realFFTOut;
-         realFFT(yPoints, realFFTOut);
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, realFFTOut);
+         realFFT(m_ySrcData, realFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
       }
-      else
+      break;
+      case E_PLOT_TYPE_COMPLEX_FFT:
       {
          dubVect realFFTOut;
          dubVect imagFFTOut;
-         dubVect xAxis;
 
-         complexFFT(xPoints, yPoints, realFFTOut, imagFFTOut);
-         getFFTXAxisValues(xAxis, realFFTOut.size());
+         complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
 
-         m_curveCmdr->create2dCurve(m_plotName, m_curveName + ".real", xAxis, realFFTOut);
-         m_curveCmdr->create2dCurve(m_plotName, m_curveName + ".imag", xAxis, imagFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName + ".real", m_plotType, realFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName + ".imag", m_plotType, imagFFTOut);
       }
+      break;
    }
-   else
-   {
-      if(m_plotType == E_PLOT_TYPE_1D)
-      {
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, yPoints);
-      }
-      else
-      {
-         m_curveCmdr->create2dCurve(m_plotName, m_curveName, xPoints, yPoints);
-      }
-   }
+
 }
 
 
@@ -126,7 +123,7 @@ QVector<tParentCurveAxis> ChildCurve::getParents()
 {
    QVector<tParentCurveAxis> retVal;
    retVal.push_back(m_yAxis);
-   if(m_plotType == E_PLOT_TYPE_2D)
+   if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
    {
       retVal.push_back(m_xAxis);
    }

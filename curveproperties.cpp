@@ -74,7 +74,7 @@ void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveNa
       foreach( QString curveName, curves->keys() )
       {
          QString plotCurveName = plotName + PLOT_CURVE_SEP + curveName;
-         if( (*curves)[curveName]->getPlotType() == E_PLOT_TYPE_1D)
+         if( (*curves)[curveName]->getPlotDim() == E_PLOT_DIM_1D)
          {
             ui->cmbXAxisSrc->addItem(plotCurveName);
             ui->cmbYAxisSrc->addItem(plotCurveName);
@@ -186,11 +186,11 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          ui->cmbYAxisSrc->setVisible(true);
       break;
       case CREATE_CHILD_CURVE_FFT_REAL:
-         ui->lblXAxisSrc->setText("Real Source");
-         ui->lblXAxisSrc->setVisible(true);
-         ui->cmbXAxisSrc->setVisible(true);
-         ui->lblYAxisSrc->setVisible(false);
-         ui->cmbYAxisSrc->setVisible(false);
+         ui->lblYAxisSrc->setText("Real Source");
+         ui->lblXAxisSrc->setVisible(false);
+         ui->cmbXAxisSrc->setVisible(false);
+         ui->lblYAxisSrc->setVisible(true);
+         ui->cmbYAxisSrc->setVisible(true);
       break;
       case CREATE_CHILD_CURVE_FFT_COMPLEX:
          ui->lblXAxisSrc->setText("Real Source");
@@ -208,19 +208,19 @@ void curveProperties::on_cmdApply_clicked()
 {
    if(ui->tabWidget->currentIndex() == TAB_CREATE_CHILD_CURVE)
    {
-      if( ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_COMBO_1D ||
-          ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_REAL )
+      ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+      if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
-                                        ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_REAL,
+                                        plotType,
                                         getCreateChildCurveInfo(ui->cmbYAxisSrc));
       }
       else
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
-                                        ui->cmbPlotType->currentIndex() == CREATE_CHILD_CURVE_FFT_COMPLEX,
+                                        plotType,
                                         getCreateChildCurveInfo(ui->cmbXAxisSrc),
                                         getCreateChildCurveInfo(ui->cmbYAxisSrc));
       }

@@ -82,9 +82,9 @@ public:
 
 
     void resetPlot();
-    void create1dCurve(QString name, dubVect& yPoints);
+    void create1dCurve(QString name, ePlotType plotType, dubVect& yPoints);
     void create2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
-    void update1dCurve(QString name, unsigned int sampleStartIndex, dubVect& yPoints);
+    void update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect &yPoints);
     void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
 
 private:
@@ -135,8 +135,12 @@ private:
 
     QAction m_curveProperties;
 
-    void createUpdateCurve(QString& name, bool resetCurve, unsigned int sampleStartIndex, dubVect* xPoints, dubVect* yPoints);
-
+    void createUpdateCurve( QString& name,
+                            bool resetCurve,
+                            unsigned int sampleStartIndex,
+                            ePlotType plotType,
+                            dubVect *xPoints,
+                            dubVect *yPoints );
 
     void calcMaxMin();
 

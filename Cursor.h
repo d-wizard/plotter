@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -87,7 +87,7 @@ public:
         // Initialize for 2D plot
         int minPointIndex = 0;
 
-        if(m_parentCurve->getPlotType() == E_PLOT_TYPE_1D)
+        if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
         {
             // Since 1D plot, assume the X position the user selected is close to the curve
             minPointIndex = (int)(pos.x() + 0.5);
@@ -101,7 +101,7 @@ public:
         int startIndex = 1;
         int endIndex = m_parentCurve->getNumPoints();
 
-        if(m_parentCurve->getPlotType() == E_PLOT_TYPE_1D)
+        if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
         {
             int roundDownMinDist = (int)(minDist * width) + 1;
             startIndex = minPointIndex - roundDownMinDist;

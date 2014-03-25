@@ -51,8 +51,16 @@ typedef struct tMaxMinXY
 
 typedef enum
 {
-    E_PLOT_TYPE_1D,
-    E_PLOT_TYPE_2D
+    E_PLOT_DIM_1D,
+    E_PLOT_DIM_2D
+}ePlotDim;
+
+typedef enum
+{
+    E_PLOT_TYPE_1D          = 0,
+    E_PLOT_TYPE_2D          = 1,
+    E_PLOT_TYPE_REAL_FFT    = 2,
+    E_PLOT_TYPE_COMPLEX_FFT = 3
 }ePlotType;
 
 typedef struct

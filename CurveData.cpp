@@ -17,14 +17,17 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "CurveData.h"
+#include "fftHelper.h"
 
 CurveData::CurveData( QwtPlot *parentPlot,
                       const QString& curveName,
-                      const dubVect& newYPoints,
-                      const QColor& curveColor):
+                      const ePlotType newPlotType,
+                      const dubVect &newYPoints,
+                      const QColor &curveColor):
    m_parentPlot(parentPlot),
    yOrigPoints(newYPoints),
-   plotType(E_PLOT_TYPE_1D),
+   plotDim(E_PLOT_DIM_1D),
+   plotType(newPlotType),
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
 {
@@ -45,6 +48,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
    m_parentPlot(parentPlot),
    xOrigPoints(newXPoints),
    yOrigPoints(newYPoints),
+   plotDim(E_PLOT_DIM_2D),
    plotType(E_PLOT_TYPE_2D),
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
@@ -114,19 +118,38 @@ void CurveData::initCurve()
 void CurveData::fill1DxPoints()
 {
    xPoints.resize(yPoints.size());
-   if(samplePeriod == 1.0)
+   switch(plotType)
    {
-       for(unsigned int i = 0; i < xPoints.size(); ++i)
-       {
-          xPoints[i] = (double)i;
-       }
-   }
-   else
-   {
-       for(unsigned int i = 0; i < xPoints.size(); ++i)
-       {
-          xPoints[i] = (double)i * samplePeriod;
-       }
+      case E_PLOT_TYPE_1D:
+      case E_PLOT_TYPE_REAL_FFT:
+      {
+         if(samplePeriod == 0.0 || samplePeriod == 1.0)
+         {
+             for(unsigned int i = 0; i < xPoints.size(); ++i)
+             {
+                xPoints[i] = (double)i;
+             }
+         }
+         else
+         {
+             for(unsigned int i = 0; i < xPoints.size(); ++i)
+             {
+                xPoints[i] = (double)i * samplePeriod;
+             }
+         }
+      }
+      break;
+
+      case E_PLOT_TYPE_COMPLEX_FFT:
+      {
+         getFFTXAxisValues(xPoints, yPoints.size());
+      }
+      break;
+
+      case E_PLOT_TYPE_2D:
+      default:
+         // Do nothing.
+      break;
    }
 }
 
@@ -160,9 +183,9 @@ QColor CurveData::getColor()
    return color;
 }
 
-ePlotType CurveData::getPlotType()
+ePlotDim CurveData::getPlotDim()
 {
-   return plotType;
+   return plotDim;
 }
 
 unsigned int CurveData::getNumPoints()
@@ -216,10 +239,10 @@ void CurveData::detach()
 void CurveData::findMaxMin()
 {
    int vectSize = yPoints.size();
-   if(plotType == E_PLOT_TYPE_1D)
+   if(plotDim == E_PLOT_DIM_1D)
    {
-      maxMin.minX = 0;
-      maxMin.maxX = vectSize-1;
+      maxMin.minX = xPoints[0];
+      maxMin.maxX = xPoints[vectSize-1];
       maxMin.minY = yPoints[0];
       maxMin.maxY = yPoints[0];
       
@@ -235,7 +258,7 @@ void CurveData::findMaxMin()
          }
       }
    }
-   else if(plotType == E_PLOT_TYPE_2D)
+   else if(plotDim == E_PLOT_DIM_2D)
    {
       maxMin.minX = xPoints[0];
       maxMin.maxX = xPoints[0];
@@ -354,7 +377,7 @@ void CurveData::setCurveSamples()
 
 void CurveData::ResetCurveSamples(dubVect& newYPoints)
 {
-   plotType = E_PLOT_TYPE_1D;
+   plotDim = E_PLOT_DIM_1D;
    yOrigPoints = newYPoints;
    performMathOnPoints();
    numPoints = yOrigPoints.size();
@@ -364,7 +387,7 @@ void CurveData::ResetCurveSamples(dubVect& newYPoints)
 }
 void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
 {
-   plotType = E_PLOT_TYPE_2D;
+   plotDim = E_PLOT_DIM_2D;
    xOrigPoints = newXPoints;
    yOrigPoints = newYPoints;
    performMathOnPoints();
@@ -384,7 +407,7 @@ void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
 
 void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex)
 {
-   if(plotType == E_PLOT_TYPE_1D)
+   if(plotDim == E_PLOT_DIM_1D)
    {
       bool resized = false;
       if(yPoints.size() < (sampleStartIndex + newYPoints.size()))
@@ -409,7 +432,7 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
 
 void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex)
 {
-   if(plotType == E_PLOT_TYPE_2D)
+   if(plotDim == E_PLOT_DIM_2D)
    {
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
 

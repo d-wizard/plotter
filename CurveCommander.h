@@ -51,9 +51,9 @@ public:
 
     tCurveCommanderInfo& getCurveCommanderInfo();
 
-    void create1dCurve(QString plotName, QString curveName, dubVect yPoints);
+    void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect yPoints);
     void create2dCurve(QString plotName, QString curveName, dubVect xPoints, dubVect yPoints);
-    void update1dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect yPoints);
+    void update1dCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect yPoints);
     void update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect xPoints, dubVect yPoints);
     void destroyAllPlots();
 
@@ -62,8 +62,8 @@ public:
 
     void showHidePlotGui(QString plotName);
 
-    void createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis yAxis); // 1D
-    void createChildCurve(QString plotName, QString curveName, bool fft, tParentCurveAxis xAxis, tParentCurveAxis yAxis); // 2D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis yAxis); // 1D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis xAxis, tParentCurveAxis yAxis); // 2D
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
 private:

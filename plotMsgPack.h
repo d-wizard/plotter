@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,13 +29,6 @@
       #define inline __inline
    #endif
 #endif
-
-
-typedef enum
-{
-   E_PLOT_1D,
-   E_PLOT_2D
-}ePlotDim;
 
 typedef enum
 {

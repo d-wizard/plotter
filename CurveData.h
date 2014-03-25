@@ -33,6 +33,7 @@ class CurveData
 public:
    CurveData( QwtPlot* parentPlot,
               const QString& curveName,
+              const ePlotType newPlotType,
               const dubVect& newYPoints,
               const QColor& curveColor);
 
@@ -49,7 +50,7 @@ public:
    void getXPoints(dubVect& ioXPoints);
    void getYPoints(dubVect& ioYPoints);
    QColor getColor();
-   ePlotType getPlotType();
+   ePlotDim getPlotDim();
    unsigned int getNumPoints();
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
@@ -93,6 +94,7 @@ private:
    dubVect xOrigPoints;
    dubVect yOrigPoints;
    maxMinXY maxMin;
+   ePlotDim plotDim;
    ePlotType plotType;
    QColor color;
    QwtPlotCurve* curve;
