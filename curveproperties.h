@@ -37,7 +37,7 @@ public:
    explicit curveProperties(CurveCommander* curveCmdr, QString plotName = "", QString curveName = "", QWidget *parent = 0);
    ~curveProperties();
 
-   void setCreateChildComboBoxes(QString plotName = "", QString curveName = "");
+   void setPlotCurveComboBoxes(QString plotName = "", QString curveName = "");
    
 private slots:
    void on_cmbPlotType_currentIndexChanged(int index);

@@ -26,6 +26,7 @@ const QString Y_AXIS_APPEND = ".yAxis";
 const QString PLOT_CURVE_SEP = "->";
 
 const int TAB_CREATE_CHILD_CURVE = 0;
+const int TAB_CREATE_MATH = 1;
 
 const int CREATE_CHILD_CURVE_COMBO_1D    = 0;
 const int CREATE_CHILD_CURVE_COMBO_2D    = 1;
@@ -43,7 +44,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
 {
    ui->setupUi(this);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
-   setCreateChildComboBoxes(plotName, curveName);
+   setPlotCurveComboBoxes(plotName, curveName);
 }
 
 curveProperties::~curveProperties()
@@ -51,7 +52,7 @@ curveProperties::~curveProperties()
    delete ui;
 }
 
-void curveProperties::setCreateChildComboBoxes(QString plotName, QString curveName)
+void curveProperties::setPlotCurveComboBoxes(QString plotName, QString curveName)
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
@@ -206,7 +207,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 
 void curveProperties::on_cmdApply_clicked()
 {
-   if(ui->tabWidget->currentIndex() == TAB_CREATE_CHILD_CURVE)
+   int tab = ui->tabWidget->currentIndex();
+   if(tab == TAB_CREATE_CHILD_CURVE)
    {
       ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
       if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
@@ -223,6 +225,21 @@ void curveProperties::on_cmdApply_clicked()
                                         plotType,
                                         getCreateChildCurveInfo(ui->cmbXAxisSrc),
                                         getCreateChildCurveInfo(ui->cmbYAxisSrc));
+      }
+   }
+   else if(tab == TAB_CREATE_MATH)
+   {
+      tParentCurveAxis parentInfo = getCreateChildCurveInfo(ui->cmbSrcCurve_math);
+      CurveData* parentCurve = m_curveCmdr->getCurveData(parentInfo.plotName, parentInfo.curveName);
+      if(parentCurve != NULL)
+      {
+         double sampleRate = atof(ui->txtSampleRate->text().toStdString().c_str());
+         parentCurve->setMath(sampleRate);
+         MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(parentInfo.plotName);
+         if(parentPlotGui != NULL)
+         {
+            parentPlotGui->replotMainPlot();
+         }
       }
    }
 }

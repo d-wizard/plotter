@@ -54,7 +54,7 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    {
       if(m_curvePropGui != NULL)
       {
-         m_curvePropGui->setCreateChildComboBoxes();
+         m_curvePropGui->setPlotCurveComboBoxes();
       }
    }
    else
@@ -65,13 +65,24 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
 
 void CurveCommander::plotRemoved(QString plotName)
 {
+   bool plotWasRemoved = false;
    tCurveCommanderInfo::iterator iter = m_allCurves.find(plotName);
    if(iter != m_allCurves.end())
    {
       delete iter.value().plotGui;
       m_allCurves.erase(iter);
+      plotWasRemoved = true;
    }
-   removeOrphanedChildCurves();
+   if(plotWasRemoved)
+   {
+      removeOrphanedChildCurves();
+
+      // Update Curve Properties GUI
+      if(m_curvePropGui != NULL)
+      {
+         m_curvePropGui->setPlotCurveComboBoxes();
+      }
+   }
 }
 
 
@@ -102,6 +113,18 @@ CurveData* CurveCommander::getCurveData(QString plotName, QString curveName)
     {
         return NULL;
     }
+}
+
+MainWindow* CurveCommander::getMainPlot(QString plotName)
+{
+   if(validPlot(plotName))
+   {
+      return m_allCurves[plotName].plotGui;
+   }
+   else
+   {
+      return NULL;
+   }
 }
 
 tCurveCommanderInfo& CurveCommander::getCurveCommanderInfo()

@@ -31,10 +31,10 @@ CurveData::CurveData( QwtPlot *parentPlot,
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
 {
-   performMathOnPoints();
    init();
-   numPoints = yPoints.size();
+   numPoints = yOrigPoints.size();
    fill1DxPoints();
+   performMathOnPoints();
    findMaxMin();
    initCurve();
    attach();
@@ -53,18 +53,18 @@ CurveData::CurveData( QwtPlot* parentPlot,
    color(curveColor),
    curve(new QwtPlotCurve(curveName))
 {
-   performMathOnPoints();
    init();
-   if(xPoints.size() > yPoints.size())
+   if(xOrigPoints.size() > yOrigPoints.size())
    {
-      xPoints.resize(yPoints.size());
+      xOrigPoints.resize(yOrigPoints.size());
    }
-   else if(xPoints.size() < yPoints.size())
+   else if(xOrigPoints.size() < yOrigPoints.size())
    {
-      yPoints.resize(xPoints.size());
+      yOrigPoints.resize(xOrigPoints.size());
    }
    
-   numPoints = yPoints.size();
+   numPoints = yOrigPoints.size();
+   performMathOnPoints();
    findMaxMin();
    initCurve();
    attach();
@@ -118,23 +118,23 @@ void CurveData::initCurve()
 
 void CurveData::fill1DxPoints()
 {
-   xPoints.resize(yPoints.size());
+   xOrigPoints.resize(yOrigPoints.size());
    switch(plotType)
    {
       case E_PLOT_TYPE_1D:
       {
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {
-             for(unsigned int i = 0; i < xPoints.size(); ++i)
+             for(unsigned int i = 0; i < xOrigPoints.size(); ++i)
              {
-                xPoints[i] = (double)i;
+                xOrigPoints[i] = (double)i;
              }
          }
          else
          {
-             for(unsigned int i = 0; i < xPoints.size(); ++i)
+             for(unsigned int i = 0; i < xOrigPoints.size(); ++i)
              {
-                xPoints[i] = (double)i * samplePeriod;
+                xOrigPoints[i] = (double)i * samplePeriod;
              }
          }
       }
@@ -142,13 +142,13 @@ void CurveData::fill1DxPoints()
 
       case E_PLOT_TYPE_REAL_FFT:
       {
-         getFFTXAxisValues_real(xPoints, xPoints.size(), sampleRate);
+         getFFTXAxisValues_real(xOrigPoints, xOrigPoints.size(), sampleRate);
       }
       break;
 
       case E_PLOT_TYPE_COMPLEX_FFT:
       {
-         getFFTXAxisValues_complex(xPoints, xPoints.size(), sampleRate);
+         getFFTXAxisValues_complex(xOrigPoints, xOrigPoints.size(), sampleRate);
       }
       break;
 
@@ -385,9 +385,9 @@ void CurveData::ResetCurveSamples(dubVect& newYPoints)
 {
    plotDim = E_PLOT_DIM_1D;
    yOrigPoints = newYPoints;
-   performMathOnPoints();
    numPoints = yOrigPoints.size();
    fill1DxPoints();
+   performMathOnPoints();
    findMaxMin();
    setCurveSamples();
 }
@@ -396,16 +396,16 @@ void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
    plotDim = E_PLOT_DIM_2D;
    xOrigPoints = newXPoints;
    yOrigPoints = newYPoints;
+   numPoints = std::min(xOrigPoints.size(), yOrigPoints.size());
+   if(xOrigPoints.size() > numPoints)
+   {
+      xOrigPoints.resize(numPoints);
+   }
+   if(yOrigPoints.size() > numPoints)
+   {
+      yOrigPoints.resize(numPoints);
+   }
    performMathOnPoints();
-   numPoints = std::min(xPoints.size(), yPoints.size());
-   if(xPoints.size() > numPoints)
-   {
-      xPoints.resize(numPoints);
-   }
-   if(yPoints.size() > numPoints)
-   {
-      yPoints.resize(numPoints);
-   }
    findMaxMin();
    setCurveSamples();
 }
@@ -416,12 +416,12 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
    if(plotDim == E_PLOT_DIM_1D)
    {
       bool resized = false;
-      if(yPoints.size() < (sampleStartIndex + newYPoints.size()))
+      if(yOrigPoints.size() < (sampleStartIndex + newYPoints.size()))
       {
          resized = true;
-         yPoints.resize(sampleStartIndex + newYPoints.size());
+         yOrigPoints.resize(sampleStartIndex + newYPoints.size());
       }
-      memcpy(&yPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newYPoints.size());
+      memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newYPoints.size());
 
       if(resized == true)
       {
@@ -429,8 +429,9 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
          fill1DxPoints();
       }
 
-      numPoints = yPoints.size();
+      numPoints = yOrigPoints.size();
 
+      performMathOnPoints();
       findMaxMin();
       setCurveSamples();
    }
@@ -442,19 +443,19 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
    {
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
 
-      if(xPoints.size() < (sampleStartIndex + newPointsSize))
+      if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
       {
-         xPoints.resize(sampleStartIndex + newPointsSize);
+         xOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
-      memcpy(&xPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+      memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
 
-      if(yPoints.size() < (sampleStartIndex + newPointsSize))
+      if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
       {
-         yPoints.resize(sampleStartIndex + newPointsSize);
+         yOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
-      memcpy(&yPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+      memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
 
-      numPoints = std::min(xPoints.size(), yPoints.size()); // These should never be unequal, but take min anyway.
+      numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
       findMaxMin();
       setCurveSamples();
@@ -463,14 +464,22 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
 
 void CurveData::setMath(double inSampleRate)
 {
-   sampleRate = inSampleRate;
-   if(sampleRate != 0.0)
+   if(sampleRate != inSampleRate)
    {
-      samplePeriod = (double)1.0 / sampleRate;
-   }
-   else
-   {
-      samplePeriod = 0.0;
+      sampleRate = inSampleRate;
+      if(sampleRate != 0.0)
+      {
+         samplePeriod = (double)1.0 / sampleRate;
+      }
+      else
+      {
+         samplePeriod = 0.0;
+      }
+
+      fill1DxPoints();
+      performMathOnPoints();
+      findMaxMin();
+      setCurveSamples();
    }
 }
 

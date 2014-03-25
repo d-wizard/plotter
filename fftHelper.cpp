@@ -127,7 +127,7 @@ void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampl
       else
       {
          // Real FFTs go from 0 to Fs/2.
-         double hzPerBin = (double)2.0 * sampleRate / (double)numPoints;
+         double hzPerBin = sampleRate / ((double)numPoints * (double)2.0);
          for(unsigned int i = 0; i < numPoints; ++i)
          {
             xAxis[i] = (double)i * hzPerBin;

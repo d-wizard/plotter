@@ -48,6 +48,7 @@ public:
     bool validPlot(QString plotName);
     bool validCurve(QString plotName, QString curveName);
     CurveData* getCurveData(QString plotName, QString curveName);
+    MainWindow* getMainPlot(QString plotName);
 
     tCurveCommanderInfo& getCurveCommanderInfo();
 
