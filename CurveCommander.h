@@ -22,7 +22,7 @@
 #include <QMap>
 #include <QString>
 #include <QVector>
-#include <QList>
+#include <list>
 #include <QSharedPointer>
 #include "CurveData.h"
 #include "mainwindow.h"
@@ -80,7 +80,7 @@ private:
 
     curveProperties* m_curvePropGui;
 
-    QList<QSharedPointer<ChildCurve> > m_childCurves;
+    std::list<ChildCurve*> m_childCurves;
 public slots:
     void plotWindowCloseSlot(QString plotName);
     void curvePropertiesGuiCloseSlot();

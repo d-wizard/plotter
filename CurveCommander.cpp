@@ -35,6 +35,12 @@ CurveCommander::~CurveCommander()
 {
    curvePropertiesGuiCloseSlot(); // Close Curve Properties GUI (if it exists)
    destroyAllPlots();
+
+   for(std::list<ChildCurve*>::iterator iter = m_childCurves.begin(); iter != m_childCurves.end(); ++iter)
+   {
+      delete *iter;
+   }
+
 }
 
 
@@ -187,7 +193,7 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, plotType, yAxis) ));
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, yAxis) );
    }
 }
 
@@ -195,13 +201,13 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back(QSharedPointer<ChildCurve>( new ChildCurve(this, plotName, curveName, plotType, xAxis, yAxis)) );
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, xAxis, yAxis) );
    }
 }
 
 void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName)
 {
-   QList<QSharedPointer<ChildCurve> >::iterator iter = m_childCurves.begin();
+   std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
 
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
@@ -212,8 +218,24 @@ void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString c
 
 void CurveCommander::removeOrphanedChildCurves()
 {
-   QList<QSharedPointer<ChildCurve> >::iterator iter = m_childCurves.begin();
+   // Remove any child curves that no longer exists.
+   std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
+   while(iter != m_childCurves.end()) // Iterate over all child curves
+   {
+      if(validCurve((*iter)->getPlotName(), (*iter)->getCurveName()) == false)
+      {
+         // Curve no longer exists, remove from child curve list.
+         delete *iter;
+         m_childCurves.erase(iter++);
+      }
+      else
+      {
+         ++iter;
+      }
+   }
 
+   // Remove any child curves whose parents no longer exists.
+   iter = m_childCurves.begin();
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
       // Check if the child curves parents exist.
@@ -231,6 +253,7 @@ void CurveCommander::removeOrphanedChildCurves()
       if(parentExists == false)
       {
          // Parents have been removed, remove from child curve list.
+         delete *iter;
          m_childCurves.erase(iter++);
       }
       else

@@ -36,6 +36,8 @@ public:
    void anotherCurveChanged(QString plotName, QString curveName);
    QVector<tParentCurveAxis> getParents();
 
+   QString getPlotName(){return m_plotName;}
+   QString getCurveName(){return m_curveName;}
 private:
    // Eliminate default, copy, assign
    ChildCurve();
