@@ -73,10 +73,6 @@ void realFFT(const dubVect& inRe, dubVect& outRe)
    if(N > 0)
    {
        unsigned int halfN = N >> 1;
-       if((N & 1) == 0)
-       {
-          --halfN;
-       }
 
        in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
        out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
