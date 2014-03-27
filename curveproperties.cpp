@@ -29,10 +29,10 @@ const QString PLOT_CURVE_SEP = "->";
 const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
 
-const int CREATE_CHILD_CURVE_COMBO_1D    = 0;
-const int CREATE_CHILD_CURVE_COMBO_2D    = 1;
-const int CREATE_CHILD_CURVE_FFT_REAL    = 2;
-const int CREATE_CHILD_CURVE_FFT_COMPLEX = 3;
+const int CREATE_CHILD_CURVE_COMBO_1D    = E_PLOT_TYPE_1D;
+const int CREATE_CHILD_CURVE_COMBO_2D    = E_PLOT_TYPE_2D;
+const int CREATE_CHILD_CURVE_FFT_REAL    = E_PLOT_TYPE_REAL_FFT;
+const int CREATE_CHILD_CURVE_FFT_COMPLEX = E_PLOT_TYPE_COMPLEX_FFT;
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
