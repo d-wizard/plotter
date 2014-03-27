@@ -20,6 +20,7 @@
 #include "ui_curveproperties.h"
 #include "CurveCommander.h"
 #include "dString.h"
+#include <QMessageBox>
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
@@ -211,21 +212,37 @@ void curveProperties::on_cmdApply_clicked()
    int tab = ui->tabWidget->currentIndex();
    if(tab == TAB_CREATE_CHILD_CURVE)
    {
-      ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
-      if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
+      QString newChildPlotName = ui->cmbDestPlotName->currentText();
+      QString newChildCurveName = ui->txtDestCurveName->text();
+
+      if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
       {
-         m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
-                                        ui->txtDestCurveName->text(),
-                                        plotType,
-                                        getSelectedCurveInfo(ui->cmbYAxisSrc));
+         // New Child Plot/Curve does not exist, continue creating the child curve.
+         ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+         if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
+         {
+            m_curveCmdr->createChildCurve( newChildPlotName,
+                                           newChildCurveName,
+                                           plotType,
+                                           getSelectedCurveInfo(ui->cmbYAxisSrc));
+         }
+         else
+         {
+            m_curveCmdr->createChildCurve( newChildPlotName,
+                                           newChildCurveName,
+                                           plotType,
+                                           getSelectedCurveInfo(ui->cmbXAxisSrc),
+                                           getSelectedCurveInfo(ui->cmbYAxisSrc));
+         }
       }
       else
       {
-         m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
-                                        ui->txtDestCurveName->text(),
-                                        plotType,
-                                        getSelectedCurveInfo(ui->cmbXAxisSrc),
-                                        getSelectedCurveInfo(ui->cmbYAxisSrc));
+         QMessageBox msgBox;
+         msgBox.setWindowTitle("Curve Already Exists");
+         msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another Plot/Curve name.");
+         msgBox.setStandardButtons(QMessageBox::Ok);
+         msgBox.setDefaultButton(QMessageBox::Ok);
+         msgBox.exec();
       }
    }
    else if(tab == TAB_CREATE_MATH)
