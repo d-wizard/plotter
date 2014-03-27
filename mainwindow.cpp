@@ -393,6 +393,18 @@ void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubV
     createUpdateCurve(name, false, sampleStartIndex, E_PLOT_TYPE_2D, &xPoints, &yPoints);
 }
 
+void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified)
+{
+   int curveIndex = findMatchingCurve(curveName);
+   if(curveIndex >= 0)
+   {
+      if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
+      {
+         handleCurveDataChange(curveIndex);
+      }
+   }
+}
+
 void MainWindow::createUpdateCurve( QString& name,
                                     bool resetCurve,
                                     unsigned int sampleStartIndex,
@@ -460,6 +472,11 @@ void MainWindow::createUpdateCurve( QString& name,
       }
    }
 
+   handleCurveDataChange(curveIndex);
+}
+
+void MainWindow::handleCurveDataChange(int curveIndex)
+{
    calcMaxMin();
 
    if(m_qwtSelectedSample->getCurve() == NULL)
@@ -485,7 +502,6 @@ void MainWindow::createUpdateCurve( QString& name,
    // inform parent that a curve has been added / changed
    m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->getCurveTitle(), m_qwtCurves[curveIndex]);
 }
-
 
 void MainWindow::toggleLegend()
 {

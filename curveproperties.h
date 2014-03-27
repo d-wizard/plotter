@@ -47,6 +47,10 @@ private slots:
 
    void on_cmdCancel_clicked();
 
+   void on_tabWidget_currentChanged(int index);
+
+   void on_cmbSrcCurve_math_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -57,6 +61,7 @@ private:
 
    tParentCurveAxis getCreateChildCurveInfo(QComboBox* cmbBox);
 
+   void setMathSampleRate();
 
    Ui::curveProperties *ui;
 

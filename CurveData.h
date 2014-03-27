@@ -71,7 +71,8 @@ public:
    void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex);
    void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex);
 
-   void setMath(double inSampleRate = 0.0);
+   bool setSampleRate(double inSampleRate, bool userSpecified);
+   double getSampleRate(){return sampleRate;}
 
    QLabel* pointLabel;
    QAction* curveAction;
@@ -113,6 +114,7 @@ private:
 
    double sampleRate;
    double samplePeriod;
+   bool sampleRateIsUserSpecified;
 };
 
 #endif

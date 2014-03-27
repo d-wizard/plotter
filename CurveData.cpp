@@ -106,6 +106,7 @@ void CurveData::init()
 
    samplePeriod = 0.0;
    sampleRate = 0.0;
+   sampleRateIsUserSpecified = false;
 
    resetNormalizeFactor();
 }
@@ -457,30 +458,44 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
+      performMathOnPoints();
       findMaxMin();
       setCurveSamples();
    }
 }
 
-void CurveData::setMath(double inSampleRate)
+bool CurveData::setSampleRate(double inSampleRate, bool userSpecified)
 {
-   if(sampleRate != inSampleRate)
+   bool changed = false;
+
+   // Do not overwrite the sample rate if the user has already specified the sample rate via the GUI
+   // and this function is being called because a parent curve has changed.
+   if( (userSpecified == true) || (sampleRateIsUserSpecified == false) )
    {
-      sampleRate = inSampleRate;
-      if(sampleRate != 0.0)
+      if(sampleRate != inSampleRate)
       {
-         samplePeriod = (double)1.0 / sampleRate;
-      }
-      else
-      {
-         samplePeriod = 0.0;
+         sampleRate = inSampleRate;
+         if(sampleRate != 0.0)
+         {
+            samplePeriod = (double)1.0 / sampleRate;
+         }
+         else
+         {
+            samplePeriod = 0.0;
+         }
+
+         fill1DxPoints();
+         performMathOnPoints();
+         findMaxMin();
+         setCurveSamples();
+
+         changed = true;
       }
 
-      fill1DxPoints();
-      performMathOnPoints();
-      findMaxMin();
-      setCurveSamples();
+      sampleRateIsUserSpecified = sampleRateIsUserSpecified || userSpecified;
    }
+
+   return changed;
 }
 
 void CurveData::performMathOnPoints()

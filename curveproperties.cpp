@@ -56,6 +56,7 @@ void curveProperties::setPlotCurveComboBoxes(QString plotName, QString curveName
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
+   // Save current values of the GUI elements.
    m_xAxisSrcCmbText = ui->cmbXAxisSrc->currentText();
    m_yAxisSrcCmbText = ui->cmbYAxisSrc->currentText();
    m_plotNameDestCmbText = ui->cmbDestPlotName->currentText();
@@ -234,11 +235,10 @@ void curveProperties::on_cmdApply_clicked()
       if(parentCurve != NULL)
       {
          double sampleRate = atof(ui->txtSampleRate->text().toStdString().c_str());
-         parentCurve->setMath(sampleRate);
          MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(parentInfo.plotName);
          if(parentPlotGui != NULL)
          {
-            parentPlotGui->replotMainPlot();
+            parentPlotGui->setCurveSampleRate(parentInfo.curveName, sampleRate, true);
          }
       }
    }
@@ -292,3 +292,30 @@ void curveProperties::closeEvent(QCloseEvent* /*event*/)
    m_curveCmdr->curvePropertiesGuiClose();
 }
 
+void curveProperties::setMathSampleRate()
+{
+   tParentCurveAxis curveInfo = getCreateChildCurveInfo(ui->cmbSrcCurve_math);
+   CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+   if(curve != NULL)
+   {
+      char sampleRate[50];
+      snprintf(sampleRate, sizeof(sampleRate)-1, "%f", (float)curve->getSampleRate());
+      ui->txtSampleRate->setText(sampleRate);
+   }
+}
+
+void curveProperties::on_tabWidget_currentChanged(int index)
+{
+   setPlotCurveComboBoxes();
+   int tab = ui->tabWidget->currentIndex();
+   if(tab == TAB_CREATE_MATH)
+   {
+      setMathSampleRate();
+   }
+
+}
+
+void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
+{
+   setMathSampleRate();
+}

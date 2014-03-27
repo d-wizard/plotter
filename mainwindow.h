@@ -87,7 +87,7 @@ public:
     void update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect &yPoints);
     void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
 
-    void replotMainPlot();
+    void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
 private:
     Ui::MainWindow *ui;
 
@@ -143,6 +143,8 @@ private:
                             dubVect *xPoints,
                             dubVect *yPoints );
 
+    void handleCurveDataChange(int curveIndex);
+
     void calcMaxMin();
 
     void clearPointLabels();
@@ -157,6 +159,7 @@ private:
 
     void setSelectedCurveIndex(int index);
 
+    void replotMainPlot();
 
     int findMatchingCurve(const QString& curveTitle);
 

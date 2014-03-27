@@ -20,6 +20,9 @@
 #include "CurveCommander.h"
 #include "fftHelper.h"
 
+const QString COMPLEX_FFT_REAL_APPEND = ".real";
+const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
+
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
@@ -110,10 +113,28 @@ void ChildCurve::updateCurve()
 
          complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
 
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName + ".real", m_plotType, realFFTOut);
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName + ".imag", m_plotType, imagFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_REAL_APPEND, m_plotType, realFFTOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_IMAG_APPEND, m_plotType, imagFFTOut);
       }
       break;
+   }
+
+   // Try to set the child curve sample rate to the parent curves sample rate.
+   MainWindow* childPlot = m_curveCmdr->getMainPlot(m_plotName);
+   CurveData* parentCurve = m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName);
+   if(childPlot != NULL && parentCurve != NULL)
+   {
+      if(m_plotType != E_PLOT_TYPE_COMPLEX_FFT)
+      {
+         // Only has one child curve.
+         childPlot->setCurveSampleRate(m_curveName, parentCurve->getSampleRate(), false);
+      }
+      else
+      {
+         // Has real and imag child curves.
+         childPlot->setCurveSampleRate(m_curveName + COMPLEX_FFT_REAL_APPEND, parentCurve->getSampleRate(), false);
+         childPlot->setCurveSampleRate(m_curveName + COMPLEX_FFT_IMAG_APPEND, parentCurve->getSampleRate(), false);
+      }
    }
 
 }
