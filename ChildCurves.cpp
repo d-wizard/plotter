@@ -27,7 +27,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
-                        tParentCurveAxis yAxis):
+                        tPlotCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
@@ -41,8 +41,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
-                        tParentCurveAxis xAxis,
-                        tParentCurveAxis yAxis):
+                        tPlotCurveAxis xAxis,
+                        tPlotCurveAxis yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
@@ -70,7 +70,7 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 
 }
 
-void ChildCurve::getDataFromParent(tParentCurveAxis& parentInfo, dubVect& data)
+void ChildCurve::getDataFromParent(tPlotCurveAxis& parentInfo, dubVect& data)
 {
    CurveData* parent = m_curveCmdr->getCurveData(parentInfo.plotName, parentInfo.curveName);
    if(parent != NULL)
@@ -140,9 +140,9 @@ void ChildCurve::updateCurve()
 }
 
 
-QVector<tParentCurveAxis> ChildCurve::getParents()
+QVector<tPlotCurveAxis> ChildCurve::getParents()
 {
-   QVector<tParentCurveAxis> retVal;
+   QVector<tPlotCurveAxis> retVal;
    retVal.push_back(m_yAxis);
    if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
    {

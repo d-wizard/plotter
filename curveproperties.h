@@ -37,7 +37,7 @@ public:
    explicit curveProperties(CurveCommander* curveCmdr, QString plotName = "", QString curveName = "", QWidget *parent = 0);
    ~curveProperties();
 
-   void setPlotCurveComboBoxes(QString plotName = "", QString curveName = "");
+   void updateGuiPlotCurveInfo(QString plotName = "", QString curveName = "");
    
 private slots:
    void on_cmbPlotType_currentIndexChanged(int index);
@@ -59,7 +59,7 @@ private:
    bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
    int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
 
-   tParentCurveAxis getCreateChildCurveInfo(QComboBox* cmbBox);
+   tPlotCurveAxis getSelectedCurveInfo(QComboBox* cmbBox);
 
    void setMathSampleRate();
 

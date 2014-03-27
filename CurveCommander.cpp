@@ -54,7 +54,7 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    {
       if(m_curvePropGui != NULL)
       {
-         m_curvePropGui->setPlotCurveComboBoxes();
+         m_curvePropGui->updateGuiPlotCurveInfo();
       }
    }
    else
@@ -80,7 +80,7 @@ void CurveCommander::plotRemoved(QString plotName)
       // Update Curve Properties GUI
       if(m_curvePropGui != NULL)
       {
-         m_curvePropGui->setPlotCurveComboBoxes();
+         m_curvePropGui->updateGuiPlotCurveInfo();
       }
    }
 }
@@ -212,7 +212,7 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis yAxis) // 1D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis yAxis) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
@@ -220,7 +220,7 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis xAxis, tParentCurveAxis yAxis) // 2D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis xAxis, tPlotCurveAxis yAxis) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
@@ -262,7 +262,7 @@ void CurveCommander::removeOrphanedChildCurves()
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
       // Check if the child curves parents exist.
-      QVector<tParentCurveAxis> parents = (*iter)->getParents();
+      QVector<tPlotCurveAxis> parents = (*iter)->getParents();
       bool parentExists = false;
       for(int i = 0; i < parents.size(); ++i)
       {

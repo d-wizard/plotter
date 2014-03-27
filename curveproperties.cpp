@@ -44,7 +44,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
 {
    ui->setupUi(this);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
-   setPlotCurveComboBoxes(plotName, curveName);
+   updateGuiPlotCurveInfo(plotName, curveName);
 }
 
 curveProperties::~curveProperties()
@@ -52,7 +52,7 @@ curveProperties::~curveProperties()
    delete ui;
 }
 
-void curveProperties::setPlotCurveComboBoxes(QString plotName, QString curveName)
+void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName)
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
@@ -217,28 +217,28 @@ void curveProperties::on_cmdApply_clicked()
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         plotType,
-                                        getCreateChildCurveInfo(ui->cmbYAxisSrc));
+                                        getSelectedCurveInfo(ui->cmbYAxisSrc));
       }
       else
       {
          m_curveCmdr->createChildCurve( ui->cmbDestPlotName->currentText(),
                                         ui->txtDestCurveName->text(),
                                         plotType,
-                                        getCreateChildCurveInfo(ui->cmbXAxisSrc),
-                                        getCreateChildCurveInfo(ui->cmbYAxisSrc));
+                                        getSelectedCurveInfo(ui->cmbXAxisSrc),
+                                        getSelectedCurveInfo(ui->cmbYAxisSrc));
       }
    }
    else if(tab == TAB_CREATE_MATH)
    {
-      tParentCurveAxis parentInfo = getCreateChildCurveInfo(ui->cmbSrcCurve_math);
-      CurveData* parentCurve = m_curveCmdr->getCurveData(parentInfo.plotName, parentInfo.curveName);
+      tPlotCurveAxis curve = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+      CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
       if(parentCurve != NULL)
       {
          double sampleRate = atof(ui->txtSampleRate->text().toStdString().c_str());
-         MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(parentInfo.plotName);
+         MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(curve.plotName);
          if(parentPlotGui != NULL)
          {
-            parentPlotGui->setCurveSampleRate(parentInfo.curveName, sampleRate, true);
+            parentPlotGui->setCurveSampleRate(curve.curveName, sampleRate, true);
          }
       }
    }
@@ -246,11 +246,11 @@ void curveProperties::on_cmdApply_clicked()
 
 
 
-tParentCurveAxis curveProperties::getCreateChildCurveInfo(QComboBox *cmbBox)
+tPlotCurveAxis curveProperties::getSelectedCurveInfo(QComboBox *cmbBox)
 {
    std::string cmbText = cmbBox->currentText().toStdString();
 
-   tParentCurveAxis retVal;
+   tPlotCurveAxis retVal;
    int axisAppendLen = (int)X_AXIS_APPEND.size();
 
    // Handle plot name ending in .xAxis or .yAxis or neither
@@ -294,7 +294,7 @@ void curveProperties::closeEvent(QCloseEvent* /*event*/)
 
 void curveProperties::setMathSampleRate()
 {
-   tParentCurveAxis curveInfo = getCreateChildCurveInfo(ui->cmbSrcCurve_math);
+   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
    CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
    if(curve != NULL)
    {
@@ -306,7 +306,7 @@ void curveProperties::setMathSampleRate()
 
 void curveProperties::on_tabWidget_currentChanged(int index)
 {
-   setPlotCurveComboBoxes();
+   updateGuiPlotCurveInfo();
    int tab = ui->tabWidget->currentIndex();
    if(tab == TAB_CREATE_MATH)
    {

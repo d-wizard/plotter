@@ -63,8 +63,8 @@ public:
 
     void showHidePlotGui(QString plotName);
 
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis yAxis); // 1D
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveAxis xAxis, tParentCurveAxis yAxis); // 2D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis yAxis); // 1D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis xAxis, tPlotCurveAxis yAxis); // 2D
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
 private:

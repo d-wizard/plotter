@@ -109,7 +109,7 @@ typedef struct
    QString plotName;
    QString curveName;
    eAxis axis;
-}tParentCurveAxis;
+}tPlotCurveAxis;
 
 
 #endif
