@@ -44,6 +44,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_mathSrcCmbText("")
 {
    ui->setupUi(this);
+   ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
    updateGuiPlotCurveInfo(plotName, curveName);
 }
