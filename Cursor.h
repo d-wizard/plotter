@@ -93,6 +93,10 @@ public:
             // convert input position to actual X position.
             tLinear inXtoPlotX = m_parentCurve->getLinearXAxisCorrection();
             minPointIndex = (int)( ((pos.x() * inXtoPlotX.m) + inXtoPlotX.b) + 0.5);
+            if(minPointIndex < 0)
+                minPointIndex = 0;
+            else if(minPointIndex >= (int)m_parentCurve->getNumPoints())
+                minPointIndex = m_parentCurve->getNumPoints() - 1;
         }
 
         double xDelta = fabs(xPoints[minPointIndex] - xPos)*inverseWidth;
