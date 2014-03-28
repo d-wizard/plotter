@@ -108,6 +108,9 @@ void CurveData::init()
    sampleRate = 0.0;
    sampleRateIsUserSpecified = false;
 
+   linearXAxisCorrection.m = 1.0;
+   linearXAxisCorrection.b = 0.0;
+
    resetNormalizeFactor();
 }
 
@@ -246,8 +249,9 @@ void CurveData::detach()
 void CurveData::findMaxMin()
 {
    int vectSize = yPoints.size();
-   if(plotDim == E_PLOT_DIM_1D)
+   if(plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT)
    {
+      // X points will be in order, use the first/last values for min/max.
       maxMin.minX = xPoints[0];
       maxMin.maxX = xPoints[vectSize-1];
       maxMin.minY = yPoints[0];
@@ -265,8 +269,9 @@ void CurveData::findMaxMin()
          }
       }
    }
-   else if(plotDim == E_PLOT_DIM_2D)
+   else
    {
+      // X Points may not be in order, loop through all x points to find min/max.
       maxMin.minX = xPoints[0];
       maxMin.maxX = xPoints[0];
       maxMin.minY = yPoints[0];
@@ -502,6 +507,14 @@ void CurveData::performMathOnPoints()
 {
    xPoints = xOrigPoints;
    yPoints = yOrigPoints;
+
+   if(plotDim == E_PLOT_DIM_1D)
+   // calculate linear conversion from 1D (xMin .. xMax) to (0 .. NumSamples-1)
+   {
+       findMaxMin();
+       linearXAxisCorrection.m = ((double)(numPoints - 1)) / (maxMin.maxX - maxMin.minX);
+       linearXAxisCorrection.b = -linearXAxisCorrection.m * maxMin.minX;
+   }
 }
 
 

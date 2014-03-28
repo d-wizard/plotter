@@ -74,6 +74,8 @@ public:
    bool setSampleRate(double inSampleRate, bool userSpecified);
    double getSampleRate(){return sampleRate;}
 
+   tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
+
    QLabel* pointLabel;
    QAction* curveAction;
    QSignalMapper* mapper;
@@ -115,6 +117,8 @@ private:
    double sampleRate;
    double samplePeriod;
    bool sampleRateIsUserSpecified;
+
+   tLinear linearXAxisCorrection;
 };
 
 #endif

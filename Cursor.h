@@ -89,8 +89,10 @@ public:
 
         if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
         {
-            // Since 1D plot, assume the X position the user selected is close to the curve
-            minPointIndex = (int)(pos.x() + 0.5);
+            // Since 1D plot, assume the X position the user selected is close to the curve,
+            // convert input position to actual X position.
+            tLinear inXtoPlotX = m_parentCurve->getLinearXAxisCorrection();
+            minPointIndex = (int)( ((pos.x() * inXtoPlotX.m) + inXtoPlotX.b) + 0.5);
         }
 
         double xDelta = fabs(xPoints[minPointIndex] - xPos)*inverseWidth;
