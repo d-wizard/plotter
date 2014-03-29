@@ -34,6 +34,26 @@ const int CREATE_CHILD_CURVE_COMBO_2D    = E_PLOT_TYPE_2D;
 const int CREATE_CHILD_CURVE_FFT_REAL    = E_PLOT_TYPE_REAL_FFT;
 const int CREATE_CHILD_CURVE_FFT_COMPLEX = E_PLOT_TYPE_COMPLEX_FFT;
 
+#define NUM_MATH_OPS (7)
+const QString mathOpsStr[NUM_MATH_OPS] = {
+"ADD",
+"SUBTRACT",
+"MUTIPLY",
+"DIVIDE",
+"SHIFT UP",
+"SHIFT DOWN",
+"LOG()"};
+
+const QString mathOpsSymbol[NUM_MATH_OPS] = {
+"+",
+"-",
+"*",
+"/",
+"<<",
+">>",
+"log"};
+
+
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
    ui(new Ui::curveProperties),
@@ -41,12 +61,21 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_xAxisSrcCmbText(""),
    m_yAxisSrcCmbText(""),
    m_plotNameDestCmbText(""),
-   m_mathSrcCmbText("")
+   m_mathSrcCmbText(""),
+   m_selectedMathOpLeft(0),
+   m_selectedMathOpRight(0)
 {
    ui->setupUi(this);
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
    updateGuiPlotCurveInfo(plotName, curveName);
+
+   for(int i = 0; i < NUM_MATH_OPS; ++i)
+   {
+      ui->availableOps->addItem(mathOpsStr[i]);
+   }
+   ui->availableOps->setCurrentRow(0);
+
 }
 
 curveProperties::~curveProperties()
@@ -336,4 +365,124 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
    setMathSampleRate();
+}
+
+void curveProperties::displayUserMathOp()
+{
+   ui->opsOnCurve->clear();
+
+   std::list<tOperation>::iterator iter;
+
+   for(iter = m_mathOps.begin(); iter != m_mathOps.end(); ++iter)
+   {
+      char number[50];
+      snprintf(number, sizeof(number), "%f", iter->num);
+      number[sizeof(number)-1] = 0;
+
+      QString displayStr = mathOpsSymbol[iter->op] + " " + QString(number);
+
+      if(iter->op == E_LOG)
+      {
+         displayStr = mathOpsSymbol[iter->op];
+      }
+
+      ui->opsOnCurve->addItem(displayStr);
+   }
+
+}
+
+void curveProperties::on_availableOps_currentRowChanged(int currentRow)
+{
+   if(currentRow >= 0)
+      m_selectedMathOpLeft = currentRow;
+}
+
+void curveProperties::on_opsOnCurve_currentRowChanged(int currentRow)
+{
+   if(currentRow >= 0)
+      m_selectedMathOpRight = currentRow;
+}
+
+void curveProperties::on_cmdOpRight_clicked()
+{
+   double number = atof(ui->txtNumber->text().toStdString().c_str());
+
+   if(number != 0.0)
+   {
+      tOperation newOp;
+
+      newOp.op = (eMathOp)m_selectedMathOpLeft;
+      newOp.num = number;
+
+      m_mathOps.push_back(newOp);
+
+      displayUserMathOp();
+   }
+}
+
+void curveProperties::on_cmdOpUp_clicked()
+{
+   if(m_selectedMathOpRight > 0)
+   {
+      std::list<tOperation>::iterator first;
+      std::list<tOperation>::iterator second = m_mathOps.begin();
+
+      for(int i = 0; i < (m_selectedMathOpRight - 1); ++i)
+         second++;
+      first = second;
+      second++;
+
+      std::iter_swap(first, second);
+      displayUserMathOp();
+
+      m_selectedMathOpRight--;
+      ui->opsOnCurve->setCurrentRow(m_selectedMathOpRight);
+   }
+}
+
+void curveProperties::on_cmdOpDown_clicked()
+{
+   if(m_selectedMathOpRight < (int)(m_mathOps.size()-1))
+   {
+      std::list<tOperation>::iterator first;
+      std::list<tOperation>::iterator second = m_mathOps.begin();
+
+      for(int i = 0; i < m_selectedMathOpRight; ++i)
+         second++;
+      first = second;
+      second++;
+
+      std::iter_swap(first, second);
+      displayUserMathOp();
+
+      m_selectedMathOpRight++;
+      ui->opsOnCurve->setCurrentRow(m_selectedMathOpRight);
+   }
+}
+
+void curveProperties::on_cmdOpDelete_clicked()
+{
+   int count = 0;
+   std::list<tOperation>::iterator iter;
+
+   for(iter = m_mathOps.begin(); iter != m_mathOps.end(); )
+   {
+      if(count == m_selectedMathOpRight)
+      {
+         m_mathOps.erase(iter++);
+         break;
+      }
+      else
+      {
+         ++iter;
+         ++count;
+      }
+   }
+
+   displayUserMathOp();
+   if(m_selectedMathOpRight >= (int)m_mathOps.size())
+   {
+      m_selectedMathOpRight = m_mathOps.size() - 1;
+      ui->opsOnCurve->setCurrentRow(m_selectedMathOpRight);
+   }
 }

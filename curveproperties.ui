@@ -224,6 +224,88 @@
       </rect>
      </property>
     </widget>
+    <widget class="QListWidget" name="availableOps">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>90</y>
+       <width>181</width>
+       <height>171</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QListWidget" name="opsOnCurve">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>90</y>
+       <width>181</width>
+       <height>171</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txtNumber">
+     <property name="geometry">
+      <rect>
+       <x>212</x>
+       <y>90</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cmdOpRight">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>140</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>---&gt;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cmdOpUp">
+     <property name="geometry">
+      <rect>
+       <x>540</x>
+       <y>90</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Up</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cmdOpDown">
+     <property name="geometry">
+      <rect>
+       <x>540</x>
+       <y>120</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Down</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cmdOpDelete">
+     <property name="geometry">
+      <rect>
+       <x>540</x>
+       <y>230</y>
+       <width>41</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Delete</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QPushButton" name="cmdApply">

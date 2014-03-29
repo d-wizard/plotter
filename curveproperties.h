@@ -21,7 +21,29 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <list>
 #include "PlotHelperTypes.h"
+
+
+
+typedef enum
+{
+   E_ADD,
+   E_SUBTRACT,
+   E_MULTIPLY,
+   E_DIVIDE,
+   E_SHIFT_UP,
+   E_SHIFT_DOWN,
+   E_LOG
+}eMathOp;
+
+typedef struct
+{
+   eMathOp op;
+   double num;
+}tOperation;
+
+
 
 namespace Ui {
 class curveProperties;
@@ -51,6 +73,18 @@ private slots:
 
    void on_cmbSrcCurve_math_currentIndexChanged(int index);
 
+   void on_availableOps_currentRowChanged(int currentRow);
+
+   void on_opsOnCurve_currentRowChanged(int currentRow);
+
+   void on_cmdOpRight_clicked();
+
+   void on_cmdOpUp_clicked();
+
+   void on_cmdOpDown_clicked();
+
+   void on_cmdOpDelete_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -62,6 +96,7 @@ private:
    tPlotCurveAxis getSelectedCurveInfo(QComboBox* cmbBox);
 
    void setMathSampleRate();
+   void displayUserMathOp();
 
    Ui::curveProperties *ui;
 
@@ -71,6 +106,12 @@ private:
    QString m_yAxisSrcCmbText;
    QString m_plotNameDestCmbText;
    QString m_mathSrcCmbText;
+
+   int m_selectedMathOpLeft;
+   int m_selectedMathOpRight;
+
+   std::list<tOperation> m_mathOps;
+
 };
 
 #endif // CURVEPROPERTIES_H
