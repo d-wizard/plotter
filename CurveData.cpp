@@ -504,7 +504,7 @@ bool CurveData::setSampleRate(double inSampleRate, bool userSpecified)
 }
 
 
-void CurveData::setCurveMath(tMathOpList& mathOpsIn, eAxis axis)
+void CurveData::setMathOps(tMathOpList& mathOpsIn, eAxis axis)
 {
    if(axis == E_X_AXIS)
       mathOpsXAxis = mathOpsIn;
@@ -514,6 +514,15 @@ void CurveData::setCurveMath(tMathOpList& mathOpsIn, eAxis axis)
    performMathOnPoints();
    findMaxMin();
    setCurveSamples();
+}
+
+
+tMathOpList CurveData::getMathOps(eAxis axis)
+{
+   if(axis == E_X_AXIS)
+      return mathOpsXAxis;
+   else
+      return mathOpsYAxis;
 }
 
 void CurveData::performMathOnPoints()

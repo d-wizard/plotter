@@ -410,7 +410,7 @@ void MainWindow::setCurveMath(QString curveName, eAxis axis, tMathOpList& mathOp
    int curveIndex = findMatchingCurve(curveName);
    if(curveIndex >= 0)
    {
-      m_qwtCurves[curveIndex]->setCurveMath(mathOps, axis);
+      m_qwtCurves[curveIndex]->setMathOps(mathOps, axis);
       handleCurveDataChange(curveIndex);
    }
 }

@@ -327,6 +327,7 @@ tPlotCurveAxis curveProperties::getSelectedCurveInfo(QComboBox *cmbBox)
 
 void curveProperties::on_cmdDone_clicked()
 {
+   on_cmdApply_clicked();
    m_curveCmdr->curvePropertiesGuiClose();
 }
 
@@ -360,12 +361,26 @@ void curveProperties::on_tabWidget_currentChanged(int index)
    {
       setMathSampleRate();
    }
+   setUserMathFromSrc();
+   displayUserMathOp();
 
 }
 
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
    setMathSampleRate();
+   setUserMathFromSrc();
+   displayUserMathOp();
+}
+
+void curveProperties::setUserMathFromSrc()
+{
+   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+   CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+   if(curve != NULL)
+   {
+      m_mathOps = curve->getMathOps(curveInfo.axis);
+   }
 }
 
 void curveProperties::displayUserMathOp()
@@ -408,7 +423,7 @@ void curveProperties::on_cmdOpRight_clicked()
 {
    double number = atof(ui->txtNumber->text().toStdString().c_str());
 
-   if(number != 0.0)
+   if(number != 0.0 || m_selectedMathOpLeft == E_LOG)
    {
       tOperation newOp;
 

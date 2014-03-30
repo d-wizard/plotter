@@ -76,9 +76,11 @@ public:
    bool setSampleRate(double inSampleRate, bool userSpecified);
    double getSampleRate(){return sampleRate;}
 
-   void setCurveMath(tMathOpList& mathOpsIn, eAxis axis);
+   void setMathOps(tMathOpList& mathOpsIn, eAxis axis);
+   tMathOpList getMathOps(eAxis axis);
 
    tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
+
 
    QLabel* pointLabel;
    QAction* curveAction;

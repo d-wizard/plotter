@@ -76,6 +76,7 @@ private:
 
    void setMathSampleRate();
    void displayUserMathOp();
+   void setUserMathFromSrc();
 
    Ui::curveProperties *ui;
 
