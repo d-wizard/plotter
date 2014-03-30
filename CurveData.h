@@ -19,6 +19,8 @@
 #ifndef CurveData_h
 #define CurveData_h
 
+#include <list>
+
 #include <QLabel>
 #include <QSignalMapper>
 #include <QAction>
@@ -74,6 +76,8 @@ public:
    bool setSampleRate(double inSampleRate, bool userSpecified);
    double getSampleRate(){return sampleRate;}
 
+   void setCurveMath(tMathOpList& mathOpsIn, eAxis axis);
+
    tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
 
    QLabel* pointLabel;
@@ -92,6 +96,7 @@ private:
    void initCurve();
 
    void performMathOnPoints();
+   void doMathOnCurve(dubVect& data, tMathOpList& mathOp);
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
@@ -119,6 +124,9 @@ private:
    bool sampleRateIsUserSpecified;
 
    tLinear linearXAxisCorrection;
+
+   tMathOpList mathOpsXAxis;
+   tMathOpList mathOpsYAxis;
 };
 
 #endif

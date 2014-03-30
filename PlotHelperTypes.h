@@ -112,5 +112,24 @@ typedef struct
 }tPlotCurveAxis;
 
 
+typedef enum
+{
+   E_ADD,
+   E_SUBTRACT,
+   E_MULTIPLY,
+   E_DIVIDE,
+   E_SHIFT_UP,
+   E_SHIFT_DOWN,
+   E_LOG
+}eMathOp;
+
+typedef struct
+{
+   eMathOp op;
+   double num;
+}tOperation;
+
+typedef std::list<tOperation> tMathOpList;
+
 #endif
 

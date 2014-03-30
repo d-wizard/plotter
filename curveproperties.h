@@ -24,27 +24,6 @@
 #include <list>
 #include "PlotHelperTypes.h"
 
-
-
-typedef enum
-{
-   E_ADD,
-   E_SUBTRACT,
-   E_MULTIPLY,
-   E_DIVIDE,
-   E_SHIFT_UP,
-   E_SHIFT_DOWN,
-   E_LOG
-}eMathOp;
-
-typedef struct
-{
-   eMathOp op;
-   double num;
-}tOperation;
-
-
-
 namespace Ui {
 class curveProperties;
 }
@@ -110,7 +89,7 @@ private:
    int m_selectedMathOpLeft;
    int m_selectedMathOpRight;
 
-   std::list<tOperation> m_mathOps;
+   tMathOpList m_mathOps;
 
 };
 

@@ -21,6 +21,7 @@
 
 #include <QMainWindow>
 #include <string>
+#include <list>
 #include <math.h>
 
 #include <qwt_plot.h>
@@ -88,6 +89,8 @@ public:
     void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
 
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
+    void setCurveMath(QString curveName, eAxis axis, tMathOpList& mathOps);
+
 private:
     Ui::MainWindow *ui;
 

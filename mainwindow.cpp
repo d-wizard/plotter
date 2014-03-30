@@ -405,6 +405,16 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
    }
 }
 
+void MainWindow::setCurveMath(QString curveName, eAxis axis, tMathOpList& mathOps)
+{
+   int curveIndex = findMatchingCurve(curveName);
+   if(curveIndex >= 0)
+   {
+      m_qwtCurves[curveIndex]->setCurveMath(mathOps, axis);
+      handleCurveDataChange(curveIndex);
+   }
+}
+
 void MainWindow::createUpdateCurve( QString& name,
                                     bool resetCurve,
                                     unsigned int sampleStartIndex,

@@ -503,10 +503,26 @@ bool CurveData::setSampleRate(double inSampleRate, bool userSpecified)
    return changed;
 }
 
+
+void CurveData::setCurveMath(tMathOpList& mathOpsIn, eAxis axis)
+{
+   if(axis == E_X_AXIS)
+      mathOpsXAxis = mathOpsIn;
+   else
+      mathOpsYAxis = mathOpsIn;
+
+   performMathOnPoints();
+   findMaxMin();
+   setCurveSamples();
+}
+
 void CurveData::performMathOnPoints()
 {
    xPoints = xOrigPoints;
    yPoints = yOrigPoints;
+
+   doMathOnCurve(xPoints, mathOpsXAxis);
+   doMathOnCurve(yPoints, mathOpsYAxis);
 
    if(plotDim == E_PLOT_DIM_1D)
    // calculate linear conversion from 1D (xMin .. xMax) to (0 .. NumSamples-1)
@@ -517,5 +533,62 @@ void CurveData::performMathOnPoints()
    }
 }
 
+void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
+{
+   if(mathOp.size() > 0)
+   {
+      dubVect::iterator dataIter;
+      tMathOpList::iterator mathIter;
+      for(dataIter = data.begin(); dataIter != data.end(); ++dataIter)
+      {
+         for(mathIter = mathOp.begin(); mathIter != mathOp.end(); ++mathIter)
+         {
+            switch(mathIter->op)
+            {
+               case E_ADD:
+                  (*dataIter) += mathIter->num;
+               break;
+               case E_SUBTRACT:
+                  (*dataIter) -= mathIter->num;
+               break;
+               case E_MULTIPLY:
+                  (*dataIter) *= mathIter->num;
+               break;
+               case E_DIVIDE:
+                  (*dataIter) /= mathIter->num;
+               break;
+               case E_SHIFT_UP:
+               {
+                  // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
+                  double shiftVal = 0.0;
+                  short* shiftValPtr = ((short*)&shiftVal)+3; // point to 16 MSBs of 64 bit double
 
+                  // 1023 offset, value of 1023 = shift of 0
+                  int shiftInt = mathIter->num + 1023;
+                  shiftValPtr[0] = (shiftInt << 4) & (0x7FF0);
+
+                  (*dataIter) *= shiftVal;
+               }
+               break;
+               case E_SHIFT_DOWN:
+               {
+                  // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
+                  double shiftVal = 0.0;
+                  short* shiftValPtr = ((short*)&shiftVal)+3; // point to 16 MSBs of 64 bit double
+
+                  // 1023 offset, value of 1023 = shift of 0
+                  int shiftInt = 1023 - mathIter->num;
+                  shiftValPtr[0] = (shiftInt << 4) & (0x7FF0);
+
+                  (*dataIter) *= shiftVal;
+               }
+               break;
+               case E_LOG:
+                  (*dataIter) = log((*dataIter));
+               break;
+            }
+         }
+      }
+   }
+}
 

@@ -286,6 +286,7 @@ void curveProperties::on_cmdApply_clicked()
          if(parentPlotGui != NULL)
          {
             parentPlotGui->setCurveSampleRate(curve.curveName, sampleRate, true);
+            parentPlotGui->setCurveMath(curve.curveName, curve.axis, m_mathOps);
          }
       }
    }
@@ -371,7 +372,7 @@ void curveProperties::displayUserMathOp()
 {
    ui->opsOnCurve->clear();
 
-   std::list<tOperation>::iterator iter;
+   tMathOpList::iterator iter;
 
    for(iter = m_mathOps.begin(); iter != m_mathOps.end(); ++iter)
    {
@@ -424,8 +425,8 @@ void curveProperties::on_cmdOpUp_clicked()
 {
    if(m_selectedMathOpRight > 0)
    {
-      std::list<tOperation>::iterator first;
-      std::list<tOperation>::iterator second = m_mathOps.begin();
+      tMathOpList::iterator first;
+      tMathOpList::iterator second = m_mathOps.begin();
 
       for(int i = 0; i < (m_selectedMathOpRight - 1); ++i)
          second++;
@@ -444,8 +445,8 @@ void curveProperties::on_cmdOpDown_clicked()
 {
    if(m_selectedMathOpRight < (int)(m_mathOps.size()-1))
    {
-      std::list<tOperation>::iterator first;
-      std::list<tOperation>::iterator second = m_mathOps.begin();
+      tMathOpList::iterator first;
+      tMathOpList::iterator second = m_mathOps.begin();
 
       for(int i = 0; i < m_selectedMathOpRight; ++i)
          second++;
@@ -463,7 +464,7 @@ void curveProperties::on_cmdOpDown_clicked()
 void curveProperties::on_cmdOpDelete_clicked()
 {
    int count = 0;
-   std::list<tOperation>::iterator iter;
+   tMathOpList::iterator iter;
 
    for(iter = m_mathOps.begin(); iter != m_mathOps.end(); )
    {
