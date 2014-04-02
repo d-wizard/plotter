@@ -89,7 +89,8 @@ public:
     void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
 
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
-    void setCurveMath(QString curveName, eAxis axis, tMathOpList& mathOps);
+
+    void setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden);
 
 private:
     Ui::MainWindow *ui;

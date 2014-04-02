@@ -60,6 +60,7 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    else
    {
       notifyChildCurvesOfParentChange(plotName, curveName);
+      showHidePlotGui(plotName);
    }
 }
 
@@ -192,7 +193,7 @@ void CurveCommander::showHidePlotGui(QString plotName)
    {
       foreach( QString key, m_allCurves[plotName].curves.keys() )
       {
-         if(m_allCurves[plotName].curves[key]->hidden == false)
+         if(m_allCurves[plotName].curves[key]->getHidden() == false)
          {
             allHidden = false;
             break;

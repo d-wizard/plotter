@@ -325,7 +325,7 @@ void MainWindow::updateCursorMenus()
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
-        if(m_qwtCurves[i]->hidden == false)
+        if(m_qwtCurves[i]->getHidden() == false)
         {
             if(m_qwtCurves[i]->isDisplayed())
             {
@@ -405,13 +405,21 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
    }
 }
 
-void MainWindow::setCurveMath(QString curveName, eAxis axis, tMathOpList& mathOps)
+
+void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden)
 {
    int curveIndex = findMatchingCurve(curveName);
    if(curveIndex >= 0)
    {
-      m_qwtCurves[curveIndex]->setMathOps(mathOps, axis);
-      handleCurveDataChange(curveIndex);
+      bool curveChanged = false;
+      curveChanged |= m_qwtCurves[curveIndex]->setSampleRate(sampleRate, true);
+      curveChanged |= m_qwtCurves[curveIndex]->setMathOps(mathOps, axis);
+      curveChanged |= m_qwtCurves[curveIndex]->setHidden(hidden);
+
+      if(curveChanged)
+      {
+         handleCurveDataChange(curveIndex);
+      }
    }
 }
 
@@ -608,6 +616,7 @@ void MainWindow::normalizeCurves()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
+    // Toggle the curve that was clicked.
     if(m_qwtCurves[index]->isDisplayed())
     {
         m_qwtCurves[index]->detach();

@@ -285,8 +285,8 @@ void curveProperties::on_cmdApply_clicked()
          MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(curve.plotName);
          if(parentPlotGui != NULL)
          {
-            parentPlotGui->setCurveSampleRate(curve.curveName, sampleRate, true);
-            parentPlotGui->setCurveMath(curve.curveName, curve.axis, m_mathOps);
+            bool curveHidden = ui->chkHideCurve->checkState() == Qt::Checked;
+            parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps, curveHidden);
          }
       }
    }
@@ -341,10 +341,8 @@ void curveProperties::closeEvent(QCloseEvent* /*event*/)
    m_curveCmdr->curvePropertiesGuiClose();
 }
 
-void curveProperties::setMathSampleRate()
+void curveProperties::setMathSampleRate(CurveData* curve)
 {
-   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
-   CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
    if(curve != NULL)
    {
       char sampleRate[50];
@@ -359,27 +357,41 @@ void curveProperties::on_tabWidget_currentChanged(int index)
    int tab = ui->tabWidget->currentIndex();
    if(tab == TAB_CREATE_MATH)
    {
-      setMathSampleRate();
+      tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+      CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+
+      setMathSampleRate(curve);
+      setUserMathFromSrc(curveInfo, curve);
+      setCurveHiddenCheckBox(curve);
+      displayUserMathOp();
    }
-   setUserMathFromSrc();
-   displayUserMathOp();
 
 }
 
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
-   setMathSampleRate();
-   setUserMathFromSrc();
+   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+   CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+
+   setMathSampleRate(curve);
+   setUserMathFromSrc(curveInfo, curve);
+   setCurveHiddenCheckBox(curve);
    displayUserMathOp();
 }
 
-void curveProperties::setUserMathFromSrc()
+void curveProperties::setUserMathFromSrc(tPlotCurveAxis &curveInfo, CurveData* curve)
 {
-   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
-   CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
    if(curve != NULL)
    {
       m_mathOps = curve->getMathOps(curveInfo.axis);
+   }
+}
+
+void curveProperties::setCurveHiddenCheckBox(CurveData* curve)
+{
+   if(curve != NULL)
+   {
+      ui->chkHideCurve->setChecked(curve->getHidden());
    }
 }
 

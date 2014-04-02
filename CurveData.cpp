@@ -504,16 +504,47 @@ bool CurveData::setSampleRate(double inSampleRate, bool userSpecified)
 }
 
 
-void CurveData::setMathOps(tMathOpList& mathOpsIn, eAxis axis)
+bool CurveData::setMathOps(tMathOpList& mathOpsIn, eAxis axis)
 {
+   bool changed = false;
+   tMathOpList* axisMathOps;
    if(axis == E_X_AXIS)
-      mathOpsXAxis = mathOpsIn;
+      axisMathOps = &mathOpsXAxis;
    else
-      mathOpsYAxis = mathOpsIn;
+      axisMathOps = &mathOpsYAxis;
 
-   performMathOnPoints();
-   findMaxMin();
-   setCurveSamples();
+   if(mathOpsIn.size() == axisMathOps->size())
+   {
+      tMathOpList::iterator inIter = mathOpsIn.begin();
+      tMathOpList::iterator thisIter = axisMathOps->begin();
+
+      // Check if the input and destination are the same.
+      while(changed == false && inIter != mathOpsIn.end() && thisIter != axisMathOps->end())
+      {
+         if(inIter->op != thisIter->op || inIter->num != thisIter->num)
+         {
+            changed = true;
+         }
+         else
+         {
+            ++inIter;
+            ++thisIter;
+         }
+      }
+   }
+   else
+   {
+      changed = true;
+   }
+
+   if(changed)
+   {
+      *axisMathOps = mathOpsIn;
+      performMathOnPoints();
+      findMaxMin();
+      setCurveSamples();
+   }
+   return changed;
 }
 
 
@@ -599,5 +630,26 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
          }
       }
    }
+}
+
+
+bool CurveData::setHidden(bool isHidden)
+{
+   bool changed = false;
+   if(isHidden != hidden)
+   {
+      if(isHidden && displayed)
+      {
+         curve->detach();
+         changed = true;
+      }
+      else if(!isHidden && displayed)
+      {
+         curve->attach(m_parentPlot);
+         changed = true;
+      }
+      hidden = isHidden;
+   }
+   return changed;
 }
 

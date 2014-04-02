@@ -306,6 +306,19 @@
       <string>Delete</string>
      </property>
     </widget>
+    <widget class="QCheckBox" name="chkHideCurve">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>10</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Hide Curve</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QPushButton" name="cmdApply">

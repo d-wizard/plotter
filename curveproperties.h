@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <list>
 #include "PlotHelperTypes.h"
+#include "CurveData.h"
 
 namespace Ui {
 class curveProperties;
@@ -74,9 +75,10 @@ private:
 
    tPlotCurveAxis getSelectedCurveInfo(QComboBox* cmbBox);
 
-   void setMathSampleRate();
+   void setMathSampleRate(CurveData *curve);
    void displayUserMathOp();
-   void setUserMathFromSrc();
+   void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
+   void setCurveHiddenCheckBox(CurveData* curve);
 
    Ui::curveProperties *ui;
 

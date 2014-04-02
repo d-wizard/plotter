@@ -76,20 +76,18 @@ public:
    bool setSampleRate(double inSampleRate, bool userSpecified);
    double getSampleRate(){return sampleRate;}
 
-   void setMathOps(tMathOpList& mathOpsIn, eAxis axis);
+   bool setMathOps(tMathOpList& mathOpsIn, eAxis axis);
    tMathOpList getMathOps(eAxis axis);
 
    tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
 
+   bool getHidden(){return hidden;}
+   bool setHidden(bool isHidden);
 
    QLabel* pointLabel;
    QAction* curveAction;
    QSignalMapper* mapper;
 
-   // Indicates whether the curve is avaiable to be displayed.
-   // If true, it is probably some other curve's parent.
-   // If a plot has no non-hidden curves, its GUI window will not be displayed.
-   bool hidden;
 private:
    CurveData();
    void init();
@@ -110,6 +108,11 @@ private:
    QwtPlotCurve* curve;
    unsigned int numPoints;
    bool displayed; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
+
+   // Indicates whether the curve is avaiable to be displayed.
+   // If true, it is probably some other curve's parent.
+   // If a plot has no non-hidden curves, its GUI window will not be displayed.
+   bool hidden;
 
    // Normalize parameters
    tLinearXYAxis normFactor;
