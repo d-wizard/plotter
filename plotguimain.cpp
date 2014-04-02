@@ -34,6 +34,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_trayIcon(NULL),
     m_trayExitAction("Exit", this),
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
+    m_propertiesWindowAction("Properties", this),
     m_trayMenu(NULL),
     m_curveCommander(this),
     m_allowNewCurves(true)
@@ -106,10 +107,13 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
+    connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
 
     m_trayMenu = new QMenu("Plot", this);
 
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_propertiesWindowAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayExitAction);
 
@@ -211,6 +215,10 @@ void plotGuiMain::enDisNewCurves()
    }
 }
 
+void plotGuiMain::showPropertiesGui()
+{
+   m_curveCommander.showCurvePropertiesGui();
+}
 
 void plotGuiMain::plotWindowClose(QString plotName)
 {

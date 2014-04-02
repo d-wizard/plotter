@@ -67,6 +67,7 @@ private:
     QSystemTrayIcon* m_trayIcon;
     QAction m_trayExitAction;
     QAction m_trayEnDisNewCurvesAction;
+    QAction m_propertiesWindowAction;
     QMenu* m_trayMenu;
 
     QSemaphore m_sem;
@@ -80,6 +81,7 @@ private:
 public slots:
     void readPlotMsgSlot(const char *msg, unsigned int size);
     void enDisNewCurves();
+    void showPropertiesGui();
     void closeAllPlotsSlot();
 
 signals:
