@@ -245,35 +245,38 @@ void curveProperties::on_cmdApply_clicked()
       QString newChildPlotName = ui->cmbDestPlotName->currentText();
       QString newChildCurveName = ui->txtDestCurveName->text();
 
-      if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
+      if(newChildPlotName != "" && newChildCurveName != "")
       {
-         // New Child Plot/Curve does not exist, continue creating the child curve.
-         ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
-         if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
+         if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
          {
-            m_curveCmdr->createChildCurve( newChildPlotName,
-                                           newChildCurveName,
-                                           plotType,
-                                           getSelectedCurveInfo(ui->cmbYAxisSrc));
+            // New Child Plot/Curve does not exist, continue creating the child curve.
+            ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+            if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
+            {
+               m_curveCmdr->createChildCurve( newChildPlotName,
+                                              newChildCurveName,
+                                              plotType,
+                                              getSelectedCurveInfo(ui->cmbYAxisSrc));
+            }
+            else
+            {
+               m_curveCmdr->createChildCurve( newChildPlotName,
+                                              newChildCurveName,
+                                              plotType,
+                                              getSelectedCurveInfo(ui->cmbXAxisSrc),
+                                              getSelectedCurveInfo(ui->cmbYAxisSrc));
+            }
          }
          else
          {
-            m_curveCmdr->createChildCurve( newChildPlotName,
-                                           newChildCurveName,
-                                           plotType,
-                                           getSelectedCurveInfo(ui->cmbXAxisSrc),
-                                           getSelectedCurveInfo(ui->cmbYAxisSrc));
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Curve Already Exists");
+            msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another Plot/Curve name.");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
          }
-      }
-      else
-      {
-         QMessageBox msgBox;
-         msgBox.setWindowTitle("Curve Already Exists");
-         msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another Plot/Curve name.");
-         msgBox.setStandardButtons(QMessageBox::Ok);
-         msgBox.setDefaultButton(QMessageBox::Ok);
-         msgBox.exec();
-      }
+      } // End if(newChildPlotName != "" && newChildCurveName != "")
    }
    else if(tab == TAB_CREATE_MATH)
    {
