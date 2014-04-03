@@ -600,27 +600,21 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                case E_SHIFT_UP:
                {
                   // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                  double shiftVal = 0.0;
-                  short* shiftValPtr = ((short*)&shiftVal)+3; // point to 16 MSBs of 64 bit double
+                  short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
 
-                  // 1023 offset, value of 1023 = shift of 0
-                  int shiftInt = mathIter->num + 1023;
-                  shiftValPtr[0] = (shiftInt << 4) & (0x7FF0);
-
-                  (*dataIter) *= shiftVal;
+                  short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
+                  curExponent += (short)mathIter->num;
+                  *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
                }
                break;
                case E_SHIFT_DOWN:
                {
                   // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                  double shiftVal = 0.0;
-                  short* shiftValPtr = ((short*)&shiftVal)+3; // point to 16 MSBs of 64 bit double
+                  short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
 
-                  // 1023 offset, value of 1023 = shift of 0
-                  int shiftInt = 1023 - mathIter->num;
-                  shiftValPtr[0] = (shiftInt << 4) & (0x7FF0);
-
-                  (*dataIter) *= shiftVal;
+                  short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
+                  curExponent -= (short)mathIter->num;
+                  *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
                }
                break;
                case E_LOG:
