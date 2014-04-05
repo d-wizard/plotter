@@ -119,7 +119,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addAction(&m_toggleLegendAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
-    m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
+    m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
