@@ -74,6 +74,9 @@ public:
    tQMenuActionMapper(QString actionStr, QObject* _this):
       m_action(actionStr, _this),
       m_mapper(_this){}
+   tQMenuActionMapper(QIcon actionIcon, QString actionStr, QObject* _this):
+      m_action(actionIcon, actionStr, _this),
+      m_mapper(_this){}
     QAction m_action;
     QSignalMapper m_mapper;
 private:
@@ -86,6 +89,9 @@ class curveStyleMenuActionMapper
 public:
    curveStyleMenuActionMapper(QwtPlotCurve::CurveStyle style, QString title, QObject* _this):
       m_qmam(title, _this),
+      m_style(style){}
+   curveStyleMenuActionMapper(QIcon actionIcon, QwtPlotCurve::CurveStyle style, QString title, QObject* _this):
+      m_qmam(actionIcon, title, _this),
       m_style(style){}
    tQMenuActionMapper m_qmam;
    QwtPlotCurve::CurveStyle m_style;
@@ -232,6 +238,7 @@ private:
 
 
     void setCurveStyleMenu();
+    void setCurveStyleMenuIcons();
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);

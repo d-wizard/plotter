@@ -1245,15 +1245,19 @@ void MainWindow::setCurveStyleMenu()
    m_stylesCurvesMenu.clear();
    m_curveLineMenu.clear();
 
-   int curveIndex = 0;
    int callbackVal = 0;
 
-   for(QList<CurveData*>::iterator iter = m_qwtCurves.begin(); iter != m_qwtCurves.end(); ++iter)
+   // curveIndex == -1 indicates All Curves
+   for(int curveIndex = -1; curveIndex < m_qwtCurves.size(); ++curveIndex)
    {
-      if((*iter)->isDisplayed())
+      if( (curveIndex >= 0 && m_qwtCurves[curveIndex]->isDisplayed()) || curveIndex < 0)
       {
-         //QList< QSharedPointer< curveStyleMenu> > m_curveLineMenu;
-         m_curveLineMenu.push_back( QSharedPointer<curveStyleMenu>(new curveStyleMenu((*iter)->getCurveTitle(), this)) );
+         if(curveIndex >= 0)
+            m_curveLineMenu.push_back( QSharedPointer<curveStyleMenu>(new curveStyleMenu(m_qwtCurves[curveIndex]->getCurveTitle(), this)) );
+         else
+            // Set all curves to this Curve Style
+            m_curveLineMenu.push_back( QSharedPointer<curveStyleMenu>(new curveStyleMenu("All Curves", this)) );
+
 
          // TODO: must be a better way to get the last element of a list.
          QList<QSharedPointer<curveStyleMenu> >::iterator newMenuItem = m_curveLineMenu.end();
@@ -1276,9 +1280,41 @@ void MainWindow::setCurveStyleMenu()
             (*newMenuItem)->m_menu.addAction(&(*mapIter)->m_qmam.m_action);
             connect( &(*mapIter)->m_qmam.m_mapper, SIGNAL(mapped(int)), SLOT(changeCurveStyle(int)) );
 
+            // When curveIndex equals -1, we are dealing with All Curves.
+            setCurveStyleMenuIcons();
 
          }
 
+      }
+   }
+}
+void MainWindow::setCurveStyleMenuIcons()
+{
+   // curveIndex == -1 indicates All Curves
+   int curveIndex = -1;
+   for( QList<QSharedPointer<curveStyleMenu> >::iterator menuItem = m_curveLineMenu.begin();
+        menuItem != m_curveLineMenu.end();
+        ++menuItem )
+   {
+      if(curveIndex == -1)
+      {
+         for(int i = 0; i < (*menuItem)->m_actionMapper.size(); ++i)
+         {
+            if((*menuItem)->m_actionMapper[i]->m_style == m_defaultCurveStyle)
+               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(m_checkedIcon);
+            else
+               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon());
+         }
+      }
+      else if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+      {
+         for(int i = 0; i < (*menuItem)->m_actionMapper.size(); ++i)
+         {
+            if((*menuItem)->m_actionMapper[i]->m_style == m_qwtCurves[curveIndex]->getStyle())
+               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(m_checkedIcon);
+            else
+               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon());
+         }
       }
       ++curveIndex;
    }
@@ -1291,18 +1327,15 @@ void MainWindow::changeCurveStyle(int inVal)
 
    if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
    {
-      switch(curveStyle)
+      m_qwtCurves[curveIndex]->setCurveAppearance(CurveAppearance(m_qwtCurves[curveIndex]->getColor(), curveStyle));
+   }
+   else if(curveIndex == -1)
+   {
+      m_defaultCurveStyle = curveStyle;
+      for(curveIndex = 0; curveIndex < m_qwtCurves.size(); ++curveIndex)
       {
-      case QwtPlotCurve::NoCurve:
-      case QwtPlotCurve::Sticks:
-      case QwtPlotCurve::Steps:
-      case QwtPlotCurve::UserCurve:
-      case QwtPlotCurve::Lines:
-      case QwtPlotCurve::Dots:
-         m_qwtCurves[curveIndex]->setCurveAppearance(CurveAppearance(m_qwtCurves[curveIndex]->getColor(), curveStyle));
-         break;
-      default:
-         break;
+         m_qwtCurves[curveIndex]->setCurveAppearance(CurveAppearance(m_qwtCurves[curveIndex]->getColor(), m_defaultCurveStyle));
       }
    }
+   setCurveStyleMenuIcons();
 }

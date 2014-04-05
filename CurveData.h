@@ -62,6 +62,7 @@ public:
    void getXPoints(dubVect& ioXPoints);
    void getYPoints(dubVect& ioYPoints);
    QColor getColor();
+   QwtPlotCurve::CurveStyle getStyle(){return appearance.style;}
    ePlotDim getPlotDim();
    unsigned int getNumPoints();
    maxMinXY getMaxMinXYOfCurve();
