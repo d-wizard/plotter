@@ -23,12 +23,12 @@ CurveData::CurveData( QwtPlot *parentPlot,
                       const QString& curveName,
                       const ePlotType newPlotType,
                       const dubVect &newYPoints,
-                      const QColor &curveColor):
+                      const CurveAppearance &curveAppearance):
    m_parentPlot(parentPlot),
    yOrigPoints(newYPoints),
    plotDim(E_PLOT_DIM_1D),
    plotType(newPlotType),
-   color(curveColor),
+   appearance(curveAppearance),
    curve(new QwtPlotCurve(curveName))
 {
    init();
@@ -44,13 +44,13 @@ CurveData::CurveData( QwtPlot* parentPlot,
                       const QString& curveName,
                       const dubVect& newXPoints,
                       const dubVect& newYPoints,
-                      const QColor& curveColor):
+                      const CurveAppearance& curveAppearance):
    m_parentPlot(parentPlot),
    xOrigPoints(newXPoints),
    yOrigPoints(newYPoints),
    plotDim(E_PLOT_DIM_2D),
    plotType(E_PLOT_TYPE_2D),
-   color(curveColor),
+   appearance(curveAppearance),
    curve(new QwtPlotCurve(curveName))
 {
    init();
@@ -116,7 +116,8 @@ void CurveData::init()
 
 void CurveData::initCurve()
 {
-   curve->setPen(color);
+   curve->setPen(appearance.color);
+   curve->setStyle(appearance.style);
    setCurveSamples();
 }
 
@@ -190,7 +191,7 @@ void CurveData::getYPoints(dubVect& ioYPoints)
 
 QColor CurveData::getColor()
 {
-   return color;
+   return appearance.color;
 }
 
 ePlotDim CurveData::getPlotDim()
@@ -647,3 +648,10 @@ bool CurveData::setHidden(bool isHidden)
    return changed;
 }
 
+void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
+{
+   appearance = curveAppearance;
+   curve->setPen(appearance.color);
+   curve->setStyle(appearance.style);
+   m_parentPlot->replot();
+}

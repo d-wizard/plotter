@@ -30,6 +30,16 @@
 #include <qwt_plot_curve.h>
 #include "PlotHelperTypes.h"
 
+class CurveAppearance
+{
+public:
+   CurveAppearance(QColor initColor, QwtPlotCurve::CurveStyle initStyle):
+      color(initColor),
+      style(initStyle){}
+   QColor color;
+   QwtPlotCurve::CurveStyle style;
+};
+
 class CurveData
 {
 public:
@@ -37,13 +47,13 @@ public:
               const QString& curveName,
               const ePlotType newPlotType,
               const dubVect& newYPoints,
-              const QColor& curveColor);
+              const CurveAppearance& curveAppearance);
 
    CurveData( QwtPlot* parentPlot,
               const QString& curveName,
               const dubVect& newXPoints,
               const dubVect& newYPoints,
-              const QColor& curveColor);
+              const CurveAppearance& curveAppearance);
 
    ~CurveData();
 
@@ -84,6 +94,8 @@ public:
    bool getHidden(){return hidden;}
    bool setHidden(bool isHidden);
 
+   void setCurveAppearance(CurveAppearance curveAppearance);
+
    QLabel* pointLabel;
    QAction* curveAction;
    QSignalMapper* mapper;
@@ -104,7 +116,7 @@ private:
    maxMinXY maxMin;
    ePlotDim plotDim;
    ePlotType plotType;
-   QColor color;
+   CurveAppearance appearance;
    QwtPlotCurve* curve;
    unsigned int numPoints;
    bool displayed; // Indicates whether the user wants the curve to be displayed on the plot at the present time.

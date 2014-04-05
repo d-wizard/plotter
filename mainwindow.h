@@ -40,6 +40,7 @@
 #include <QAction>
 #include <QString>
 #include <QCursor>
+#include <QSharedPointer >
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -52,13 +53,6 @@
 class CurveCommander;
 class plotGuiMain;
 
-typedef struct
-{
-    QAction* action;
-    QSignalMapper* mapper;
-}tMenuActionMapper;
-
-
 
 typedef enum
 {
@@ -67,6 +61,62 @@ typedef enum
     E_ZOOM
 }eSelectMode;
 
+
+typedef struct
+{
+    QAction* action;
+    QSignalMapper* mapper;
+}tMenuActionMapper;
+
+class tQMenuActionMapper
+{
+public:
+   tQMenuActionMapper(QString actionStr, QObject* _this):
+      m_action(actionStr, _this),
+      m_mapper(_this){}
+    QAction m_action;
+    QSignalMapper m_mapper;
+private:
+   tQMenuActionMapper();
+};
+
+
+class curveStyleMenuActionMapper
+{
+public:
+   curveStyleMenuActionMapper(QwtPlotCurve::CurveStyle style, QString title, QObject* _this):
+      m_qmam(title, _this),
+      m_style(style){}
+   tQMenuActionMapper m_qmam;
+   QwtPlotCurve::CurveStyle m_style;
+private:
+   curveStyleMenuActionMapper();
+};
+
+class curveStyleMenu
+{
+public:
+   curveStyleMenu(QString menuStr, QObject* _this):
+      m_menu(menuStr)
+   {
+      m_actionMapper.push_back(new curveStyleMenuActionMapper(QwtPlotCurve::Lines, "Lines", _this));
+      m_actionMapper.push_back(new curveStyleMenuActionMapper(QwtPlotCurve::Dots, "Dots", _this));
+      m_actionMapper.push_back(new curveStyleMenuActionMapper(QwtPlotCurve::Sticks, "Sticks", _this));
+      m_actionMapper.push_back(new curveStyleMenuActionMapper(QwtPlotCurve::Steps, "Steps", _this));
+   }
+   ~curveStyleMenu()
+   {
+      for(int i = 0; i < m_actionMapper.size(); ++i)
+      {
+         delete m_actionMapper[i];
+      }
+   }
+
+   QMenu m_menu;
+   QVector<curveStyleMenuActionMapper*> m_actionMapper;
+private:
+   curveStyleMenu();
+};
 
 
 namespace Ui {
@@ -135,10 +185,14 @@ private:
     QMenu m_rightClickMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
+    QMenu m_stylesCurvesMenu;
 
     QAction m_enableDisablePlotUpdate;
 
     QAction m_curveProperties;
+
+    QwtPlotCurve::CurveStyle m_defaultCurveStyle;
+    QList< QSharedPointer< curveStyleMenu> > m_curveLineMenu;
 
     void createUpdateCurve( QString& name,
                             bool resetCurve,
@@ -176,6 +230,8 @@ private:
     void closeEvent(QCloseEvent* event);
     void resizeEvent(QResizeEvent* event);
 
+
+    void setCurveStyleMenu();
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -190,6 +246,8 @@ private slots:
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);
+
+    void changeCurveStyle(int inVal);
 
     void showCurveProperties();
     void togglePlotUpdateAbility();

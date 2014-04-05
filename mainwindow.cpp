@@ -59,8 +59,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_toggleLegendAction("Legend", this),
     m_selectedCurvesMenu("Selected Curve"),
     m_visibleCurvesMenu("Visible Curves"),
+    m_stylesCurvesMenu("Curve Style"),
     m_enableDisablePlotUpdate("Disable New Curves", this),
-    m_curveProperties("Properties", this)
+    m_curveProperties("Properties", this),
+    m_defaultCurveStyle(QwtPlotCurve::Lines)
 {
     ui->setupUi(this);
 
@@ -117,7 +119,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addAction(&m_toggleLegendAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
-    m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
+    m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
+
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
@@ -370,7 +375,7 @@ void MainWindow::updateCursorMenus()
         } // if(m_qwtCurves[i]->hidden == false)
 
     }
-
+    setCurveStyleMenu();
 }
 
 void MainWindow::create1dCurve(QString name, ePlotType plotType, dubVect &yPoints)
@@ -480,13 +485,15 @@ void MainWindow::createUpdateCurve( QString& name,
          yPoints->insert(yPoints->begin(), sampleStartIndex, 0.0);
       }
 
+      CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
+
       if(xPoints == NULL)
       {
-         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, plotType, *yPoints, curveColors[colorLookupIndex]));
+         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, plotType, *yPoints, newCurveAppearance));
       }
       else
       {
-         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, curveColors[colorLookupIndex]));
+         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, newCurveAppearance));
       }
    }
 
@@ -1233,3 +1240,69 @@ void MainWindow::resizeEvent(QResizeEvent* /*event*/)
 }
 
 
+void MainWindow::setCurveStyleMenu()
+{
+   m_stylesCurvesMenu.clear();
+   m_curveLineMenu.clear();
+
+   int curveIndex = 0;
+   int callbackVal = 0;
+
+   for(QList<CurveData*>::iterator iter = m_qwtCurves.begin(); iter != m_qwtCurves.end(); ++iter)
+   {
+      if((*iter)->isDisplayed())
+      {
+         //QList< QSharedPointer< curveStyleMenu> > m_curveLineMenu;
+         m_curveLineMenu.push_back( QSharedPointer<curveStyleMenu>(new curveStyleMenu((*iter)->getCurveTitle(), this)) );
+
+         // TODO: must be a better way to get the last element of a list.
+         QList<QSharedPointer<curveStyleMenu> >::iterator newMenuItem = m_curveLineMenu.end();
+         --newMenuItem;
+
+         m_stylesCurvesMenu.addMenu(&(*newMenuItem)->m_menu);
+
+
+         for( QVector<curveStyleMenuActionMapper*>::iterator mapIter = (*newMenuItem)->m_actionMapper.begin();
+              mapIter != (*newMenuItem)->m_actionMapper.end();
+              ++mapIter )
+         {
+
+            callbackVal = ((curveIndex << 16) & 0xffff0000) | ((*mapIter)->m_style & 0xffff);
+
+            (*mapIter)->m_qmam.m_mapper.setMapping(&(*mapIter)->m_qmam.m_action, callbackVal);
+            connect(&(*mapIter)->m_qmam.m_action,SIGNAL(triggered()),
+                          &(*mapIter)->m_qmam.m_mapper,SLOT(map()));
+
+            (*newMenuItem)->m_menu.addAction(&(*mapIter)->m_qmam.m_action);
+            connect( &(*mapIter)->m_qmam.m_mapper, SIGNAL(mapped(int)), SLOT(changeCurveStyle(int)) );
+
+
+         }
+
+      }
+      ++curveIndex;
+   }
+}
+
+void MainWindow::changeCurveStyle(int inVal)
+{
+   short curveIndex = (inVal >> 16) & 0xffff;
+   QwtPlotCurve::CurveStyle curveStyle = (QwtPlotCurve::CurveStyle)((inVal) & 0xffff);
+
+   if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+   {
+      switch(curveStyle)
+      {
+      case QwtPlotCurve::NoCurve:
+      case QwtPlotCurve::Sticks:
+      case QwtPlotCurve::Steps:
+      case QwtPlotCurve::UserCurve:
+      case QwtPlotCurve::Lines:
+      case QwtPlotCurve::Dots:
+         m_qwtCurves[curveIndex]->setCurveAppearance(CurveAppearance(m_qwtCurves[curveIndex]->getColor(), curveStyle));
+         break;
+      default:
+         break;
+      }
+   }
+}
