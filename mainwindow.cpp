@@ -1296,25 +1296,69 @@ void MainWindow::setCurveStyleMenuIcons()
         menuItem != m_curveLineMenu.end();
         ++menuItem )
    {
+      QwtPlotCurve::CurveStyle selectedCurveStyle = QwtPlotCurve::NoCurve;
       if(curveIndex == -1)
       {
-         for(int i = 0; i < (*menuItem)->m_actionMapper.size(); ++i)
-         {
-            if((*menuItem)->m_actionMapper[i]->m_style == m_defaultCurveStyle)
-               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(m_checkedIcon);
-            else
-               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon());
-         }
+         selectedCurveStyle = m_defaultCurveStyle;
       }
       else if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
       {
+         selectedCurveStyle = m_qwtCurves[curveIndex]->getStyle();
+      }
+
+      if(selectedCurveStyle != QwtPlotCurve::NoCurve)
+      {
          for(int i = 0; i < (*menuItem)->m_actionMapper.size(); ++i)
          {
-            if((*menuItem)->m_actionMapper[i]->m_style == m_qwtCurves[curveIndex]->getStyle())
-               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(m_checkedIcon);
+            if((*menuItem)->m_actionMapper[i]->m_style == selectedCurveStyle)
+            {
+               switch((*menuItem)->m_actionMapper[i]->m_style)
+               {
+                  case QwtPlotCurve::Lines:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/lines_selected.png"));
+                  break;
+                  case QwtPlotCurve::Dots:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/dots_selected.png"));
+                  break;
+                  case QwtPlotCurve::Sticks:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/sticks_selected.png"));
+                  break;
+                  case QwtPlotCurve::Steps:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/steps_selected.png"));
+                  break;
+                  case QwtPlotCurve::NoCurve:
+                  case QwtPlotCurve::UserCurve:
+                  default:
+                  break;
+               }
+            }
             else
-               (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon());
+            {
+               switch((*menuItem)->m_actionMapper[i]->m_style)
+               {
+                  case QwtPlotCurve::Lines:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/lines.png"));
+                  break;
+                  case QwtPlotCurve::Dots:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/dots.png"));
+                  break;
+                  case QwtPlotCurve::Sticks:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/sticks.png"));
+                  break;
+                  case QwtPlotCurve::Steps:
+                     (*menuItem)->m_actionMapper[i]->m_qmam.m_action.setIcon(QIcon(":/CurveStyleIcons/steps.png"));
+                  break;
+                  case QwtPlotCurve::NoCurve:
+                  case QwtPlotCurve::UserCurve:
+                  default:
+                  break;
+               }
+            }
          }
+      }
+      else
+      {
+         // Should probably be an error here.
       }
       ++curveIndex;
    }

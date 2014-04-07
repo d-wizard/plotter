@@ -1,7 +1,15 @@
- <!DOCTYPE RCC><RCC version="1.0">
- <qresource>
-    <file>./check.png</file>
-    <file>./zoomCursor.png</file>
-    <file>./plot.png</file>
- </qresource>
- </RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>check.png</file>
+        <file>zoomCursor.png</file>
+        <file>plot.png</file>
+        <file>CurveStyleIcons/dots_selected.png</file>
+        <file>CurveStyleIcons/lines.png</file>
+        <file>CurveStyleIcons/lines_selected.png</file>
+        <file>CurveStyleIcons/steps.png</file>
+        <file>CurveStyleIcons/steps_selected.png</file>
+        <file>CurveStyleIcons/sticks.png</file>
+        <file>CurveStyleIcons/sticks_selected.png</file>
+        <file>CurveStyleIcons/dots.png</file>
+    </qresource>
+</RCC>
