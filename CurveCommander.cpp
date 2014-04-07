@@ -294,6 +294,7 @@ void CurveCommander::showCurvePropertiesGui(QString plotName, QString curveName)
       m_curvePropGui = new curveProperties(this, plotName, curveName);
    }
    m_curvePropGui->show();
+   m_curvePropGui->raise();
 }
 
 
