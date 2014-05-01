@@ -32,7 +32,7 @@ namespace fso
    typedef std::list<tDirListing> tDirContents;
    
    std::string dirSep();
-   std::string dirSepToOS(std::string t_path);
+   std::string dirSepToOS(const std::string& t_path);
 
    void GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_recursive);
    
@@ -51,6 +51,10 @@ namespace fso
    void AppendFile(std::string t_path, std::string t_fileText);
    
    bool ComparePath(tDirListing t_comp1, tDirListing t_comp2);
+
+   std::string DontEndWithDirSep(const std::string& t_path);
+   std::string EndWithDirSep(const std::string& t_path);
+
 }
 
 #endif

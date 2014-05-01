@@ -42,7 +42,7 @@ std::string fso::dirSep()
    return DIR_SEP;
 }
 
-std::string fso::dirSepToOS(std::string t_path)
+std::string fso::dirSepToOS(const std::string& t_path)
 {
    if(DIR_SEP == "\\")
    {
@@ -503,5 +503,15 @@ std::string fso::GetFileNameNoExt(std::string t_path)
    return t_retVal;
 }
 
+
+std::string fso::DontEndWithDirSep(const std::string& t_path)
+{
+   return dString::DontEndWithThis(dirSepToOS(t_path), DIR_SEP);
+}
+
+std::string fso::EndWithDirSep(const std::string& t_path)
+{
+   return DontEndWithDirSep(t_path) + DIR_SEP;
+}
 
 
