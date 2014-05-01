@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,14 @@
 #include <string>
 #include <algorithm>
 #include "dString.h"
+
+#if (defined(_WIN32) || defined(__WIN32__))
+   #define WIN_BUILD
+   static const std::string LINE_ENDING = "\r\n";
+#else
+   #define LINUX_BUILD
+   static const std::string LINE_ENDING = "\n";
+#endif
 
 int dString::Len(const std::string& t_inputString)
 {
@@ -67,7 +75,7 @@ std::string dString::Mid(const std::string& t_inputString, int i_startPos)
 {
    std::string t_retVal = t_inputString;
    int i_inputLen = Len(t_inputString);
-   int i_outputLen = i_inputLen - i_startPos + 1;
+   int i_outputLen = i_inputLen - i_startPos;
    t_retVal = Right(t_inputString, i_outputLen);
    return t_retVal;
 }
@@ -77,7 +85,7 @@ std::string dString::Mid(const std::string& t_inputString, int i_startPos, int i
 {
    std::string t_retVal = t_inputString;
    int i_inputLen = Len(t_inputString);
-   int i_outputLen = i_inputLen - i_startPos + 1;
+   int i_outputLen = i_inputLen - i_startPos;
 
    if(i_len == 0)
    {
@@ -90,7 +98,7 @@ std::string dString::Mid(const std::string& t_inputString, int i_startPos, int i
    else
    {
       char* pc_retVal = new char[i_len+1];
-      memcpy(pc_retVal, t_inputString.c_str()+(i_startPos-1), i_len);
+      memcpy(pc_retVal, t_inputString.c_str()+i_startPos, i_len);
       pc_retVal[i_len] = '\0';
       t_retVal = pc_retVal;
       delete[] pc_retVal;
@@ -104,15 +112,18 @@ int dString::InStr(const std::string& t_inputString, const std::string& t_search
    int i_searchLen = Len(t_searchString);
    int i_index;
 
+   if(t_searchString == "")
+      return -1;
+
    for(i_index = 0; i_index < (i_inputLen - i_searchLen + 1); ++i_index)
    {
       if(memcmp(t_inputString.c_str()+i_index, t_searchString.c_str(), i_searchLen) == 0)
       {
-         return i_index+1;
+         return i_index;
       }
    }
 
-   return 0;
+   return -1;
 }
 
 int dString::InStrBack(const std::string& t_inputString, const std::string& t_searchString)
@@ -121,22 +132,25 @@ int dString::InStrBack(const std::string& t_inputString, const std::string& t_se
    int i_searchLen = Len(t_searchString);
    int i_index;
 
+   if(t_searchString == "")
+      return -1;
+
    for(i_index = (i_inputLen - i_searchLen); i_index >= 0; --i_index)
    {
       if(memcmp(t_inputString.c_str()+i_index, t_searchString.c_str(), i_searchLen) == 0)
       {
-         return i_index+1;
+         return i_index;
       }
    }
 
-   return 0;
+   return -1;
 }
 
 std::string dString::SplitBackRight(const std::string& t_inputString, const std::string& t_searchString)
 {
    int pos;
    pos = InStrBack(t_inputString, t_searchString);
-   if(pos > 0)
+   if(pos >= 0)
    {
       return Mid(t_inputString, pos + t_searchString.size());
    }
@@ -150,9 +164,9 @@ std::string dString::SplitBackLeft(const std::string& t_inputString, const std::
 {
    int pos;
    pos = InStrBack(t_inputString, t_searchString);
-   if(pos > 1)
+   if(pos >= 0)
    {
-      return Left(t_inputString, pos - 1);
+      return Left(t_inputString, pos);
    }
    else
    {
@@ -164,7 +178,7 @@ std::string dString::SplitRight(const std::string& t_inputString, const std::str
 {
    int pos;
    pos = InStr(t_inputString, t_searchString);
-   if(pos > 0)
+   if(pos >= 0)
    {
       return Mid(t_inputString, pos + t_searchString.size());
    }
@@ -178,9 +192,9 @@ std::string dString::SplitLeft(const std::string& t_inputString, const std::stri
 {
    int pos;
    pos = InStr(t_inputString, t_searchString);
-   if(pos > 0)
+   if(pos >= 0)
    {
-      return Left(t_inputString, pos - 1);
+      return Left(t_inputString, pos);
    }
    else
    {
@@ -193,7 +207,7 @@ std::string dString::Replace(const std::string& t_inputString, const std::string
    std::string t_in = t_inputString;
    std::string t_out = "";
    
-   while(InStr(t_in, t_searchString) > 0)
+   while(InStr(t_in, t_searchString) >= 0)
    {
       t_out.append(SplitLeft(t_in, t_searchString));
       t_out.append(t_replaceString);
@@ -210,7 +224,7 @@ std::string dString::Split(std::string* t_inputString, const std::string& t_sear
    {
       int pos;
       pos = InStr(*t_inputString, t_searchString);
-      if(pos > 0)
+      if(pos >= 0)
       {
          t_retVal = SplitLeft(*t_inputString, t_searchString);
          *t_inputString = SplitRight(*t_inputString, t_searchString);
@@ -365,7 +379,7 @@ std::string dString::DontStartWithThis(const std::string& t_inputString, const s
    {
       while( Left(t_retVal, Len(t_searchString)) == t_searchString)
       {
-         t_retVal = Mid(t_retVal, Len(t_searchString)+1);
+         t_retVal = Mid(t_retVal, Len(t_searchString));
       }  
    }
    return t_retVal;
@@ -392,7 +406,7 @@ int dString::Count(const std::string& t_inputString, const std::string& t_search
    
    if(t_searchString != "")
    {
-      while(t_inStr != "" && InStr(t_inStr, t_searchString) > 0)
+      while(t_inStr != "" && InStr(t_inStr, t_searchString) >= 0)
       {
          Split(&t_inStr, t_searchString);
          ++i_retVal;
@@ -416,3 +430,28 @@ std::string temp(t_inputString.length(), ' ');
 std::copy(t_inputString.begin(), t_inputString.end(), temp.begin());
 return temp;
 }
+
+
+std::string dString::GetLineEnding()
+{
+   return LINE_ENDING;
+}
+std::string dString::ConvertLineEndingToDos(const std::string& t_text)
+{
+   return Replace(Replace(t_text, "\r\n", "\n"), "\n", "\r\n");
+}
+std::string dString::ConvertLineEndingToUnix(const std::string& t_text)
+{
+   return Replace(t_text, "\r\n", "\n");
+}
+std::string dString::ConvertLineEndingToOS(const std::string& t_text)
+{
+#ifdef WIN_BUILD
+   return ConvertLineEndingToDos(t_text);
+#else
+   return ConvertLineEndingToUnix(t_text);
+#endif
+}
+
+
+

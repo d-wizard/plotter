@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -37,6 +37,11 @@
 static const std::string CUR_DIR = ".";
 static const std::string UP_DIR = "..";
 
+std::string fso::dirSep()
+{
+   return DIR_SEP;
+}
+
 std::string fso::dirSepToOS(std::string t_path)
 {
    if(DIR_SEP == "\\")
@@ -55,9 +60,11 @@ bool fso::ComparePath(tDirListing t_comp1, tDirListing t_comp2)
 
    if( t_comp1.b_isDir == t_comp2.b_isDir)
    {
+#ifdef WIN_BUILD
       // Make the paths lower case so the search is not case sensitive.
       t_comp1.t_path = dString::Lower(t_comp1.t_path);
       t_comp2.t_path = dString::Lower(t_comp2.t_path);
+#endif
       const char* pc_path1 = t_comp1.t_path.c_str();
       const char* pc_path2 = t_comp2.t_path.c_str();
 
@@ -68,8 +75,8 @@ bool fso::ComparePath(tDirListing t_comp1, tDirListing t_comp2)
          ++pc_path2;
       }
 
-      bool b_diffIsInDir1 = (dString::InStr(pc_path1, DIR_SEP) > 0);
-      bool b_diffIsInDir2 = (dString::InStr(pc_path2, DIR_SEP) > 0);
+      bool b_diffIsInDir1 = (dString::InStr(pc_path1, DIR_SEP) >= 0);
+      bool b_diffIsInDir2 = (dString::InStr(pc_path2, DIR_SEP) >= 0);
       if(*pc_path1 < *pc_path2)
       {
          // Path 1 should come first unless the difference in path 1 is
@@ -252,7 +259,7 @@ bool fso::FileExists(std::string t_path)
    bool b_retVal = false;
 
    // Check if there is only a file name, but no path
-   if(dString::InStr(t_path, DIR_SEP) == 0)
+   if(dString::InStr(t_path, DIR_SEP) < 0)
    {
       std::string t_temp = ".";
       t_temp.append(DIR_SEP).append(t_path);
@@ -278,8 +285,12 @@ bool fso::FileExists(std::string t_path)
             // Read all the directory listings in the folder, exit.
             break;
          }
+#ifdef WIN_BUILD
          // Check to see if the file names are the same. This is not case sensitive, so it will not work in Linux.
          if( dString::Compare(dString::Lower(pt_dirListing->d_name), dString::Lower(t_file)))
+#else
+         if( dString::Compare(pt_dirListing->d_name, t_file))
+#endif
          {
             // Create the full path to the matching directory listing.
             std::string t_checkPath = t_dir;
@@ -317,14 +328,16 @@ bool fso::recursiveCreateDir(std::string t_dir)
    std::string path = "";
    bool success = true;
 
-   if(dString::Compare(dString::Mid(t_dir, 2, 1),":") == true)
+   if(dString::Compare(dString::Mid(t_dir, 1, 1),":") == true)
    {
       path = dString::Split(&t_dir, DIR_SEP).append(DIR_SEP);
    }
    else if(dString::Compare(dString::Left(t_dir, 2),"\\\\") == true)
    {
-      t_dir = dString::Mid(t_dir, 3);
-      path.append("\\\\").append(dString::Split(&t_dir, DIR_SEP)).append(DIR_SEP).append(dString::Split(&t_dir, DIR_SEP)).append(DIR_SEP);
+      t_dir = dString::Mid(t_dir, 2);
+      path = "\\\\";
+      path += (dString::Split(&t_dir, DIR_SEP) + DIR_SEP);
+      path += (dString::Split(&t_dir, DIR_SEP) + DIR_SEP);
    }
 
    if(DirExists(path) == true)
@@ -410,9 +423,10 @@ void fso::AppendFile(std::string t_path, std::string t_fileText)
 {
    t_path = dirSepToOS(t_path);
 
-   std::string t_outText = ReadFile(t_path);
-   t_outText.append(t_fileText);
-   WriteFile(t_path, t_outText);
+   std::ofstream t_outStream;
+   t_outStream.open(t_path.c_str(), std::ios::binary | std::ios_base::app);
+   t_outStream.write(t_fileText.c_str(), dString::Len(t_fileText));
+   t_outStream.close();
 }
 
 std::string fso::GetDir(std::string t_path)
@@ -421,7 +435,14 @@ std::string fso::GetDir(std::string t_path)
 
    std::string t_retVal = "";
 
-   if(dString::InStr(t_path, DIR_SEP))
+   int count = dString::Count(t_path, DIR_SEP);
+   
+   if(count == 1 && dString::Left(t_path, DIR_SEP.length()) == DIR_SEP)
+   {
+      // Input is in root path, e.g. /file.ext
+      t_retVal = "";
+   }
+   else if(count > 0)
    {
       t_retVal = dString::SplitBackLeft(t_path, DIR_SEP);
    }
@@ -435,7 +456,7 @@ std::string fso::GetFile(std::string t_path)
 
    std::string t_retVal = "";
 
-   if(dString::InStr(t_path, DIR_SEP))
+   if(dString::InStr(t_path, DIR_SEP) >= 0)
    {
       t_retVal = dString::SplitBackRight(t_path, DIR_SEP);
    }
@@ -453,9 +474,21 @@ std::string fso::GetExt(std::string t_path)
 
    std::string t_retVal = "";
    t_retVal = dString::SplitBackRight(t_path, ".");
-   if(dString::InStr(t_retVal, DIR_SEP) > 0)
+   if(dString::InStr(t_retVal, DIR_SEP) >= 0)
    {
       t_retVal = "";
+   }
+   return t_retVal;
+}
+
+std::string fso::RemoveExt(std::string t_path)
+{
+   t_path = dirSepToOS(t_path);
+
+   std::string t_retVal = t_path;
+   if(dString::InStrBack(t_retVal, ".") > dString::InStrBack(t_retVal, DIR_SEP))
+   {
+      t_retVal = dString::SplitBackLeft(t_path, ".");
    }
    return t_retVal;
 }
@@ -469,3 +502,6 @@ std::string fso::GetFileNameNoExt(std::string t_path)
    t_retVal = dString::SplitBackLeft(t_retVal, ".");
    return t_retVal;
 }
+
+
+
