@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 #ifndef D_STRING
 #define D_STRING
 
+#include <string>
 #include <string.h>
 
 namespace dString
@@ -51,6 +52,11 @@ namespace dString
    int Count(const std::string& t_inputString, const std::string& t_searchString);
    std::wstring StringToWString(const std::string& t_inputString);
    std::string WStringToString(const std::wstring& t_inputString);
-
+   
+   std::string GetLineEnding();
+   std::string ConvertLineEndingToDos(const std::string& t_text);
+   std::string ConvertLineEndingToUnix(const std::string& t_text);
+   std::string ConvertLineEndingToOS(const std::string& t_text);
+   
 }
 #endif

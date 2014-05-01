@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -30,7 +30,8 @@ namespace fso
       bool b_isDir;
    }tDirListing;
    typedef std::list<tDirListing> tDirContents;
-      
+   
+   std::string dirSep();
    std::string dirSepToOS(std::string t_path);
 
    void GetDirContents(tDirContents& t_dirContents, std::string t_dir, bool b_recursive);
@@ -42,6 +43,7 @@ namespace fso
    std::string GetDir(std::string t_path);
    std::string GetFile(std::string t_path);
    std::string GetExt(std::string t_path);
+   std::string RemoveExt(std::string t_path);
    std::string GetFileNameNoExt(std::string t_path);
    std::string ReadFile(std::string t_path);
    void WriteFile(std::string t_path, std::string t_fileText);
