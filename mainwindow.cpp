@@ -828,7 +828,7 @@ bool MainWindow::setDisplayIoMapipXAxis(std::stringstream& iostr, ePlotDim plotD
 
     if(!retVal)
     {
-        iostr << std::fixed << std::setprecision(STRING_STREAM_CLEAR_PRECISION_VAL);
+        iostr << std::fixed << std::setprecision(0);
     }
     else
     {
