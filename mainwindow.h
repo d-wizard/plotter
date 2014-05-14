@@ -50,6 +50,8 @@
 
 #define PLOT_CANVAS_OFFSET (6)
 
+#define MIN_DISPLAY_PRECISION (4)
+
 class CurveCommander;
 class plotGuiMain;
 
@@ -200,6 +202,19 @@ private:
     QwtPlotCurve::CurveStyle m_defaultCurveStyle;
     QList< QSharedPointer< curveStyleMenu> > m_curveLineMenu;
 
+    eDisplayPointType m_displayType;
+    int m_displayPrecision;
+    QMenu m_displayPointsMenu;
+    tQMenuActionMapper m_displayPointsAutoAction;
+    tQMenuActionMapper m_displayPointsFixedAction;
+    tQMenuActionMapper m_displayPointsScientificAction;
+
+    tQMenuActionMapper m_displayPointsPrecisionAutoAction;
+    tQMenuActionMapper m_displayPointsPrecisionUpAction;
+    tQMenuActionMapper m_displayPointsPrecisionDownAction;
+    tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
+    tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
+
     void createUpdateCurve( QString& name,
                             bool resetCurve,
                             unsigned int sampleStartIndex,
@@ -211,10 +226,15 @@ private:
 
     void calcMaxMin();
 
+    void setDisplayIoMapIp(std::stringstream &iostr);
+    void clearDisplayIoMapIp(std::stringstream& iostr);
+    bool setDisplayIoMapIpXAxis(std::stringstream& iostr, ePlotDim plotDim);
+    void setDisplayIoMapIpYAxis(std::stringstream& iostr);
     void clearPointLabels();
     void displayPointLabels();
     void displayDeltaLabel();
     void updatePointDisplay();
+    void setDisplayRightClickIcons();
 
     void updateCursors();
 
@@ -267,7 +287,11 @@ private slots:
 
 
     void onApplicationFocusChanged(QWidget* old, QWidget* now);
-    void ShowContextMenu(const QPoint& pos);
+    void ShowRightClickForPlot(const QPoint& pos);
+    void ShowRightClickForDisplayPoints(const QPoint& pos);
+
+    void displayPointsChangeType(int type);
+    void displayPointsChangePrecision(int precision);
 
 // Functions that could be called from a thread, but modify ui
 public slots:

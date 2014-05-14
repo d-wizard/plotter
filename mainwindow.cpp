@@ -22,6 +22,8 @@
 #include <QSignalMapper>
 #include <QKeyEvent>
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 #include <QBitmap>
 #include <qwt_plot_canvas.h>
 
@@ -30,6 +32,13 @@
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
+
+
+#define MAPPER_ACTION_TO_SLOT(menu, mapperAction, intVal, callback) \
+menu.addAction(&mapperAction.m_action); \
+mapperAction.m_mapper.setMapping(&mapperAction.m_action, (int)intVal); \
+connect(&mapperAction.m_action,SIGNAL(triggered()), &mapperAction.m_mapper,SLOT(map())); \
+connect(&mapperAction.m_mapper, SIGNAL(mapped(int)), SLOT(callback(int)) );
 
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
@@ -62,7 +71,17 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_stylesCurvesMenu("Curve Style"),
     m_enableDisablePlotUpdate("Disable New Curves", this),
     m_curveProperties("Properties", this),
-    m_defaultCurveStyle(QwtPlotCurve::Lines)
+    m_defaultCurveStyle(QwtPlotCurve::Lines),
+    m_displayType(E_DISPLAY_POINT_AUTO),
+    m_displayPrecision(8),
+    m_displayPointsAutoAction("Auto", this),
+    m_displayPointsFixedAction("Decimal", this),
+    m_displayPointsScientificAction("Scientific", this),
+    m_displayPointsPrecisionAutoAction("Auto", this),
+    m_displayPointsPrecisionUpAction("Precision +1", this),
+    m_displayPointsPrecisionDownAction("Precision -1", this),
+    m_displayPointsPrecisionUpBigAction("Precision +3", this),
+    m_displayPointsPrecisionDownBigAction("Precision -3", this)
 {
     ui->setupUi(this);
 
@@ -130,6 +149,19 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_curveProperties);
 
+    setDisplayRightClickIcons();
+
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsAutoAction,       E_DISPLAY_POINT_AUTO,       displayPointsChangeType);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsFixedAction,      E_DISPLAY_POINT_FIXED,      displayPointsChangeType);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsScientificAction, E_DISPLAY_POINT_SCIENTIFIC, displayPointsChangeType);
+
+    m_displayPointsMenu.addSeparator();
+
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionUpBigAction,   +3, displayPointsChangePrecision);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionUpAction,      +1, displayPointsChangePrecision);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownAction,    -1, displayPointsChangePrecision);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownBigAction, -3, displayPointsChangePrecision);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
 }
 
 MainWindow::~MainWindow()
@@ -200,7 +232,7 @@ void MainWindow::resetPlot()
     m_qwtPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     // TODO: Do I need to disconnect the action
     connect(m_qwtPlot, SIGNAL(customContextMenuRequested(const QPoint&)),
-        this, SLOT(ShowContextMenu(const QPoint&)));
+        this, SLOT(ShowRightClickForPlot(const QPoint&)));
 
     m_legendDisplayed = false;
     m_qwtPlot->insertLegend(NULL);
@@ -766,6 +798,51 @@ void MainWindow::on_horizontalScrollBar_sliderMoved(int /*position*/)
     m_plotZoom->HorzSliderMoved();
 }
 
+void MainWindow::setDisplayIoMapIp(std::stringstream &iostr)
+{
+    iostr << std::setprecision(m_displayPrecision);
+    switch(m_displayType)
+    {
+    case E_DISPLAY_POINT_FIXED:
+        iostr << std::fixed;
+    break;
+    case E_DISPLAY_POINT_SCIENTIFIC:
+        iostr << std::scientific;
+    break;
+    case E_DISPLAY_POINT_AUTO:
+    default:
+        iostr << std::resetiosflags(std::ios::floatfield);
+    break;
+    }
+
+}
+
+void MainWindow::clearDisplayIoMapIp(std::stringstream &iostr)
+{
+    iostr << std::setprecision(STRING_STREAM_CLEAR_PRECISION_VAL) << std::resetiosflags(std::ios::floatfield);
+}
+
+bool MainWindow::setDisplayIoMapIpXAxis(std::stringstream& iostr, ePlotDim plotDim)
+{
+    bool retVal = (plotDim != E_PLOT_DIM_1D);
+
+    if(!retVal)
+    {
+        iostr << std::fixed << std::setprecision(STRING_STREAM_CLEAR_PRECISION_VAL);
+    }
+    else
+    {
+        setDisplayIoMapIp(iostr);
+    }
+
+    return retVal;
+}
+
+void MainWindow::setDisplayIoMapIpYAxis(std::stringstream& iostr)
+{
+    setDisplayIoMapIp(iostr);
+}
+
 void MainWindow::clearPointLabels()
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
@@ -787,10 +864,19 @@ void MainWindow::displayPointLabels()
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
+            bool displayFormatSet = false;
             std::stringstream lblText;
-            lblText << "(" <<
-                m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex] << "," <<
-                m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex] << ")";
+
+            displayFormatSet = setDisplayIoMapIpXAxis(lblText, m_qwtCurves[i]->getPlotDim());
+            lblText << "(" << m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex] << ",";
+
+            if(displayFormatSet == false)
+            {
+                setDisplayIoMapIpYAxis(lblText);
+                displayFormatSet = true;
+            }
+            lblText << m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex] << ")";
+
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
 
             QPalette palette = this->palette();
@@ -799,6 +885,11 @@ void MainWindow::displayPointLabels()
             m_qwtCurves[i]->pointLabel->setPalette(palette);
 
             ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
+
+            m_qwtCurves[i]->pointLabel->setContextMenuPolicy(Qt::CustomContextMenu);
+            connect(m_qwtCurves[i]->pointLabel, SIGNAL(customContextMenuRequested(const QPoint&)),
+                this, SLOT(ShowRightClickForDisplayPoints(const QPoint&)));
+
         }
     }
 }
@@ -809,14 +900,21 @@ void MainWindow::displayDeltaLabel()
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
+        ePlotDim plotDim = m_qwtSelectedSample->m_parentCurve->getPlotDim();
         std::stringstream lblText;
-        lblText << "(" <<
-            m_qwtSelectedSampleDelta->m_xPoint << "," <<
-            m_qwtSelectedSampleDelta->m_yPoint << ") : (" <<
-            m_qwtSelectedSample->m_xPoint << "," <<
-            m_qwtSelectedSample->m_yPoint << ") d (" <<
-            (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << "," <<
-            (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
+        lblText << "(";
+        setDisplayIoMapIpXAxis(lblText, plotDim);
+        lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
+        setDisplayIoMapIpYAxis(lblText);
+        lblText << m_qwtSelectedSampleDelta->m_yPoint << ") : (";
+        setDisplayIoMapIpXAxis(lblText, plotDim);
+        lblText << m_qwtSelectedSample->m_xPoint << ",";
+        setDisplayIoMapIpYAxis(lblText);
+        lblText << m_qwtSelectedSample->m_yPoint << ") d (";
+        setDisplayIoMapIpXAxis(lblText, plotDim);
+        lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
+        setDisplayIoMapIpYAxis(lblText);
+        lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
 
         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
         QPalette palette = this->palette();
@@ -825,6 +923,10 @@ void MainWindow::displayDeltaLabel()
         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setPalette(palette);
 
         ui->InfoLayout->addWidget(m_qwtCurves[m_selectedCurveIndex]->pointLabel);
+
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(m_qwtCurves[m_selectedCurveIndex]->pointLabel, SIGNAL(customContextMenuRequested(const QPoint&)),
+            this, SLOT(ShowRightClickForDisplayPoints(const QPoint&)));
     }
 
 }
@@ -845,6 +947,58 @@ void MainWindow::updatePointDisplay()
     }
 
 }
+
+void MainWindow::setDisplayRightClickIcons()
+{
+    switch(m_displayType)
+    {
+    case E_DISPLAY_POINT_FIXED:
+        m_displayPointsAutoAction.m_action.setIcon(QIcon());
+        m_displayPointsFixedAction.m_action.setIcon(m_checkedIcon);
+        m_displayPointsScientificAction.m_action.setIcon(QIcon());
+    break;
+    case E_DISPLAY_POINT_SCIENTIFIC:
+        m_displayPointsAutoAction.m_action.setIcon(QIcon());
+        m_displayPointsFixedAction.m_action.setIcon(QIcon());
+        m_displayPointsScientificAction.m_action.setIcon(m_checkedIcon);
+    break;
+    case E_DISPLAY_POINT_AUTO:
+        m_displayPointsAutoAction.m_action.setIcon(m_checkedIcon);
+        m_displayPointsFixedAction.m_action.setIcon(QIcon());
+        m_displayPointsScientificAction.m_action.setIcon(QIcon());
+    default:
+    break;
+    }
+}
+
+void MainWindow::displayPointsChangeType(int type) // This is a SLOT
+{
+    m_displayType = (eDisplayPointType)type;
+    setDisplayRightClickIcons();
+    updatePointDisplay();
+}
+
+void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
+{
+    if(precision == 0)
+    {
+        // Input of zero means let the num to string conversion run as auto.
+        m_displayPrecision = -1;
+    }
+    else
+    {
+        m_displayPrecision += precision;
+        if(m_displayPrecision < MIN_DISPLAY_PRECISION)
+        {
+            // Limit to MIN_DISPLAY_PRECISION
+            m_displayPrecision = MIN_DISPLAY_PRECISION;
+        }
+    }
+
+    setDisplayRightClickIcons();
+    updatePointDisplay();
+}
+
 
 void MainWindow::updateCursors()
 {
@@ -1198,9 +1352,24 @@ void MainWindow::replotMainPlot()
     m_qwtPlot->replot();
 }
 
-void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
+void MainWindow::ShowRightClickForPlot(const QPoint& pos) // this is a slot
 {
     m_rightClickMenu.exec(m_qwtPlot->mapToGlobal(pos));
+}
+
+void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
+{
+    // Kinda ugly, but this is the simplist way I found to display the right click menu
+    // when right clicking in the display area. Basically, for loop through all the curves
+    // until a valid point label is found. Then use that point label for the right click menu and exit.
+    for(int i = 0; i < m_qwtCurves.size(); ++i)
+    {
+        if(m_qwtCurves[i]->pointLabel != NULL)
+        {
+            m_displayPointsMenu.exec(m_qwtCurves[i]->pointLabel->mapToGlobal(pos));
+            break;
+        }
+    }
 }
 
 void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)

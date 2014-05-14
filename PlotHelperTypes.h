@@ -30,6 +30,8 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#define STRING_STREAM_CLEAR_PRECISION_VAL (-1)
+
 typedef std::vector<double> dubVect;
 
 typedef struct tMaxMinXY
@@ -130,6 +132,13 @@ typedef struct
 }tOperation;
 
 typedef std::list<tOperation> tMathOpList;
+
+typedef enum
+{
+    E_DISPLAY_POINT_AUTO,
+    E_DISPLAY_POINT_FIXED,
+    E_DISPLAY_POINT_SCIENTIFIC
+}eDisplayPointType;
 
 #endif
 
