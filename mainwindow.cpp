@@ -825,7 +825,6 @@ void MainWindow::clearDisplayIoMapIp(std::stringstream &iostr)
 bool MainWindow::setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData* curve)
 {
     bool simpleXAxis = (curve->getPlotDim() == E_PLOT_DIM_1D) &&
-                       (curve->isXNormalized() == false) &&
                        ( (curve->getSampleRate() == 1.0) || (curve->getSampleRate() == 0.0) );
 
     if(simpleXAxis)
