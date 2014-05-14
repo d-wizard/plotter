@@ -822,11 +822,13 @@ void MainWindow::clearDisplayIoMapIp(std::stringstream &iostr)
     iostr << std::setprecision(STRING_STREAM_CLEAR_PRECISION_VAL) << std::resetiosflags(std::ios::floatfield);
 }
 
-bool MainWindow::setDisplayIoMapipXAxis(std::stringstream& iostr, ePlotDim plotDim)
+bool MainWindow::setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData* curve)
 {
-    bool retVal = (plotDim != E_PLOT_DIM_1D);
+    bool simpleXAxis = (curve->getPlotDim() == E_PLOT_DIM_1D) &&
+                       (curve->isXNormalized() == false) &&
+                       ( (curve->getSampleRate() == 1.0) || (curve->getSampleRate() == 0.0) );
 
-    if(!retVal)
+    if(simpleXAxis)
     {
         iostr << std::fixed << std::setprecision(0);
     }
@@ -835,7 +837,7 @@ bool MainWindow::setDisplayIoMapipXAxis(std::stringstream& iostr, ePlotDim plotD
         setDisplayIoMapIp(iostr);
     }
 
-    return retVal;
+    return !simpleXAxis;
 }
 
 void MainWindow::setDisplayIoMapipYAxis(std::stringstream& iostr)
@@ -867,7 +869,7 @@ void MainWindow::displayPointLabels()
             bool displayFormatSet = false;
             std::stringstream lblText;
 
-            displayFormatSet = setDisplayIoMapipXAxis(lblText, m_qwtCurves[i]->getPlotDim());
+            displayFormatSet = setDisplayIoMapipXAxis(lblText, m_qwtCurves[i]);
             lblText << "(" << m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex] << ",";
 
             if(displayFormatSet == false)
@@ -900,18 +902,18 @@ void MainWindow::displayDeltaLabel()
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
-        ePlotDim plotDim = m_qwtSelectedSample->m_parentCurve->getPlotDim();
+        CurveData* curve = m_qwtSelectedSample->m_parentCurve;
         std::stringstream lblText;
         lblText << "(";
-        setDisplayIoMapipXAxis(lblText, plotDim);
+        setDisplayIoMapipXAxis(lblText, curve);
         lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
         setDisplayIoMapipYAxis(lblText);
         lblText << m_qwtSelectedSampleDelta->m_yPoint << ") : (";
-        setDisplayIoMapipXAxis(lblText, plotDim);
+        setDisplayIoMapipXAxis(lblText, curve);
         lblText << m_qwtSelectedSample->m_xPoint << ",";
         setDisplayIoMapipYAxis(lblText);
         lblText << m_qwtSelectedSample->m_yPoint << ") d (";
-        setDisplayIoMapipXAxis(lblText, plotDim);
+        setDisplayIoMapipXAxis(lblText, curve);
         lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
         setDisplayIoMapipYAxis(lblText);
         lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";

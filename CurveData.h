@@ -87,6 +87,9 @@ public:
    bool setSampleRate(double inSampleRate, bool userSpecified);
    double getSampleRate(){return sampleRate;}
 
+   bool isXNormalized(){return xNormalized;}
+   bool isYNormalized(){return yNormalized;}
+
    bool setMathOps(tMathOpList& mathOpsIn, eAxis axis);
    tMathOpList getMathOps(eAxis axis);
 

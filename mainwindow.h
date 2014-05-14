@@ -228,7 +228,7 @@ private:
 
     void setDisplayIoMapIp(std::stringstream &iostr);
     void clearDisplayIoMapIp(std::stringstream& iostr);
-    bool setDisplayIoMapipXAxis(std::stringstream& iostr, ePlotDim plotDim);
+    bool setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData *curve);
     void setDisplayIoMapipYAxis(std::stringstream& iostr);
     void clearPointLabels();
     void displayPointLabels();
