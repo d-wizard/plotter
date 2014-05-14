@@ -963,10 +963,10 @@ void MainWindow::setDisplayRightClickIcons()
         m_displayPointsScientificAction.m_action.setIcon(m_checkedIcon);
     break;
     case E_DISPLAY_POINT_AUTO:
+    default:
         m_displayPointsAutoAction.m_action.setIcon(m_checkedIcon);
         m_displayPointsFixedAction.m_action.setIcon(QIcon());
         m_displayPointsScientificAction.m_action.setIcon(QIcon());
-    default:
     break;
     }
 }
