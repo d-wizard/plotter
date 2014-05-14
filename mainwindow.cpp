@@ -983,7 +983,7 @@ void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
     if(precision == 0)
     {
         // Input of zero means let the num to string conversion run as auto.
-        m_displayPrecision = -1;
+        m_displayPrecision = STRING_STREAM_CLEAR_PRECISION_VAL;
     }
     else
     {
