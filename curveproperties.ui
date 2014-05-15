@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tabCreateChild">
     <attribute name="title">
@@ -168,6 +168,83 @@
        <width>141</width>
        <height>20</height>
       </rect>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="chkSrcSlice">
+     <property name="geometry">
+      <rect>
+       <x>250</x>
+       <y>10</y>
+       <width>81</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Source Slice</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spnXSrcStart">
+     <property name="geometry">
+      <rect>
+       <x>250</x>
+       <y>50</y>
+       <width>101</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>-2000000000</number>
+     </property>
+     <property name="maximum">
+      <number>2000000000</number>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spnXSrcStop">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>50</y>
+       <width>101</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>-2000000000</number>
+     </property>
+     <property name="maximum">
+      <number>2000000000</number>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spnYSrcStart">
+     <property name="geometry">
+      <rect>
+       <x>250</x>
+       <y>90</y>
+       <width>101</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>-2000000000</number>
+     </property>
+     <property name="maximum">
+      <number>2000000000</number>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spnYSrcStop">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>90</y>
+       <width>101</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>-2000000000</number>
+     </property>
+     <property name="maximum">
+      <number>2000000000</number>
      </property>
     </widget>
    </widget>

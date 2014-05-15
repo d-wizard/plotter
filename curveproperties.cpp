@@ -255,8 +255,16 @@ void curveProperties::on_cmdApply_clicked()
             {
                tParentCurveInfo yAxisParent;
                yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
-               yAxisParent.startIndex = 0;
-               yAxisParent.stopIndex = 0;
+               if(ui->chkSrcSlice->checkState() == Qt::Checked)
+               {
+                  yAxisParent.startIndex = ui->spnYSrcStart->value();
+                  yAxisParent.stopIndex = ui->spnYSrcStop->value();
+               }
+               else
+               {
+                  yAxisParent.startIndex = 0;
+                  yAxisParent.stopIndex = 0;
+               }
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
@@ -266,13 +274,25 @@ void curveProperties::on_cmdApply_clicked()
             {
                tParentCurveInfo xAxisParent;
                xAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
-               xAxisParent.startIndex = 0;
-               xAxisParent.stopIndex = 0;
 
                tParentCurveInfo yAxisParent;
                yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
-               yAxisParent.startIndex = 0;
-               yAxisParent.stopIndex = 0;
+
+
+               if(ui->chkSrcSlice->checkState() == Qt::Checked)
+               {
+                  xAxisParent.startIndex = ui->spnXSrcStart->value();
+                  xAxisParent.stopIndex = ui->spnXSrcStop->value();
+                  yAxisParent.startIndex = ui->spnYSrcStart->value();
+                  yAxisParent.stopIndex = ui->spnYSrcStop->value();
+               }
+               else
+               {
+                  xAxisParent.startIndex = 0;
+                  xAxisParent.stopIndex = 0;
+                  yAxisParent.startIndex = 0;
+                  yAxisParent.stopIndex = 0;
+               }
 
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
