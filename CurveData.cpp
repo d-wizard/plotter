@@ -189,6 +189,43 @@ void CurveData::getYPoints(dubVect& ioYPoints)
    ioYPoints = yPoints;
 }
 
+void CurveData::getXPoints(dubVect& ioXPoints, int startIndex, int stopIndex)
+{
+   ioXPoints.clear();
+   if(startIndex < 0)
+      startIndex = 0;
+   else if(startIndex >= (int)xPoints.size())
+      return;
+
+   if(stopIndex > (int)xPoints.size())
+      stopIndex = xPoints.size();
+   else if(stopIndex < 0)
+      return;
+
+   if(stopIndex > startIndex)
+   {
+      ioXPoints.assign(&xPoints[startIndex], &xPoints[stopIndex]);
+   }
+}
+void CurveData::getYPoints(dubVect& ioYPoints, int startIndex, int stopIndex)
+{
+   ioYPoints.clear();
+   if(startIndex < 0)
+      startIndex = 0;
+   else if(startIndex >= (int)yPoints.size())
+      return;
+
+   if(stopIndex > (int)yPoints.size())
+      stopIndex = yPoints.size();
+   else if(stopIndex < 0)
+      return;
+
+   if(stopIndex > startIndex)
+   {
+      ioYPoints.assign(&yPoints[startIndex], &yPoints[stopIndex]);
+   }
+}
+
 QColor CurveData::getColor()
 {
    return appearance.color;

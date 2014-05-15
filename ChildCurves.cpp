@@ -73,12 +73,21 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 void ChildCurve::getDataFromParent(tParentCurveInfo &parentInfo, dubVect& data)
 {
    CurveData* parent = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
+   int startIndex = parentInfo.startIndex;
+   int stopIndex = parentInfo.stopIndex;
+
+   // Slice... Handle negative indexes, 0 is beginning for start and 0 is end for stop.
+   if(startIndex < 0)
+      startIndex += parent->getNumPoints();
+   if(stopIndex <= 0)
+      stopIndex += parent->getNumPoints();
+
    if(parent != NULL)
    {
       if(parentInfo.dataSrc.axis == E_X_AXIS)
-         parent->getXPoints(data);
+         parent->getXPoints(data, startIndex, stopIndex);
       else
-         parent->getYPoints(data);
+         parent->getYPoints(data, startIndex, stopIndex);
    }
 }
 

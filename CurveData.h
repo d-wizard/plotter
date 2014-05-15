@@ -61,6 +61,8 @@ public:
    const double* getYPoints();
    void getXPoints(dubVect& ioXPoints);
    void getYPoints(dubVect& ioYPoints);
+   void getXPoints(dubVect& ioXPoints, int startIndex, int stopIndex);
+   void getYPoints(dubVect& ioYPoints, int startIndex, int stopIndex);
    QColor getColor();
    QwtPlotCurve::CurveStyle getStyle(){return appearance.style;}
    ePlotDim getPlotDim();
