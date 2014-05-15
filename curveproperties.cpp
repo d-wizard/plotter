@@ -201,40 +201,42 @@ int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
+   bool xVis = false;
+   bool yVis = false;
+   bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
    switch(index)
    {
       case CREATE_CHILD_CURVE_COMBO_1D:
          ui->lblYAxisSrc->setText("Y Axis Source");
-         ui->lblXAxisSrc->setVisible(false);
-         ui->cmbXAxisSrc->setVisible(false);
-         ui->lblYAxisSrc->setVisible(true);
-         ui->cmbYAxisSrc->setVisible(true);
+         yVis = true;
       break;
       case CREATE_CHILD_CURVE_COMBO_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
          ui->lblYAxisSrc->setText("Y Axis Source");
-         ui->lblXAxisSrc->setVisible(true);
-         ui->cmbXAxisSrc->setVisible(true);
-         ui->lblYAxisSrc->setVisible(true);
-         ui->cmbYAxisSrc->setVisible(true);
+         xVis = true;
+         yVis = true;
       break;
       case CREATE_CHILD_CURVE_FFT_REAL:
          ui->lblYAxisSrc->setText("Real Source");
-         ui->lblXAxisSrc->setVisible(false);
-         ui->cmbXAxisSrc->setVisible(false);
-         ui->lblYAxisSrc->setVisible(true);
-         ui->cmbYAxisSrc->setVisible(true);
+         yVis = true;
       break;
       case CREATE_CHILD_CURVE_FFT_COMPLEX:
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
-         ui->lblXAxisSrc->setVisible(true);
-         ui->cmbXAxisSrc->setVisible(true);
-         ui->lblYAxisSrc->setVisible(true);
-         ui->cmbYAxisSrc->setVisible(true);
+         xVis = true;
+         yVis = true;
       break;
 
    }
+   ui->lblXAxisSrc->setVisible(xVis);
+   ui->cmbXAxisSrc->setVisible(xVis);
+   ui->spnXSrcStart->setVisible(xVis && slice);
+   ui->spnXSrcStop->setVisible(xVis && slice);
+
+   ui->lblYAxisSrc->setVisible(yVis);
+   ui->cmbYAxisSrc->setVisible(yVis);
+   ui->spnYSrcStart->setVisible(yVis && slice);
+   ui->spnYSrcStop->setVisible(yVis && slice);
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -543,4 +545,9 @@ void curveProperties::on_cmdOpDelete_clicked()
       m_selectedMathOpRight = m_mathOps.size() - 1;
       ui->opsOnCurve->setCurrentRow(m_selectedMathOpRight);
    }
+}
+
+void curveProperties::on_chkSrcSlice_clicked()
+{
+   on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
 }

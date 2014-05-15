@@ -63,6 +63,8 @@ private slots:
 
    void on_cmdOpDelete_clicked();
 
+   void on_chkSrcSlice_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
