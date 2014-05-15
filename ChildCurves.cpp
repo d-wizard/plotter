@@ -27,7 +27,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
-                        tPlotCurveAxis yAxis):
+                        tParentCurveInfo yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
@@ -41,8 +41,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
-                        tPlotCurveAxis xAxis,
-                        tPlotCurveAxis yAxis):
+                        tParentCurveInfo xAxis,
+                        tParentCurveInfo yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
@@ -55,12 +55,12 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 
 void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 {
-   bool curveIsYAxisParent = (m_yAxis.plotName == plotName) &&
-                             (m_yAxis.curveName == curveName);
+   bool curveIsYAxisParent = (m_yAxis.dataSrc.plotName == plotName) &&
+                             (m_yAxis.dataSrc.curveName == curveName);
    bool curveIsXAxisParent = ( m_plotType == E_PLOT_TYPE_2D ||
                                m_plotType == E_PLOT_TYPE_COMPLEX_FFT ) &&
-                             (m_xAxis.plotName == plotName) &&
-                             (m_xAxis.curveName == curveName);
+                             (m_xAxis.dataSrc.plotName == plotName) &&
+                             (m_xAxis.dataSrc.curveName == curveName);
 
    bool parentChanged = curveIsYAxisParent || curveIsXAxisParent;
    if(parentChanged)
@@ -70,12 +70,12 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 
 }
 
-void ChildCurve::getDataFromParent(tPlotCurveAxis& parentInfo, dubVect& data)
+void ChildCurve::getDataFromParent(tParentCurveInfo &parentInfo, dubVect& data)
 {
-   CurveData* parent = m_curveCmdr->getCurveData(parentInfo.plotName, parentInfo.curveName);
+   CurveData* parent = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
    if(parent != NULL)
    {
-      if(parentInfo.axis == E_X_AXIS)
+      if(parentInfo.dataSrc.axis == E_X_AXIS)
          parent->getXPoints(data);
       else
          parent->getYPoints(data);
@@ -121,7 +121,7 @@ void ChildCurve::updateCurve()
 
    // Try to set the child curve sample rate to the parent curves sample rate.
    MainWindow* childPlot = m_curveCmdr->getMainPlot(m_plotName);
-   CurveData* parentCurve = m_curveCmdr->getCurveData(m_yAxis.plotName, m_yAxis.curveName);
+   CurveData* parentCurve = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
    if(childPlot != NULL && parentCurve != NULL)
    {
       if(m_plotType != E_PLOT_TYPE_COMPLEX_FFT)
@@ -143,10 +143,10 @@ void ChildCurve::updateCurve()
 QVector<tPlotCurveAxis> ChildCurve::getParents()
 {
    QVector<tPlotCurveAxis> retVal;
-   retVal.push_back(m_yAxis);
+   retVal.push_back(m_yAxis.dataSrc);
    if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
    {
-      retVal.push_back(m_xAxis);
+      retVal.push_back(m_xAxis.dataSrc);
    }
    return retVal;
 }

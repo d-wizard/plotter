@@ -253,18 +253,32 @@ void curveProperties::on_cmdApply_clicked()
             ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
             if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
             {
+               tParentCurveInfo yAxisParent;
+               yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+               yAxisParent.startIndex = 0;
+               yAxisParent.stopIndex = 0;
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
-                                              getSelectedCurveInfo(ui->cmbYAxisSrc));
+                                              yAxisParent);
             }
             else
             {
+               tParentCurveInfo xAxisParent;
+               xAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
+               xAxisParent.startIndex = 0;
+               xAxisParent.stopIndex = 0;
+
+               tParentCurveInfo yAxisParent;
+               yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+               yAxisParent.startIndex = 0;
+               yAxisParent.stopIndex = 0;
+
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
-                                              getSelectedCurveInfo(ui->cmbXAxisSrc),
-                                              getSelectedCurveInfo(ui->cmbYAxisSrc));
+                                              xAxisParent,
+                                              yAxisParent);
             }
          }
          else

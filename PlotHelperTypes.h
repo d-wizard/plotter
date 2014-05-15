@@ -113,6 +113,12 @@ typedef struct
    eAxis axis;
 }tPlotCurveAxis;
 
+typedef struct
+{
+   tPlotCurveAxis dataSrc;
+   int startIndex;
+   int stopIndex;
+}tParentCurveInfo;
 
 typedef enum
 {

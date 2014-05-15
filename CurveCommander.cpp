@@ -213,7 +213,7 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis yAxis) // 1D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
@@ -221,7 +221,7 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tPlotCurveAxis xAxis, tPlotCurveAxis yAxis) // 2D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
