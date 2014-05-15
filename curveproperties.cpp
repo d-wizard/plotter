@@ -327,14 +327,7 @@ tPlotCurveAxis curveProperties::getSelectedCurveInfo(QComboBox *cmbBox)
 }
 
 
-
-void curveProperties::on_cmdDone_clicked()
-{
-   on_cmdApply_clicked();
-   m_curveCmdr->curvePropertiesGuiClose();
-}
-
-void curveProperties::on_cmdCancel_clicked()
+void curveProperties::on_cmdClose_clicked()
 {
    m_curveCmdr->curvePropertiesGuiClose();
 }

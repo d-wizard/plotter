@@ -45,9 +45,7 @@ private slots:
    void on_cmbPlotType_currentIndexChanged(int index);
    void on_cmdApply_clicked();
 
-   void on_cmdDone_clicked();
-
-   void on_cmdCancel_clicked();
+   void on_cmdClose_clicked();
 
    void on_tabWidget_currentChanged(int index);
 
