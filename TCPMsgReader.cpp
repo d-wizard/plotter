@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,11 +34,19 @@ TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
    dServerSocket_bind(&m_servSock);
 
    dServerSocket_accept(&m_servSock);
+
+#ifdef RX_FROM_UDP
+   dUDPSocket_start(&m_udpSock, port+1, RxPacketCallbackUDP, this);
+#endif
 }
 
 TCPMsgReader::~TCPMsgReader()
 {
    dServerSocket_killAll(&m_servSock);
+
+#ifdef RX_FROM_UDP
+   dUDPSocket_stop(&m_udpSock);
+#endif
 
    std::map<struct sockaddr_storage*, GetEntirePlotMsg*>::iterator iter;
    for(iter = m_msgReaderMap.begin(); iter != m_msgReaderMap.end(); ++iter)
@@ -80,3 +88,17 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
     }
 
 }
+
+#ifdef RX_FROM_UDP
+void TCPMsgReader::RxPacketCallbackUDP(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)
+{
+    if((int)size > 0)
+    {
+        ClientStartCallback(inPtr, client);
+        RxPacketCallback(inPtr, client, packet, size);
+        ClientEndCallback(inPtr, client);
+    }
+}
+#endif
+
+

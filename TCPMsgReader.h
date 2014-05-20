@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +20,9 @@
 #define TCPMsgReader_h
 
 #include "TCPThreads.h"
+#ifdef RX_FROM_UDP
+#include "UDPThreads.h"
+#endif
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 
@@ -41,11 +44,17 @@ public:
 private:
    dServerSocket m_servSock;
 
+#ifdef RX_FROM_UDP
+   dUDPSocket m_udpSock;
+#endif
 
    static void RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size);
    static void ClientStartCallback(void* inPtr, struct sockaddr_storage* client);
    static void ClientEndCallback(void* inPtr, struct sockaddr_storage* client);
-   
+
+#ifdef RX_FROM_UDP
+   static void RxPacketCallbackUDP(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size);
+#endif
    
    TCPMsgReader();
    

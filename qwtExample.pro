@@ -45,7 +45,8 @@ HEADERS  += mainwindow.h \
     CurveCommander.h \
     fftHelper.h \
     ChildCurves.h \
-    curveproperties.h
+    curveproperties.h \
+    UDPThreads.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
