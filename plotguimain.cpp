@@ -37,7 +37,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_propertiesWindowAction("Properties", this),
     m_trayMenu(NULL),
     m_curveCommander(this),
-    m_allowNewCurves(true)
+    m_allowNewCurves(true),
+    m_storedMsgBuff(new char[STORED_MSG_SIZE]),
+    m_storedMsgBuffIndex(0)
 {
     ui->setupUi(this);
     this->setFixedSize(165, 95);
@@ -149,6 +151,8 @@ plotGuiMain::~plotGuiMain()
 
     m_curveCommander.destroyAllPlots();
     delete ui;
+
+    delete m_storedMsgBuff;
 }
 
 void plotGuiMain::closeAllPlots()
@@ -165,10 +169,28 @@ void plotGuiMain::closeAllPlotsSlot()
 
 void plotGuiMain::readPlotMsg(const char* msg, unsigned int size)
 {
-   if(m_allowNewCurves == true)
+   if(m_allowNewCurves == true)// && size < STORED_MSG_SIZE)
    {
-      char* msgCopy = new char[size];
+      m_storedMsgBuffMutex.lock(); // Make sure multiple threads cannot modify buffer at same time
+
+      // Make sure new message won't overrun the buffer.
+      if( (m_storedMsgBuffIndex + size) > STORED_MSG_SIZE )
+      {
+         m_storedMsgBuffIndex = 0;
+      }
+
+      char* msgCopy = m_storedMsgBuff+m_storedMsgBuffIndex;
       memcpy(msgCopy, msg, size);
+
+      // Update index to position for next packet (make sure index is mod 4)
+      m_storedMsgBuffIndex = (m_storedMsgBuffIndex + size + 3) & (~3);
+      if( m_storedMsgBuffIndex >= STORED_MSG_SIZE )
+      {
+         m_storedMsgBuffIndex = 0;
+      }
+
+      m_storedMsgBuffMutex.unlock();
+
       emit readPlotMsgSignal(msgCopy,size);
    }
 }
@@ -197,9 +219,10 @@ void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
         default:
             break;
         }
+
+        m_curveCommander.storePlotMsg(msg, size, plotName, msgUnpacker.m_curveName.c_str());
     }
 
-    delete[] msg;
 }
 
 void plotGuiMain::enDisNewCurves()

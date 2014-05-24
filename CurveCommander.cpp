@@ -41,6 +41,11 @@ CurveCommander::~CurveCommander()
       delete *iter;
    }
 
+   for(std::list<tStoredMsg*>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
+   {
+      delete *iter;
+   }
+
 }
 
 
@@ -307,3 +312,34 @@ void CurveCommander::curvePropertiesGuiCloseSlot()
    }
 }
 
+void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QString plotName, QString curveName)
+{
+   tStoredMsg* newMsg = new tStoredMsg;
+   newMsg->curveName = curveName;
+   newMsg->plotName = plotName;
+   newMsg->msgPtr = msgPtr;
+   newMsg->msgSize = msgSize;
+
+   const char* msgEndPtr = msgPtr + msgSize;
+
+   QMutexLocker ml(&m_storedMsgsMutex); // lock until end of function.
+
+   std::list<tStoredMsg*>::iterator iter = m_storedMsgs.begin();
+   while(iter != m_storedMsgs.end()) // Iterate over all stored msgs
+   {
+      // If start of old message falls within the new message memory
+      // it has been overwritten.
+      if((*iter)->msgPtr >= msgPtr && (*iter)->msgPtr < msgEndPtr)
+      {
+         // Data has been invalided by new msg, remove from list.
+         delete *iter;
+         m_storedMsgs.erase(iter++);
+      }
+      else
+      {
+         ++iter;
+      }
+   }
+   m_storedMsgs.push_back(newMsg);
+
+}

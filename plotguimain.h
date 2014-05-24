@@ -28,6 +28,7 @@
 #include <QAction>
 #include <QMap>
 #include <QSemaphore>
+#include <QMutex>
 
 #include "mainwindow.h"
 #include "TCPMsgReader.h"
@@ -35,6 +36,7 @@
 #include "CurveData.h"
 #include "CurveCommander.h"
 
+#define STORED_MSG_SIZE (40*1024*1024)
 
 class createFFTPlot;
 
@@ -75,6 +77,10 @@ private:
     CurveCommander m_curveCommander;
 
     bool m_allowNewCurves;
+
+    char* m_storedMsgBuff;
+    unsigned int m_storedMsgBuffIndex;
+    QMutex m_storedMsgBuffMutex;
 
     void closeEvent(QCloseEvent* event);
 
