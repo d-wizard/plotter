@@ -41,11 +41,6 @@ CurveCommander::~CurveCommander()
       delete *iter;
    }
 
-   for(std::list<tStoredMsg*>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
-   {
-      delete *iter;
-   }
-
 }
 
 
@@ -314,25 +309,25 @@ void CurveCommander::curvePropertiesGuiCloseSlot()
 
 void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QString plotName, QString curveName)
 {
-   tStoredMsg* newMsg = new tStoredMsg;
-   newMsg->curveName = curveName;
-   newMsg->plotName = plotName;
-   newMsg->msgPtr = msgPtr;
-   newMsg->msgSize = msgSize;
+   tStoredMsg newMsg;
+   newMsg.msgTime = QDateTime::currentDateTime();
+   newMsg.curveName = curveName;
+   newMsg.plotName = plotName;
+   newMsg.msgPtr = msgPtr;
+   newMsg.msgSize = msgSize;
 
    const char* msgEndPtr = msgPtr + msgSize;
 
    QMutexLocker ml(&m_storedMsgsMutex); // lock until end of function.
 
-   std::list<tStoredMsg*>::iterator iter = m_storedMsgs.begin();
+   std::list<tStoredMsg>::iterator iter = m_storedMsgs.begin();
    while(iter != m_storedMsgs.end()) // Iterate over all stored msgs
    {
       // If start of old message falls within the new message memory
       // it has been overwritten.
-      if((*iter)->msgPtr >= msgPtr && (*iter)->msgPtr < msgEndPtr)
+      if((*iter).msgPtr >= msgPtr && (*iter).msgPtr < msgEndPtr)
       {
          // Data has been invalided by new msg, remove from list.
-         delete *iter;
          m_storedMsgs.erase(iter++);
       }
       else
@@ -342,4 +337,36 @@ void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QStr
    }
    m_storedMsgs.push_back(newMsg);
 
+}
+
+void CurveCommander::getStoredPlotMsgs(QVector<tStoredMsg>& storedMsgs)
+{
+   QMutexLocker ml(&m_storedMsgsMutex); // lock until end of function.
+
+   for(std::list<tStoredMsg>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
+   {
+      storedMsgs.push_front(*iter);
+   }
+}
+
+
+void CurveCommander::restorePlotMsg(tStoredMsg msgToRestore)
+{
+   bool validInput = false;
+   {
+      QMutexLocker ml(&m_storedMsgsMutex); // lock until end of scope.
+
+      for(std::list<tStoredMsg>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
+      {
+         if(iter->msgPtr == msgToRestore.msgPtr && iter->msgSize == msgToRestore.msgSize)
+         {
+            validInput = true;
+            break;
+         }
+      }
+   }
+   if(validInput)
+   {
+      m_plotGuiMain->readPlotMsg(msgToRestore.msgPtr, msgToRestore.msgSize, true);
+   }
 }

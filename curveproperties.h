@@ -80,6 +80,10 @@ private:
    void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
    void setCurveHiddenCheckBox(CurveData* curve);
 
+   // Restore Tab Functions / Parameters
+   void fillRestoreTabListBox();
+   QVector<tStoredMsg> m_storedMsgs;
+
    Ui::curveProperties *ui;
 
    CurveCommander* m_curveCmdr;

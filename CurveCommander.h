@@ -32,14 +32,6 @@ typedef QMap<QString, CurveData*> tCurveDataInfo;
 typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
 typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
 
-typedef struct
-{
-   QString plotName;
-   QString curveName;
-   const char* msgPtr;
-   unsigned int msgSize;
-}tStoredMsg;
-
 class plotGuiMain;
 class curveProperties;
 class ChildCurve;
@@ -78,6 +70,9 @@ public:
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
 
     void storePlotMsg(const char *msgPtr, unsigned int msgSize, QString plotName, QString curveName);
+    void getStoredPlotMsgs(QVector<tStoredMsg> &storedMsgs);
+
+    void restorePlotMsg(tStoredMsg msgToRestore);
 
 private:
     CurveCommander();
@@ -95,7 +90,7 @@ private:
 
     std::list<ChildCurve*> m_childCurves;
 
-    std::list<tStoredMsg*> m_storedMsgs;
+    std::list<tStoredMsg> m_storedMsgs;
     QMutex m_storedMsgsMutex;
 
 public slots:

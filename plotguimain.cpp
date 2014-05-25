@@ -197,31 +197,39 @@ void plotGuiMain::readPlotMsg(const char* msg, unsigned int size)
 
 void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
 {
-    UnpackPlotMsg msgUnpacker(msg, size);
+   readPlotMsg(msg, size, false);
+}
 
-    if(validPlotAction(msgUnpacker.m_plotAction))
-    {
-        QString plotName(msgUnpacker.m_plotName.c_str());
-        switch(msgUnpacker.m_plotAction)
-        {
-        case E_CREATE_1D_PLOT:
-            m_curveCommander.create1dCurve(plotName, msgUnpacker.m_curveName.c_str(), E_PLOT_TYPE_1D, msgUnpacker.m_yAxisValues);
-            break;
-        case E_CREATE_2D_PLOT:
-            m_curveCommander.create2dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-            break;
-        case E_UPDATE_1D_PLOT:
-            m_curveCommander.update1dCurve(plotName, msgUnpacker.m_curveName.c_str(), E_PLOT_TYPE_1D, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_yAxisValues);
-            break;
-        case E_UPDATE_2D_PLOT:
-            m_curveCommander.update2dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_sampleStartIndex, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-            break;
-        default:
-            break;
-        }
+void plotGuiMain::readPlotMsg(const char *msg, unsigned int size, bool restored)
+{
+   UnpackPlotMsg msgUnpacker(msg, size);
 
-        m_curveCommander.storePlotMsg(msg, size, plotName, msgUnpacker.m_curveName.c_str());
-    }
+   if(validPlotAction(msgUnpacker.m_plotAction))
+   {
+       QString plotName(msgUnpacker.m_plotName.c_str());
+       switch(msgUnpacker.m_plotAction)
+       {
+       case E_CREATE_1D_PLOT:
+           m_curveCommander.create1dCurve(plotName, msgUnpacker.m_curveName.c_str(), E_PLOT_TYPE_1D, msgUnpacker.m_yAxisValues);
+           break;
+       case E_CREATE_2D_PLOT:
+           m_curveCommander.create2dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
+           break;
+       case E_UPDATE_1D_PLOT:
+           m_curveCommander.update1dCurve(plotName, msgUnpacker.m_curveName.c_str(), E_PLOT_TYPE_1D, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_yAxisValues);
+           break;
+       case E_UPDATE_2D_PLOT:
+           m_curveCommander.update2dCurve(plotName, msgUnpacker.m_curveName.c_str(), msgUnpacker.m_sampleStartIndex, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
+           break;
+       default:
+           break;
+       }
+
+       if(restored == false)
+       {
+         m_curveCommander.storePlotMsg(msg, size, plotName, msgUnpacker.m_curveName.c_str());
+       }
+   }
 
 }
 

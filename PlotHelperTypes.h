@@ -26,6 +26,7 @@
 #include <QList>
 #include <QVector>
 #include <QString>
+#include <QDateTime>
 
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
@@ -145,6 +146,15 @@ typedef enum
     E_DISPLAY_POINT_FIXED,
     E_DISPLAY_POINT_SCIENTIFIC
 }eDisplayPointType;
+
+typedef struct
+{
+   QString plotName;
+   QString curveName;
+   const char* msgPtr;
+   unsigned int msgSize;
+   QDateTime msgTime;
+}tStoredMsg;
 
 #endif
 

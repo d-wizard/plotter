@@ -28,6 +28,7 @@ const QString PLOT_CURVE_SEP = "->";
 
 const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
+const int TAB_RESTORE_MSG = 2;
 
 const int CREATE_CHILD_CURVE_COMBO_1D    = E_PLOT_TYPE_1D;
 const int CREATE_CHILD_CURVE_COMBO_2D    = E_PLOT_TYPE_2D;
@@ -329,6 +330,15 @@ void curveProperties::on_cmdApply_clicked()
          }
       }
    }
+   else if(tab == TAB_RESTORE_MSG)
+   {
+      QModelIndexList indexes = ui->storedMsgs->selectionModel()->selectedIndexes();
+
+      foreach(QModelIndex index, indexes)
+      {
+         m_curveCmdr->restorePlotMsg(m_storedMsgs[index.row()]);
+      }
+   }
 }
 
 
@@ -396,6 +406,10 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       setUserMathFromSrc(curveInfo, curve);
       setCurveHiddenCheckBox(curve);
       displayUserMathOp();
+   }
+   else if(tab == TAB_RESTORE_MSG)
+   {
+      fillRestoreTabListBox();
    }
 
 }
@@ -551,3 +565,20 @@ void curveProperties::on_chkSrcSlice_clicked()
 {
    on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex());
 }
+
+void curveProperties::fillRestoreTabListBox()
+{
+   ui->storedMsgs->clear();
+   m_curveCmdr->getStoredPlotMsgs(m_storedMsgs);
+   for(QVector<tStoredMsg>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
+   {
+      // I like the msgTime toString except for the year at the end.
+      // Remove last 5 characters from toString return to remove the year (and space).
+      // This should be replaced with a date/time format.
+      QString time((*iter).msgTime.toString());
+      time = dString::Slice(time.toStdString(), 0, -5).c_str();
+      ui->storedMsgs->addItem("[" + time + "] " + (*iter).plotName + "->" + (*iter).curveName);
+   }
+}
+
+

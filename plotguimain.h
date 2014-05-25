@@ -59,6 +59,8 @@ public:
 
     void curveUpdated(QString plotName, QString curveName);
 
+    void readPlotMsg(const char *msg, unsigned int size, bool restored);
+
     CurveCommander& getCurveCommander(){return m_curveCommander;}
 
 private:
