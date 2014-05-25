@@ -21,6 +21,8 @@
 
 #include <string>
 #include <string.h>
+#include <vector>
+#include <list>
 
 namespace dString
 {
@@ -57,6 +59,14 @@ namespace dString
    std::string ConvertLineEndingToDos(const std::string& t_text);
    std::string ConvertLineEndingToUnix(const std::string& t_text);
    std::string ConvertLineEndingToOS(const std::string& t_text);
+
+   std::string Slice(const std::string& t_inputString, int sliceRHS = 0, int sliceLHS = 0);
+
+   std::vector<std::string> SplitV(const std::string& t_input, const std::string& t_delimiter);
+   std::string JoinV(const std::vector<std::string>& t_input, const std::string& t_delimiter);
+   
+   std::list<std::string> SplitL(const std::string& t_input, const std::string& t_delimiter);
+   std::string JoinL(const std::list<std::string>& t_input, const std::string& t_delimiter);
    
 }
 #endif

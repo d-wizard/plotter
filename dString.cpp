@@ -41,7 +41,7 @@ std::string dString::Left(const std::string& t_inputString, int i_len)
    {
       t_retVal = "";
    }
-   else if(i_len <= i_inputLen)
+   else if(i_len < i_inputLen)
    {
       char* pc_retVal = new char[i_len+1];
       memcpy(pc_retVal, t_inputString.c_str(), i_len);
@@ -60,7 +60,7 @@ std::string dString::Right(const std::string& t_inputString, int i_len)
    {
       t_retVal = "";
    }
-   else if(i_len <= i_inputLen)
+   else if(i_len < i_inputLen)
    {
       char* pc_retVal = new char[i_len+1];
       memcpy(pc_retVal, t_inputString.c_str()+(i_inputLen-i_len), i_len);
@@ -83,11 +83,23 @@ std::string dString::Mid(const std::string& t_inputString, int i_startPos)
 
 std::string dString::Mid(const std::string& t_inputString, int i_startPos, int i_len)
 {
-   std::string t_retVal = t_inputString;
    int i_inputLen = Len(t_inputString);
+   
+   // Fix input.
+   if(i_startPos < 0)
+   {
+      i_len += i_startPos;
+      i_startPos = 0;
+   }
+   else if(i_startPos >= i_inputLen)
+   {
+      return "";
+   }
+
+   std::string t_retVal = t_inputString;
    int i_outputLen = i_inputLen - i_startPos;
 
-   if(i_len == 0)
+   if(i_len <= 0)
    {
       t_retVal = "";
    }
@@ -452,6 +464,84 @@ std::string dString::ConvertLineEndingToOS(const std::string& t_text)
    return ConvertLineEndingToUnix(t_text);
 #endif
 }
+
+std::string dString::Slice(const std::string& t_inputString, int sliceRHS, int sliceLHS)
+{
+   std::string retVal = "";
+   int strLen = (int)t_inputString.size();
+
+   if(sliceRHS < 0)
+      sliceRHS += strLen;
+   if(sliceLHS <= 0)
+      sliceLHS += strLen;
+   
+   if(sliceRHS < sliceLHS)
+   {
+      retVal = Mid(t_inputString, sliceRHS, sliceLHS-sliceRHS);
+   }
+   
+   return retVal;
+}
+
+std::vector<std::string> dString::SplitV(const std::string& t_input, const std::string& t_delimiter)
+{
+   std::string in = t_input;
+   std::vector<std::string> retVal;
+   
+   while(InStr(in, t_delimiter) >= 0)
+   {
+      retVal.push_back(Split(&in, t_delimiter));
+   }
+   retVal.push_back(in);
+   
+   return retVal;
+}
+
+std::string dString::JoinV(const std::vector<std::string>& t_input, const std::string& t_delimiter)
+{
+   std::string retVal("");
+   if(t_input.size() > 0)
+   {
+      std::vector<std::string>::const_iterator lastIter = --t_input.end();
+      for(std::vector<std::string>::const_iterator iter = t_input.begin(); iter != lastIter; ++iter)
+      {
+         retVal += ((*iter) + t_delimiter);
+      }
+      retVal += (*lastIter);
+   }
+   return retVal;
+}
+
+
+std::list<std::string> dString::SplitL(const std::string& t_input, const std::string& t_delimiter)
+{
+   std::string in = t_input;
+   std::list<std::string> retVal;
+   
+   while(InStr(in, t_delimiter) >= 0)
+   {
+      retVal.push_back(Split(&in, t_delimiter));
+   }
+   retVal.push_back(in);
+   
+   return retVal;
+}
+
+std::string dString::JoinL(const std::list<std::string>& t_input, const std::string& t_delimiter)
+{
+   std::string retVal("");
+   if(t_input.size() > 0)
+   {
+      std::list<std::string>::const_iterator lastIter = --t_input.end();
+      for(std::list<std::string>::const_iterator iter = t_input.begin(); iter != lastIter; ++iter)
+      {
+         retVal += ((*iter) + t_delimiter);
+      }
+      retVal += (*lastIter);
+   }
+   return retVal;
+}
+
 
 
 
