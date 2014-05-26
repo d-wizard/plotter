@@ -65,6 +65,10 @@ private slots:
 
    void on_chkSrcSlice_clicked();
 
+   void on_cmbRestorePlotNameFilter_currentIndexChanged(int index);
+
+   void on_cmbRestoreCurveNameFilter_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -83,6 +87,12 @@ private:
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
    QVector<tStoredMsg> m_storedMsgs;
+
+   void fillRestoreFilters();
+   QVector<QString> m_restoreFilterPlotName;
+   QVector<QString> m_restoreFilterCurveName;
+
+
 
    Ui::curveProperties *ui;
 

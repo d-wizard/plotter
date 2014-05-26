@@ -342,7 +342,7 @@ void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QStr
 void CurveCommander::getStoredPlotMsgs(QVector<tStoredMsg>& storedMsgs)
 {
    QMutexLocker ml(&m_storedMsgsMutex); // lock until end of function.
-
+   storedMsgs.clear();
    for(std::list<tStoredMsg>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
    {
       storedMsgs.push_front(*iter);

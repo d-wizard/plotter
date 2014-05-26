@@ -21,6 +21,7 @@
 #include "CurveCommander.h"
 #include "dString.h"
 #include <QMessageBox>
+#include <algorithm>
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
@@ -334,10 +335,20 @@ void curveProperties::on_cmdApply_clicked()
    {
       QModelIndexList indexes = ui->storedMsgs->selectionModel()->selectedIndexes();
 
-      foreach(QModelIndex index, indexes)
+      if(indexes.size() > 0)
       {
-         m_curveCmdr->restorePlotMsg(m_storedMsgs[index.row()]);
+         // Cycle through list, in reverse order (oldest plot messages will be restored first)
+         QModelIndexList::Iterator iter = indexes.end();
+         do
+         {
+            --iter;
+            int storedMsgIndex = iter->row();
+            if(storedMsgIndex >= 0 && storedMsgIndex < m_storedMsgs.size())
+               m_curveCmdr->restorePlotMsg(m_storedMsgs[storedMsgIndex]);
+
+         }while(iter != indexes.begin());
       }
+
    }
 }
 
@@ -409,6 +420,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
    }
    else if(tab == TAB_RESTORE_MSG)
    {
+      fillRestoreFilters();
       fillRestoreTabListBox();
    }
 
@@ -569,16 +581,84 @@ void curveProperties::on_chkSrcSlice_clicked()
 void curveProperties::fillRestoreTabListBox()
 {
    ui->storedMsgs->clear();
-   m_curveCmdr->getStoredPlotMsgs(m_storedMsgs);
-   for(QVector<tStoredMsg>::iterator iter = m_storedMsgs.begin(); iter != m_storedMsgs.end(); ++iter)
+   m_storedMsgs.clear();
+
+   QVector<tStoredMsg> storedMsgs;
+   m_curveCmdr->getStoredPlotMsgs(storedMsgs);
+   for(QVector<tStoredMsg>::iterator iter = storedMsgs.begin(); iter != storedMsgs.end(); ++iter)
    {
-      // I like the msgTime toString except for the year at the end.
-      // Remove last 5 characters from toString return to remove the year (and space).
-      // This should be replaced with a date/time format.
-      QString time((*iter).msgTime.toString());
-      time = dString::Slice(time.toStdString(), 0, -5).c_str();
-      ui->storedMsgs->addItem("[" + time + "] " + (*iter).plotName + "->" + (*iter).curveName);
+      bool validPlotName = false;
+      bool validCurveName = false;
+
+      int plotIndex = ui->cmbRestorePlotNameFilter->currentIndex() - 1;   // index 0 is all plots,  subtract 1 to make index match member variable index
+      int curveIndex = ui->cmbRestoreCurveNameFilter->currentIndex() - 1; // index 0 is all curves, subtract 1 to make index match member variable index
+
+      if( plotIndex < 0 || // When index is less than 0, assume all plot names are valid
+          ( plotIndex < m_restoreFilterPlotName.size() &&
+            m_restoreFilterPlotName[plotIndex] == (*iter).plotName ) )
+      {
+         validPlotName = true;
+      }
+
+      if( curveIndex < 0 || // When index is less than 0, assume all curve names are valid
+          ( curveIndex < m_restoreFilterCurveName.size() &&
+            m_restoreFilterCurveName[curveIndex] == (*iter).curveName ) )
+      {
+         validCurveName = true;
+      }
+
+      if(validPlotName && validCurveName)
+      {
+         // I like the msgTime toString except for the year at the end.
+         // Remove last 5 characters from toString return to remove the year (and space).
+         // This should be replaced with a date/time format.
+         QString time((*iter).msgTime.toString());
+         time = dString::Slice(time.toStdString(), 0, -5).c_str();
+         ui->storedMsgs->addItem("[" + time + "] " + (*iter).plotName + "->" + (*iter).curveName);
+         m_storedMsgs.push_back(*iter);
+      }
+   }
+
+}
+
+void curveProperties::fillRestoreFilters()
+{
+   m_restoreFilterPlotName.clear();
+   m_restoreFilterCurveName.clear();
+
+   QVector<tStoredMsg> storedMsgs;
+   m_curveCmdr->getStoredPlotMsgs(storedMsgs);
+   // Add unique plot/curve names to lists.
+   for(QVector<tStoredMsg>::iterator iter = storedMsgs.begin(); iter != storedMsgs.end(); ++iter)
+   {
+      if(m_restoreFilterPlotName.indexOf(iter->plotName) < 0)
+         m_restoreFilterPlotName.append(iter->plotName);
+      if(m_restoreFilterCurveName.indexOf(iter->curveName) < 0)
+         m_restoreFilterCurveName.append(iter->curveName);
+   }
+
+   ui->cmbRestorePlotNameFilter->clear();
+   ui->cmbRestoreCurveNameFilter->clear();
+   ui->cmbRestorePlotNameFilter->addItem("*");
+   ui->cmbRestoreCurveNameFilter->addItem("*");
+
+   for(int i = 0; i < m_restoreFilterPlotName.size(); ++i)
+   {
+      ui->cmbRestorePlotNameFilter->addItem(m_restoreFilterPlotName[i]);
+   }
+   for(int i = 0; i < m_restoreFilterCurveName.size(); ++i)
+   {
+      ui->cmbRestoreCurveNameFilter->addItem(m_restoreFilterCurveName[i]);
    }
 }
 
 
+void curveProperties::on_cmbRestorePlotNameFilter_currentIndexChanged(int index)
+{
+   fillRestoreTabListBox();
+}
+
+void curveProperties::on_cmbRestoreCurveNameFilter_currentIndexChanged(int index)
+{
+   fillRestoreTabListBox();
+}
