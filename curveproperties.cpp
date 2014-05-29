@@ -699,6 +699,11 @@ void curveProperties::on_cmdXUseZoomForSlice_clicked()
          ui->spnXSrcStop->setValue(dim.maxX);
       }
    }
+   else
+   {
+      ui->spnXSrcStart->setValue(0);
+      ui->spnXSrcStop->setValue(0);
+   }
 }
 
 // Get source curve start and stop indexes from the current zoom
@@ -734,5 +739,10 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
          ui->spnYSrcStart->setValue(dim.minX);
          ui->spnYSrcStop->setValue(dim.maxX);
       }
+   }
+   else
+   {
+      ui->spnYSrcStart->setValue(0);
+      ui->spnYSrcStop->setValue(0);
    }
 }
