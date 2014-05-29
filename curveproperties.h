@@ -69,6 +69,11 @@ private slots:
 
    void on_cmbRestoreCurveNameFilter_currentIndexChanged(int index);
 
+
+   void on_cmdXUseZoomForSlice_clicked();
+
+   void on_cmdYUseZoomForSlice_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
