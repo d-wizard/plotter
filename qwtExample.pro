@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     PlotZoom.cpp \
     CurveData.cpp \
     ChildCurves.cpp \
-    curveproperties.cpp
+    curveproperties.cpp \
+    saveRestoreCurve.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -46,7 +47,8 @@ HEADERS  += mainwindow.h \
     fftHelper.h \
     ChildCurves.h \
     curveproperties.h \
-    UDPThreads.h
+    UDPThreads.h \
+    saveRestoreCurve.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

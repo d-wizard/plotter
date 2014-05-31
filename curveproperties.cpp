@@ -22,6 +22,10 @@
 #include "dString.h"
 #include <QMessageBox>
 #include <algorithm>
+#include <QFileDialog>
+#include <fstream>
+#include "saveRestoreCurve.h"
+#include "FileSystemOperations.h"
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
@@ -30,6 +34,7 @@ const QString PLOT_CURVE_SEP = "->";
 const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
+const int TAB_OPEN_SAVE_CURVE = 3;
 
 const int CREATE_CHILD_CURVE_COMBO_1D    = E_PLOT_TYPE_1D;
 const int CREATE_CHILD_CURVE_COMBO_2D    = E_PLOT_TYPE_2D;
@@ -78,6 +83,21 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    }
    ui->availableOps->setCurrentRow(0);
 
+   // Initialize the list of all the combo boxes that display PlotName->CurveName
+   tCmbBoxAndValue plotCurveComboInit;
+   plotCurveComboInit.cmbBoxVal = "";
+
+   m_plotCurveCombos.clear();
+
+   plotCurveComboInit.cmbBoxPtr = ui->cmbXAxisSrc;
+   m_plotCurveCombos.append(plotCurveComboInit);
+   plotCurveComboInit.cmbBoxPtr = ui->cmbYAxisSrc;
+   m_plotCurveCombos.append(plotCurveComboInit);
+   plotCurveComboInit.cmbBoxPtr = ui->cmbSrcCurve_math;
+   m_plotCurveCombos.append(plotCurveComboInit);
+   plotCurveComboInit.cmbBoxPtr = ui->cmbCurveToSave;
+   m_plotCurveCombos.append(plotCurveComboInit);
+
 }
 
 curveProperties::~curveProperties()
@@ -89,16 +109,12 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
 {
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
-   // Save current values of the GUI elements.
-   m_xAxisSrcCmbText = ui->cmbXAxisSrc->currentText();
-   m_yAxisSrcCmbText = ui->cmbYAxisSrc->currentText();
-   m_plotNameDestCmbText = ui->cmbDestPlotName->currentText();
-   m_mathSrcCmbText = ui->cmbSrcCurve_math->currentText();
-
-   ui->cmbDestPlotName->clear();
-   ui->cmbXAxisSrc->clear();
-   ui->cmbYAxisSrc->clear();
-   ui->cmbSrcCurve_math->clear();
+   // Save current values of the GUI elements. Clear the combo box members.
+   for(int i = 0; i < m_plotCurveCombos.size(); ++i)
+   {
+      m_plotCurveCombos[i].cmbBoxVal = m_plotCurveCombos[i].cmbBoxPtr->currentText();
+      m_plotCurveCombos[i].cmbBoxPtr->clear();
+   }
 
    foreach( QString plotName, allCurves.keys() )
    {
@@ -111,19 +127,18 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          QString plotCurveName = plotName + PLOT_CURVE_SEP + curveName;
          if( (*curves)[curveName]->getPlotDim() == E_PLOT_DIM_1D)
          {
-            ui->cmbXAxisSrc->addItem(plotCurveName);
-            ui->cmbYAxisSrc->addItem(plotCurveName);
-            ui->cmbSrcCurve_math->addItem(plotCurveName);
+            for(int i = 0; i < m_plotCurveCombos.size(); ++i)
+            {
+               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName);
+            }
          }
          else
          {
-            ui->cmbXAxisSrc->addItem(plotCurveName + X_AXIS_APPEND);
-            ui->cmbYAxisSrc->addItem(plotCurveName + X_AXIS_APPEND);
-            ui->cmbSrcCurve_math->addItem(plotCurveName + X_AXIS_APPEND);
-
-            ui->cmbXAxisSrc->addItem(plotCurveName + Y_AXIS_APPEND);
-            ui->cmbYAxisSrc->addItem(plotCurveName + Y_AXIS_APPEND);
-            ui->cmbSrcCurve_math->addItem(plotCurveName + Y_AXIS_APPEND);
+            for(int i = 0; i < m_plotCurveCombos.size(); ++i)
+            {
+               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + X_AXIS_APPEND);
+               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + Y_AXIS_APPEND);
+            }
          }
       }
    }
@@ -140,11 +155,10 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
 
 void curveProperties::setCombosToPrevValues()
 {
-   trySetComboItemIndex(ui->cmbXAxisSrc, m_xAxisSrcCmbText);
-   trySetComboItemIndex(ui->cmbYAxisSrc, m_yAxisSrcCmbText);
-
-   trySetComboItemIndex(ui->cmbDestPlotName, m_plotNameDestCmbText);
-   trySetComboItemIndex(ui->cmbSrcCurve_math, m_mathSrcCmbText);
+   for(int i = 0; i < m_plotCurveCombos.size(); ++i)
+   {
+      trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+   }
 }
 
 void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
@@ -744,5 +758,69 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
    {
       ui->spnYSrcStart->setValue(0);
       ui->spnYSrcStop->setValue(0);
+   }
+}
+
+void curveProperties::on_cmdOpenCurveFileOpenDialog_clicked()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                     "",
+                                                     tr("Curves (*.curve);;All files (*.*)"));
+    if(fileName != "")
+    {
+        ui->txtOpenCurveFilePath->setText(fileName);
+    }
+}
+
+void curveProperties::on_cmdSaveCurveToFile_clicked()
+{
+   tPlotCurveAxis toSave = getSelectedCurveInfo(ui->cmbCurveToSave);
+   CurveData* toSaveCurveData = m_curveCmdr->getCurveData(toSave.plotName, toSave.curveName);
+   if(toSaveCurveData != NULL)
+   {
+      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
+                                                       "",
+                                                       tr("Curves (*.curve)"));
+      SaveCurve packedCurve(toSaveCurveData);
+
+      fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+
+   }
+
+}
+
+void curveProperties::on_cmdOpenCurveFromFile_clicked()
+{
+   if(fso::FileExists(ui->txtOpenCurveFilePath->text().toStdString()))
+   {
+      std::vector<char> curveFile;
+      fso::ReadBinaryFile(ui->txtOpenCurveFilePath->text().toStdString(), curveFile);
+
+      // Get plot name.
+      QString plotName = ui->cmbOpenCurvePlotName->currentText();
+      if(plotName == "")
+      {
+         plotName = "New Plot";
+      }
+
+      RestoreCurve restoreCurve(curveFile);
+      tSaveRestoreCurveParams* p = &restoreCurve.params;
+      if(p->plotDim == E_PLOT_DIM_1D)
+      {
+         // 1D Plot
+         m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
+      }
+      else
+      {
+         // 2D Plot
+         m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
+      }
+
+      MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+      if(plot != NULL)
+      {
+         plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
+         plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+      }
    }
 }

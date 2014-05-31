@@ -20,6 +20,7 @@
 #define FileSystemOperations_h
 
 #include <string>
+#include <vector>
 #include <list>
 
 namespace fso
@@ -46,6 +47,7 @@ namespace fso
    std::string RemoveExt(std::string t_path);
    std::string GetFileNameNoExt(std::string t_path);
    std::string ReadFile(std::string t_path);
+   void ReadBinaryFile(std::string t_path, std::vector<char>& t_binaryFile);
    void WriteFile(std::string t_path, std::string t_fileText);
    void WriteFile(std::string t_path, char* pc_fileText, int i_outSizeBytes);
    void AppendFile(std::string t_path, std::string t_fileText);

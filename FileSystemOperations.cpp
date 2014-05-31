@@ -399,6 +399,41 @@ std::string fso::ReadFile(std::string t_path)
    return t_retVal;
 }
 
+void fso::ReadBinaryFile(std::string t_path, std::vector<char>& t_binaryFile)
+{
+   t_path = dirSepToOS(t_path);
+
+   if(FileExists(t_path) == true)
+   {
+      int length;
+
+      std::ifstream is;
+      is.open(t_path.c_str(), std::ios::binary );
+
+      // get length of file:
+      is.seekg (0, std::ios::end);
+      length = is.tellg();
+
+      if(length >= 0)
+      {
+         is.seekg (0, std::ios::beg);
+
+         // allocate memory:
+         t_binaryFile.resize(length);
+
+         // read data as a block:
+         is.read (&t_binaryFile[0],length);
+         is.close();
+
+      }
+      else
+      {
+         is.close();
+      }
+   }
+}
+
+
 void fso::WriteFile(std::string t_path, std::string t_fileText)
 {
    t_path = dirSepToOS(t_path);

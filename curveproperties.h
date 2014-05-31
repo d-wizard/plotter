@@ -21,6 +21,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QVector>
 #include <list>
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
@@ -28,6 +29,12 @@
 namespace Ui {
 class curveProperties;
 }
+
+typedef struct
+{
+   QComboBox* cmbBoxPtr;
+   QString    cmbBoxVal;
+}tCmbBoxAndValue;
 
 class CurveCommander;
 
@@ -74,6 +81,12 @@ private slots:
 
    void on_cmdYUseZoomForSlice_clicked();
 
+   void on_cmdOpenCurveFileOpenDialog_clicked();
+
+   void on_cmdSaveCurveToFile_clicked();
+
+   void on_cmdOpenCurveFromFile_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -112,6 +125,8 @@ private:
    int m_selectedMathOpRight;
 
    tMathOpList m_mathOps;
+
+   QVector<tCmbBoxAndValue> m_plotCurveCombos;
 
 };
 

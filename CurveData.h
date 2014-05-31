@@ -66,6 +66,7 @@ public:
    QColor getColor();
    QwtPlotCurve::CurveStyle getStyle(){return appearance.style;}
    ePlotDim getPlotDim();
+   ePlotType getPlotType(){ return plotType;}
    unsigned int getNumPoints();
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
@@ -86,7 +87,7 @@ public:
    void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex);
    void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex);
 
-   bool setSampleRate(double inSampleRate, bool userSpecified);
+   bool setSampleRate(double inSampleRate, bool userSpecified = true);
    double getSampleRate(){return sampleRate;}
 
    bool isXNormalized(){return xNormalized;}
