@@ -81,8 +81,6 @@ private slots:
 
    void on_cmdYUseZoomForSlice_clicked();
 
-   void on_cmdOpenCurveFileOpenDialog_clicked();
-
    void on_cmdSaveCurveToFile_clicked();
 
    void on_cmdOpenCurveFromFile_clicked();
@@ -127,6 +125,7 @@ private:
    tMathOpList m_mathOps;
 
    QVector<tCmbBoxAndValue> m_plotCurveCombos;
+   QVector<QComboBox*> m_plotNameCombos;
 
 };
 

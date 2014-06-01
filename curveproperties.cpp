@@ -98,6 +98,11 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    plotCurveComboInit.cmbBoxPtr = ui->cmbCurveToSave;
    m_plotCurveCombos.append(plotCurveComboInit);
 
+   // Initialize the list of all the combo boxes that display all the plot names
+   m_plotNameCombos.clear();
+   m_plotNameCombos.append(ui->cmbDestPlotName);
+   m_plotNameCombos.append(ui->cmbOpenCurvePlotName);
+
 }
 
 curveProperties::~curveProperties()
@@ -116,10 +121,19 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       m_plotCurveCombos[i].cmbBoxPtr->clear();
    }
 
+   // Clear Plot Name combo boxes.
+   for(int i = 0; i < m_plotNameCombos.size(); ++i)
+   {
+      m_plotNameCombos[i]->clear();
+   }
+
    foreach( QString plotName, allCurves.keys() )
    {
       // Add to dest plot name combo box
-      ui->cmbDestPlotName->addItem(plotName);
+      for(int i = 0; i < m_plotNameCombos.size(); ++i)
+      {
+         m_plotNameCombos[i]->addItem(plotName);
+      }
 
       tCurveDataInfo* curves = &(allCurves[plotName].curves);
       foreach( QString curveName, curves->keys() )
@@ -761,17 +775,6 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
    }
 }
 
-void curveProperties::on_cmdOpenCurveFileOpenDialog_clicked()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
-                                                     "",
-                                                     tr("Curves (*.curve);;All files (*.*)"));
-    if(fileName != "")
-    {
-        ui->txtOpenCurveFilePath->setText(fileName);
-    }
-}
-
 void curveProperties::on_cmdSaveCurveToFile_clicked()
 {
    tPlotCurveAxis toSave = getSelectedCurveInfo(ui->cmbCurveToSave);
@@ -791,36 +794,36 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
-   if(fso::FileExists(ui->txtOpenCurveFilePath->text().toStdString()))
+   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                   "",
+                                                   tr("Curves (*.curve);;All files (*.*)"));
+   std::vector<char> curveFile;
+   fso::ReadBinaryFile(fileName.toStdString(), curveFile);
+
+   // Get plot name.
+   QString plotName = ui->cmbOpenCurvePlotName->currentText();
+   if(plotName == "")
    {
-      std::vector<char> curveFile;
-      fso::ReadBinaryFile(ui->txtOpenCurveFilePath->text().toStdString(), curveFile);
+      plotName = "New Plot";
+   }
 
-      // Get plot name.
-      QString plotName = ui->cmbOpenCurvePlotName->currentText();
-      if(plotName == "")
-      {
-         plotName = "New Plot";
-      }
+   RestoreCurve restoreCurve(curveFile);
+   tSaveRestoreCurveParams* p = &restoreCurve.params;
+   if(p->plotDim == E_PLOT_DIM_1D)
+   {
+      // 1D Plot
+      m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
+   }
+   else
+   {
+      // 2D Plot
+      m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
+   }
 
-      RestoreCurve restoreCurve(curveFile);
-      tSaveRestoreCurveParams* p = &restoreCurve.params;
-      if(p->plotDim == E_PLOT_DIM_1D)
-      {
-         // 1D Plot
-         m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
-      }
-      else
-      {
-         // 2D Plot
-         m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
-      }
-
-      MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-      if(plot != NULL)
-      {
-         plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
-         plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
-      }
+   MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+   if(plot != NULL)
+   {
+      plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
+      plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
    }
 }
