@@ -23,6 +23,8 @@
 #include "DataTypes.h"
 #include "CurveData.h"
 
+#define MAX_STORE_CURVE_NAME_SIZE (100)
+
 typedef std::vector<char> PackedCurveData;
 
 typedef struct
@@ -67,10 +69,19 @@ public:
 
    tSaveRestoreCurveParams params;
 
+   bool isValid;
+
 private:
    RestoreCurve();
    RestoreCurve(RestoreCurve const&);
    void operator=(RestoreCurve const&);
+
+
+   void unpack(void* toUnpack, size_t unpackSize);
+   char* m_packedArray;
+   size_t m_packedSize;
+
+
 };
 
 #endif

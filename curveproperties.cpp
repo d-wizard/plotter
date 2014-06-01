@@ -885,29 +885,34 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
    }
 
    RestoreCurve restoreCurve(curveFile);
-   tSaveRestoreCurveParams* p = &restoreCurve.params;
-   QString newCurveName = p->curveName;
 
-   if(validateNewPlotCurveName(plotName, newCurveName))
+   if(restoreCurve.isValid)
    {
-      if(p->plotDim == E_PLOT_DIM_1D)
+      tSaveRestoreCurveParams* p = &restoreCurve.params;
+      QString newCurveName = p->curveName;
+
+      if(validateNewPlotCurveName(plotName, newCurveName))
       {
-         // 1D Plot
-         m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
-      }
-      else
-      {
-         // 2D Plot
-         m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
+         if(p->plotDim == E_PLOT_DIM_1D)
+         {
+            // 1D Plot
+            m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
+         }
+         else
+         {
+            // 2D Plot
+            m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
+         }
+
+         MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+         if(plot != NULL)
+         {
+            plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
+            plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+         }
       }
 
-      MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-      if(plot != NULL)
-      {
-         plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
-         plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
-      }
-   }
+   } // End if(restoreCurve.isValid)
 }
 
 bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)

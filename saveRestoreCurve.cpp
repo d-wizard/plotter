@@ -25,11 +25,6 @@ static void pack(char** packArray, const void* toPack, size_t packSize)
    (*packArray) += packSize;
 }
 
-static void unpack(char** packArray, void* toUnpack, size_t packSize)
-{
-   memcpy(toUnpack, (*packArray), packSize);
-   (*packArray) += packSize;
-}
 
 //PackedCurveData packedCurveData;
 SaveCurve::SaveCurve(CurveData* curve)
@@ -47,6 +42,10 @@ SaveCurve::SaveCurve(CurveData* curve)
    unsigned long dataPointsSize1Axis = (params.numPoints * sizeof(double));
    unsigned long dataPointsSize = (params.plotDim == E_PLOT_DIM_2D) ? (2*dataPointsSize1Axis) : dataPointsSize1Axis;
 
+   if(params.curveName.size() > MAX_STORE_CURVE_NAME_SIZE)
+   {
+      params.curveName.resize(MAX_STORE_CURVE_NAME_SIZE);
+   }
 
    unsigned long finalSize =
          params.curveName.size() + 1 +
@@ -95,45 +94,113 @@ SaveCurve::SaveCurve(CurveData* curve)
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
 {
-   char* packedArray = &packedCurve[0];
+   isValid = false;
 
-   params.curveName = QString(packedArray);
-   packedArray += (params.curveName.size() + 1);
-   unpack(&packedArray, &params.plotDim, sizeof(params.plotDim));
-   unpack(&packedArray, &params.plotType, sizeof(params.plotType));
-   unpack(&packedArray, &params.numPoints, sizeof(params.numPoints));
-   unpack(&packedArray, &params.sampleRate, sizeof(params.sampleRate));
+   m_packedArray = &packedCurve[0];
+   m_packedSize = packedCurve.size();
 
-   // Get X Axis Math Operations
-   unpack(&packedArray, &params.numXMapOps, sizeof(params.numXMapOps));
-   params.mathOpsXAxis.clear();
-   for(unsigned int i = 0; i < params.numXMapOps; ++i)
+   if(m_packedSize <= 0)
+      return; // invalid input.
+
+   // Validate Curve Name... find null terminator
+   bool curveNameValid = false;
+   for(unsigned int i = 0; i <= MAX_STORE_CURVE_NAME_SIZE && i < m_packedSize; ++i)
    {
-      tOperation newOp;
-      unpack(&packedArray, &newOp, sizeof(newOp));
-      params.mathOpsXAxis.push_back(newOp);
+      if(m_packedArray[i] == '\0')
+      {
+         curveNameValid = true;
+         break;
+      }
    }
 
-   // Get Y Axis Math Operations
-   unpack(&packedArray, &params.numYMapOps, sizeof(params.numYMapOps));
-   params.mathOpsYAxis.clear();
-   for(unsigned int i = 0; i < params.numYMapOps; ++i)
+   if(curveNameValid == false)
+      // Invalid curve name, return.
+      return;
+
+   // Valid curve name, copy it out and continue.
+   params.curveName = QString(m_packedArray);
+   m_packedArray += (params.curveName.size() + 1);
+   m_packedSize -= (params.curveName.size() + 1);
+
+   try
    {
-      tOperation newOp;
-      unpack(&packedArray, &newOp, sizeof(newOp));
-      params.mathOpsYAxis.push_back(newOp);
+      // Read in remaining parameters. Catch execption if attempting
+      // to read passed the end of the input file. Early return if
+      // parameter read from if is not valid.
+
+      unpack(&params.plotDim, sizeof(params.plotDim));
+      if(valid_ePlotDim(params.plotDim) == false)
+         return;
+
+      unpack(&params.plotType, sizeof(params.plotType));
+      if(valid_ePlotType(params.plotType) == false)
+         return;
+
+      unpack(&params.numPoints, sizeof(params.numPoints));
+      if(params.numPoints <= 0)
+         return;
+
+      unpack(&params.sampleRate, sizeof(params.sampleRate));
+
+      // Get X Axis Math Operations
+      unpack(&params.numXMapOps, sizeof(params.numXMapOps));
+      params.mathOpsXAxis.clear();
+      for(unsigned int i = 0; i < params.numXMapOps; ++i)
+      {
+         tOperation newOp;
+         unpack(&newOp, sizeof(newOp));
+
+         // Validate new operation... return if invalid.
+         if(valid_eMathOp(newOp.op))
+            params.mathOpsXAxis.push_back(newOp);
+         else
+            return;
+      }
+
+      // Get Y Axis Math Operations
+      unpack(&params.numYMapOps, sizeof(params.numYMapOps));
+      params.mathOpsYAxis.clear();
+      for(unsigned int i = 0; i < params.numYMapOps; ++i)
+      {
+         tOperation newOp;
+         unpack(&newOp, sizeof(newOp));
+
+         // Validate new operation... return if invalid.
+         if(valid_eMathOp(newOp.op))
+            params.mathOpsYAxis.push_back(newOp);
+         else
+            return;
+      }
+
+      // Unpack Y Axis Data Points
+      params.yOrigPoints.resize(params.numPoints);
+      unpack(&params.yOrigPoints[0], (params.numPoints * sizeof(double)));
+
+      // Unpack X Axis Data Points
+      if(params.plotDim == E_PLOT_DIM_2D)
+      {
+         params.xOrigPoints.resize(params.numPoints);
+         unpack(&params.xOrigPoints[0], (params.numPoints * sizeof(double)));
+      }
+   }
+   catch(int dontCare)
+   {
+      return; // Tried to unpack beyond the input file size, return.
    }
 
-   // Unpack Y Axis Data Points
-   params.yOrigPoints.resize(params.numPoints);
-   unpack(&packedArray, &params.yOrigPoints[0], (params.numPoints * sizeof(double)));
-
-   // Unpack X Axis Data Points
-   if(params.plotDim == E_PLOT_DIM_2D)
-   {
-      params.xOrigPoints.resize(params.numPoints);
-      unpack(&packedArray, &params.xOrigPoints[0], (params.numPoints * sizeof(double)));
-   }
-
+   isValid = true; // If invalid would have early returned. If we got here, the input is valid.
 }
 
+void RestoreCurve::unpack(void* toUnpack, size_t unpackSize)
+{
+   if(unpackSize <= m_packedSize)
+   {
+      memcpy(toUnpack, m_packedArray, unpackSize);
+      m_packedArray += unpackSize;
+      m_packedSize -= unpackSize;
+   }
+   else
+   {
+      throw 0;
+   }
+}
