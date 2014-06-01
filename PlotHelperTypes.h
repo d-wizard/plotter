@@ -68,6 +68,18 @@ typedef enum
     E_PLOT_DIM_1D,
     E_PLOT_DIM_2D
 }ePlotDim;
+inline bool valid_ePlotDim(ePlotDim in)
+{
+   switch(in)
+   {
+   case E_PLOT_DIM_1D:
+   case E_PLOT_DIM_2D:
+      return true;
+      break;
+   }
+   return false;
+}
+
 
 typedef enum
 {
@@ -76,6 +88,19 @@ typedef enum
     E_PLOT_TYPE_REAL_FFT    = 2,
     E_PLOT_TYPE_COMPLEX_FFT = 3
 }ePlotType;
+inline bool valid_ePlotType(ePlotType in)
+{
+   switch(in)
+   {
+   case E_PLOT_TYPE_1D:
+   case E_PLOT_TYPE_2D:
+   case E_PLOT_TYPE_REAL_FFT:
+   case E_PLOT_TYPE_COMPLEX_FFT:
+      return true;
+      break;
+   }
+   return false;
+}
 
 typedef struct
 {
@@ -142,6 +167,22 @@ typedef enum
    E_SHIFT_DOWN,
    E_LOG
 }eMathOp;
+inline bool valid_eMathOp(eMathOp in)
+{
+   switch(in)
+   {
+   case E_ADD:
+   case E_SUBTRACT:
+   case E_MULTIPLY:
+   case E_DIVIDE:
+   case E_SHIFT_UP:
+   case E_SHIFT_DOWN:
+   case E_LOG:
+      return true;
+      break;
+   }
+   return false;
+}
 
 typedef struct
 {
