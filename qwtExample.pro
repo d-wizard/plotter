@@ -29,7 +29,9 @@ SOURCES += main.cpp\
     CurveData.cpp \
     ChildCurves.cpp \
     curveproperties.cpp \
-    saveRestoreCurve.cpp
+    saveRestoreCurve.cpp \
+    plotcurvenamedialog.cpp \
+    overwriterenamedialog.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -48,11 +50,15 @@ HEADERS  += mainwindow.h \
     ChildCurves.h \
     curveproperties.h \
     UDPThreads.h \
-    saveRestoreCurve.h
+    saveRestoreCurve.h \
+    plotcurvenamedialog.h \
+    overwriterenamedialog.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
-    curveproperties.ui
+    curveproperties.ui \
+    plotcurvenamedialog.ui \
+    overwriterenamedialog.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR

@@ -29,6 +29,8 @@
 #include <QDateTime>
 
 
+const QString PLOT_CURVE_SEP = "->";
+
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 #define STRING_STREAM_CLEAR_PRECISION_VAL (-1)

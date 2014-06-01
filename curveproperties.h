@@ -25,6 +25,7 @@
 #include <list>
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
+#include "plotcurvenamedialog.h"
 
 namespace Ui {
 class curveProperties;
@@ -100,6 +101,8 @@ private:
    void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
    void setCurveHiddenCheckBox(CurveData* curve);
 
+   bool plotCurveExists_askUserWhatToDo(QString& plotName, QString& curveName);
+
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
    QVector<tStoredMsg> m_storedMsgs;
@@ -126,6 +129,8 @@ private:
 
    QVector<tCmbBoxAndValue> m_plotCurveCombos;
    QVector<QComboBox*> m_plotNameCombos;
+
+   plotCurveNameDialog m_plotCurveDialog;
 
 };
 

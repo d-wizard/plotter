@@ -24,12 +24,12 @@
 #include <algorithm>
 #include <QFileDialog>
 #include <fstream>
+#include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
-const QString PLOT_CURVE_SEP = "->";
 
 const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
@@ -102,6 +102,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameCombos.clear();
    m_plotNameCombos.append(ui->cmbDestPlotName);
    m_plotNameCombos.append(ui->cmbOpenCurvePlotName);
+   m_plotNameCombos.append(m_plotCurveDialog.getPlotNameCombo());
 
 }
 
@@ -438,21 +439,49 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 {
    updateGuiPlotCurveInfo();
    int tab = ui->tabWidget->currentIndex();
-   if(tab == TAB_CREATE_MATH)
-   {
-      tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
-      CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
 
-      setMathSampleRate(curve);
-      setUserMathFromSrc(curveInfo, curve);
-      setCurveHiddenCheckBox(curve);
-      displayUserMathOp();
-   }
-   else if(tab == TAB_RESTORE_MSG)
+   bool showApplyButton = false;
+
+   switch(tab)
    {
-      fillRestoreFilters();
-      fillRestoreTabListBox();
+      case TAB_CREATE_CHILD_CURVE:
+      {
+         showApplyButton = true;
+      }
+      break;
+
+      case TAB_CREATE_MATH:
+      {
+         tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+         CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+
+         setMathSampleRate(curve);
+         setUserMathFromSrc(curveInfo, curve);
+         setCurveHiddenCheckBox(curve);
+         displayUserMathOp();
+
+         showApplyButton = true;
+      }
+      break;
+
+      case TAB_RESTORE_MSG:
+      {
+         fillRestoreFilters();
+         fillRestoreTabListBox();
+
+         showApplyButton = true;
+      }
+      break;
+
+      case TAB_OPEN_SAVE_CURVE:
+      {
+         showApplyButton = false;
+      }
+      break;
+
    }
+
+   ui->cmdApply->setVisible(showApplyButton);
 
 }
 
@@ -809,21 +838,78 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
 
    RestoreCurve restoreCurve(curveFile);
    tSaveRestoreCurveParams* p = &restoreCurve.params;
-   if(p->plotDim == E_PLOT_DIM_1D)
+
+   bool validNewPlotCurveName = true;
+
+   if(m_curveCmdr->validCurve(plotName, p->curveName) == true)
    {
-      // 1D Plot
-      m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
-   }
-   else
-   {
-      // 2D Plot
-      m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
+      // Plot/Curve exists. Ask user what to do.
+      validNewPlotCurveName = plotCurveExists_askUserWhatToDo(plotName, p->curveName);
    }
 
-   MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-   if(plot != NULL)
+   if(validNewPlotCurveName)
    {
-      plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
-      plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+      if(p->plotDim == E_PLOT_DIM_1D)
+      {
+         // 1D Plot
+         m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
+      }
+      else
+      {
+         // 2D Plot
+         m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
+      }
+
+      MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+      if(plot != NULL)
+      {
+         plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
+         plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+      }
    }
 }
+
+bool curveProperties::plotCurveExists_askUserWhatToDo(QString& plotName, QString& curveName)
+{
+   bool namesAreValid = false;
+   bool finished = false;
+
+   do
+   {
+      overwriteRenameDialog overRenameDlg(NULL);
+      ePlotExistsReturn whatToDo = overRenameDlg.askUserAboutExistingPlot(plotName, curveName);
+      if(whatToDo == RENAME)
+      {
+         bool renamed = m_plotCurveDialog.getPlotCurveNameFromUser(plotName, curveName);
+         if(renamed == true && m_curveCmdr->validCurve(plotName, curveName) == false)
+         {
+            // Renamed to a unique plot/curve name. Return valid.
+            namesAreValid = true;
+            finished = true;
+         }
+         else if(renamed == false)
+         {
+            // User clicked cancel. Return invalid.
+            namesAreValid = false;
+            finished = true;
+         }
+      }
+      else if(whatToDo == OVERWRITE)
+      {
+         // Overwrite. Do not rename. Return valid.
+         namesAreValid = true;
+         finished = true;
+      }
+      else
+      {
+         // Cancel. Return invalid.
+         namesAreValid = false;
+         finished = true;
+      }
+
+   }while(finished == false);
+
+   return namesAreValid;
+}
+
+
