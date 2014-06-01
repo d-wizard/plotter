@@ -52,14 +52,15 @@ public:
     explicit plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon);
     ~plotGuiMain();
 
-    void readPlotMsg(const char *msg, unsigned int size);
+    void startPlotMsgProcess(const char *msg, unsigned int size);
 
     void plotWindowClose(QString plotName);
     void closeAllPlots();
 
     void curveUpdated(QString plotName, QString curveName);
 
-    void readPlotMsg(const char *msg, unsigned int size, bool restored);
+    void readPlotMsg(const char *msg, unsigned int size);
+    void restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName);
 
     CurveCommander& getCurveCommander(){return m_curveCommander;}
 

@@ -21,6 +21,7 @@
 #include "CurveCommander.h"
 #include "dString.h"
 #include <QMessageBox>
+#include <QMap>
 #include <algorithm>
 #include <QFileDialog>
 #include <fstream>
@@ -284,7 +285,7 @@ void curveProperties::on_cmdApply_clicked()
       {
          if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
          {
-            // New Child Plot/Curve does not exist, continue creating the child curve.
+            // New Child plot->curve does not exist, continue creating the child curve.
             ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
             if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
             {
@@ -340,7 +341,7 @@ void curveProperties::on_cmdApply_clicked()
          {
             QMessageBox msgBox;
             msgBox.setWindowTitle("Curve Already Exists");
-            msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another Plot/Curve name.");
+            msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another plot->curve name.");
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
@@ -369,13 +370,60 @@ void curveProperties::on_cmdApply_clicked()
       if(indexes.size() > 0)
       {
          // Cycle through list, in reverse order (oldest plot messages will be restored first)
+
+         // We are potentially restoring many different curves. Some or all of these curves could
+         // already exist. For each individual curve name that exists, ask the user whether
+         // to overwrite the existing curve, rename the curve to restore or cancel the restore.
+         // Save the users response for each unique curve name to restore, so we only ask
+         // the user how to handle restoring curves that match existing curve names.
          QModelIndexList::Iterator iter = indexes.end();
+         QMap<tPlotCurveName, bool> validPlotCurveNames;         // Indicates whether to cancel restore for plot->curve name.
+         QMap<tPlotCurveName, tPlotCurveName> renamedPlotCurves; // Stores renamed plot->curve name.
+
          do
          {
             --iter;
             int storedMsgIndex = iter->row();
             if(storedMsgIndex >= 0 && storedMsgIndex < m_storedMsgs.size())
-               m_curveCmdr->restorePlotMsg(m_storedMsgs[storedMsgIndex]);
+            {
+               tPlotCurveName plotCurve = m_storedMsgs[storedMsgIndex].name;
+               bool restoreCurve = false;
+
+               // Check if user has already renamed the plot->curve name of the message to restore.
+               QMap<tPlotCurveName, tPlotCurveName>::Iterator renameIter = renamedPlotCurves.find(plotCurve);
+               if(renameIter != renamedPlotCurves.end())
+               {
+                  // Already renaming this restore plot->curve name. Use use new name and restore message.
+                  restoreCurve = true;
+                  plotCurve = renamedPlotCurves[plotCurve];
+               }
+               else
+               {
+                  // Not renaming, check if the user has cancelled the restore of this plot->curve name.
+                  QMap<tPlotCurveName, bool>::Iterator validIter = validPlotCurveNames.find(plotCurve);
+
+                  if(validIter != validPlotCurveNames.end())
+                  {
+                     // Already determined whether the plot->curve is valid, use previously determined value.
+                     restoreCurve = validIter.value();
+                  }
+                  else
+                  {
+                     // Check whether the plot->curve is valid, if it exists ask the user whether to overwrite/rename/cancel.
+                     restoreCurve = validateNewPlotCurveName(plotCurve.plot, plotCurve.curve);
+
+                     if(restoreCurve == true && plotCurve != m_storedMsgs[storedMsgIndex].name)
+                     {
+                        // User renamed the plot->curve, add to map of renamed plot->curves.
+                        renamedPlotCurves[m_storedMsgs[storedMsgIndex].name] = plotCurve;
+                     }
+
+                     validPlotCurveNames[plotCurve] = restoreCurve;
+                  }
+               }
+               if(restoreCurve)
+                  m_curveCmdr->restorePlotMsg(m_storedMsgs[storedMsgIndex], plotCurve);
+            }
 
          }while(iter != indexes.begin());
       }
@@ -654,14 +702,14 @@ void curveProperties::fillRestoreTabListBox()
 
       if( plotIndex < 0 || // When index is less than 0, assume all plot names are valid
           ( plotIndex < m_restoreFilterPlotName.size() &&
-            m_restoreFilterPlotName[plotIndex] == (*iter).plotName ) )
+            m_restoreFilterPlotName[plotIndex] == (*iter).name.plot ) )
       {
          validPlotName = true;
       }
 
       if( curveIndex < 0 || // When index is less than 0, assume all curve names are valid
           ( curveIndex < m_restoreFilterCurveName.size() &&
-            m_restoreFilterCurveName[curveIndex] == (*iter).curveName ) )
+            m_restoreFilterCurveName[curveIndex] == (*iter).name.curve ) )
       {
          validCurveName = true;
       }
@@ -673,7 +721,7 @@ void curveProperties::fillRestoreTabListBox()
          // This should be replaced with a date/time format.
          QString time((*iter).msgTime.toString());
          time = dString::Slice(time.toStdString(), 0, -5).c_str();
-         ui->storedMsgs->addItem("[" + time + "] " + (*iter).plotName + "->" + (*iter).curveName);
+         ui->storedMsgs->addItem("[" + time + "] " + (*iter).name.plot + "->" + (*iter).name.curve);
          m_storedMsgs.push_back(*iter);
       }
    }
@@ -687,13 +735,13 @@ void curveProperties::fillRestoreFilters()
 
    QVector<tStoredMsg> storedMsgs;
    m_curveCmdr->getStoredPlotMsgs(storedMsgs);
-   // Add unique plot/curve names to lists.
+   // Add unique plot->curve names to lists.
    for(QVector<tStoredMsg>::iterator iter = storedMsgs.begin(); iter != storedMsgs.end(); ++iter)
    {
-      if(m_restoreFilterPlotName.indexOf(iter->plotName) < 0)
-         m_restoreFilterPlotName.append(iter->plotName);
-      if(m_restoreFilterCurveName.indexOf(iter->curveName) < 0)
-         m_restoreFilterCurveName.append(iter->curveName);
+      if(m_restoreFilterPlotName.indexOf(iter->name.plot) < 0)
+         m_restoreFilterPlotName.append(iter->name.plot);
+      if(m_restoreFilterCurveName.indexOf(iter->name.curve) < 0)
+         m_restoreFilterCurveName.append(iter->name.curve);
    }
 
    ui->cmbRestorePlotNameFilter->clear();
@@ -838,76 +886,79 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
 
    RestoreCurve restoreCurve(curveFile);
    tSaveRestoreCurveParams* p = &restoreCurve.params;
+   QString newCurveName = p->curveName;
 
-   bool validNewPlotCurveName = true;
-
-   if(m_curveCmdr->validCurve(plotName, p->curveName) == true)
-   {
-      // Plot/Curve exists. Ask user what to do.
-      validNewPlotCurveName = plotCurveExists_askUserWhatToDo(plotName, p->curveName);
-   }
-
-   if(validNewPlotCurveName)
+   if(validateNewPlotCurveName(plotName, newCurveName))
    {
       if(p->plotDim == E_PLOT_DIM_1D)
       {
          // 1D Plot
-         m_curveCmdr->create1dCurve(plotName, p->curveName, p->plotType, p->yOrigPoints);
+         m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
       }
       else
       {
          // 2D Plot
-         m_curveCmdr->create2dCurve(plotName, p->curveName, p->xOrigPoints, p->yOrigPoints);
+         m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
       }
 
       MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
       if(plot != NULL)
       {
-         plot->setCurveProperties(p->curveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
-         plot->setCurveProperties(p->curveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+         plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
+         plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
       }
    }
 }
 
-bool curveProperties::plotCurveExists_askUserWhatToDo(QString& plotName, QString& curveName)
+bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)
 {
    bool namesAreValid = false;
    bool finished = false;
 
-   do
+   if(m_curveCmdr->validCurve(plotName, curveName) == false)
    {
-      overwriteRenameDialog overRenameDlg(NULL);
-      ePlotExistsReturn whatToDo = overRenameDlg.askUserAboutExistingPlot(plotName, curveName);
-      if(whatToDo == RENAME)
+      // plot->curve does not exist, the input names are valid.
+      namesAreValid = true;
+   }
+   else
+   {
+      // plot->curve does exists, ask user whether to overwrite existing curve, rename
+      // the new curve or cancel creation of new curve.
+      do
       {
-         bool renamed = m_plotCurveDialog.getPlotCurveNameFromUser(plotName, curveName);
-         if(renamed == true && m_curveCmdr->validCurve(plotName, curveName) == false)
+         overwriteRenameDialog overRenameDlg(NULL);
+         ePlotExistsReturn whatToDo = overRenameDlg.askUserAboutExistingPlot(plotName, curveName);
+         if(whatToDo == RENAME)
          {
-            // Renamed to a unique plot/curve name. Return valid.
+            bool renamed = m_plotCurveDialog.getPlotCurveNameFromUser(plotName, curveName);
+            if(renamed == true && m_curveCmdr->validCurve(plotName, curveName) == false)
+            {
+               // Renamed to a unique plot->curve name. Return valid.
+               namesAreValid = true;
+               finished = true;
+            }
+            else if(renamed == false)
+            {
+               // User clicked cancel. Return invalid.
+               namesAreValid = false;
+               finished = true;
+            }
+         }
+         else if(whatToDo == OVERWRITE)
+         {
+            // Overwrite. Do not rename. Return valid.
             namesAreValid = true;
             finished = true;
          }
-         else if(renamed == false)
+         else
          {
-            // User clicked cancel. Return invalid.
+            // Cancel. Return invalid.
             namesAreValid = false;
             finished = true;
          }
-      }
-      else if(whatToDo == OVERWRITE)
-      {
-         // Overwrite. Do not rename. Return valid.
-         namesAreValid = true;
-         finished = true;
-      }
-      else
-      {
-         // Cancel. Return invalid.
-         namesAreValid = false;
-         finished = true;
-      }
 
-   }while(finished == false);
+      }while(finished == false);
+   }
 
    return namesAreValid;
 }

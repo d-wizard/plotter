@@ -160,8 +160,7 @@ typedef enum
 
 typedef struct
 {
-   QString plotName;
-   QString curveName;
+   tPlotCurveName name;
    const char* msgPtr;
    unsigned int msgSize;
    QDateTime msgTime;

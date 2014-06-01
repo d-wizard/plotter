@@ -83,7 +83,7 @@ void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client
     _this->m_msgReaderMap[client]->ProcessPlotPacket(packet, size);
     while(_this->m_msgReaderMap[client]->ReadPlotPackets(&plotMsg, &plotMsgSize))
     {
-        _this->m_parent->readPlotMsg(plotMsg, plotMsgSize);
+        _this->m_parent->startPlotMsgProcess(plotMsg, plotMsgSize);
         _this->m_msgReaderMap[client]->finishedReadMsg();
     }
 

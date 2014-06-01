@@ -101,7 +101,7 @@ private:
    void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
    void setCurveHiddenCheckBox(CurveData* curve);
 
-   bool plotCurveExists_askUserWhatToDo(QString& plotName, QString& curveName);
+   bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();

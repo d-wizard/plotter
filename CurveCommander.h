@@ -69,10 +69,10 @@ public:
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
 
-    void storePlotMsg(const char *msgPtr, unsigned int msgSize, QString plotName, QString curveName);
+    void storePlotMsg(const char *msgPtr, unsigned int msgSize, QString& plotName, QString& curveName);
     void getStoredPlotMsgs(QVector<tStoredMsg> &storedMsgs);
 
-    void restorePlotMsg(tStoredMsg msgToRestore);
+    void restorePlotMsg(tStoredMsg msgToRestore, tPlotCurveName plotCurveName);
 
 private:
     CurveCommander();

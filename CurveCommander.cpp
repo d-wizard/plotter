@@ -307,12 +307,12 @@ void CurveCommander::curvePropertiesGuiCloseSlot()
    }
 }
 
-void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QString plotName, QString curveName)
+void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QString& plotName, QString& curveName)
 {
    tStoredMsg newMsg;
    newMsg.msgTime = QDateTime::currentDateTime();
-   newMsg.curveName = curveName;
-   newMsg.plotName = plotName;
+   newMsg.name.curve = curveName;
+   newMsg.name.plot = plotName;
    newMsg.msgPtr = msgPtr;
    newMsg.msgSize = msgSize;
 
@@ -350,7 +350,7 @@ void CurveCommander::getStoredPlotMsgs(QVector<tStoredMsg>& storedMsgs)
 }
 
 
-void CurveCommander::restorePlotMsg(tStoredMsg msgToRestore)
+void CurveCommander::restorePlotMsg(tStoredMsg msgToRestore, tPlotCurveName plotCurveName)
 {
    bool validInput = false;
    {
@@ -367,6 +367,6 @@ void CurveCommander::restorePlotMsg(tStoredMsg msgToRestore)
    }
    if(validInput)
    {
-      m_plotGuiMain->readPlotMsg(msgToRestore.msgPtr, msgToRestore.msgSize, true);
+      m_plotGuiMain->restorePlotMsg(msgToRestore.msgPtr, msgToRestore.msgSize, plotCurveName);
    }
 }
