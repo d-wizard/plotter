@@ -37,6 +37,15 @@ const QString PLOT_CURVE_SEP = "->";
 
 typedef std::vector<double> dubVect;
 
+
+typedef struct
+{
+   QString plot;
+   QString curve;
+}tPlotCurveName;
+
+
+
 typedef struct tMaxMinXY
 {
     double minX;
@@ -157,6 +166,55 @@ typedef struct
    unsigned int msgSize;
    QDateTime msgTime;
 }tStoredMsg;
+
+
+//////////////////////////////////////////////
+////////////// Type Operators ////////////////
+//////////////////////////////////////////////
+
+// tPlotCurveName operators.
+inline bool operator==(const tPlotCurveName& lhs, const tPlotCurveName& rhs)
+{
+   return (lhs.plot == rhs.plot) &&
+          (lhs.curve == rhs.curve);
+}
+inline bool operator!=(const tPlotCurveName& lhs, const tPlotCurveName& rhs){return !(operator==(lhs, rhs));}
+
+inline bool operator<(const tPlotCurveName& lhs, const tPlotCurveName& rhs)
+{
+   if(lhs.plot != rhs.plot)
+   {
+      int diffVal = memcmp( lhs.plot.toStdString().c_str(),
+                            rhs.plot.toStdString().c_str(),
+                            std::min(lhs.plot.size(), rhs.plot.size()) );
+      if(diffVal != 0)
+         return diffVal < 0;
+      else
+         return lhs.plot.size() < rhs.plot.size();
+   }
+   else
+   {
+      int diffVal =  memcmp( lhs.curve.toStdString().c_str(),
+                             rhs.curve.toStdString().c_str(),
+                             std::min(lhs.curve.size(), rhs.curve.size()) );
+      if(diffVal != 0)
+         return diffVal < 0;
+      else
+         return lhs.curve.size() < rhs.curve.size();
+
+   }
+}
+inline bool operator<=(const tPlotCurveName& lhs, const tPlotCurveName& rhs){return   operator< (rhs, lhs);}
+inline bool operator> (const tPlotCurveName& lhs, const tPlotCurveName& rhs){return !(operator<=(lhs, rhs));}
+inline bool operator>=(const tPlotCurveName& lhs, const tPlotCurveName& rhs){return !(operator< (lhs, rhs));}
+
+
+
+
+
+
+
+
 
 #endif
 
