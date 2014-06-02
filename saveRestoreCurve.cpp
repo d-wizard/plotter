@@ -83,11 +83,11 @@ SaveCurve::SaveCurve(CurveData* curve)
       pack(&packArray, &(*iter), sizeof(*iter));
 
    // Pack Y Axis Data
-   pack(&packArray, curve->getYPoints(), dataPointsSize1Axis);
+   pack(&packArray, curve->getOrigYPoints(), dataPointsSize1Axis);
 
    // Pack X Axis Data if 2D plot
    if(params.plotDim == E_PLOT_DIM_2D)
-      pack(&packArray, curve->getXPoints(), dataPointsSize1Axis);
+      pack(&packArray, curve->getOrigXPoints(), dataPointsSize1Axis);
 
 }
 
@@ -126,7 +126,7 @@ RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
    {
       // Read in remaining parameters. Catch execption if attempting
       // to read passed the end of the input file. Early return if
-      // parameter read from if is not valid.
+      // parameter read from input is not valid.
 
       unpack(&params.plotDim, sizeof(params.plotDim));
       if(valid_ePlotDim(params.plotDim) == false)
