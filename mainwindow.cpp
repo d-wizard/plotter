@@ -763,7 +763,7 @@ void MainWindow::pointSelected(const QPointF &pos)
 {
     if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
     {
-        m_qwtSelectedSample->showCursor(pos, m_maxMin, m_canvasXOverYRatio);
+        m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
 
         updatePointDisplay();
         replotMainPlot();
