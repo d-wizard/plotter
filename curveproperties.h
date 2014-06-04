@@ -128,7 +128,7 @@ private:
    tMathOpList m_mathOps;
 
    QVector<tCmbBoxAndValue> m_plotCurveCombos;
-   QVector<QComboBox*> m_plotNameCombos;
+   QVector<tCmbBoxAndValue> m_plotNameCombos;
 
    plotCurveNameDialog m_plotCurveDialog;
 
