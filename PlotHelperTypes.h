@@ -86,7 +86,10 @@ typedef enum
     E_PLOT_TYPE_1D          = 0,
     E_PLOT_TYPE_2D          = 1,
     E_PLOT_TYPE_REAL_FFT    = 2,
-    E_PLOT_TYPE_COMPLEX_FFT = 3
+    E_PLOT_TYPE_COMPLEX_FFT = 3,
+    E_PLOT_TYPE_AM_DEMOD    = 4,
+    E_PLOT_TYPE_FM_DEMOD    = 5,
+    E_PLOT_TYPE_PM_DEMOD    = 6
 }ePlotType;
 inline bool valid_ePlotType(ePlotType in)
 {
@@ -96,10 +99,35 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_2D:
    case E_PLOT_TYPE_REAL_FFT:
    case E_PLOT_TYPE_COMPLEX_FFT:
+   case E_PLOT_TYPE_AM_DEMOD:
+   case E_PLOT_TYPE_FM_DEMOD:
+   case E_PLOT_TYPE_PM_DEMOD:
       return true;
       break;
    }
    return false;
+}
+
+inline bool plotTypeHas2DInput(ePlotType in)
+{
+   bool twoDInput = false;
+   switch(in)
+   {
+   case E_PLOT_TYPE_2D:
+   case E_PLOT_TYPE_COMPLEX_FFT:
+   case E_PLOT_TYPE_AM_DEMOD:
+   case E_PLOT_TYPE_FM_DEMOD:
+   case E_PLOT_TYPE_PM_DEMOD:
+      twoDInput = true;
+      break;
+
+   case E_PLOT_TYPE_1D:
+   case E_PLOT_TYPE_REAL_FFT:
+   default:
+      twoDInput = false;
+      break;
+   }
+   return twoDInput;
 }
 
 typedef struct

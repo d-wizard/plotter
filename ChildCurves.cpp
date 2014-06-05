@@ -57,8 +57,7 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
 {
    bool curveIsYAxisParent = (m_yAxis.dataSrc.plotName == plotName) &&
                              (m_yAxis.dataSrc.curveName == curveName);
-   bool curveIsXAxisParent = ( m_plotType == E_PLOT_TYPE_2D ||
-                               m_plotType == E_PLOT_TYPE_COMPLEX_FFT ) &&
+   bool curveIsXAxisParent = plotTypeHas2DInput(m_plotType) &&
                              (m_xAxis.dataSrc.plotName == plotName) &&
                              (m_xAxis.dataSrc.curveName == curveName);
 
@@ -95,7 +94,7 @@ void ChildCurve::updateCurve()
 {
    getDataFromParent(m_yAxis, m_ySrcData);
 
-   if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
+   if(plotTypeHas2DInput(m_plotType))
    {
       getDataFromParent(m_xAxis, m_xSrcData);
    }
@@ -126,6 +125,12 @@ void ChildCurve::updateCurve()
          m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_IMAG_APPEND, m_plotType, imagFFTOut);
       }
       break;
+      case E_PLOT_TYPE_AM_DEMOD:
+      break;
+      case E_PLOT_TYPE_FM_DEMOD:
+      break;
+      case E_PLOT_TYPE_PM_DEMOD:
+      break;
    }
 
    // Try to set the child curve sample rate to the parent curves sample rate.
@@ -153,7 +158,7 @@ QVector<tPlotCurveAxis> ChildCurve::getParents()
 {
    QVector<tPlotCurveAxis> retVal;
    retVal.push_back(m_yAxis.dataSrc);
-   if(m_plotType == E_PLOT_TYPE_2D || m_plotType == E_PLOT_TYPE_COMPLEX_FFT)
+   if(plotTypeHas2DInput(m_plotType))
    {
       retVal.push_back(m_xAxis.dataSrc);
    }

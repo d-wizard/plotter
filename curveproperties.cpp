@@ -299,7 +299,7 @@ void curveProperties::on_cmdApply_clicked()
          {
             // New Child plot->curve does not exist, continue creating the child curve.
             ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
-            if( plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT )
+            if( plotTypeHas2DInput(plotType) == false )
             {
                tParentCurveInfo yAxisParent;
                yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);

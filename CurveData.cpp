@@ -127,6 +127,9 @@ void CurveData::fill1DxPoints()
    switch(plotType)
    {
       case E_PLOT_TYPE_1D:
+      case E_PLOT_TYPE_AM_DEMOD:
+      case E_PLOT_TYPE_FM_DEMOD:
+      case E_PLOT_TYPE_PM_DEMOD:
       {
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {
@@ -287,7 +290,7 @@ void CurveData::detach()
 void CurveData::findMaxMin()
 {
    int vectSize = yPoints.size();
-   if(plotType == E_PLOT_TYPE_1D || plotType == E_PLOT_TYPE_REAL_FFT)
+   if(plotType != E_PLOT_TYPE_2D && plotType != E_PLOT_TYPE_COMPLEX_FFT)
    {
       // X points will be in order, use the first/last values for min/max.
       maxMin.minX = xPoints[0];
