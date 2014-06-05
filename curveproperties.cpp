@@ -37,10 +37,6 @@ const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
 
-const int CREATE_CHILD_CURVE_COMBO_1D    = E_PLOT_TYPE_1D;
-const int CREATE_CHILD_CURVE_COMBO_2D    = E_PLOT_TYPE_2D;
-const int CREATE_CHILD_CURVE_FFT_REAL    = E_PLOT_TYPE_REAL_FFT;
-const int CREATE_CHILD_CURVE_FFT_COMPLEX = E_PLOT_TYPE_COMPLEX_FFT;
 
 #define NUM_MATH_OPS (7)
 const QString mathOpsStr[NUM_MATH_OPS] = {
@@ -250,21 +246,24 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
    switch(index)
    {
-      case CREATE_CHILD_CURVE_COMBO_1D:
+      case E_PLOT_TYPE_1D:
          ui->lblYAxisSrc->setText("Y Axis Source");
          yVis = true;
       break;
-      case CREATE_CHILD_CURVE_COMBO_2D:
+      case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
          ui->lblYAxisSrc->setText("Y Axis Source");
          xVis = true;
          yVis = true;
       break;
-      case CREATE_CHILD_CURVE_FFT_REAL:
+      case E_PLOT_TYPE_REAL_FFT:
          ui->lblYAxisSrc->setText("Real Source");
          yVis = true;
       break;
-      case CREATE_CHILD_CURVE_FFT_COMPLEX:
+      case E_PLOT_TYPE_COMPLEX_FFT:
+      case E_PLOT_TYPE_AM_DEMOD:
+      case E_PLOT_TYPE_FM_DEMOD:
+      case E_PLOT_TYPE_PM_DEMOD:
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
          xVis = true;

@@ -19,6 +19,7 @@
 #include "ChildCurves.h"
 #include "CurveCommander.h"
 #include "fftHelper.h"
+#include "AmFmPmDemod.h"
 
 const QString COMPLEX_FFT_REAL_APPEND = ".real";
 const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
@@ -126,10 +127,25 @@ void ChildCurve::updateCurve()
       }
       break;
       case E_PLOT_TYPE_AM_DEMOD:
+      {
+         dubVect demodOut;
+         AmDemod(m_xSrcData, m_ySrcData, demodOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+      }
       break;
       case E_PLOT_TYPE_FM_DEMOD:
+      {
+         dubVect demodOut;
+         FmDemod(m_xSrcData, m_ySrcData, demodOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+      }
       break;
       case E_PLOT_TYPE_PM_DEMOD:
+      {
+         dubVect demodOut;
+         PmDemod(m_xSrcData, m_ySrcData, demodOut);
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+      }
       break;
    }
 

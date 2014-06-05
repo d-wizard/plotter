@@ -61,6 +61,21 @@
        <string>Complex FFT</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>AM Demod</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>FM Demod</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PM Demod</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="lblPlotType">
      <property name="geometry">

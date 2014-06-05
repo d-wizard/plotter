@@ -18,6 +18,7 @@
  */
 #include "CurveData.h"
 #include "fftHelper.h"
+#include "AmFmPmDemod.h"
 
 CurveData::CurveData( QwtPlot *parentPlot,
                       const QString& curveName,
@@ -601,6 +602,22 @@ void CurveData::performMathOnPoints()
 {
    xPoints = xOrigPoints;
    yPoints = yOrigPoints;
+
+   // If FM demod and sample rate is specified, convert phase delta to frequency (Hz)
+   if(plotType == E_PLOT_TYPE_FM_DEMOD && sampleRate != 0.0)
+   {
+      // Convert from radians per sample to cycles per second(Hz)
+      // The equation is (Rad/Samp) * (Samp/Sec) * (1 Cycle/2Pi Rad) = Cycles/Sec = Hz
+      // Rad/Sec is yPoints[i], Samp/Sec is sampleRate, 1 Cycle/2Pi Rad is 1/M_2X_PI
+
+      // Get the (Samp/Sec) * (1 Cycle/2Pi Rad) part
+      double multiplier = (double)sampleRate / ((double)M_2X_PI);
+      for(unsigned int i = 0; i < numPoints; ++i)
+      {
+         // Convert to Hz.
+         yPoints[i] *= multiplier;
+      }
+   }
 
    doMathOnCurve(xPoints, mathOpsXAxis);
    doMathOnCurve(yPoints, mathOpsYAxis);

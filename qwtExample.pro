@@ -52,7 +52,8 @@ HEADERS  += mainwindow.h \
     UDPThreads.h \
     saveRestoreCurve.h \
     plotcurvenamedialog.h \
-    overwriterenamedialog.h
+    overwriterenamedialog.h \
+    AmFmPmDemod.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
