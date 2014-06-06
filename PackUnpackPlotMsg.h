@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +23,7 @@
 #include <vector>
 #include <stdio.h>
 #include <string.h>
+#include <QElapsedTimer>
 
 #include "DataTypes.h"
 #include "plotMsgPack.h"
@@ -75,6 +76,9 @@ inline bool validPlotDataTypes(ePlotDataTypes in)
 #define NUM_PACKET_SAVE (5)
 class GetEntirePlotMsg
 {
+   // After 1.5 seconds without a packet, assume any incomplete messages are lost and reinitialize for a new message.
+   static const qint64 MS_BETWEEN_PACKETS_FOR_REINIT = 1500;
+
 public:
    GetEntirePlotMsg();
    ~GetEntirePlotMsg();
@@ -110,6 +114,8 @@ private:
    char*        m_curPtrToFill;
    unsigned int m_curValueNumBytesFilled;
    unsigned int m_bytesNeededForCurValue;
+
+   QElapsedTimer m_timeBetweenPackets;
 
 };
 

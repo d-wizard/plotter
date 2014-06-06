@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -32,6 +32,8 @@ GetEntirePlotMsg::GetEntirePlotMsg():
    initNextWriteMsg();
    m_msgsReadIndex = m_msgsWriteIndex;
    reset();
+
+   m_timeBetweenPackets.restart();
 }
 
 GetEntirePlotMsg::~GetEntirePlotMsg()
@@ -84,8 +86,18 @@ void GetEntirePlotMsg::finishedReadMsg()
    }
 }
 
+// Take in raw packet from TCP Server. Read packet header and combine message that
+// is split into multiple TCP packets.
 void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBytes)
 {
+   // If too much time has passed since the last packet, assume the current message is
+   // lost and reset for a new message.
+   if(m_timeBetweenPackets.elapsed() >= MS_BETWEEN_PACKETS_FOR_REINIT)
+   {
+      reset();
+   }
+   m_timeBetweenPackets.restart();
+
    for(unsigned int i = 0; i < numBytes; ++i)
    {
       if(ReadOneByte(inBytes[i]))
