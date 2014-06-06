@@ -78,28 +78,17 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    ui->availableOps->setCurrentRow(0);
 
    // Initialize the list of all the combo boxes that display PlotName->CurveName
-   tCmbBoxAndValue plotCurveComboInit;
-   plotCurveComboInit.cmbBoxVal = "";
-
    m_plotCurveCombos.clear();
-
-   plotCurveComboInit.cmbBoxPtr = ui->cmbXAxisSrc;
-   m_plotCurveCombos.append(plotCurveComboInit);
-   plotCurveComboInit.cmbBoxPtr = ui->cmbYAxisSrc;
-   m_plotCurveCombos.append(plotCurveComboInit);
-   plotCurveComboInit.cmbBoxPtr = ui->cmbSrcCurve_math;
-   m_plotCurveCombos.append(plotCurveComboInit);
-   plotCurveComboInit.cmbBoxPtr = ui->cmbCurveToSave;
-   m_plotCurveCombos.append(plotCurveComboInit);
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbXAxisSrc, E_X_AXIS));
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbYAxisSrc, E_Y_AXIS));
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbSrcCurve_math, E_Y_AXIS));
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbCurveToSave, E_Y_AXIS));
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
-   plotCurveComboInit.cmbBoxPtr = ui->cmbDestPlotName;
-   m_plotNameCombos.append(plotCurveComboInit);
-   plotCurveComboInit.cmbBoxPtr = ui->cmbOpenCurvePlotName;
-   m_plotNameCombos.append(plotCurveComboInit);
-   plotCurveComboInit.cmbBoxPtr = m_plotCurveDialog.getPlotNameCombo();
-   m_plotNameCombos.append(plotCurveComboInit);
+   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbDestPlotName, E_X_AXIS));
+   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbOpenCurvePlotName, E_X_AXIS));
+   m_plotNameCombos.append(tCmbBoxAndValue(m_plotCurveDialog.getPlotNameCombo(), E_X_AXIS));
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -164,10 +153,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
 
    if(plotName != "" && curveName != "")
    {
+      // User brought this GUI up from a plot window. Set the selected value of all the plot/curve
+      // combo boxes to the plot/curve name of the selected curve in the plot window.
       setCombosToPlotCurve(plotName, curveName);
    }
    else
    {
+      // This function is being called because some curve has changed (created/deleted/updated).
+      // Attempt to set the selected value of the plot/curve combos back to the value
+      // it was before the change.
       setCombosToPrevValues();
    }
 }
@@ -190,7 +184,8 @@ void curveProperties::setCombosToPrevValues()
 void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
 {
    QString plotCurveName1D = plotName + PLOT_CURVE_SEP + curveName;
-   QString plotCurveName2D = plotCurveName1D + Y_AXIS_APPEND;
+   QString plotCurveName2Dx = plotCurveName1D + X_AXIS_APPEND;
+   QString plotCurveName2Dy = plotCurveName1D + Y_AXIS_APPEND;
 
    // Set Plot/Curve Name Combos
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
@@ -199,7 +194,10 @@ void curveProperties::setCombosToPlotCurve(QString plotName, QString curveName)
       if(trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D) == false)
       {
          // 1D Curve Name doesn't exists, must be 2D. Set to 2D Curve Name.
-         trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2D);
+         if(m_plotCurveCombos[i].defaultAxis == E_X_AXIS)
+            trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dx);
+         else
+            trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dy);
       }
    }
 

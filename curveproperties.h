@@ -31,11 +31,17 @@ namespace Ui {
 class curveProperties;
 }
 
-typedef struct
+class tCmbBoxAndValue
 {
+public:
+   tCmbBoxAndValue(){}
+   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, eAxis defaultAxisIn):
+      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn){}
    QComboBox* cmbBoxPtr;
    QString    cmbBoxVal;
-}tCmbBoxAndValue;
+   eAxis      defaultAxis; // Used when determining whether to initialize to x or y axis of 2D plot
+
+};
 
 class CurveCommander;
 
