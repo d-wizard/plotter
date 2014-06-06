@@ -148,9 +148,6 @@ private:
    ePlotDataTypes m_xAxisDataType;
    ePlotDataTypes m_yAxisDataType;
 
-   INT_32 m_xShiftFactor;
-   INT_32 m_yShiftFactor;
-
    UCHAR m_interleaved;
 };
 
