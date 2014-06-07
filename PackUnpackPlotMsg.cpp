@@ -183,72 +183,79 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
    unpack(&m_msgSize, sizeof(m_msgSize));
    if(m_msgSize == size)
    {
-      switch(m_plotAction)
+      try
       {
-         case E_CREATE_1D_PLOT:
-         case E_UPDATE_1D_PLOT:
-            unpackStr(&m_plotName);
-            unpackStr(&m_curveName);
-            unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
-            if(m_plotAction == E_UPDATE_1D_PLOT)
-            {
-               // Update action has an extra parameter to define where the samples should go
-               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
-            }
-            unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
-            if(validPlotDataTypes(m_yAxisDataType))
-            {
-               m_yAxisValues.resize(m_numSamplesInPlot);
-               for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+         switch(m_plotAction)
+         {
+            case E_CREATE_1D_PLOT:
+            case E_UPDATE_1D_PLOT:
+               unpackStr(&m_plotName);
+               unpackStr(&m_curveName);
+               unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+               if(m_plotAction == E_UPDATE_1D_PLOT)
                {
-                  m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  // Update action has an extra parameter to define where the samples should go
+                  unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
                }
-            }
-         break;
-         case E_CREATE_2D_PLOT:
-         case E_UPDATE_2D_PLOT:
-            unpackStr(&m_plotName);
-            unpackStr(&m_curveName);
-            unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
-            if(m_plotAction == E_UPDATE_2D_PLOT)
-            {
-               // Update action has an extra parameter to define where the samples should go
-               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
-            }
-            unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
-            unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
-            unpack(&m_interleaved, sizeof(m_interleaved));
-
-            if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
-            {
-               m_xAxisValues.resize(m_numSamplesInPlot);
-               m_yAxisValues.resize(m_numSamplesInPlot);
-               if(m_interleaved == false)
+               unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+               if(validPlotDataTypes(m_yAxisDataType))
                {
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                  {
-                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                  }
+                  m_yAxisValues.resize(m_numSamplesInPlot);
                   for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
                   {
                      m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
                   }
-
-               } // end if(m_interleaved == false)
-               else
+               }
+            break;
+            case E_CREATE_2D_PLOT:
+            case E_UPDATE_2D_PLOT:
+               unpackStr(&m_plotName);
+               unpackStr(&m_curveName);
+               unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+               if(m_plotAction == E_UPDATE_2D_PLOT)
                {
-                  // Interleaved data
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  // Update action has an extra parameter to define where the samples should go
+                  unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
+               }
+               unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
+               unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+               unpack(&m_interleaved, sizeof(m_interleaved));
+
+               if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
+               {
+                  m_xAxisValues.resize(m_numSamplesInPlot);
+                  m_yAxisValues.resize(m_numSamplesInPlot);
+                  if(m_interleaved == false)
                   {
-                     m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                     }
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
+
+                  } // end if(m_interleaved == false)
+                  else
+                  {
+                     // Interleaved data
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
                   }
                }
-            }
-         break;
-         default:
-            m_plotAction = E_INVALID_PLOT_ACTION;
-         break;
+            break;
+            default:
+               m_plotAction = E_INVALID_PLOT_ACTION;
+            break;
+         } // End switch(m_plotAction)
+      }
+      catch(int dontCare)
+      {
+         m_plotAction = E_INVALID_PLOT_ACTION; // Tried to unpack beyond the packet size, return Invalid Action enum.
       }
    }
    else
@@ -267,12 +274,34 @@ void UnpackPlotMsg::unpack(void* dst, unsigned int size)
       memcpy(dst, m_msg+m_msgReadIndex, size);
       m_msgReadIndex += size;
    }
+   else
+   {
+      throw 0; // Indicate to calling function that an error has occurred.
+   }
 }
 
 void UnpackPlotMsg::unpackStr(std::string* dst)
 {
-   *dst = m_msg+m_msgReadIndex;
-   m_msgReadIndex += (dst->size()+1);
+   // Validate string... find null terminator
+   bool validStr = false;
+   for(unsigned int i = m_msgReadIndex; i < m_msgSize; ++i)
+   {
+      if(m_msg[i] == '\0')
+      {
+         validStr = true;
+         break;
+      }
+   }
+
+   if(validStr)
+   {
+      *dst = m_msg+m_msgReadIndex;
+      m_msgReadIndex += (dst->size()+1);
+   }
+   else
+   {
+      throw 0; // Indicate to calling function that an error has occurred.
+   }
 }
 
 double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
