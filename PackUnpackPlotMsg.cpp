@@ -200,10 +200,18 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
                unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
                if(validPlotDataTypes(m_yAxisDataType))
                {
-                  m_yAxisValues.resize(m_numSamplesInPlot);
-                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                  // Calculate size of the data portion of the message.
+                  UINT_32 dataSize = getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
+
+                  // Make sure the remainder of the messages is exactly the size of the amount
+                  // of data specified in the message.
+                  if( (m_msgReadIndex + dataSize) == m_msgSize )
                   {
-                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     m_yAxisValues.resize(m_numSamplesInPlot);
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                     }
                   }
                }
             break;
@@ -223,27 +231,36 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
 
                if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
                {
-                  m_xAxisValues.resize(m_numSamplesInPlot);
-                  m_yAxisValues.resize(m_numSamplesInPlot);
-                  if(m_interleaved == false)
-                  {
-                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                     {
-                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                     }
-                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                     {
-                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
-                     }
+                  // Calculate size of the data portion of the message.
+                  UINT_32 dataSize = getPlotDataTypeSize(m_xAxisDataType) * m_numSamplesInPlot +
+                                     getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
 
-                  } // end if(m_interleaved == false)
-                  else
+                  // Make sure the remainder of the messages is exactly the size of the amount
+                  // of data specified in the message.
+                  if( (m_msgReadIndex + dataSize) == m_msgSize )
                   {
-                     // Interleaved data
-                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     m_xAxisValues.resize(m_numSamplesInPlot);
+                     m_yAxisValues.resize(m_numSamplesInPlot);
+                     if(m_interleaved == false)
                      {
-                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                        {
+                           m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                        }
+                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                        {
+                           m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                        }
+
+                     } // end if(m_interleaved == false)
+                     else
+                     {
+                        // Interleaved data
+                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                        {
+                           m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                           m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                        }
                      }
                   }
                }

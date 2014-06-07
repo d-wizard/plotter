@@ -48,6 +48,49 @@ inline bool validPlotAction(ePlotAction in)
    return valid;
 }
 
+inline UINT_32 getPlotDataTypeSize(ePlotDataTypes in)
+{
+   UINT_32 size = 0;
+   switch(in)
+   {
+   case E_CHAR:
+      size = sizeof(SCHAR);
+      break;
+   case E_UCHAR:
+      size = sizeof(UCHAR);
+      break;
+   case E_INT_16:
+      size = sizeof(INT_16);
+      break;
+   case E_UINT_16:
+      size = sizeof(UINT_16);
+      break;
+   case E_INT_32:
+      size = sizeof(INT_32);
+      break;
+   case E_UINT_32:
+      size = sizeof(UINT_32);
+      break;
+   case E_INT_64:
+      size = sizeof(INT_64);
+      break;
+   case E_UINT_64:
+      size = sizeof(UINT_64);
+      break;
+   case E_FLOAT_32:
+      size = sizeof(FLOAT_32);
+      break;
+   case E_FLOAT_64:
+      size = sizeof(FLOAT_64);
+      break;
+   default:
+   case E_INVALID_DATA_TYPE:
+       size = 0;
+       break;
+   }
+   return size;
+}
+
 inline bool validPlotDataTypes(ePlotDataTypes in)
 {
    bool valid = false;
