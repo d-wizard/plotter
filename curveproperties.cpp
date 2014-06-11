@@ -868,7 +868,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
    if(toSaveCurveData != NULL)
    {
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
-                                                       "",
+                                                       toSave.curveName,
                                                        tr("Curves (*.curve)"));
       SaveCurve packedCurve(toSaveCurveData);
 
