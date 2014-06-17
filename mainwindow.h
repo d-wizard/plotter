@@ -139,8 +139,6 @@ public:
     explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent = 0);
     ~MainWindow();
 
-
-    void resetPlot();
     void create1dCurve(QString name, ePlotType plotType, dubVect& yPoints);
     void create2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
     void update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect &yPoints);
@@ -217,6 +215,8 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionDownAction;
     tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
+
+    void resetPlot();
 
     void createUpdateCurve( QString& name,
                             bool resetCurve,
