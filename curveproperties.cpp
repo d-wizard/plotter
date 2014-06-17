@@ -38,7 +38,7 @@ const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
 
 
-#define NUM_MATH_OPS (7)
+#define NUM_MATH_OPS (8)
 const QString mathOpsStr[NUM_MATH_OPS] = {
 "ADD",
 "SUBTRACT",
@@ -46,7 +46,8 @@ const QString mathOpsStr[NUM_MATH_OPS] = {
 "DIVIDE",
 "SHIFT UP",
 "SHIFT DOWN",
-"LOG()"};
+"LOG()",
+"ABS()"};
 
 const QString mathOpsSymbol[NUM_MATH_OPS] = {
 "+",
@@ -55,7 +56,8 @@ const QString mathOpsSymbol[NUM_MATH_OPS] = {
 "/",
 "<<",
 ">>",
-"log"};
+"log",
+"abs"};
 
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
@@ -583,7 +585,7 @@ void curveProperties::displayUserMathOp()
 
       QString displayStr = mathOpsSymbol[iter->op] + " " + QString(number);
 
-      if(iter->op == E_LOG)
+      if(iter->op == E_LOG || iter->op == E_ABS)
       {
          displayStr = mathOpsSymbol[iter->op];
       }
@@ -609,7 +611,7 @@ void curveProperties::on_cmdOpRight_clicked()
 {
    double number = atof(ui->txtNumber->text().toStdString().c_str());
 
-   if(number != 0.0 || m_selectedMathOpLeft == E_LOG)
+   if(number != 0.0 || (m_selectedMathOpLeft == E_LOG || m_selectedMathOpLeft == E_ABS))
    {
       tOperation newOp;
 

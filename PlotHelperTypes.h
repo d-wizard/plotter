@@ -193,7 +193,8 @@ typedef enum
    E_DIVIDE,
    E_SHIFT_UP,
    E_SHIFT_DOWN,
-   E_LOG
+   E_LOG,
+   E_ABS
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -206,6 +207,7 @@ inline bool valid_eMathOp(eMathOp in)
    case E_SHIFT_UP:
    case E_SHIFT_DOWN:
    case E_LOG:
+   case E_ABS:
       return true;
       break;
    }

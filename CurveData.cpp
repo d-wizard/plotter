@@ -678,6 +678,9 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                case E_LOG:
                   (*dataIter) = log((*dataIter));
                break;
+               case E_ABS:
+                  (*dataIter) = fabs((*dataIter));
+               break;
             }
          }
       }
