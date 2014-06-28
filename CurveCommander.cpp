@@ -44,7 +44,7 @@ CurveCommander::~CurveCommander()
 }
 
 
-void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData)
+void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints)
 {
    bool newCurve = !validCurve(plotName, curveName);
    m_allCurves[plotName].curves[curveName] = curveData;
@@ -59,7 +59,7 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    }
    else
    {
-      notifyChildCurvesOfParentChange(plotName, curveName);
+      notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints);
       showHidePlotGui(plotName);
    }
 }
@@ -229,13 +229,13 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
    }
 }
 
-void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName)
+void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints)
 {
    std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
 
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
-      (*iter)->anotherCurveChanged(plotName, curveName);
+      (*iter)->anotherCurveChanged(plotName, curveName, sampleStartIndex, numPoints);
       ++iter;
    }
 }

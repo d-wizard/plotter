@@ -43,7 +43,7 @@ public:
     CurveCommander(plotGuiMain* parent);
     ~CurveCommander();
 
-    void curveUpdated(QString plotName, QString curveName, CurveData* curveData);
+    void curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints);
     void plotRemoved(QString plotName);
 
     bool validPlot(QString plotName);
@@ -78,7 +78,7 @@ private:
     CurveCommander();
 
     void createPlot(QString plotName);
-    void notifyChildCurvesOfParentChange(QString plotName, QString curveName);
+    void notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints);
     void removeOrphanedChildCurves();
 
 

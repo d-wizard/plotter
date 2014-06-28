@@ -61,6 +61,30 @@ inline void FmDemod(dubVect& reInput, dubVect& imInput, dubVect& demodOutput)
    }
 }
 
+inline void FmPmDemod(dubVect& reInput, dubVect& imInput, dubVect& fmOutput, double* pmOutput, double prevPhase)
+{
+   unsigned int outSize = std::min(reInput.size(), imInput.size());
+   if(outSize > 0)
+   {
+      fmOutput.resize(outSize);
+
+      double curPhase = 0.0;
+
+      for(unsigned int i = 0; i < outSize; ++i)
+      {
+         curPhase = atan2(reInput[i], imInput[i]);
+         pmOutput[i] = curPhase;
+         fmOutput[i] = curPhase - prevPhase;
+         if(fmOutput[i] < M_NEG_PI)
+            fmOutput[i] += M_2X_PI;
+         else if(fmOutput[i] > M_PI)
+            fmOutput[i] -= M_2X_PI;
+
+         prevPhase = curPhase;
+      }
+   }
+}
+
 inline void PmDemod(dubVect& reInput, dubVect& imInput, dubVect& demodOutput)
 {
    unsigned int outSize = std::min(reInput.size(), imInput.size());

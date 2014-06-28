@@ -437,7 +437,7 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
    {
       if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
       {
-         handleCurveDataChange(curveIndex);
+         handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
       }
    }
 }
@@ -455,7 +455,7 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
 
       if(curveChanged)
       {
-         handleCurveDataChange(curveIndex);
+         handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
       }
    }
 }
@@ -529,10 +529,10 @@ void MainWindow::createUpdateCurve( QString& name,
       }
    }
 
-   handleCurveDataChange(curveIndex);
+   handleCurveDataChange(curveIndex, sampleStartIndex, yPoints->size());
 }
 
-void MainWindow::handleCurveDataChange(int curveIndex)
+void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints)
 {
    calcMaxMin();
 
@@ -557,7 +557,11 @@ void MainWindow::handleCurveDataChange(int curveIndex)
    emit updateCursorMenusSignal();
 
    // inform parent that a curve has been added / changed
-   m_curveCommander->curveUpdated(this->windowTitle(), m_qwtCurves[curveIndex]->getCurveTitle(), m_qwtCurves[curveIndex]);
+   m_curveCommander->curveUpdated( this->windowTitle(),
+                                   m_qwtCurves[curveIndex]->getCurveTitle(),
+                                   m_qwtCurves[curveIndex],
+                                   sampleStartIndex,
+                                   numPoints );
 }
 
 void MainWindow::toggleLegend()

@@ -35,7 +35,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotType(plotType),
    m_yAxis(yAxis)
 {
-   updateCurve();
+   updateCurve(false, true);
 }
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
@@ -51,10 +51,10 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_xAxis(xAxis),
    m_yAxis(yAxis)
 {
-   updateCurve();
+   updateCurve(true, true);
 }
 
-void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
+void ChildCurve::anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints)
 {
    bool curveIsYAxisParent = (m_yAxis.dataSrc.plotName == plotName) &&
                              (m_yAxis.dataSrc.curveName == curveName);
@@ -65,52 +65,197 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName)
    bool parentChanged = curveIsYAxisParent || curveIsXAxisParent;
    if(parentChanged)
    {
-      updateCurve();
+      updateCurve( curveIsXAxisParent,
+                   curveIsYAxisParent,
+                   parentStartIndex,
+                   parentStartIndex + parentNumPoints );
    }
 
 }
 
-void ChildCurve::getDataFromParent(tParentCurveInfo &parentInfo, dubVect& data)
+void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
+                                      unsigned int parentStartIndex,
+                                      unsigned int parentStopIndex,
+                                      bool parentChanged,
+                                      CurveData*& parentCurve,
+                                      int& origStartIndex,
+                                      int& startIndex,
+                                      int& stopIndex)
 {
-   CurveData* parent = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
-   int startIndex = parentInfo.startIndex;
-   int stopIndex = parentInfo.stopIndex;
+   parentCurve = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
+   startIndex = parentInfo.startIndex;
+   stopIndex = parentInfo.stopIndex;
 
    // Slice... Handle negative indexes, 0 is beginning for start and 0 is end for stop.
    if(startIndex < 0)
-      startIndex += parent->getNumPoints();
+      startIndex += parentCurve->getNumPoints();
    if(stopIndex <= 0)
-      stopIndex += parent->getNumPoints();
+      stopIndex += parentCurve->getNumPoints();
 
-   if(parent != NULL)
+   origStartIndex = startIndex;
+
+   if(parentChanged)
    {
-      if(parentInfo.dataSrc.axis == E_X_AXIS)
-         parent->getXPoints(data, startIndex, stopIndex);
-      else
-         parent->getYPoints(data, startIndex, stopIndex);
+      // Make sure indexes are within the parents change window
+      if(startIndex < (int)parentStartIndex)
+         startIndex = parentStartIndex;
+
+      // If parentChangeStopIndex is 0, the change goes to the end of the curve.
+      // In that case there is no need to bound stop indexes.
+      if(parentStopIndex > 0)
+      {
+         if(stopIndex >= (int)parentStopIndex)
+            stopIndex = parentStopIndex;
+      }
+   }
+   else
+   {
+      // Parent did not change. Set copy length to 0;
+      stopIndex = startIndex;
    }
 }
 
-void ChildCurve::updateCurve()
-{
-   getDataFromParent(m_yAxis, m_ySrcData);
 
-   if(plotTypeHas2DInput(m_plotType))
+unsigned int ChildCurve::getDataFromParent1D( unsigned int parentStartIndex,
+                                              unsigned int parentStopIndex)
+{
+   CurveData* yParent;
+   int yStartIndex;
+   int yStopIndex;
+   int origYStart;
+
+   getParentUpdateInfo( m_yAxis,
+                        parentStartIndex,
+                        parentStopIndex,
+                        true,
+                        yParent,
+                        origYStart,
+                        yStartIndex,
+                        yStopIndex );
+
+   int startOffset = 0;
+   int numSampToGet = yStopIndex - yStartIndex;
+   if(numSampToGet > 0)
    {
-      getDataFromParent(m_xAxis, m_xSrcData);
+      startOffset = yStartIndex - origYStart;
+
+      if(m_yAxis.dataSrc.axis == E_X_AXIS)
+         yParent->getXPoints(m_ySrcData, yStartIndex, yStopIndex);
+      else
+         yParent->getYPoints(m_ySrcData, yStartIndex, yStopIndex);
    }
+   else
+   {
+      m_ySrcData.clear();
+   }
+
+   return startOffset;
+}
+
+
+unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
+                                              bool yParentChanged,
+                                              unsigned int parentStartIndex,
+                                              unsigned int parentStopIndex)
+{
+   CurveData* xParent;
+   int xStartIndex;
+   int xStopIndex;
+   int origXStart;
+
+   CurveData* yParent;
+   int yStartIndex;
+   int yStopIndex;
+   int origYStart;
+
+   getParentUpdateInfo( m_xAxis,
+                        parentStartIndex,
+                        parentStopIndex,
+                        xParentChanged,
+                        xParent,
+                        origXStart,
+                        xStartIndex,
+                        xStopIndex );
+
+   getParentUpdateInfo( m_yAxis,
+                        parentStartIndex,
+                        parentStopIndex,
+                        yParentChanged,
+                        yParent,
+                        origYStart,
+                        yStartIndex,
+                        yStopIndex );
+
+   int numXSamp = xStopIndex - xStartIndex;
+   int numYSamp = yStopIndex - yStartIndex;
+
+   int numSampToGet = std::max(numXSamp, numYSamp);
+   int startOffset = 0;
+   if(numSampToGet > 0)
+   {
+      if(numXSamp > numYSamp)
+      {
+         startOffset = xStartIndex - origXStart;
+         yStartIndex = origYStart + startOffset;
+         yStopIndex = yStartIndex + numSampToGet;
+      }
+      else
+      {
+         startOffset = yStartIndex - origYStart;
+         xStartIndex = origXStart + startOffset;
+         xStopIndex = xStartIndex + numSampToGet;
+      }
+
+      if(m_xAxis.dataSrc.axis == E_X_AXIS)
+         xParent->getXPoints(m_xSrcData, xStartIndex, xStopIndex);
+      else
+         xParent->getYPoints(m_xSrcData, xStartIndex, xStopIndex);
+
+      if(m_yAxis.dataSrc.axis == E_X_AXIS)
+         yParent->getXPoints(m_ySrcData, yStartIndex, yStopIndex);
+      else
+         yParent->getYPoints(m_ySrcData, yStartIndex, yStopIndex);
+   }
+   else
+   {
+      m_xSrcData.clear();
+      m_ySrcData.clear();
+   }
+
+   return startOffset;
+}
+
+void ChildCurve::updateCurve( bool xParentChanged,
+                              bool yParentChanged,
+                              unsigned int parentStartIndex,
+                              unsigned int parentStopIndex )
+{
+
 
    switch(m_plotType)
    {
       case E_PLOT_TYPE_1D:
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, m_ySrcData);
+      {
+         unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
+
+         m_curveCmdr->update1dCurve( m_plotName, m_curveName, m_plotType, offset, m_ySrcData );
+
+      }
       break;
       case E_PLOT_TYPE_2D:
-         m_curveCmdr->create2dCurve(m_plotName, m_curveName, m_xSrcData, m_ySrcData);
+      {
+         unsigned int offset = getDataFromParent2D( xParentChanged,
+                                                    yParentChanged,
+                                                    parentStartIndex,
+                                                    parentStopIndex );
+
+         m_curveCmdr->update2dCurve(m_plotName, m_curveName, offset, m_xSrcData, m_ySrcData);
+      }
       break;
       case E_PLOT_TYPE_REAL_FFT:
       {
          dubVect realFFTOut;
+         getDataFromParent2D(xParentChanged, yParentChanged);
          realFFT(m_ySrcData, realFFTOut);
          m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
       }
@@ -120,6 +265,7 @@ void ChildCurve::updateCurve()
          dubVect realFFTOut;
          dubVect imagFFTOut;
 
+         getDataFromParent2D(xParentChanged, yParentChanged);
          complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
 
          m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_REAL_APPEND, m_plotType, realFFTOut);
@@ -129,22 +275,53 @@ void ChildCurve::updateCurve()
       case E_PLOT_TYPE_AM_DEMOD:
       {
          dubVect demodOut;
+         unsigned int offset = getDataFromParent2D( xParentChanged,
+                                                    yParentChanged,
+                                                    parentStartIndex,
+                                                    parentStopIndex );
          AmDemod(m_xSrcData, m_ySrcData, demodOut);
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+         m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, demodOut);
       }
       break;
       case E_PLOT_TYPE_FM_DEMOD:
       {
-         dubVect demodOut;
-         FmDemod(m_xSrcData, m_ySrcData, demodOut);
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+         dubVect fmDemod;
+         unsigned int offset = getDataFromParent2D( xParentChanged,
+                                                    yParentChanged,
+                                                    parentStartIndex,
+                                                    parentStopIndex );
+
+         int dataSize = std::min(m_xSrcData.size(), m_ySrcData.size());
+         if(dataSize > 0)
+         {
+            int pmDemodSize = m_pmDemod.size();
+            int prevPhaseIndex = (int)offset - 1;
+            if(prevPhaseIndex < 0)
+            {
+               prevPhaseIndex = pmDemodSize - 1;
+            }
+
+            double prevPhase = pmDemodSize <= 0 ? 0.0 : m_pmDemod[prevPhaseIndex];
+
+            if(pmDemodSize < ((int)offset + dataSize))
+            {
+               m_pmDemod.resize(offset + dataSize);
+            }
+
+            FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_pmDemod[offset], prevPhase);
+            m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, fmDemod);
+         }
       }
       break;
       case E_PLOT_TYPE_PM_DEMOD:
       {
          dubVect demodOut;
+         unsigned int offset = getDataFromParent2D( xParentChanged,
+                                                    yParentChanged,
+                                                    parentStartIndex,
+                                                    parentStopIndex );
          PmDemod(m_xSrcData, m_ySrcData, demodOut);
-         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, demodOut);
+         m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, demodOut);
       }
       break;
    }

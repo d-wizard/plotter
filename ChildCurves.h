@@ -23,6 +23,7 @@
 #include <QString>
 #include <QVector>
 #include <PlotHelperTypes.h>
+#include "CurveData.h"
 
 class CurveCommander;
 
@@ -33,7 +34,7 @@ public:
    ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
    ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
 
-   void anotherCurveChanged(QString plotName, QString curveName);
+   void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints);
    QVector<tPlotCurveAxis> getParents();
 
    QString getPlotName(){return m_plotName;}
@@ -44,8 +45,27 @@ private:
    ChildCurve(ChildCurve const&);
    void operator=(ChildCurve const&);
 
-   void getDataFromParent(tParentCurveInfo& parentInfo, dubVect &data);
-   void updateCurve();
+   void getParentUpdateInfo( tParentCurveInfo &parentInfo,
+                             unsigned int parentStartIndex,
+                             unsigned int parentStopIndex,
+                             bool parentChanged,
+                             CurveData*& parentCurve,
+                             int& origStartIndex,
+                             int& startIndex,
+                             int& stopIndex);
+
+   unsigned int getDataFromParent1D( unsigned int parentStartIndex = 0,
+                                     unsigned int parentStopIndex = 0);
+
+   unsigned int getDataFromParent2D( bool xParentChanged,
+                                     bool yParentChanged,
+                                     unsigned int parentStartIndex = 0,
+                                     unsigned int parentStopIndex = 0);
+
+   void updateCurve( bool xParentChanged,
+                     bool yParentChanged,
+                     unsigned int parentStartIndex = 0,
+                     unsigned int parentStopIndex = 0);
 
    CurveCommander* m_curveCmdr;
    QString m_plotName;
@@ -56,6 +76,8 @@ private:
 
    dubVect m_xSrcData;
    dubVect m_ySrcData;
+
+   dubVect m_pmDemod; // Used to store previous phase values for FM demod
 };
 
 #endif
