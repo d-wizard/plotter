@@ -1630,3 +1630,17 @@ void MainWindow::updateCurveOrder()
    calcMaxMin();
    emit updateCursorMenusSignal();
 }
+
+void MainWindow::removeCurve(const QString& curveName)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   int curveIndex = getCurveIndex(curveName);
+   if(curveIndex >= 0)
+   {
+      delete m_qwtCurves[curveIndex];
+      m_qwtCurves.removeAt(curveIndex);
+   }
+   updateCurveOrder();
+}
+

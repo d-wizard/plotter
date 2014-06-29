@@ -24,6 +24,7 @@
 #include <QMap>
 #include <algorithm>
 #include <QFileDialog>
+#include <QMessageBox>
 #include <fstream>
 #include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
@@ -554,6 +555,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_PROPERTIES:
       {
          showApplyButton = true;
+         ui->chkPropRemove->setChecked(false);
          fillInPropTab();
       }
       break;
@@ -1001,7 +1003,8 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
-    fillInPropTab();
+   ui->chkPropRemove->setChecked(false);
+   fillInPropTab();
 }
 
 void curveProperties::fillInPropTab()
@@ -1027,6 +1030,22 @@ void curveProperties::propTabApply()
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
    {
+      if(ui->chkPropRemove->isChecked())
+      {
+         // Ask the user if they are sure they want to remove the plot.
+         QMessageBox::StandardButton reply;
+         reply = QMessageBox::question( this,
+                                        "Remove Plot",
+                                        "Are you sure you want to permanently remove this curve: " + ui->cmbPropPlotCurveName->currentText(),
+                                        QMessageBox::Yes|QMessageBox::No );
+         if (reply == QMessageBox::Yes)
+         {
+            m_curveCmdr->removeCurve(plotCurveInfo.plotName, plotCurveInfo.curveName);
+            return; // removing Curve, nothing more to do.
+         }
+      }
+
+      // Check for change of Curve Display Index
       if(parentPlot->getCurveIndex(plotCurveInfo.curveName) != ui->spnPropCurvePos->value())
       {
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());

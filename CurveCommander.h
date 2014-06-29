@@ -74,6 +74,8 @@ public:
 
     void restorePlotMsg(tStoredMsg msgToRestore, tPlotCurveName plotCurveName);
 
+    void removeCurve(const QString& plotName, const QString& curveName);
+
 private:
     CurveCommander();
 

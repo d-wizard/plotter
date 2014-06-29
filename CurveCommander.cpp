@@ -370,3 +370,30 @@ void CurveCommander::restorePlotMsg(tStoredMsg msgToRestore, tPlotCurveName plot
       m_plotGuiMain->restorePlotMsg(msgToRestore.msgPtr, msgToRestore.msgSize, plotCurveName);
    }
 }
+
+void CurveCommander::removeCurve(const QString& plotName, const QString& curveName)
+{
+   if(validCurve(plotName, curveName))
+   {
+      m_allCurves[plotName].plotGui->removeCurve(curveName);
+      if(m_allCurves[plotName].plotGui->getNumCurves() <= 0)
+      {
+         // Remove the Plot window the offical way (but without emitting the signal).
+         plotWindowCloseSlot(plotName);
+      }
+      else
+      {
+         // Plot still exists, just remove curve from map.
+         m_allCurves[plotName].curves.remove(curveName);
+
+         removeOrphanedChildCurves();
+
+         // Update Curve Properties GUI
+         if(m_curvePropGui != NULL)
+         {
+            m_curvePropGui->updateGuiPlotCurveInfo();
+         }
+      }
+
+   }
+}

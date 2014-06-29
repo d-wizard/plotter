@@ -155,6 +155,8 @@ public:
     int getNumCurves();
     int getCurveIndex(const QString& curveTitle);
     void setCurveIndex(const QString& curveTitle, int newIndex);
+
+    void removeCurve(const QString& curveName);
 private:
     Ui::MainWindow *ui;
 
