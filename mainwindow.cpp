@@ -47,6 +47,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_curveCommander(curveCmdr),
     m_plotGuiMain(plotGui),
     m_qwtPlot(NULL),
+    m_qwtCurvesMutex(QMutex::Recursive),
     m_qwtSelectedSample(NULL),
     m_qwtSelectedSampleDelta(NULL),
     m_qwtPicker(NULL),
@@ -173,6 +174,8 @@ MainWindow::~MainWindow()
         delete m_selectedCursorActions[i].action;
         delete m_selectedCursorActions[i].mapper;
     }
+
+    m_qwtCurvesMutex.lock();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         if(m_qwtCurves[i] != NULL)
@@ -181,6 +184,8 @@ MainWindow::~MainWindow()
             m_qwtCurves[i] = NULL;
         }
     }
+    m_qwtCurvesMutex.unlock();
+
     if(m_qwtGrid != NULL)
     {
         delete m_qwtGrid;
@@ -299,6 +304,8 @@ void MainWindow::resetPlot()
 
 void MainWindow::updateCursorMenus()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     int numDisplayedCurves = 0;
 
     for(int i = 0; i < m_qwtCurves.size(); ++i)
@@ -432,6 +439,8 @@ void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubV
 
 void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified)
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    int curveIndex = getCurveIndex(curveName);
    if(curveIndex >= 0)
    {
@@ -445,6 +454,8 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
 
 void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden)
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    int curveIndex = getCurveIndex(curveName);
    if(curveIndex >= 0)
    {
@@ -467,6 +478,8 @@ void MainWindow::createUpdateCurve( QString& name,
                                     dubVect *xPoints,
                                     dubVect *yPoints )
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    // Check for any reason to not allow the adding of the new curve.
    if( m_allowNewCurves == false ||
        yPoints == NULL ||
@@ -659,6 +672,8 @@ void MainWindow::normalizeCurves()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     // Toggle the curve that was clicked.
     if(m_qwtCurves[index]->isDisplayed())
     {
@@ -702,6 +717,7 @@ void MainWindow::selectedCursorMenuSelect(int index)
 
 void MainWindow::showCurveProperties()
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
    m_curveCommander->showCurvePropertiesGui(windowTitle(), m_qwtCurves[m_selectedCurveIndex]->getCurveTitle());
 }
 
@@ -720,6 +736,8 @@ void MainWindow::togglePlotUpdateAbility()
 
 void MainWindow::calcMaxMin()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     int i = 0;
     while(i < m_qwtCurves.size() && m_qwtCurves[i]->isDisplayed() == false)
     {
@@ -850,6 +868,8 @@ void MainWindow::setDisplayIoMapipYAxis(std::stringstream& iostr)
 
 void MainWindow::clearPointLabels()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         if(m_qwtCurves[i]->pointLabel != NULL)
@@ -862,6 +882,8 @@ void MainWindow::clearPointLabels()
 }
 void MainWindow::displayPointLabels()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     clearPointLabels();
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
@@ -900,6 +922,8 @@ void MainWindow::displayPointLabels()
 }
 void MainWindow::displayDeltaLabel()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     clearPointLabels();
     if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
     {
@@ -1196,6 +1220,8 @@ bool MainWindow::keyPressModifyCursor(int key)
 
 void MainWindow::modifySelectedCursor(int modDelta)
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     if(modDelta != 0)
     {
         std::vector<int> displayedCurves;
@@ -1300,6 +1326,8 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
 
 void MainWindow::setSelectedCurveIndex(int index)
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     if(index >= 0 && index < m_qwtCurves.size())
     {
         int oldSelectCursor = m_selectedCurveIndex;
@@ -1333,6 +1361,8 @@ void MainWindow::setSelectedCurveIndex(int index)
 
 void MainWindow::replotMainPlot()
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         if(m_normalizeCurves)
@@ -1364,6 +1394,8 @@ void MainWindow::ShowRightClickForPlot(const QPoint& pos) // this is a slot
 
 void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     // Kinda ugly, but this is the simplist way I found to display the right click menu
     // when right clicking in the display area. Basically, for loop through all the curves
     // until a valid point label is found. Then use that point label for the right click menu and exit.
@@ -1391,6 +1423,8 @@ void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
 
 int MainWindow::getCurveIndex(const QString& curveTitle)
 {
+    QMutexScopedLock lock(&m_qwtCurvesMutex);
+
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         if(m_qwtCurves[i]->getCurveTitle() == curveTitle)
@@ -1416,6 +1450,8 @@ void MainWindow::resizeEvent(QResizeEvent* /*event*/)
 
 void MainWindow::setCurveStyleMenu()
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    m_stylesCurvesMenu.clear();
    m_curveLineMenu.clear();
 
@@ -1464,6 +1500,8 @@ void MainWindow::setCurveStyleMenu()
 }
 void MainWindow::setCurveStyleMenuIcons()
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    // curveIndex == -1 indicates All Curves
    int curveIndex = -1;
    for( QList<QSharedPointer<curveStyleMenu> >::iterator menuItem = m_curveLineMenu.begin();
@@ -1540,6 +1578,8 @@ void MainWindow::setCurveStyleMenuIcons()
 
 void MainWindow::changeCurveStyle(int inVal)
 {
+   QMutexScopedLock lock(&m_qwtCurvesMutex);
+
    short curveIndex = (inVal >> 16) & 0xffff;
    QwtPlotCurve::CurveStyle curveStyle = (QwtPlotCurve::CurveStyle)((inVal) & 0xffff);
 

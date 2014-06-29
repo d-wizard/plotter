@@ -41,6 +41,7 @@
 #include <QString>
 #include <QCursor>
 #include <QSharedPointer >
+#include <QMutex>
 
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
@@ -126,6 +127,27 @@ private:
    curveStyleMenu();
 };
 
+class QMutexScopedLock
+{
+public:
+   QMutexScopedLock(QMutex* mutex):
+      m_mutex(mutex)
+   {
+      m_mutex->lock();
+   }
+   ~QMutexScopedLock()
+   {
+      m_mutex->unlock();
+   }
+
+private:
+   QMutexScopedLock();
+   QMutexScopedLock(QMutexScopedLock const&);
+   void operator=(QMutexScopedLock const&);
+
+   QMutex* m_mutex;
+};
+
 
 namespace Ui {
 class MainWindow;
@@ -161,6 +183,7 @@ private:
 
     QwtPlot* m_qwtPlot;
     QList<CurveData*> m_qwtCurves;
+    QMutex m_qwtCurvesMutex;
     Cursor* m_qwtSelectedSample;
     Cursor* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
