@@ -151,6 +151,7 @@ public:
     // Return current zoom dimemsions if pointer is value, otherwise return zero values
     maxMinXY getZoomDimensions(){ maxMinXY zeroRetVal = {0,0,0,0}; return m_plotZoom ? m_plotZoom->getCurZoom() : zeroRetVal; }
 
+    int getCurveIndex(const QString& curveTitle);
 private:
     Ui::MainWindow *ui;
 
@@ -247,8 +248,6 @@ private:
     void setSelectedCurveIndex(int index);
 
     void replotMainPlot();
-
-    int findMatchingCurve(const QString& curveTitle);
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);

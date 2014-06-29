@@ -432,7 +432,7 @@ void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubV
 
 void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified)
 {
-   int curveIndex = findMatchingCurve(curveName);
+   int curveIndex = getCurveIndex(curveName);
    if(curveIndex >= 0)
    {
       if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
@@ -445,7 +445,7 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
 
 void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden)
 {
-   int curveIndex = findMatchingCurve(curveName);
+   int curveIndex = getCurveIndex(curveName);
    if(curveIndex >= 0)
    {
       bool curveChanged = false;
@@ -476,7 +476,7 @@ void MainWindow::createUpdateCurve( QString& name,
       return;
    }
 
-   int curveIndex = findMatchingCurve(name);
+   int curveIndex = getCurveIndex(name);
    if(curveIndex >= 0)
    {
       if(resetCurve == true)
@@ -1389,7 +1389,7 @@ void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
   }
 }
 
-int MainWindow::findMatchingCurve(const QString& curveTitle)
+int MainWindow::getCurveIndex(const QString& curveTitle)
 {
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
