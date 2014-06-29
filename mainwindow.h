@@ -127,27 +127,6 @@ private:
    curveStyleMenu();
 };
 
-class QMutexScopedLock
-{
-public:
-   QMutexScopedLock(QMutex* mutex):
-      m_mutex(mutex)
-   {
-      m_mutex->lock();
-   }
-   ~QMutexScopedLock()
-   {
-      m_mutex->unlock();
-   }
-
-private:
-   QMutexScopedLock();
-   QMutexScopedLock(QMutexScopedLock const&);
-   void operator=(QMutexScopedLock const&);
-
-   QMutex* m_mutex;
-};
-
 
 namespace Ui {
 class MainWindow;
