@@ -152,7 +152,9 @@ public:
     // Return current zoom dimemsions if pointer is value, otherwise return zero values
     maxMinXY getZoomDimensions(){ maxMinXY zeroRetVal = {0,0,0,0}; return m_plotZoom ? m_plotZoom->getCurZoom() : zeroRetVal; }
 
+    int getNumCurves();
     int getCurveIndex(const QString& curveTitle);
+    void setCurveIndex(const QString& curveTitle, int newIndex);
 private:
     Ui::MainWindow *ui;
 
@@ -296,6 +298,8 @@ private slots:
 
     void displayPointsChangeType(int type);
     void displayPointsChangePrecision(int precision);
+
+    void updateCurveOrder();
 
 // Functions that could be called from a thread, but modify ui
 public slots:

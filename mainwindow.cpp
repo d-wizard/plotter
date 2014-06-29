@@ -683,26 +683,7 @@ void MainWindow::visibleCursorMenuSelect(int index)
     {
         m_qwtCurves[index]->attach();
     }
-
-    // Detach all and re-attach visable curves, so as to retain curve order on gui
-    QList<CurveData*> visableCurves;
-    for(int i = 0; i < m_qwtCurves.size(); ++i)
-    {
-        if(m_qwtCurves[i]->isDisplayed() == true)
-        {
-            visableCurves.push_back(m_qwtCurves[i]);
-            m_qwtCurves[i]->detach();
-        }
-    }
-    for(int i = 0; i < visableCurves.size(); ++i)
-    {
-        visableCurves[i]->attach();
-    }
-
-    updatePointDisplay();
-    replotMainPlot();
-    calcMaxMin();
-    emit updateCursorMenusSignal();
+    updateCurveOrder();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -1421,6 +1402,12 @@ void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
   }
 }
 
+int MainWindow::getNumCurves()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   return m_qwtCurves.size();
+}
+
 int MainWindow::getCurveIndex(const QString& curveTitle)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
@@ -1435,6 +1422,27 @@ int MainWindow::getCurveIndex(const QString& curveTitle)
     return -1;
 }
 
+void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   int curIndex = getCurveIndex(curveTitle);
+   if(curIndex >= 0)
+   {
+      int maxCurveIndex = m_qwtCurves.size() - 1;
+      if(newIndex > maxCurveIndex)
+         newIndex = maxCurveIndex;
+      else if(newIndex < 0)
+         newIndex = 0;
+
+      if(curIndex != newIndex)
+      {
+         m_qwtCurves.move(curIndex, newIndex);
+         updateCurveOrder();
+      }
+      // Else new and cur index are the same, nothing to do.
+   }
+}
 
 void MainWindow::closeEvent(QCloseEvent* /*event*/)
 {
@@ -1596,4 +1604,29 @@ void MainWindow::changeCurveStyle(int inVal)
       }
    }
    setCurveStyleMenuIcons();
+}
+
+void MainWindow::updateCurveOrder()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   // Detach all and re-attach visable curves, so as to retain curve order on gui
+   QList<CurveData*> visableCurves;
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+       if(m_qwtCurves[i]->isDisplayed() == true)
+       {
+           visableCurves.push_back(m_qwtCurves[i]);
+           m_qwtCurves[i]->detach();
+       }
+   }
+   for(int i = 0; i < visableCurves.size(); ++i)
+   {
+       visableCurves[i]->attach();
+   }
+
+   updatePointDisplay();
+   replotMainPlot();
+   calcMaxMin();
+   emit updateCursorMenusSignal();
 }
