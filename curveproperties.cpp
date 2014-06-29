@@ -247,6 +247,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    switch(index)
    {
       case E_PLOT_TYPE_1D:
+      case E_PLOT_TYPE_AVERAGE:
          ui->lblYAxisSrc->setText("Y Axis Source");
          yVis = true;
       break;
@@ -282,6 +283,9 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->spnYSrcStart->setVisible(yVis && slice);
    ui->spnYSrcStop->setVisible(yVis && slice);
    ui->cmdYUseZoomForSlice->setVisible(yVis && slice);
+
+   ui->lblAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
+   ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -312,6 +316,9 @@ void curveProperties::on_cmdApply_clicked()
                   yAxisParent.startIndex = 0;
                   yAxisParent.stopIndex = 0;
                }
+
+               yAxisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
+
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,

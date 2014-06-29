@@ -131,6 +131,7 @@ void CurveData::fill1DxPoints()
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
+      case E_PLOT_TYPE_AVERAGE:
       {
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {

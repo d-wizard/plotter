@@ -76,6 +76,11 @@
        <string>PM Demod</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Average</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="lblPlotType">
      <property name="geometry">
@@ -286,6 +291,32 @@
      </property>
      <property name="text">
       <string>Use Zoom</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txtAvgAmount">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>180</y>
+       <width>113</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0.9</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblAvgAmount">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>160</y>
+       <width>131</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Average Amount (0 - 1)</string>
      </property>
     </widget>
    </widget>

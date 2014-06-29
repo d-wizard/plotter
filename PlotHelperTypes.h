@@ -89,7 +89,8 @@ typedef enum
     E_PLOT_TYPE_COMPLEX_FFT = 3,
     E_PLOT_TYPE_AM_DEMOD    = 4,
     E_PLOT_TYPE_FM_DEMOD    = 5,
-    E_PLOT_TYPE_PM_DEMOD    = 6
+    E_PLOT_TYPE_PM_DEMOD    = 6,
+    E_PLOT_TYPE_AVERAGE     = 7
 }ePlotType;
 inline bool valid_ePlotType(ePlotType in)
 {
@@ -102,6 +103,7 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_AM_DEMOD:
    case E_PLOT_TYPE_FM_DEMOD:
    case E_PLOT_TYPE_PM_DEMOD:
+   case E_PLOT_TYPE_AVERAGE:
       return true;
       break;
    }
@@ -123,6 +125,7 @@ inline bool plotTypeHas2DInput(ePlotType in)
 
    case E_PLOT_TYPE_1D:
    case E_PLOT_TYPE_REAL_FFT:
+   case E_PLOT_TYPE_AVERAGE:
    default:
       twoDInput = false;
       break;
@@ -183,6 +186,7 @@ typedef struct
    tPlotCurveAxis dataSrc;
    int startIndex;
    int stopIndex;
+   double avgAmount;
 }tParentCurveInfo;
 
 typedef enum

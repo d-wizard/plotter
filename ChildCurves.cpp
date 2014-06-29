@@ -294,21 +294,21 @@ void ChildCurve::updateCurve( bool xParentChanged,
          int dataSize = std::min(m_xSrcData.size(), m_ySrcData.size());
          if(dataSize > 0)
          {
-            int pmDemodSize = m_pmDemod.size();
+            int pmDemodSize = m_prevInfo.size();
             int prevPhaseIndex = (int)offset - 1;
             if(prevPhaseIndex < 0)
             {
                prevPhaseIndex = pmDemodSize - 1;
             }
 
-            double prevPhase = pmDemodSize <= 0 ? 0.0 : m_pmDemod[prevPhaseIndex];
+            double prevPhase = pmDemodSize <= 0 ? 0.0 : m_prevInfo[prevPhaseIndex];
 
             if(pmDemodSize < ((int)offset + dataSize))
             {
-               m_pmDemod.resize(offset + dataSize);
+               m_prevInfo.resize(offset + dataSize);
             }
 
-            FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_pmDemod[offset], prevPhase);
+            FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_prevInfo[offset], prevPhase);
             m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, fmDemod);
          }
       }
@@ -322,6 +322,40 @@ void ChildCurve::updateCurve( bool xParentChanged,
                                                     parentStopIndex );
          PmDemod(m_xSrcData, m_ySrcData, demodOut);
          m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, demodOut);
+      }
+      break;
+      case E_PLOT_TYPE_AVERAGE:
+      {
+         unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
+
+         int dataSize = m_ySrcData.size();
+         if(dataSize > 0)
+         {
+
+            int prevAvgSize = m_prevInfo.size();
+            int prevAvgIndex = (int)offset - 1;
+            if(prevAvgIndex < 0)
+            {
+               prevAvgIndex = prevAvgSize - 1;
+            }
+
+            double prevAvg = prevAvgSize <= 0 ? 0.0 : m_prevInfo[prevAvgIndex];
+
+            if(prevAvgSize < ((int)offset + dataSize))
+            {
+               m_prevInfo.resize(offset + dataSize);
+            }
+
+            double avgKeepAmount = 1.0 - m_yAxis.avgAmount;
+            for(int i = 0; i < dataSize; ++i)
+            {
+               prevAvg = m_ySrcData[i] = m_prevInfo[offset + i] =
+                     (m_yAxis.avgAmount * prevAvg) + (avgKeepAmount * m_ySrcData[i]);
+            }
+
+
+            m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData);
+         }
       }
       break;
    }

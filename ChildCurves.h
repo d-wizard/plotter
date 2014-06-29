@@ -77,7 +77,7 @@ private:
    dubVect m_xSrcData;
    dubVect m_ySrcData;
 
-   dubVect m_pmDemod; // Used to store previous phase values for FM demod
+   dubVect m_prevInfo; // Used to store previous information needed to create some child curves.
 };
 
 #endif
