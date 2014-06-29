@@ -36,6 +36,7 @@ const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
+const int TAB_PROPERTIES = 4;
 
 
 #define NUM_MATH_OPS (8)
@@ -85,6 +86,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbYAxisSrc, E_Y_AXIS));
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbSrcCurve_math, E_Y_AXIS));
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbCurveToSave, E_Y_AXIS));
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbPropPlotCurveName, E_Y_AXIS));
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
@@ -447,6 +449,10 @@ void curveProperties::on_cmdApply_clicked()
       }
 
    }
+   else if(tab == TAB_PROPERTIES)
+   {
+      propTabApply();
+   }
 }
 
 
@@ -542,6 +548,13 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_OPEN_SAVE_CURVE:
       {
          showApplyButton = false;
+      }
+      break;
+
+      case TAB_PROPERTIES:
+      {
+         showApplyButton = true;
+         fillInPropTab();
       }
       break;
 
@@ -986,4 +999,37 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
    return namesAreValid;
 }
 
+void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
+{
+    fillInPropTab();
+}
 
+void curveProperties::fillInPropTab()
+{
+   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
+   if(parentCurve != NULL && parentPlot != NULL)
+   {
+      ui->txtPropPlotName->setText(plotCurveInfo.plotName);
+      ui->txtPropCurveName->setText(plotCurveInfo.curveName);
+      ui->txtPropNumSamp->setText(QString::number(parentCurve->getNumPoints()));
+      ui->txtPropDim->setText(parentCurve->getPlotDim() == E_PLOT_DIM_1D ? "1D" : "2D");
+      ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
+      ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
+   }
+}
+
+void curveProperties::propTabApply()
+{
+   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
+   if(parentCurve != NULL && parentPlot != NULL)
+   {
+      if(parentPlot->getCurveIndex(plotCurveInfo.curveName) != ui->spnPropCurvePos->value())
+      {
+         parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
+      }
+   }
+}

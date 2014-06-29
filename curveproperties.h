@@ -92,6 +92,8 @@ private slots:
 
    void on_cmdOpenCurveFromFile_clicked();
 
+   void on_cmbPropPlotCurveName_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -108,6 +110,10 @@ private:
    void setCurveHiddenCheckBox(CurveData* curve);
 
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
+
+   void fillInPropTab();
+   void propTabApply();
+
 
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
