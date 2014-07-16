@@ -268,11 +268,18 @@ bool dString::IsStrNum(const std::string& t_inputString)
    bool b_retVal = false;
    int i_index = 0;
    const char* pc_inStr = t_inputString.c_str();
+   int i_len = Len(t_inputString);
 
-   if(Len(t_inputString) > 0)
+   if(i_len > 0)
    {
+      if(*pc_inStr == '-' && i_len > 1)
+      {
+         pc_inStr++;
+         i_len--;
+      }
+   
       b_retVal = true;
-      for(i_index = 0; i_index < Len(t_inputString); ++i_index)
+      for(i_index = 0; i_index < i_len; ++i_index)
       {
          if(*pc_inStr < '0' || *pc_inStr > '9')
          {
@@ -283,6 +290,44 @@ bool dString::IsStrNum(const std::string& t_inputString)
       }
    }
    return b_retVal;
+}
+
+// Returns the beginning of the string until is ceases to be a number.
+std::string dString::GetNumFromStr(const std::string& inStr)
+{
+   const char* cStr = inStr.c_str();
+   unsigned int strLen = inStr.size();
+
+   std::string outString = "";
+
+   if(cStr[0] == '-')
+   {
+      // Negative number.
+      outString.append(&cStr[0]);
+
+      // Skip past negative sign.
+      ++cStr;
+      --strLen;
+   }
+   for(unsigned int i = 0; i < strLen; ++i)
+   {
+      std::string curChar(1, cStr[i]);
+      if(dString::IsStrNum(curChar))
+         outString.append(curChar);
+      else
+         break;
+   }
+   return outString;
+}
+
+// Returns the beginning of the string until is ceases to be a number
+// and removes the number portion from the beginning of inOutStr
+std::string dString::SplitNumFromStr(std::string& inOutStr)
+{
+   std::string retVal = GetNumFromStr(inOutStr);
+   int retValLen = retVal.size();
+   inOutStr = inOutStr.substr(retValLen, inOutStr.size() - retValLen);
+   return retVal;
 }
 
 std::string dString::Chr(const unsigned char c_chr)

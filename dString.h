@@ -41,6 +41,8 @@ namespace dString
    std::string Split(std::string* t_inputString, const std::string& t_searchString);
    std::string GetMiddle(std::string* t_inputString, const std::string& t_searchStringStart, const std::string& t_searchStringEnd);
    bool IsStrNum(const std::string& t_inputString);
+   std::string GetNumFromStr(const std::string& inStr);
+   std::string SplitNumFromStr(std::string& inOutStr);
    std::string Chr(const unsigned char c_chr);
    unsigned char Asc(const std::string& t_inputString);
    std::string Upper(const std::string& t_inputString);
