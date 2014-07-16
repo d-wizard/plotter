@@ -30,6 +30,8 @@
 
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
+#define MAX_PLOT_MSG_HEADER_SIZE (256)
+extern unsigned int g_maxTcpPlotMsgSize; // This value can be changed via ini file.
 
 inline bool validPlotAction(ePlotAction in)
 {

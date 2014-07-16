@@ -20,6 +20,9 @@
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 
+// Global, can be changed outside of this file.
+unsigned int g_maxTcpPlotMsgSize = (40*1024*1024) + MAX_PLOT_MSG_HEADER_SIZE; // 40 MB+
+
 GetEntirePlotMsg::GetEntirePlotMsg():
    m_unpackState(E_READ_ACTION),
    m_curAction(E_INVALID_PLOT_ACTION),
@@ -116,7 +119,8 @@ void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBy
             break;
             case E_READ_SIZE:
             {
-               if(m_curMsgSize > (sizeof(m_curAction) + sizeof(m_curMsgSize)))
+               if( (m_curMsgSize > (sizeof(m_curAction) + sizeof(m_curMsgSize))) &&
+                   (m_curMsgSize <= g_maxTcpPlotMsgSize) )
                {
                   m_msgs[m_msgsWriteIndex].resize(m_curMsgSize);
                   

@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -20,71 +20,92 @@
 #include "plotguimain.h"
 #include "dString.h"
 #include "FileSystemOperations.h"
+#include "PackUnpackPlotMsg.h"
 
 int main(int argc, char *argv[])
 {
-    int dummyArgc = 0;
-    bool validPort = false;
-    unsigned short port = 0xFFFF;
+   bool validPort = false;
+   unsigned short port = 0xFFFF;
 
-    if(argc >= 2)
-    {
-        unsigned int cmdLinePort = atoi(argv[1]);
-        if(cmdLinePort > 0 && cmdLinePort <= 0xFFFF)
-        {
-            validPort = true;
-            port = cmdLinePort;
-        }
-    }
+   if(argc >= 2)
+   {
+      unsigned int cmdLinePort = atoi(argv[1]);
+      if(cmdLinePort > 0 && cmdLinePort <= 0xFFFF)
+      {
+         validPort = true;
+         port = cmdLinePort;
+      }
+   }
 
-    if(validPort == false)
-    {
-        std::string iniName(fso::GetFileNameNoExt(argv[0]));
-        iniName.append(".ini");
+   std::string iniName(fso::GetFileNameNoExt(argv[0]));
+   iniName.append(".ini");
 
-        std::string iniFile = fso::ReadFile(iniName);
+   std::string iniFile = fso::ReadFile(iniName);
 
-        // If the ini file is empty, don't do anything.
-        if(dString::Compare(iniFile, "") == false)
-        {
-            // convert windows line ending to linux
-            iniFile = dString::Replace(iniFile, "\r\n", "\n");
+   // If the ini file is empty, don't do anything.
+   if(iniFile != "")
+   {
+      // convert windows line ending to linux
+      iniFile = dString::Replace(iniFile, "\r\n", "\n");
 
-            // suround with new line for easier searching
-            std::string temp = "\n";
-            iniFile = temp.append(iniFile).append("\n");
+      // suround with new line for easier searching
+      iniFile = std::string("\n") + iniFile + std::string("\n");
 
-            std::string portFromIni = dString::GetMiddle(&iniFile, "\nport=", "\n");
+      if(validPort == false)
+      {
+         std::string portFromIni = dString::SplitRight(iniFile, "\nport=");
+         portFromIni = dString::GetNumFromStr(portFromIni);
+         if(portFromIni.size() > 0)
+         {
             unsigned int iniPort = atoi(portFromIni.c_str());
             if(iniPort > 0 && iniPort <= 0xFFFF)
             {
-                validPort = true;
-                port = iniPort;
+               validPort = true;
+               port = iniPort;
             }
-        }
+         }
+      } // End if(validPort == false)
 
-    }
+      std::string maxPacketSizeStrBegin =
+            dString::SplitRight(iniFile, "\nmax_packet_size=");
 
-    if(validPort == true)
-    {
-        QApplication a(dummyArgc, NULL);
+      std::string maxPacketSizeNumStr = dString::SplitNumFromStr(maxPacketSizeStrBegin);
+      if(maxPacketSizeNumStr.size() > 0)
+      {
+         g_maxTcpPlotMsgSize = atoi(maxPacketSizeNumStr.c_str());
+         std::string nextChar = maxPacketSizeStrBegin.substr(0, 1);
+         if(dString::Lower(nextChar) == "k")
+            g_maxTcpPlotMsgSize *= 1024;
+         else if(dString::Lower(nextChar) == "m")
+            g_maxTcpPlotMsgSize *= (1024*1024);
 
-        a.setQuitOnLastWindowClosed(false);
+         // Increase to add remove for message header.
+         g_maxTcpPlotMsgSize += MAX_PLOT_MSG_HEADER_SIZE;
+      }
+
+   } // End if(iniFile != "")
+
+   if(validPort == true)
+   {
+      int dummyArgc = 0;
+      QApplication a(dummyArgc, NULL);
+
+      a.setQuitOnLastWindowClosed(false);
 
 #if (defined(_WIN32) || defined(__WIN32__))
-        plotGuiMain pgm(NULL, port, true);
+      plotGuiMain pgm(NULL, port, true);
 #else
-        // Linux doesn't seem to have a tray, so show the GUI with similar functions
-        plotGuiMain pgm(NULL, port, false);
-        pgm.show();
+      // Linux doesn't seem to have a tray, so show the GUI with similar functions
+      plotGuiMain pgm(NULL, port, false);
+      pgm.show();
 #endif
 
-        return a.exec();
-    }
-    else
-    {
-        QApplication::quit();
-        return -1;
-    }
+      return a.exec();
+   }
+   else
+   {
+      QApplication::quit();
+      return -1;
+   }
 
 }
