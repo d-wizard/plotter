@@ -255,7 +255,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       case E_PLOT_TYPE_REAL_FFT:
       {
          dubVect realFFTOut;
-         getDataFromParent2D(xParentChanged, yParentChanged);
+         getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
          realFFT(m_ySrcData, realFFTOut);
          m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
       }
