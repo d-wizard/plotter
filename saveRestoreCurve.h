@@ -22,6 +22,7 @@
 #include <vector>
 #include "DataTypes.h"
 #include "CurveData.h"
+#include "mainwindow.h"
 
 #define MAX_STORE_CURVE_NAME_SIZE (100)
 
@@ -51,6 +52,7 @@ class SaveCurve
 {
 public:
    SaveCurve(CurveData* curve);
+   SaveCurve(CurveData* curve, MainWindow* plotGui);
 
    PackedCurveData packedCurveData;
 private:

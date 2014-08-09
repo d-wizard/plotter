@@ -889,14 +889,25 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 {
    tPlotCurveAxis toSave = getSelectedCurveInfo(ui->cmbCurveToSave);
    CurveData* toSaveCurveData = m_curveCmdr->getCurveData(toSave.plotName, toSave.curveName);
+   MainWindow* plotGui = m_curveCmdr->getMainPlot(toSave.plotName);
+
    if(toSaveCurveData != NULL)
    {
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        toSave.curveName,
-                                                       tr("Curves (*.curve)"));
-      SaveCurve packedCurve(toSaveCurveData);
+                                                       tr("Curves (*.curve);;Comma Separted Values (*.csv)"));
 
-      fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+      if(fso::GetExt(fileName.toStdString()) == "curve")
+      {
+         SaveCurve packedCurve(toSaveCurveData);
+         fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+      }
+      else if(fso::GetExt(fileName.toStdString()) == "csv")
+      {
+         SaveCurve packedCurve(toSaveCurveData, plotGui);
+         fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+      }
+
 
    }
 

@@ -157,6 +157,12 @@ public:
     void setCurveIndex(const QString& curveTitle, int newIndex);
 
     void removeCurve(const QString& curveName);
+
+
+    void setDisplayIoMapIp(std::stringstream &iostr);
+    void clearDisplayIoMapIp(std::stringstream& iostr);
+    bool setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData *curve);
+    void setDisplayIoMapipYAxis(std::stringstream& iostr);
 private:
     Ui::MainWindow *ui;
 
@@ -236,10 +242,6 @@ private:
 
     void calcMaxMin();
 
-    void setDisplayIoMapIp(std::stringstream &iostr);
-    void clearDisplayIoMapIp(std::stringstream& iostr);
-    bool setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData *curve);
-    void setDisplayIoMapipYAxis(std::stringstream& iostr);
     void clearPointLabels();
     void displayPointLabels();
     void displayDeltaLabel();

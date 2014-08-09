@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
+#include <sstream>
 #include "saveRestoreCurve.h"
 
 static void pack(char** packArray, const void* toPack, size_t packSize)
@@ -91,6 +92,39 @@ SaveCurve::SaveCurve(CurveData* curve)
 
 }
 
+SaveCurve::SaveCurve(CurveData* curve, MainWindow* plotGui)
+{
+   params.curveName = curve->getCurveTitle();
+   params.plotDim = curve->getPlotDim();
+   params.plotType = curve->getPlotType();
+   params.numPoints = curve->getNumPoints();
+   params.sampleRate = curve->getSampleRate();
+   params.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
+   params.numXMapOps = params.mathOpsXAxis.size();
+   params.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
+   params.numYMapOps = params.mathOpsYAxis.size();
+
+
+   std::stringstream csvFile;
+   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   {
+      csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
+      csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
+
+      for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
+      {
+         plotGui->setDisplayIoMapipXAxis(csvFile, curve);
+         csvFile << curve->getXPoints()[i] << ",";
+         plotGui->setDisplayIoMapipYAxis(csvFile);
+         csvFile << curve->getYPoints()[i] << "\r\n";
+      }
+      plotGui->clearDisplayIoMapIp(csvFile);
+   }
+
+
+   packedCurveData.resize(csvFile.str().size());
+   memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
+}
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
 {
