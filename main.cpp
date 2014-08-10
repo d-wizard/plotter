@@ -76,6 +76,8 @@ int main(int argc, char *argv[])
       {
          g_maxTcpPlotMsgSize = atoi(maxPacketSizeNumStr.c_str());
          std::string nextChar = maxPacketSizeStrBegin.substr(0, 1);
+
+         // Determine scale of Max Packet Size.
          if(dString::Lower(nextChar) == "k")
             g_maxTcpPlotMsgSize *= 1024;
          else if(dString::Lower(nextChar) == "m")
