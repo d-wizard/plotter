@@ -295,14 +295,18 @@ void ChildCurve::updateCurve( bool xParentChanged,
          if(dataSize > 0)
          {
             int pmDemodSize = m_prevInfo.size();
+
+            // Get index, make sure it is valid.
             int prevPhaseIndex = (int)offset - 1;
             if(prevPhaseIndex < 0)
             {
                prevPhaseIndex = pmDemodSize - 1;
             }
 
+            // If the prev info array size is 0, can't read from it.
             double prevPhase = pmDemodSize <= 0 ? 0.0 : m_prevInfo[prevPhaseIndex];
 
+            // Resize if needed to allow room for new samples.
             if(pmDemodSize < ((int)offset + dataSize))
             {
                m_prevInfo.resize(offset + dataSize);
@@ -315,13 +319,37 @@ void ChildCurve::updateCurve( bool xParentChanged,
       break;
       case E_PLOT_TYPE_PM_DEMOD:
       {
-         dubVect demodOut;
+         dubVect pmDemod;
          unsigned int offset = getDataFromParent2D( xParentChanged,
                                                     yParentChanged,
                                                     parentStartIndex,
                                                     parentStopIndex );
-         PmDemod(m_xSrcData, m_ySrcData, demodOut);
-         m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, demodOut);
+
+         int dataSize = std::min(m_xSrcData.size(), m_ySrcData.size());
+         if(dataSize > 0)
+         {
+            int pmDemodSize = m_prevInfo.size();
+
+            // Get index, make sure it is valid.
+            int prevPhaseIndex = (int)offset - 1;
+            if(prevPhaseIndex < 0)
+            {
+               prevPhaseIndex = pmDemodSize - 1;
+            }
+
+            // If the prev info array size is 0, can't read from it.
+            double prevPhase = pmDemodSize <= 0 ? 0.0 : m_prevInfo[prevPhaseIndex];
+
+            // Resize if needed to allow room for new samples.
+            if(pmDemodSize < ((int)offset + dataSize))
+            {
+               m_prevInfo.resize(offset + dataSize);
+            }
+
+            PmDemod(m_xSrcData, m_ySrcData, &m_prevInfo[offset], prevPhase);
+            pmDemod.assign(&m_prevInfo[offset], (&m_prevInfo[offset])+dataSize);
+            m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, pmDemod);
+         }
       }
       break;
       case E_PLOT_TYPE_AVERAGE:
@@ -331,16 +359,19 @@ void ChildCurve::updateCurve( bool xParentChanged,
          int dataSize = m_ySrcData.size();
          if(dataSize > 0)
          {
-
             int prevAvgSize = m_prevInfo.size();
+
+            // Get index, make sure it is valid.
             int prevAvgIndex = (int)offset - 1;
             if(prevAvgIndex < 0)
             {
                prevAvgIndex = prevAvgSize - 1;
             }
 
+            // If the prev info array size is 0, can't read from it.
             double prevAvg = prevAvgSize <= 0 ? 0.0 : m_prevInfo[prevAvgIndex];
 
+            // Resize if needed to allow room for new samples.
             if(prevAvgSize < ((int)offset + dataSize))
             {
                m_prevInfo.resize(offset + dataSize);

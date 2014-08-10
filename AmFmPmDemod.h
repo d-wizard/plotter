@@ -24,8 +24,8 @@
 
 #include <math.h>
 
-#define M_NEG_PI -3.14159265358979323846
-#define M_2X_PI 6.28318530717958647692528676655900
+#define M_NEG_PI ((double)-3.14159265358979323846)
+#define M_2X_PI ((double)6.28318530717958647692528676655900)
 
 inline void AmDemod(dubVect& reInput, dubVect& imInput, dubVect& demodOutput)
 {
@@ -85,13 +85,25 @@ inline void FmPmDemod(dubVect& reInput, dubVect& imInput, dubVect& fmOutput, dou
    }
 }
 
-inline void PmDemod(dubVect& reInput, dubVect& imInput, dubVect& demodOutput)
+inline void PmDemod(dubVect& reInput, dubVect& imInput, double* demodOutput, double prevPhase)
 {
    unsigned int outSize = std::min(reInput.size(), imInput.size());
-   demodOutput.resize(outSize);
+   double curPhase = 0.0;
+   double deltaPhase;
+
    for(unsigned int i = 0; i < outSize; ++i)
    {
-      demodOutput[i] = atan2(reInput[i], imInput[i]);
+      curPhase = atan2(reInput[i], imInput[i]);
+      deltaPhase = curPhase - prevPhase;
+      deltaPhase = fmod(deltaPhase, M_2X_PI);
+      if(deltaPhase < M_NEG_PI)
+         deltaPhase += M_2X_PI;
+      else if(deltaPhase > M_PI)
+         deltaPhase -= M_2X_PI;
+
+      curPhase = prevPhase + deltaPhase;
+      demodOutput[i] = curPhase;
+      prevPhase = curPhase;
    }
 }
 
