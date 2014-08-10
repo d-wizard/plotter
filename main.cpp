@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
    bool validPort = false;
    unsigned short port = 0xFFFF;
 
+   // First argument is path to executable,
+   // argc must be 2 or more for command line parameters.
    if(argc >= 2)
    {
       unsigned int cmdLinePort = atoi(argv[1]);
