@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,8 +29,9 @@
 
 #define ZOOM_OUT_PAD (0.02)
 #define ZOOM_SCROLL_RESOLUTION (10000)
-#define ZOOM_SCROLL_CHANGE_SMALL (50)
-#define ZOOM_SCROLL_CHANGE_BIG (250)
+#define ZOOM_SCROLL_CHANGE_TINY (0.001)
+#define ZOOM_SCROLL_CHANGE_SMALL (0.05)
+#define ZOOM_SCROLL_CHANGE_BIG (1.0)
 #define ZOOM_IN_PERCENT (0.9)
 #define ZOOM_OUT_PERCENT (1.1)
 
@@ -48,7 +49,7 @@ public:
    void VertSliderMoved();
    void HorzSliderMoved();
 
-   void ModSliderPos(QScrollBar* scroll, int posMod);
+   void ModSliderPos(eAxis axis, double changeWindowPercent);
 
    void BoundZoom(maxMinXY& zoom);
    void BoundScroll(QScrollBar* scroll, int& newPos);

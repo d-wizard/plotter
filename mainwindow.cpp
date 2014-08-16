@@ -1140,34 +1140,25 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
 bool MainWindow::keyPressModifyZoom(int key)
 {
-    int posMod = 0;
-    QScrollBar* scroll = NULL;
-    bool valid = false;
+    bool valid = true;
 
     switch(key)
     {
         case Qt::Key_Down:
-            scroll = ui->verticalScrollBar;
-            posMod = 1;
+            m_plotZoom->ModSliderPos(E_Y_AXIS, ZOOM_SCROLL_CHANGE_TINY);
         break;
         case Qt::Key_Up:
-            scroll = ui->verticalScrollBar;
-            posMod = -1;
+            m_plotZoom->ModSliderPos(E_Y_AXIS, -ZOOM_SCROLL_CHANGE_TINY);
         break;
         case Qt::Key_Left:
-            scroll = ui->horizontalScrollBar;
-            posMod = -1;
+            m_plotZoom->ModSliderPos(E_X_AXIS, -ZOOM_SCROLL_CHANGE_TINY);
         break;
         case Qt::Key_Right:
-            scroll = ui->horizontalScrollBar;
-            posMod = 1;
+            m_plotZoom->ModSliderPos(E_X_AXIS, ZOOM_SCROLL_CHANGE_TINY);
         break;
-    }
-
-    if(scroll != NULL)
-    {
-        valid = true;
-        m_plotZoom->ModSliderPos(scroll, posMod);
+        default:
+            valid = false;
+        break;
     }
 
     return valid;
@@ -1272,16 +1263,16 @@ void MainWindow::on_verticalScrollBar_actionTriggered(int action)
     switch(action)
     {
     case QAbstractSlider::SliderSingleStepAdd:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, ZOOM_SCROLL_CHANGE_SMALL);
+        m_plotZoom->ModSliderPos(E_Y_AXIS, -ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderSingleStepSub:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -ZOOM_SCROLL_CHANGE_SMALL);
+        m_plotZoom->ModSliderPos(E_Y_AXIS, ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderPageStepAdd:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, ZOOM_SCROLL_CHANGE_BIG);
+        m_plotZoom->ModSliderPos(E_Y_AXIS, -ZOOM_SCROLL_CHANGE_BIG);
         break;
     case QAbstractSlider::SliderPageStepSub:
-        m_plotZoom->ModSliderPos(ui->verticalScrollBar, -ZOOM_SCROLL_CHANGE_BIG);
+        m_plotZoom->ModSliderPos(E_Y_AXIS, ZOOM_SCROLL_CHANGE_BIG);
         break;
     }
 }
@@ -1291,16 +1282,16 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
     switch(action)
     {
     case QAbstractSlider::SliderSingleStepAdd:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, ZOOM_SCROLL_CHANGE_SMALL);
+        m_plotZoom->ModSliderPos(E_X_AXIS, ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderSingleStepSub:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -ZOOM_SCROLL_CHANGE_SMALL);
+        m_plotZoom->ModSliderPos(E_X_AXIS, -ZOOM_SCROLL_CHANGE_SMALL);
         break;
     case QAbstractSlider::SliderPageStepAdd:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, ZOOM_SCROLL_CHANGE_BIG);
+        m_plotZoom->ModSliderPos(E_X_AXIS, ZOOM_SCROLL_CHANGE_BIG);
         break;
     case QAbstractSlider::SliderPageStepSub:
-        m_plotZoom->ModSliderPos(ui->horizontalScrollBar, -ZOOM_SCROLL_CHANGE_BIG);
+        m_plotZoom->ModSliderPos(E_X_AXIS, -ZOOM_SCROLL_CHANGE_BIG);
         break;
     }
 }

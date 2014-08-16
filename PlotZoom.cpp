@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -198,27 +198,55 @@ void PlotZoom::HorzSliderMoved()
    }
 }
 
-void PlotZoom::ModSliderPos(QScrollBar* scroll, int posMod)
+void PlotZoom::ModSliderPos(eAxis axis, double changeWindowPercent)
 {
-    if((scroll == m_vertScroll || scroll == m_horzScroll) && posMod != 0)
+    if(axis == E_X_AXIS)
     {
-        int newPos = scroll->sliderPosition() + posMod;
+        maxMinXY zoomDim = m_zoomDimensions;
+        double width = zoomDim.maxX - zoomDim.minX;
+        double changeAmount = width * changeWindowPercent;
 
-        BoundScroll(scroll, newPos);
+        zoomDim.maxX += changeAmount;
+        zoomDim.minX += changeAmount;
 
-        if(newPos != scroll->sliderPosition())
+        // If start or end are out of range, set to max/min, but keep zoom width the same.
+        if(zoomDim.maxX > m_plotDimensions.maxX)
         {
-            scroll->setSliderPosition(newPos);
-            if(scroll == m_vertScroll)
-            {
-                VertSliderMoved();
-            }
-            else if(scroll == m_horzScroll)
-            {
-                HorzSliderMoved();
-            }
+            zoomDim.minX = m_plotDimensions.maxX - width;
+            zoomDim.maxX = m_plotDimensions.maxX;
         }
+        else if(zoomDim.minX < m_plotDimensions.minX)
+        {
+            zoomDim.maxX = m_plotDimensions.minX + width;
+            zoomDim.minX = m_plotDimensions.minX;
+        }
+
+        SetZoom(zoomDim, false);
     }
+    else
+    {
+        maxMinXY zoomDim = m_zoomDimensions;
+        double height = zoomDim.maxY - zoomDim.minY;
+        double changeAmount = height * changeWindowPercent;
+
+        zoomDim.maxY += changeAmount;
+        zoomDim.minY += changeAmount;
+
+        // If start or end are out of range, set to max/min, but keep zoom height the same.
+        if(zoomDim.maxY > m_plotDimensions.maxY)
+        {
+            zoomDim.minY = m_plotDimensions.maxY - height;
+            zoomDim.maxY = m_plotDimensions.maxY;
+        }
+        else if(zoomDim.minY < m_plotDimensions.minY)
+        {
+            zoomDim.maxY = m_plotDimensions.minY + height;
+            zoomDim.minY = m_plotDimensions.minY;
+        }
+
+        SetZoom(zoomDim, false);
+    }
+
 }
 
 void PlotZoom::BoundZoom(maxMinXY& zoom)
@@ -368,13 +396,13 @@ maxMinXY PlotZoom::getCurZoom()
 }
 
 void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool saveZoom)
+{
+   // Nothing in the save zoom vector, initialize it with current zoom value.
+   if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
-       // Nothing in the save zoom vector, initialize it with current zoom value.
-       if(saveZoom == true && m_zoomDimSave.size() == 0)
-       {
-           m_zoomDimSave.resize(1);
-           m_zoomDimIndex = 0;
-           m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
+       m_zoomDimSave.resize(1);
+       m_zoomDimIndex = 0;
+       m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
 
    }
 
