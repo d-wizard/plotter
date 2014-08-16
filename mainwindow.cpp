@@ -553,7 +553,7 @@ void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartI
    {
       setSelectedCurveIndex(curveIndex);
    }
-   m_plotZoom->ResetZoom();
+
    replotMainPlot();
 
    // Make sure the cursors matches the updated point.
