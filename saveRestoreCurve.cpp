@@ -120,6 +120,17 @@ SaveCurve::SaveCurve(CurveData* curve, MainWindow* plotGui)
       }
       plotGui->clearDisplayIoMapIp(csvFile);
    }
+   else
+   {
+       csvFile << curve->getCurveTitle().toStdString();
+
+       plotGui->setDisplayIoMapipYAxis(csvFile);
+       for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
+       {
+          csvFile << curve->getYPoints()[i] << "\r\n";
+       }
+       plotGui->clearDisplayIoMapIp(csvFile);
+   }
 
 
    packedCurveData.resize(csvFile.str().size());
