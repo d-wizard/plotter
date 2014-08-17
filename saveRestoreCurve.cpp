@@ -122,7 +122,7 @@ SaveCurve::SaveCurve(CurveData* curve, MainWindow* plotGui)
    }
    else
    {
-       csvFile << curve->getCurveTitle().toStdString();
+       csvFile << curve->getCurveTitle().toStdString() << "\r\n";
 
        plotGui->setDisplayIoMapipYAxis(csvFile);
        for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
