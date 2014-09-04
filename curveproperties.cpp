@@ -1022,6 +1022,16 @@ void curveProperties::fillInPropTab()
       ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
       ui->chkPropHide->setChecked(parentCurve->getHidden());
    }
+   else
+   {
+       ui->txtPropPlotName->setText("");
+       ui->txtPropCurveName->setText("");
+       ui->txtPropNumSamp->setText("");
+       ui->txtPropDim->setText("");
+       ui->spnPropCurvePos->setMaximum(0);
+       ui->spnPropCurvePos->setValue(0);
+       ui->chkPropHide->setChecked(false);
+   }
 }
 
 void curveProperties::propTabApply()
