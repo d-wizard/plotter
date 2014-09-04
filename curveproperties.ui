@@ -667,6 +667,9 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
       <property name="readOnly">
        <bool>true</bool>
       </property>
@@ -690,6 +693,9 @@
       </property>
       <property name="autoFillBackground">
        <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
       </property>
       <property name="text">
        <string/>
@@ -749,6 +755,9 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
       <property name="readOnly">
        <bool>true</bool>
       </property>
@@ -764,6 +773,9 @@
         <width>101</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
       </property>
       <property name="readOnly">
        <bool>true</bool>
