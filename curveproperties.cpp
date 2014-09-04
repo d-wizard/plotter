@@ -379,8 +379,7 @@ void curveProperties::on_cmdApply_clicked()
          MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(curve.plotName);
          if(parentPlotGui != NULL)
          {
-            bool curveHidden = ui->chkHideCurve->checkState() == Qt::Checked;
-            parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps, curveHidden);
+            parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps);
          }
       }
    }
@@ -530,7 +529,6 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
          setMathSampleRate(curve);
          setUserMathFromSrc(curveInfo, curve);
-         setCurveHiddenCheckBox(curve);
          displayUserMathOp();
 
          showApplyButton = true;
@@ -573,7 +571,6 @@ void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 
    setMathSampleRate(curve);
    setUserMathFromSrc(curveInfo, curve);
-   setCurveHiddenCheckBox(curve);
    displayUserMathOp();
 }
 
@@ -582,14 +579,6 @@ void curveProperties::setUserMathFromSrc(tPlotCurveAxis &curveInfo, CurveData* c
    if(curve != NULL)
    {
       m_mathOps = curve->getMathOps(curveInfo.axis);
-   }
-}
-
-void curveProperties::setCurveHiddenCheckBox(CurveData* curve)
-{
-   if(curve != NULL)
-   {
-      ui->chkHideCurve->setChecked(curve->getHidden());
    }
 }
 
@@ -951,8 +940,8 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
          MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
          if(plot != NULL)
          {
-            plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis, false);
-            plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis, false);
+            plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
+            plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
          }
       }
 
@@ -1031,6 +1020,7 @@ void curveProperties::fillInPropTab()
       ui->txtPropDim->setText(parentCurve->getPlotDim() == E_PLOT_DIM_1D ? "1D" : "2D");
       ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
       ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
+      ui->chkPropHide->setChecked(parentCurve->getHidden());
    }
 }
 
@@ -1054,6 +1044,11 @@ void curveProperties::propTabApply()
             m_curveCmdr->removeCurve(plotCurveInfo.plotName, plotCurveInfo.curveName);
             return; // removing Curve, nothing more to do.
          }
+      }
+      else
+      {
+          // Only bother with hiding/unhiding curve if remove isn't checked.
+          parentPlot->setCurveHidden(plotCurveInfo.curveName, ui->chkPropHide->isChecked());
       }
 
       // Check for change of Curve Display Index

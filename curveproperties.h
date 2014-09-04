@@ -107,7 +107,6 @@ private:
    void setMathSampleRate(CurveData *curve);
    void displayUserMathOp();
    void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
-   void setCurveHiddenCheckBox(CurveData* curve);
 
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 

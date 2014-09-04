@@ -455,19 +455,6 @@
       <string>Delete</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="chkHideCurve">
-     <property name="geometry">
-      <rect>
-       <x>350</x>
-       <y>10</y>
-       <width>81</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Hide Curve</string>
-     </property>
-    </widget>
    </widget>
    <widget class="QWidget" name="tabRestoreCurve">
     <attribute name="title">
@@ -656,90 +643,256 @@
     <attribute name="title">
      <string>Properties</string>
     </attribute>
-    <widget class="QComboBox" name="cmbPropPlotCurveName">
+    <widget class="QGroupBox" name="groupBox_4">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>10</x>
+       <y>80</y>
+       <width>371</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Plot / Curve Name</string>
+     </property>
+     <widget class="QLineEdit" name="txtPropCurveName">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>50</y>
+        <width>291</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtPropPlotName">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>20</y>
+        <width>291</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <kerning>false</kerning>
+       </font>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plot Name</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Curve Name</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>390</x>
+       <y>80</y>
+       <width>191</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Curve Properties</string>
+     </property>
+     <widget class="QLineEdit" name="txtPropNumSamp">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>20</y>
+        <width>101</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtPropDim">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>50</y>
+        <width>101</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num Samples</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>61</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Dimensions</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Change Order</string>
+     </property>
+     <widget class="QSpinBox" name="spnPropCurvePos">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>20</y>
+        <width>42</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_10">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>46</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Order</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
        <y>10</y>
-       <width>551</width>
-       <height>22</height>
+       <width>571</width>
+       <height>61</height>
       </rect>
      </property>
+     <property name="title">
+      <string>Select Curve</string>
+     </property>
+     <widget class="QComboBox" name="cmbPropPlotCurveName">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>551</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
-    <widget class="QLineEdit" name="txtPropPlotName">
+    <widget class="QGroupBox" name="groupBox_8">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>40</y>
-       <width>271</width>
-       <height>20</height>
+       <x>130</x>
+       <y>170</y>
+       <width>151</width>
+       <height>51</height>
       </rect>
      </property>
-     <property name="readOnly">
-      <bool>true</bool>
+     <property name="title">
+      <string>Hide / Remove</string>
      </property>
-    </widget>
-    <widget class="QLineEdit" name="txtPropCurveName">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>40</y>
-       <width>271</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="txtPropNumSamp">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>70</y>
-       <width>113</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="txtPropDim">
-     <property name="geometry">
-      <rect>
-       <x>140</x>
-       <y>70</y>
-       <width>113</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QSpinBox" name="spnPropCurvePos">
-     <property name="geometry">
-      <rect>
-       <x>270</x>
-       <y>70</y>
-       <width>42</width>
-       <height>22</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="chkPropRemove">
-     <property name="geometry">
-      <rect>
-       <x>330</x>
-       <y>70</y>
-       <width>70</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Remove</string>
-     </property>
+     <widget class="QCheckBox" name="chkPropRemove">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>20</y>
+        <width>70</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkPropHide">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>70</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Hide</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

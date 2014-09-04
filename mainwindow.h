@@ -147,7 +147,9 @@ public:
 
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
 
-    void setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden);
+    void setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps);
+
+    void setCurveHidden(QString curveName, bool hidden);
 
     // Return current zoom dimemsions if pointer is value, otherwise return zero values
     maxMinXY getZoomDimensions(){ maxMinXY zeroRetVal = {0,0,0,0}; return m_plotZoom ? m_plotZoom->getCurZoom() : zeroRetVal; }

@@ -452,7 +452,7 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
 }
 
 
-void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps, bool hidden)
+void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -462,13 +462,29 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
       bool curveChanged = false;
       curveChanged |= m_qwtCurves[curveIndex]->setSampleRate(sampleRate, true);
       curveChanged |= m_qwtCurves[curveIndex]->setMathOps(mathOps, axis);
-      curveChanged |= m_qwtCurves[curveIndex]->setHidden(hidden);
 
       if(curveChanged)
       {
          handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
       }
    }
+}
+
+
+void MainWindow::setCurveHidden(QString curveName, bool hidden)
+{
+    QMutexLocker lock(&m_qwtCurvesMutex);
+
+    int curveIndex = getCurveIndex(curveName);
+    if(curveIndex >= 0)
+    {
+       bool curveChanged = m_qwtCurves[curveIndex]->setHidden(hidden);
+
+       if(curveChanged)
+       {
+          handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
+       }
+    }
 }
 
 void MainWindow::createUpdateCurve( QString& name,
