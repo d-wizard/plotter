@@ -87,7 +87,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbYAxisSrc, E_Y_AXIS));
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbSrcCurve_math, E_Y_AXIS));
    m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbCurveToSave, E_Y_AXIS));
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbPropPlotCurveName, E_Y_AXIS));
+   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbPropPlotCurveName, E_Y_AXIS, false));
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
@@ -149,8 +149,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
-               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + X_AXIS_APPEND);
-               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + Y_AXIS_APPEND);
+               if(m_plotCurveCombos[i].displayAxesSeparately)
+               {
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + X_AXIS_APPEND);
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + Y_AXIS_APPEND);
+               }
+               else
+               {
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName);
+               }
             }
          }
       }

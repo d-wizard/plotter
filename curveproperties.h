@@ -36,11 +36,13 @@ class tCmbBoxAndValue
 public:
    tCmbBoxAndValue(){}
    tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, eAxis defaultAxisIn):
-      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn){}
+      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn), displayAxesSeparately(true){}
+   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, eAxis defaultAxisIn, bool displayAxesSeparate):
+      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn), displayAxesSeparately(displayAxesSeparate){}
    QComboBox* cmbBoxPtr;
    QString    cmbBoxVal;
    eAxis      defaultAxis; // Used when determining whether to initialize to x or y axis of 2D plot
-
+   bool       displayAxesSeparately;
 };
 
 class CurveCommander;
