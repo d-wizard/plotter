@@ -1028,6 +1028,12 @@ void curveProperties::fillInPropTab()
       ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
       ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
       ui->chkPropHide->setChecked(parentCurve->getHidden());
+
+      maxMinXY curveDataMaxMin = parentCurve->getMaxMinXYOfData();
+      ui->txtPropXMin->setText(QString::number(curveDataMaxMin.minX));
+      ui->txtPropXMax->setText(QString::number(curveDataMaxMin.maxX));
+      ui->txtPropYMin->setText(QString::number(curveDataMaxMin.minY));
+      ui->txtPropYMax->setText(QString::number(curveDataMaxMin.maxY));
    }
    else
    {
@@ -1038,6 +1044,10 @@ void curveProperties::fillInPropTab()
        ui->spnPropCurvePos->setMaximum(0);
        ui->spnPropCurvePos->setValue(0);
        ui->chkPropHide->setChecked(false);
+       ui->txtPropXMin->setText("");
+       ui->txtPropXMax->setText("");
+       ui->txtPropYMin->setText("");
+       ui->txtPropYMax->setText("");
    }
 }
 
