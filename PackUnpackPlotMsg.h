@@ -176,6 +176,9 @@ public:
    UINT_32 m_sampleStartIndex;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
+
+   const char* GetMsgPtr(){return m_msg;}
+   UINT_32 GetMsgPtrSize(){return m_msgSize;}
 private:
    UnpackPlotMsg();
    

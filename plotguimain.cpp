@@ -44,8 +44,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     ui->setupUi(this);
     this->setFixedSize(165, 95);
 
-    QObject::connect(this, SIGNAL(readPlotMsgSignal(const char*, unsigned int)),
-                     this, SLOT(readPlotMsgSlot(const char*, unsigned int)), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(readPlotMsgSignal(UnpackPlotMsg*)),
+                     this, SLOT(readPlotMsgSlot(UnpackPlotMsg*)), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -191,45 +191,49 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
 
       m_storedMsgBuffMutex.unlock();
 
-      emit readPlotMsgSignal(msgCopy,size);
-   }
-}
-
-void plotGuiMain::readPlotMsgSlot(const char* msg, unsigned int size)
-{
-   readPlotMsg(msg, size);
-}
-
-void plotGuiMain::readPlotMsg(const char *msg, unsigned int size)
-{
-   UnpackPlotMsg msgUnpacker(msg, size);
-
-   if(validPlotAction(msgUnpacker.m_plotAction))
-   {
-      QString plotName = msgUnpacker.m_plotName.c_str();
-      QString curveName = msgUnpacker.m_curveName.c_str();
-
-      switch(msgUnpacker.m_plotAction)
+      UnpackPlotMsg* msgUnpacker = new UnpackPlotMsg(msgCopy, size);
+      if(validPlotAction(msgUnpacker->m_plotAction))
       {
-         case E_CREATE_1D_PLOT:
-            m_curveCommander.create1dCurve(plotName, curveName, E_PLOT_TYPE_1D, msgUnpacker.m_yAxisValues);
-         break;
-         case E_CREATE_2D_PLOT:
-            m_curveCommander.create2dCurve(plotName, curveName, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-         break;
-         case E_UPDATE_1D_PLOT:
-            m_curveCommander.update1dCurve(plotName, curveName, E_PLOT_TYPE_1D, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_yAxisValues);
-         break;
-         case E_UPDATE_2D_PLOT:
-            m_curveCommander.update2dCurve(plotName, curveName, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-         break;
-         default:
-         break;
+         emit readPlotMsgSignal(msgUnpacker);
       }
-
-      m_curveCommander.storePlotMsg(msg, size, plotName, curveName);
-
+      else
+      {
+         delete msgUnpacker;
+      }
    }
+}
+
+void plotGuiMain::readPlotMsgSlot(UnpackPlotMsg* plotMsg)
+{
+   readPlotMsg(plotMsg);
+}
+
+void plotGuiMain::readPlotMsg(UnpackPlotMsg* plotMsg)
+{
+   QString plotName = plotMsg->m_plotName.c_str();
+   QString curveName = plotMsg->m_curveName.c_str();
+
+   switch(plotMsg->m_plotAction)
+   {
+      case E_CREATE_1D_PLOT:
+         m_curveCommander.create1dCurve(plotName, curveName, E_PLOT_TYPE_1D, plotMsg->m_yAxisValues);
+      break;
+      case E_CREATE_2D_PLOT:
+         m_curveCommander.create2dCurve(plotName, curveName, plotMsg->m_xAxisValues, plotMsg->m_yAxisValues);
+      break;
+      case E_UPDATE_1D_PLOT:
+         m_curveCommander.update1dCurve(plotName, curveName, E_PLOT_TYPE_1D, plotMsg->m_sampleStartIndex, plotMsg->m_yAxisValues);
+      break;
+      case E_UPDATE_2D_PLOT:
+         m_curveCommander.update2dCurve(plotName, curveName, plotMsg->m_sampleStartIndex, plotMsg->m_xAxisValues, plotMsg->m_yAxisValues);
+      break;
+      default:
+      break;
+   }
+
+   m_curveCommander.storePlotMsg(plotMsg->GetMsgPtr(), plotMsg->GetMsgPtrSize(), plotName, curveName);
+
+   delete plotMsg;
 }
 
 void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName)
