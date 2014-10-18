@@ -533,8 +533,19 @@ void curveProperties::setMathSampleRate(CurveData* curve)
 
 void curveProperties::on_tabWidget_currentChanged(int index)
 {
-   updateGuiPlotCurveInfo();
    int tab = ui->tabWidget->currentIndex();
+
+   // If moving away from Child Curve Tab, need to store user
+   // input before updateGuiPlotCurveInfo wipes it out. The
+   // stored value will be returned to the New Plot Name ComboBox
+   // when returning to the Child Curve Tab.
+   if(tab != TAB_CREATE_CHILD_CURVE)
+   {
+      m_childCurveNewPlotNameUser = ui->cmbDestPlotName->currentText();
+   }
+
+
+   updateGuiPlotCurveInfo();
 
    bool showApplyButton = false;
 
@@ -543,6 +554,10 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_CREATE_CHILD_CURVE:
       {
          showApplyButton = true;
+         if(m_childCurveNewPlotNameUser != "")
+         {
+            ui->cmbDestPlotName->lineEdit()->setText(m_childCurveNewPlotNameUser);
+         }
       }
       break;
 

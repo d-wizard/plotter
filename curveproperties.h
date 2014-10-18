@@ -145,6 +145,8 @@ private:
 
    plotCurveNameDialog m_plotCurveDialog;
 
+   QString m_childCurveNewPlotNameUser;
+
 };
 
 #endif // CURVEPROPERTIES_H
