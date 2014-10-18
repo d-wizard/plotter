@@ -64,6 +64,18 @@ const QString mathOpsSymbol[NUM_MATH_OPS] = {
 "abs"};
 
 
+const QString mathOpsValueLabel[NUM_MATH_OPS] = {
+"Value to Add",
+"Value to Subtract",
+"Value to Multiply by",
+"Value to Divide by",
+"Bits to Shift Up by",
+"Bits to Shift Down by",
+"Raise to Power Value",
+"",
+""};
+
+
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
    ui(new Ui::curveProperties),
@@ -81,7 +93,10 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    {
       ui->availableOps->addItem(mathOpsStr[i]);
    }
-   ui->availableOps->setCurrentRow(0);
+
+   unsigned int initialAvailableMathOpSelectionIndex = 0;
+   ui->availableOps->setCurrentRow(initialAvailableMathOpSelectionIndex);
+   ui->lblMapOpValueLabel->setText(mathOpsValueLabel[initialAvailableMathOpSelectionIndex]);
 
    // Initialize the list of all the combo boxes that display PlotName->CurveName
    m_plotCurveCombos.clear();
@@ -620,6 +635,7 @@ void curveProperties::on_availableOps_currentRowChanged(int currentRow)
    if(currentRow >= 0)
    {
       m_selectedMathOpLeft = currentRow;
+      ui->lblMapOpValueLabel->setText(mathOpsValueLabel[currentRow]);
       ui->txtNumber->setVisible(needsValue_eMathOp((eMathOp)currentRow));
    }
 }

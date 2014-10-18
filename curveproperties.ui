@@ -396,8 +396,8 @@
     <widget class="QLineEdit" name="txtNumber">
      <property name="geometry">
       <rect>
-       <x>212</x>
-       <y>90</y>
+       <x>210</x>
+       <y>110</y>
        <width>131</width>
        <height>20</height>
       </rect>
@@ -453,6 +453,19 @@
      </property>
      <property name="text">
       <string>Delete</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblMapOpValueLabel">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>85</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </widget>
