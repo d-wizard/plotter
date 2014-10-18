@@ -618,7 +618,10 @@ void curveProperties::displayUserMathOp()
 void curveProperties::on_availableOps_currentRowChanged(int currentRow)
 {
    if(currentRow >= 0)
+   {
       m_selectedMathOpLeft = currentRow;
+      ui->txtNumber->setVisible(needsValue_eMathOp((eMathOp)currentRow));
+   }
 }
 
 void curveProperties::on_opsOnCurve_currentRowChanged(int currentRow)

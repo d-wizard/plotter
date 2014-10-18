@@ -219,6 +219,26 @@ inline bool valid_eMathOp(eMathOp in)
    }
    return false;
 }
+inline bool needsValue_eMathOp(eMathOp in)
+{
+   switch(in)
+   {
+   case E_ADD:
+   case E_SUBTRACT:
+   case E_MULTIPLY:
+   case E_DIVIDE:
+   case E_SHIFT_UP:
+   case E_SHIFT_DOWN:
+   case E_POWER:
+      return true;
+      break;
+   case E_LOG:
+   case E_ABS:
+      return false;
+      break;
+   }
+   return false;
+}
 
 typedef struct
 {
