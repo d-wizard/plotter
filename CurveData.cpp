@@ -676,6 +676,9 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                   *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
                }
                break;
+               case E_POWER:
+                  (*dataIter) = pow((*dataIter), mathIter->num);
+               break;
                case E_LOG:
                   (*dataIter) = log((*dataIter));
                break;

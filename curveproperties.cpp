@@ -40,7 +40,7 @@ const int TAB_OPEN_SAVE_CURVE = 3;
 const int TAB_PROPERTIES = 4;
 
 
-#define NUM_MATH_OPS (8)
+#define NUM_MATH_OPS (9)
 const QString mathOpsStr[NUM_MATH_OPS] = {
 "ADD",
 "SUBTRACT",
@@ -48,6 +48,7 @@ const QString mathOpsStr[NUM_MATH_OPS] = {
 "DIVIDE",
 "SHIFT UP",
 "SHIFT DOWN",
+"POWER",
 "LOG()",
 "ABS()"};
 
@@ -58,6 +59,7 @@ const QString mathOpsSymbol[NUM_MATH_OPS] = {
 "/",
 "<<",
 ">>",
+"^",
 "log",
 "abs"};
 
