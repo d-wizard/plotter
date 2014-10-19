@@ -122,6 +122,7 @@ private:
 
    void performMathOnPoints();
    void doMathOnCurve(dubVect& data, tMathOpList& mathOp);
+   unsigned int removeInvalidPoints();
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;

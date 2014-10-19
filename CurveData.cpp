@@ -16,9 +16,31 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <limits>       // std::numeric_limits
 #include "CurveData.h"
 #include "fftHelper.h"
 #include "AmFmPmDemod.h"
+#include "handleLogData.h"
+
+inline bool isDoubleValid(double value)
+{
+   if (value != value)
+   {
+      return false;
+   }
+   else if (value > std::numeric_limits<double>::max())
+   {
+      return false;
+   }
+   else if (value < -std::numeric_limits<double>::max())
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
 
 CurveData::CurveData( QwtPlot *parentPlot,
                       const QString& curveName,
@@ -634,6 +656,7 @@ void CurveData::performMathOnPoints()
 
 void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
 {
+   bool logOpPerformed = false;
    if(mathOp.size() > 0)
    {
       dubVect::iterator dataIter;
@@ -681,6 +704,7 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                break;
                case E_LOG:
                   (*dataIter) = log((*dataIter));
+                  logOpPerformed = true;
                break;
                case E_ABS:
                   (*dataIter) = fabs((*dataIter));
@@ -688,6 +712,11 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
             }
          }
       }
+   }
+
+   if(logOpPerformed)
+   {
+      handleLogData(&data[0], data.size());
    }
 }
 
@@ -719,3 +748,37 @@ void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
    curve->setStyle(appearance.style);
    m_parentPlot->replot();
 }
+
+unsigned int CurveData::removeInvalidPoints()
+{
+   unsigned int numPointsInCurve = numPoints;
+   // According to the IEEE standard, NaN values have the odd property that
+   // comparisons involving them are always false. That is, for a float
+   // f, f != f will be true only if f is NaN
+   if( !isDoubleValid(maxMin.maxX) || !isDoubleValid(maxMin.maxY) ||
+       !isDoubleValid(maxMin.minX) || !isDoubleValid(maxMin.minY) )
+   {
+      // One of the values is invalid. Need to remove invalid points.
+      unsigned int writeIndex = 0;
+      for(unsigned int readIndex = 0; readIndex < numPoints; ++readIndex)
+      {
+         if( isDoubleValid(xPoints[readIndex]) && isDoubleValid(yPoints[readIndex]) )
+         {
+            // Point is valid, keep it.
+            xPoints[writeIndex] = xPoints[readIndex];
+            yPoints[writeIndex] = yPoints[readIndex];
+            ++writeIndex;
+         }
+      }
+      if(writeIndex < numPoints)
+      {
+         numPointsInCurve = writeIndex;
+         xPoints.resize(numPointsInCurve);
+         yPoints.resize(numPointsInCurve);
+      }
+   }
+
+   return numPointsInCurve;
+}
+
+
