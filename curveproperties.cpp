@@ -285,6 +285,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          yVis = true;
       break;
       case E_PLOT_TYPE_REAL_FFT:
+      case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          ui->lblYAxisSrc->setText("Real Source");
          yVis = true;
       break;
@@ -292,6 +293,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
+      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
          xVis = true;

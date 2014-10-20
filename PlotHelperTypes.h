@@ -80,18 +80,20 @@ inline bool valid_ePlotDim(ePlotDim in)
    return false;
 }
 
-
 typedef enum
 {
-    E_PLOT_TYPE_1D          = 0,
-    E_PLOT_TYPE_2D          = 1,
-    E_PLOT_TYPE_REAL_FFT    = 2,
-    E_PLOT_TYPE_COMPLEX_FFT = 3,
-    E_PLOT_TYPE_AM_DEMOD    = 4,
-    E_PLOT_TYPE_FM_DEMOD    = 5,
-    E_PLOT_TYPE_PM_DEMOD    = 6,
-    E_PLOT_TYPE_AVERAGE     = 7
+   E_PLOT_TYPE_1D,
+   E_PLOT_TYPE_2D,
+   E_PLOT_TYPE_REAL_FFT,
+   E_PLOT_TYPE_COMPLEX_FFT,
+   E_PLOT_TYPE_AM_DEMOD,
+   E_PLOT_TYPE_FM_DEMOD,
+   E_PLOT_TYPE_PM_DEMOD,
+   E_PLOT_TYPE_AVERAGE,
+   E_PLOT_TYPE_DB_POWER_FFT_REAL,
+   E_PLOT_TYPE_DB_POWER_FFT_COMPLEX
 }ePlotType;
+
 inline bool valid_ePlotType(ePlotType in)
 {
    switch(in)
@@ -104,6 +106,8 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_FM_DEMOD:
    case E_PLOT_TYPE_PM_DEMOD:
    case E_PLOT_TYPE_AVERAGE:
+   case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+   case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
       return true;
       break;
    }
@@ -120,12 +124,14 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_AM_DEMOD:
    case E_PLOT_TYPE_FM_DEMOD:
    case E_PLOT_TYPE_PM_DEMOD:
+   case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
       twoDInput = true;
       break;
 
    case E_PLOT_TYPE_1D:
    case E_PLOT_TYPE_REAL_FFT:
    case E_PLOT_TYPE_AVERAGE:
+   case E_PLOT_TYPE_DB_POWER_FFT_REAL:
    default:
       twoDInput = false;
       break;

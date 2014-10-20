@@ -173,12 +173,14 @@ void CurveData::fill1DxPoints()
       break;
 
       case E_PLOT_TYPE_REAL_FFT:
+      case E_PLOT_TYPE_DB_POWER_FFT_REAL:
       {
          getFFTXAxisValues_real(xOrigPoints, xOrigPoints.size(), sampleRate);
       }
       break;
 
       case E_PLOT_TYPE_COMPLEX_FFT:
+      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
       {
          getFFTXAxisValues_complex(xOrigPoints, xOrigPoints.size(), sampleRate);
       }
@@ -681,22 +683,28 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                break;
                case E_SHIFT_UP:
                {
-                  // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                  short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
+                  if(*dataIter != 0.0)
+                  {
+                     // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
+                     short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
 
-                  short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
-                  curExponent += (short)mathIter->num;
-                  *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
+                     short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
+                     curExponent += (short)mathIter->num;
+                     *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
+                  }
                }
                break;
                case E_SHIFT_DOWN:
                {
-                  // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                  short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
+                  if(*dataIter != 0.0)
+                  {
+                     // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
+                     short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
 
-                  short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
-                  curExponent -= (short)mathIter->num;
-                  *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
+                     short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
+                     curExponent -= (short)mathIter->num;
+                     *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
+                  }
                }
                break;
                case E_POWER:

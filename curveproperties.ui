@@ -81,6 +81,16 @@
        <string>Average</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>dB Power from Real</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dB Power from Complex</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="lblPlotType">
      <property name="geometry">

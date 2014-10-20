@@ -20,6 +20,7 @@
 #include "CurveCommander.h"
 #include "fftHelper.h"
 #include "AmFmPmDemod.h"
+#include "handleLogData.h"
 
 const QString COMPLEX_FFT_REAL_APPEND = ".real";
 const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
@@ -387,6 +388,42 @@ void ChildCurve::updateCurve( bool xParentChanged,
 
             m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData);
          }
+      }
+      break;
+      case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+      {
+         dubVect realFFTOut;
+         getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
+         realFFT(m_ySrcData, realFFTOut);
+
+         unsigned int fftSize = realFFTOut.size();
+         for(unsigned int i = 0; i < fftSize; ++i)
+         {
+            realFFTOut[i] = log(realFFTOut[i] * realFFTOut[i]);
+         }
+
+         handleLogData(&realFFTOut[0], fftSize);
+
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
+      }
+      break;
+      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+      {
+         dubVect realFFTOut;
+         dubVect imagFFTOut;
+
+         getDataFromParent2D(xParentChanged, yParentChanged);
+         complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+
+         unsigned int fftSize = realFFTOut.size();
+         for(unsigned int i = 0; i < fftSize; ++i)
+         {
+            realFFTOut[i] = log( (realFFTOut[i] * realFFTOut[i]) + (imagFFTOut[i] * imagFFTOut[i]) );
+         }
+
+         handleLogData(&realFFTOut[0], fftSize);
+
+         m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
       }
       break;
    }
