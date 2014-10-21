@@ -399,7 +399,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          unsigned int fftSize = realFFTOut.size();
          for(unsigned int i = 0; i < fftSize; ++i)
          {
-            realFFTOut[i] = log(realFFTOut[i] * realFFTOut[i]);
+            realFFTOut[i] = 10.0 * log10(realFFTOut[i] * realFFTOut[i]);
          }
 
          handleLogData(&realFFTOut[0], fftSize);
@@ -418,7 +418,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          unsigned int fftSize = realFFTOut.size();
          for(unsigned int i = 0; i < fftSize; ++i)
          {
-            realFFTOut[i] = log( (realFFTOut[i] * realFFTOut[i]) + (imagFFTOut[i] * imagFFTOut[i]) );
+            realFFTOut[i] = 10.0 * log10( (realFFTOut[i] * realFFTOut[i]) + (imagFFTOut[i] * imagFFTOut[i]) );
          }
 
          handleLogData(&realFFTOut[0], fftSize);
