@@ -236,9 +236,9 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_SHIFT_UP:
    case E_SHIFT_DOWN:
    case E_POWER:
+   case E_LOG:
       return true;
       break;
-   case E_LOG:
    case E_ABS:
       return false;
       break;
@@ -250,6 +250,10 @@ typedef struct
 {
    eMathOp op;
    double num;
+
+   // To be used for math ops that can generate a number when the math operation
+   // is specified that will be used each time the math operation is applied to a sample.
+   double helperNum;
 }tOperation;
 
 typedef std::list<tOperation> tMathOpList;

@@ -711,7 +711,7 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                   (*dataIter) = pow((*dataIter), mathIter->num);
                break;
                case E_LOG:
-                  (*dataIter) = log10((*dataIter));
+                  (*dataIter) = log(*dataIter) / mathIter->helperNum;
                   logOpPerformed = true;
                break;
                case E_ABS:

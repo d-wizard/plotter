@@ -39,6 +39,8 @@ const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
 const int TAB_PROPERTIES = 4;
 
+const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751058;
+const double CURVE_PROP_E = 2.7182818284590452353602874713526624977572470936999595;
 
 #define NUM_MATH_OPS (9)
 const QString mathOpsStr[NUM_MATH_OPS] = {
@@ -72,7 +74,7 @@ const QString mathOpsValueLabel[NUM_MATH_OPS] = {
 "Bits to Shift Up by",
 "Bits to Shift Down by",
 "Raise to Power Value",
-"",
+"Base of log",
 ""};
 
 
@@ -637,7 +639,7 @@ void curveProperties::displayUserMathOp()
 
       QString displayStr = mathOpsSymbol[iter->op] + " " + QString(number);
 
-      if(iter->op == E_LOG || iter->op == E_ABS)
+      if(needsValue_eMathOp(iter->op) == false)
       {
          displayStr = mathOpsSymbol[iter->op];
       }
@@ -665,14 +667,48 @@ void curveProperties::on_opsOnCurve_currentRowChanged(int currentRow)
 
 void curveProperties::on_cmdOpRight_clicked()
 {
-   double number = atof(ui->txtNumber->text().toStdString().c_str());
+   double number = 0.0;
+   if(ui->txtNumber->text().toLower() == "pi")
+   {
+      number = CURVE_PROP_PI;
+   }
+   else if(ui->txtNumber->text().toLower() == "e")
+   {
+      number = CURVE_PROP_E;
+   }
+   else
+   {
+      if(dString::strTo(ui->txtNumber->text().toStdString(), number) == false)
+      {
+         number = 0.0;
+      }
+   }
 
-   if(number != 0.0 || (m_selectedMathOpLeft == E_LOG || m_selectedMathOpLeft == E_ABS))
+   if(number != 0.0 || needsValue_eMathOp((eMathOp)m_selectedMathOpLeft) == false)
    {
       tOperation newOp;
 
       newOp.op = (eMathOp)m_selectedMathOpLeft;
       newOp.num = number;
+
+      if(m_selectedMathOpLeft == E_LOG)
+      {
+         // The number for log is actually the divisor to convert from ln to logx (x is the base).
+         // Where logx(n) = ln(n) / ln(x)
+         if(number != CURVE_PROP_E)
+         {
+            newOp.helperNum = log(number); // Remember log in c++ is actually natural log.
+         }
+         else
+         {
+            // Base is e, so no divide is needed.
+            newOp.helperNum = 1.0;
+         }
+      }
+      else
+      {
+         newOp.helperNum = 0.0;
+      }
 
       m_mathOps.push_back(newOp);
 
