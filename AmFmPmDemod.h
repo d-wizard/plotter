@@ -44,12 +44,12 @@ inline void FmDemod(dubVect& reInput, dubVect& imInput, dubVect& demodOutput)
    {
       demodOutput.resize(outSize);
 
-      double prevPhase = atan2(reInput[outSize-1], imInput[outSize-1]);
+      double prevPhase = atan2(imInput[outSize-1], reInput[outSize-1]);
       double curPhase = 0.0;
 
       for(unsigned int i = 0; i < outSize; ++i)
       {
-         curPhase = atan2(reInput[i], imInput[i]);
+         curPhase = atan2(imInput[i], reInput[i]);
          demodOutput[i] = curPhase - prevPhase;
          if(demodOutput[i] < M_NEG_PI)
             demodOutput[i] += M_2X_PI;
@@ -72,7 +72,7 @@ inline void FmPmDemod(dubVect& reInput, dubVect& imInput, dubVect& fmOutput, dou
 
       for(unsigned int i = 0; i < outSize; ++i)
       {
-         curPhase = atan2(reInput[i], imInput[i]);
+         curPhase = atan2(imInput[i], reInput[i]);
          pmOutput[i] = curPhase;
          fmOutput[i] = curPhase - prevPhase;
          if(fmOutput[i] < M_NEG_PI)
@@ -93,7 +93,7 @@ inline void PmDemod(dubVect& reInput, dubVect& imInput, double* demodOutput, dou
 
    for(unsigned int i = 0; i < outSize; ++i)
    {
-      curPhase = atan2(reInput[i], imInput[i]);
+      curPhase = atan2(imInput[i], reInput[i]);
       deltaPhase = curPhase - prevPhase;
       deltaPhase = fmod(deltaPhase, M_2X_PI);
       if(deltaPhase < M_NEG_PI)
