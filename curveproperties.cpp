@@ -40,10 +40,10 @@ const int TAB_OPEN_SAVE_CURVE = 3;
 const int TAB_PROPERTIES = 4;
 
 const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751058;
+const double CURVE_PROP_2PI = 6.2831853071795864769252867665590057683943387987502116;
 const double CURVE_PROP_E = 2.7182818284590452353602874713526624977572470936999595;
 
-#define NUM_MATH_OPS (9)
-const QString mathOpsStr[NUM_MATH_OPS] = {
+const QString mathOpsStr[] = {
 "ADD",
 "SUBTRACT",
 "MUTIPLY",
@@ -52,9 +52,10 @@ const QString mathOpsStr[NUM_MATH_OPS] = {
 "SHIFT DOWN",
 "POWER",
 "LOG()",
+"MOD()",
 "ABS()"};
 
-const QString mathOpsSymbol[NUM_MATH_OPS] = {
+const QString mathOpsSymbol[] = {
 "+",
 "-",
 "*",
@@ -63,10 +64,11 @@ const QString mathOpsSymbol[NUM_MATH_OPS] = {
 ">>",
 "^",
 "log",
+"mod",
 "abs"};
 
 
-const QString mathOpsValueLabel[NUM_MATH_OPS] = {
+const QString mathOpsValueLabel[] = {
 "Value to Add",
 "Value to Subtract",
 "Value to Multiply by",
@@ -75,6 +77,7 @@ const QString mathOpsValueLabel[NUM_MATH_OPS] = {
 "Bits to Shift Down by",
 "Raise to Power Value",
 "Base of log",
+"Modulus Denominator"
 ""};
 
 
@@ -91,7 +94,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
 {
    ui->setupUi(this);
 
-   for(int i = 0; i < NUM_MATH_OPS; ++i)
+   for(unsigned int i = 0; i < ARRAY_SIZE(mathOpsStr); ++i)
    {
       ui->availableOps->addItem(mathOpsStr[i]);
    }
@@ -671,6 +674,10 @@ void curveProperties::on_cmdOpRight_clicked()
    if(ui->txtNumber->text().toLower() == "pi")
    {
       number = CURVE_PROP_PI;
+   }
+   if(ui->txtNumber->text().toLower() == "2pi")
+   {
+      number = CURVE_PROP_2PI;
    }
    else if(ui->txtNumber->text().toLower() == "e")
    {

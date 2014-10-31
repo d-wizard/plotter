@@ -714,6 +714,11 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                   (*dataIter) = log(*dataIter) / mathIter->helperNum;
                   logOpPerformed = true;
                break;
+               case E_MOD:
+                  (*dataIter) = fmod(*dataIter, mathIter->num);
+                  if((*dataIter) < 0)
+                     (*dataIter) += mathIter->num;
+               break;
                case E_ABS:
                   (*dataIter) = fabs((*dataIter));
                break;

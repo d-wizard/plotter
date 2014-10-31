@@ -205,6 +205,7 @@ typedef enum
    E_SHIFT_DOWN,
    E_POWER,
    E_LOG,
+   E_MOD,
    E_ABS
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
@@ -219,6 +220,7 @@ inline bool valid_eMathOp(eMathOp in)
    case E_SHIFT_DOWN:
    case E_POWER:
    case E_LOG:
+   case E_MOD:
    case E_ABS:
       return true;
       break;
@@ -237,6 +239,7 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_SHIFT_DOWN:
    case E_POWER:
    case E_LOG:
+   case E_MOD:
       return true;
       break;
    case E_ABS:
