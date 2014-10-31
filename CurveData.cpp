@@ -672,9 +672,6 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
                case E_ADD:
                   (*dataIter) += mathIter->num;
                break;
-               case E_SUBTRACT:
-                  (*dataIter) -= mathIter->num;
-               break;
                case E_MULTIPLY:
                   (*dataIter) *= mathIter->num;
                break;

@@ -45,7 +45,6 @@ const double CURVE_PROP_E = 2.71828182845904523536028747135266249775724709369995
 
 const QString mathOpsStr[] = {
 "ADD",
-"SUBTRACT",
 "MUTIPLY",
 "DIVIDE",
 "SHIFT UP",
@@ -57,7 +56,6 @@ const QString mathOpsStr[] = {
 
 const QString mathOpsSymbol[] = {
 "+",
-"-",
 "*",
 "/",
 "<<",
@@ -70,7 +68,6 @@ const QString mathOpsSymbol[] = {
 
 const QString mathOpsValueLabel[] = {
 "Value to Add",
-"Value to Subtract",
 "Value to Multiply by",
 "Value to Divide by",
 "Bits to Shift Up by",

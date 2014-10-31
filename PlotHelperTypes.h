@@ -198,7 +198,6 @@ typedef struct
 typedef enum
 {
    E_ADD,
-   E_SUBTRACT,
    E_MULTIPLY,
    E_DIVIDE,
    E_SHIFT_UP,
@@ -213,7 +212,6 @@ inline bool valid_eMathOp(eMathOp in)
    switch(in)
    {
    case E_ADD:
-   case E_SUBTRACT:
    case E_MULTIPLY:
    case E_DIVIDE:
    case E_SHIFT_UP:
@@ -232,7 +230,6 @@ inline bool needsValue_eMathOp(eMathOp in)
    switch(in)
    {
    case E_ADD:
-   case E_SUBTRACT:
    case E_MULTIPLY:
    case E_DIVIDE:
    case E_SHIFT_UP:
