@@ -256,8 +256,24 @@ void ChildCurve::updateCurve( bool xParentChanged,
       case E_PLOT_TYPE_REAL_FFT:
       {
          dubVect realFFTOut;
+
          getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
-         realFFT(m_ySrcData, realFFTOut);
+
+         if(m_yAxis.windowFFT == true)
+         {
+            unsigned int dataSize = m_ySrcData.size();
+            if(m_prevInfo.size() != dataSize)
+            {
+               m_prevInfo.resize(dataSize);
+               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+            }
+            realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
+         }
+         else
+         {
+            realFFT(m_ySrcData, realFFTOut);
+         }
+
          m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
       }
       break;
@@ -267,7 +283,22 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect imagFFTOut;
 
          getDataFromParent2D(xParentChanged, yParentChanged);
-         complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+
+         if(m_yAxis.windowFFT == true)
+         {
+            unsigned int dataSize = std::min(m_ySrcData.size(), m_xSrcData.size());
+            if(m_prevInfo.size() != dataSize)
+            {
+               m_prevInfo.resize(dataSize);
+               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+            }
+            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
+         }
+         else
+         {
+            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+         }
+
 
          m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_REAL_APPEND, m_plotType, realFFTOut);
          m_curveCmdr->create1dCurve(m_plotName, m_curveName + COMPLEX_FFT_IMAG_APPEND, m_plotType, imagFFTOut);
@@ -394,7 +425,21 @@ void ChildCurve::updateCurve( bool xParentChanged,
       {
          dubVect realFFTOut;
          getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
-         realFFT(m_ySrcData, realFFTOut);
+
+         if(m_yAxis.windowFFT == true)
+         {
+            unsigned int dataSize = m_ySrcData.size();
+            if(m_prevInfo.size() != dataSize)
+            {
+               m_prevInfo.resize(dataSize);
+               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+            }
+            realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
+         }
+         else
+         {
+            realFFT(m_ySrcData, realFFTOut);
+         }
 
          unsigned int fftSize = realFFTOut.size();
          for(unsigned int i = 0; i < fftSize; ++i)
@@ -413,7 +458,20 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect imagFFTOut;
 
          getDataFromParent2D(xParentChanged, yParentChanged);
-         complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+         if(m_yAxis.windowFFT == true)
+         {
+            unsigned int dataSize = std::min(m_ySrcData.size(), m_xSrcData.size());
+            if(m_prevInfo.size() != dataSize)
+            {
+               m_prevInfo.resize(dataSize);
+               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+            }
+            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
+         }
+         else
+         {
+            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+         }
 
          unsigned int fftSize = realFFTOut.size();
          for(unsigned int i = 0; i < fftSize; ++i)

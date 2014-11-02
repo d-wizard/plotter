@@ -272,6 +272,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
    bool xVis = false;
    bool yVis = false;
+   bool windowChkVis = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
    switch(index)
    {
@@ -290,12 +291,14 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          ui->lblYAxisSrc->setText("Real Source");
          yVis = true;
+         windowChkVis = true;
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
+      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+         windowChkVis = true;
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
-      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
          xVis = true;
@@ -317,6 +320,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 
    ui->lblAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
+
+   ui->chkWindow->setVisible(windowChkVis);
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -348,6 +353,7 @@ void curveProperties::on_cmdApply_clicked()
                   yAxisParent.stopIndex = 0;
                }
 
+               yAxisParent.windowFFT = ui->chkWindow->isChecked();
                yAxisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
 
                m_curveCmdr->createChildCurve( newChildPlotName,
@@ -378,6 +384,9 @@ void curveProperties::on_cmdApply_clicked()
                   yAxisParent.startIndex = 0;
                   yAxisParent.stopIndex = 0;
                }
+
+               xAxisParent.windowFFT = ui->chkWindow->isChecked();
+               yAxisParent.windowFFT = ui->chkWindow->isChecked();
 
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,

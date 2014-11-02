@@ -193,6 +193,7 @@ typedef struct
    int startIndex;
    int stopIndex;
    double avgAmount;
+   bool windowFFT;
 }tParentCurveInfo;
 
 typedef enum

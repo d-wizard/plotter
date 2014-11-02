@@ -19,11 +19,12 @@
 #ifndef fftHelper_h
 #define fftHelper_h
 
-void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm);
+void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double* windowCoef = NULL);
 
-void realFFT(const dubVect& inRe, dubVect& outRe);
+void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef = NULL);
 
 void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampleRate = 0.0);
 void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sampleRate = 0.0);
 
+void genBlackmanWindowCoef(double* outSamp, unsigned int numSamp);
 #endif

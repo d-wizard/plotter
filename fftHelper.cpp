@@ -21,7 +21,7 @@
 #include "PlotHelperTypes.h"
 #include "fftHelper.h"
 
-void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm)
+void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double *windowCoef)
 {
    fftw_complex *in, *out;
    fftw_plan p;
@@ -33,10 +33,21 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
        in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
        out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
-       for(unsigned int i = 0; i < N; ++i)
+       if(windowCoef == NULL)
        {
-          in[i][0] = inRe[i];
-          in[i][1] = inIm[i];
+          for(unsigned int i = 0; i < N; ++i)
+          {
+             in[i][0] = inRe[i];
+             in[i][1] = inIm[i];
+          }
+       }
+       else
+       {
+          for(unsigned int i = 0; i < N; ++i)
+          {
+             in[i][0] = inRe[i] * windowCoef[i];
+             in[i][1] = inIm[i] * windowCoef[i];
+          }
        }
 
        p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -63,7 +74,7 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
    }
 }
 
-void realFFT(const dubVect& inRe, dubVect& outRe)
+void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
 {
    fftw_complex *in, *out;
    fftw_plan p;
@@ -77,10 +88,21 @@ void realFFT(const dubVect& inRe, dubVect& outRe)
        in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
        out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
-       for(unsigned int i = 0; i < N; ++i)
+       if(windowCoef == NULL)
        {
-          in[i][0] = inRe[i];
-          in[i][1] = inRe[i];
+          for(unsigned int i = 0; i < N; ++i)
+          {
+             in[i][0] = inRe[i];
+             in[i][1] = inRe[i];
+          }
+       }
+       else
+       {
+          for(unsigned int i = 0; i < N; ++i)
+          {
+             in[i][0] = inRe[i] * windowCoef[i];
+             in[i][1] = inRe[i] * windowCoef[i];
+          }
        }
 
        p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
@@ -184,4 +206,13 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sa
     {
         xAxis.clear();
     }
+}
+
+void genBlackmanWindowCoef(double* outSamp, unsigned int numSamp)
+{
+   for(unsigned int i = 0; i < numSamp; ++i)
+   {
+      outSamp[i] = ( 0.42 - 0.5 * cos (2.0*M_PI*(double)i/(double)(numSamp-1))
+         + 0.08 * cos (4.0*M_PI*(double)i/(double)(numSamp-1)) );
+   }
 }

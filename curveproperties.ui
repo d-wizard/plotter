@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tabCreateChild">
     <attribute name="title">
@@ -327,6 +327,19 @@
      </property>
      <property name="text">
       <string>Average Amount (0 - 1)</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="chkWindow">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>180</y>
+       <width>111</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Window FFT Data</string>
      </property>
     </widget>
    </widget>
