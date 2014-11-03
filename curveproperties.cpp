@@ -837,7 +837,7 @@ void curveProperties::fillRestoreTabListBox()
          // This should be replaced with a date/time format.
          QString time((*iter).msgTime.toString());
          time = dString::Slice(time.toStdString(), 0, -5).c_str();
-         ui->storedMsgs->addItem("[" + time + "] " + (*iter).name.plot + "->" + (*iter).name.curve);
+         ui->storedMsgs->addItem("[" + time + "] " + (*iter).name.plot + PLOT_CURVE_SEP + (*iter).name.curve);
          m_storedMsgs.push_back(*iter);
       }
    }
@@ -1121,6 +1121,13 @@ void curveProperties::fillInPropTab()
       ui->txtPropXMax->setText(QString::number(curveDataMaxMin.maxX));
       ui->txtPropYMin->setText(QString::number(curveDataMaxMin.minY));
       ui->txtPropYMax->setText(QString::number(curveDataMaxMin.maxY));
+
+      ui->propParentCurves->clear();
+      QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
+      for(int i = 0; i < parent.size(); ++i)
+      {
+         ui->propParentCurves->addItem(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
+      }
    }
    else
    {
@@ -1135,6 +1142,7 @@ void curveProperties::fillInPropTab()
        ui->txtPropXMax->setText("");
        ui->txtPropYMin->setText("");
        ui->txtPropYMax->setText("");
+       ui->propParentCurves->clear();
    }
 }
 
@@ -1171,4 +1179,11 @@ void curveProperties::propTabApply()
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
       }
    }
+}
+
+void curveProperties::on_cmdUnlinkParent_clicked()
+{
+   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   m_curveCmdr->unlinkChildFromParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   fillInPropTab(); // Update Propties Tab with new information.
 }

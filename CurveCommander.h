@@ -76,6 +76,10 @@ public:
 
     void removeCurve(const QString& plotName, const QString& curveName);
 
+    QVector<tPlotCurveAxis> getCurveParents(const QString& plotName, const QString& curveName);
+
+    void unlinkChildFromParents(const QString& plotName, const QString& curveName);
+
 private:
     CurveCommander();
 

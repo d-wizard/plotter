@@ -397,3 +397,50 @@ void CurveCommander::removeCurve(const QString& plotName, const QString& curveNa
 
    }
 }
+
+QVector<tPlotCurveAxis> CurveCommander::getCurveParents(const QString& plotName, const QString& curveName)
+{
+   // Iterate over all child curves. If a match is found, return the parents of the match.
+   std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
+   while(iter != m_childCurves.end())
+   {
+      if((*iter)->getPlotName() == plotName && (*iter)->getCurveName() == curveName)
+      {
+         return (*iter)->getParents();
+      }
+      else
+      {
+         ++iter;
+      }
+   }
+
+   QVector<tPlotCurveAxis> retVal;
+   return retVal; // No match found, return empty vector;
+}
+
+
+void CurveCommander::unlinkChildFromParents(const QString& plotName, const QString& curveName)
+{
+   bool matchFound = false;
+
+   // Remove the child curve that matches the Plot Name and Curve Name specified.
+   std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
+   while(iter != m_childCurves.end() && matchFound == false) // Iterate over all child curves until match is found.
+   {
+      if((*iter)->getPlotName() == plotName && (*iter)->getCurveName() == curveName)
+      {
+         // This is the child curve that needs to be unlinked.
+         matchFound = true;
+         delete *iter;
+         m_childCurves.erase(iter);
+      }
+      else
+      {
+         ++iter;
+      }
+   }
+}
+
+
+
+

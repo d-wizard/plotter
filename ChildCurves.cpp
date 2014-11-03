@@ -510,11 +510,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
 QVector<tPlotCurveAxis> ChildCurve::getParents()
 {
    QVector<tPlotCurveAxis> retVal;
-   retVal.push_back(m_yAxis.dataSrc);
    if(plotTypeHas2DInput(m_plotType))
    {
       retVal.push_back(m_xAxis.dataSrc);
    }
+   retVal.push_back(m_yAxis.dataSrc);
    return retVal;
 }
 

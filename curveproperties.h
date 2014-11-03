@@ -96,6 +96,8 @@ private slots:
 
    void on_cmbPropPlotCurveName_currentIndexChanged(int index);
 
+   void on_cmdUnlinkParent_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
