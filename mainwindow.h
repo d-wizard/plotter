@@ -160,6 +160,7 @@ public:
 
     void removeCurve(const QString& curveName);
 
+    unsigned int findNextUnusedColorIndex();
 
     void setDisplayIoMapIp(std::stringstream &iostr);
     void clearDisplayIoMapIp(std::stringstream& iostr);

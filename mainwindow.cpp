@@ -534,7 +534,7 @@ void MainWindow::createUpdateCurve( QString& name,
    else
    {
       curveIndex = m_qwtCurves.size();
-      int colorLookupIndex = curveIndex % ARRAY_SIZE(curveColors);
+      int colorLookupIndex = findNextUnusedColorIndex();
 
       if(resetCurve == false && sampleStartIndex > 0)
       {
@@ -1651,3 +1651,27 @@ void MainWindow::removeCurve(const QString& curveName)
    updateCurveOrder();
 }
 
+unsigned int MainWindow::findNextUnusedColorIndex()
+{
+   unsigned int nextColorIndex = 0;
+   bool nextColorFound = false;
+   for(unsigned int colorIndex = 0; colorIndex < ARRAY_SIZE(curveColors) && nextColorFound == false; ++colorIndex)
+   {
+      bool matchFound = false;
+      for(unsigned int curveIndex = 0; curveIndex < (unsigned int)m_qwtCurves.size() && matchFound == false; ++curveIndex)
+      {
+         if(m_qwtCurves[curveIndex]->getColor() == curveColors[colorIndex])
+         {
+            matchFound = true;
+         }
+      }
+
+      if(matchFound == false)
+      {
+         nextColorFound = true;
+         nextColorIndex = colorIndex;
+      }
+   }
+
+   return nextColorIndex;
+}
