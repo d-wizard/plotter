@@ -98,6 +98,8 @@ private slots:
 
    void on_cmdUnlinkParent_clicked();
 
+   void on_cmdRemoveCurve_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 

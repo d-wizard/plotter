@@ -64,6 +64,14 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    }
 }
 
+void CurveCommander::curvePropertyChanged()
+{
+   if(m_curvePropGui != NULL)
+   {
+      m_curvePropGui->updateGuiPlotCurveInfo();
+   }
+}
+
 void CurveCommander::plotRemoved(QString plotName)
 {
    bool plotWasRemoved = false;

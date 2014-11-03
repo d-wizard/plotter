@@ -700,6 +700,7 @@ void MainWindow::visibleCursorMenuSelect(int index)
         m_qwtCurves[index]->attach();
     }
     updateCurveOrder();
+    m_curveCommander->curvePropertyChanged();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -1675,3 +1676,16 @@ unsigned int MainWindow::findNextUnusedColorIndex()
 
    return nextColorIndex;
 }
+
+void MainWindow::toggleCurveVisability(const QString& curveName)
+{
+   int curveIndex = getCurveIndex(curveName);
+   if(curveIndex >= 0)
+   {
+      visibleCursorMenuSelect(curveIndex);
+   }
+}
+
+
+
+

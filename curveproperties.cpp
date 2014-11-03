@@ -195,6 +195,11 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       // it was before the change.
       setCombosToPrevValues();
    }
+
+   if(ui->tabWidget->currentIndex() == TAB_PROPERTIES)
+   {
+      fillInPropTab();
+   }
 }
 
 void curveProperties::setCombosToPrevValues()
@@ -605,7 +610,6 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_PROPERTIES:
       {
          showApplyButton = true;
-         ui->chkPropRemove->setChecked(false);
          fillInPropTab();
       }
       break;
@@ -1097,7 +1101,6 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
-   ui->chkPropRemove->setChecked(false);
    fillInPropTab();
 }
 
@@ -1115,6 +1118,7 @@ void curveProperties::fillInPropTab()
       ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
       ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
       ui->chkPropHide->setChecked(parentCurve->getHidden());
+      ui->chkPropVisable->setChecked(parentCurve->isDisplayed());
 
       maxMinXY curveDataMaxMin = parentCurve->getMaxMinXYOfData();
       ui->txtPropXMin->setText(QString::number(curveDataMaxMin.minX));
@@ -1153,25 +1157,14 @@ void curveProperties::propTabApply()
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
    {
-      if(ui->chkPropRemove->isChecked())
+      // If curve visability has changed, update.
+      if(parentCurve->isDisplayed() != ui->chkPropVisable->isChecked())
       {
-         // Ask the user if they are sure they want to remove the plot.
-         QMessageBox::StandardButton reply;
-         reply = QMessageBox::question( this,
-                                        "Remove Plot",
-                                        "Are you sure you want to permanently remove this curve: " + ui->cmbPropPlotCurveName->currentText(),
-                                        QMessageBox::Yes|QMessageBox::No );
-         if (reply == QMessageBox::Yes)
-         {
-            m_curveCmdr->removeCurve(plotCurveInfo.plotName, plotCurveInfo.curveName);
-            return; // removing Curve, nothing more to do.
-         }
+         parentPlot->toggleCurveVisability(plotCurveInfo.curveName);
       }
-      else
-      {
-          // Only bother with hiding/unhiding curve if remove isn't checked.
-          parentPlot->setCurveHidden(plotCurveInfo.curveName, ui->chkPropHide->isChecked());
-      }
+
+      // Set Curve Hidden Status.
+      parentPlot->setCurveHidden(plotCurveInfo.curveName, ui->chkPropHide->isChecked());
 
       // Check for change of Curve Display Index
       if(parentPlot->getCurveIndex(plotCurveInfo.curveName) != ui->spnPropCurvePos->value())
@@ -1186,4 +1179,20 @@ void curveProperties::on_cmdUnlinkParent_clicked()
    tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
    m_curveCmdr->unlinkChildFromParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
    fillInPropTab(); // Update Propties Tab with new information.
+}
+
+void curveProperties::on_cmdRemoveCurve_clicked()
+{
+   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   // Ask the user if they are sure they want to remove the plot.
+   QMessageBox::StandardButton reply;
+   reply = QMessageBox::question( this,
+                                  "Remove Plot",
+                                  "Are you sure you want to permanently remove this curve: " + ui->cmbPropPlotCurveName->currentText(),
+                                  QMessageBox::Yes|QMessageBox::No );
+   if (reply == QMessageBox::Yes)
+   {
+      m_curveCmdr->removeCurve(plotCurveInfo.plotName, plotCurveInfo.curveName);
+      return; // removing Curve, nothing more to do.
+   }
 }

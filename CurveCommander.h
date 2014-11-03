@@ -44,6 +44,7 @@ public:
     ~CurveCommander();
 
     void curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints);
+    void curvePropertyChanged();
     void plotRemoved(QString plotName);
 
     bool validPlot(QString plotName);

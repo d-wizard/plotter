@@ -166,6 +166,8 @@ public:
     void clearDisplayIoMapIp(std::stringstream& iostr);
     bool setDisplayIoMapipXAxis(std::stringstream& iostr, CurveData *curve);
     void setDisplayIoMapipYAxis(std::stringstream& iostr);
+
+    void toggleCurveVisability(const QString& curveName);
 private:
     Ui::MainWindow *ui;
 
