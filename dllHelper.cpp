@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -81,7 +81,7 @@ void createPlot(char* msg)
    {
       unsigned int len = 0;
       memcpy(&len, msg+4, sizeof(len));
-      pgm->readPlotMsg(msg, len);
+      pgm->startPlotMsgProcess(msg, len);
    }
 }
 
@@ -107,7 +107,7 @@ void create1dPlot( char* plotName,
 
       packCreate1dPlotMsg(&plotParam, yAxisSamples, &msg[0]);
 
-      pgm->readPlotMsg(&msg[0], msg.size());
+      pgm->startPlotMsgProcess(&msg[0], msg.size());
    }
 }
 
@@ -138,7 +138,7 @@ void create2dPlot( char* plotName,
 
       packCreate2dPlotMsg(&plotParam, xAxisSamples, yAxisSamples, &msg[0]);
 
-      pgm->readPlotMsg(&msg[0], msg.size());
+      pgm->startPlotMsgProcess(&msg[0], msg.size());
    }
 }
 
@@ -166,7 +166,7 @@ void update1dPlot( char* plotName,
 
       packUpdate1dPlotMsg(&plotParam, sampleStartIndex, yAxisSamples, &msg[0]);
 
-      pgm->readPlotMsg(&msg[0], msg.size());
+      pgm->startPlotMsgProcess(&msg[0], msg.size());
    }
 }
 
@@ -198,6 +198,6 @@ void update2dPlot( char* plotName,
 
       packUpdate2dPlotMsg(&plotParam, sampleStartIndex, xAxisSamples, yAxisSamples, &msg[0]);
 
-      pgm->readPlotMsg(&msg[0], msg.size());
+      pgm->startPlotMsgProcess(&msg[0], msg.size());
    }
 }
