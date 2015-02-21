@@ -89,7 +89,6 @@ void create1dPlot( char* plotName,
                    char* curveName,
                    unsigned int numSamp,
                    int yAxisType,
-                   int yShiftValue,
                    void* yAxisSamples)
 {
    if(pgm != NULL)
@@ -101,7 +100,6 @@ void create1dPlot( char* plotName,
       plotParam.curveName = curveName;
       plotParam.numSamp = numSamp;
       plotParam.yAxisType = (ePlotDataTypes)yAxisType;
-      plotParam.yShiftValue = yShiftValue;
 
       msg.resize(getCreatePlot1dMsgSize(&plotParam));
 
@@ -115,9 +113,7 @@ void create2dPlot( char* plotName,
                    char* curveName,
                    unsigned int numSamp,
                    int xAxisType,
-                   int xShiftValue,
                    int yAxisType,
-                   int yShiftValue,
                    void* xAxisSamples,
                    void* yAxisSamples)
 {
@@ -130,9 +126,7 @@ void create2dPlot( char* plotName,
       plotParam.curveName = curveName;
       plotParam.numSamp = numSamp;
       plotParam.xAxisType = (ePlotDataTypes)xAxisType;
-      plotParam.xShiftValue = xShiftValue;
       plotParam.yAxisType = (ePlotDataTypes)yAxisType;
-      plotParam.yShiftValue = yShiftValue;
 
       msg.resize(getCreatePlot2dMsgSize(&plotParam));
 
@@ -148,7 +142,6 @@ void update1dPlot( char* plotName,
                    unsigned int numSamp,
                    unsigned int sampleStartIndex,
                    int yAxisType,
-                   int yShiftValue,
                    void* yAxisSamples)
 {
    if(pgm != NULL)
@@ -160,7 +153,6 @@ void update1dPlot( char* plotName,
       plotParam.curveName = curveName;
       plotParam.numSamp = numSamp;
       plotParam.yAxisType = (ePlotDataTypes)yAxisType;
-      plotParam.yShiftValue = yShiftValue;
 
       msg.resize(getUpdatePlot1dMsgSize(&plotParam));
 
@@ -175,9 +167,7 @@ void update2dPlot( char* plotName,
                    unsigned int numSamp,
                    unsigned int sampleStartIndex,
                    int xAxisType,
-                   int xShiftValue,
                    int yAxisType,
-                   int yShiftValue,
                    void* xAxisSamples,
                    void* yAxisSamples)
 {
@@ -190,9 +180,7 @@ void update2dPlot( char* plotName,
       plotParam.curveName = curveName;
       plotParam.numSamp = numSamp;
       plotParam.xAxisType = (ePlotDataTypes)xAxisType;
-      plotParam.xShiftValue = xShiftValue;
       plotParam.yAxisType = (ePlotDataTypes)yAxisType;
-      plotParam.yShiftValue = yShiftValue;
 
       msg.resize(getUpdatePlot2dMsgSize(&plotParam));
 
