@@ -69,6 +69,13 @@ void update2dPlot( char* plotName,
                    void *xAxisSamples,
                    void *yAxisSamples);
 
+extern "C" Q_DECL_EXPORT
+void removeCurve(char* plotName, char* curveName);
+
+extern "C" Q_DECL_EXPORT
+void setLegendState(char* plotName, char showLegend);
+
+
 #endif
 
 

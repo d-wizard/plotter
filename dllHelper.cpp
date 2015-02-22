@@ -189,3 +189,18 @@ void update2dPlot( char* plotName,
       pgm->startPlotMsgProcess(&msg[0], msg.size());
    }
 }
+
+
+void removeCurve(char* plotName, char* curveName)
+{
+    pgm->getCurveCommander().removeCurve(plotName, curveName);
+}
+
+void setLegendState(char* plotName, char showLegend)
+{
+    MainWindow* plot = pgm->getCurveCommander().getMainPlot(plotName);
+    if(plot != NULL)
+    {
+        plot->setLegendState((bool)showLegend);
+    }
+}

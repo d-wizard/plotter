@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -611,6 +611,13 @@ void MainWindow::toggleLegend()
     }
 }
 
+void MainWindow::setLegendState(bool showLegend)
+{
+    if(m_legendDisplayed != showLegend)
+    {
+        toggleLegend();
+    }
+}
 
 void MainWindow::cursorMode()
 {
