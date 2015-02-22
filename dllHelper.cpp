@@ -201,6 +201,6 @@ void setLegendState(char* plotName, char showLegend)
     MainWindow* plot = pgm->getCurveCommander().getMainPlot(plotName);
     if(plot != NULL)
     {
-        plot->setLegendState((bool)showLegend);
+        plot->setLegendState(showLegend != 0);
     }
 }
