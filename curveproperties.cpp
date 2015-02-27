@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -87,7 +87,8 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameDestCmbText(""),
    m_mathSrcCmbText(""),
    m_selectedMathOpLeft(0),
-   m_selectedMathOpRight(0)
+   m_selectedMathOpRight(0),
+  m_curveSavePrevDir("")
 {
    ui->setupUi(this);
 
@@ -980,9 +981,26 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 
    if(toSaveCurveData != NULL)
    {
+      // Use the last saved location to determine the folder to save the curve to.
+      QString suggestedSavePath = m_curveSavePrevDir;
+      if(suggestedSavePath != "")
+      {
+         suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + toSave.curveName;
+      }
+      else
+      {
+         suggestedSavePath = toSave.curveName;
+      }
+
+      // Open the save file dialog.
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
-                                                       toSave.curveName,
+                                                       suggestedSavePath,
                                                        tr("Curves (*.curve);;Comma Separted Values (*.csv)"));
+
+      // Save off the folder the user saved the curve file to, so the next time the user
+      // saves a curve the dialog will default to the same folder.
+      m_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
+
 
       if(fso::GetExt(fileName.toStdString()) == "curve")
       {
