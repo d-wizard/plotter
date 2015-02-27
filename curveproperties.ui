@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tabCreateChild">
     <attribute name="title">
@@ -603,7 +603,7 @@
        <rect>
         <x>100</x>
         <y>20</y>
-        <width>301</width>
+        <width>371</width>
         <height>22</height>
        </rect>
       </property>
@@ -614,7 +614,7 @@
      <widget class="QPushButton" name="cmdOpenCurveFromFile">
       <property name="geometry">
        <rect>
-        <x>410</x>
+        <x>480</x>
         <y>20</y>
         <width>75</width>
         <height>23</height>
@@ -655,7 +655,7 @@
        <rect>
         <x>100</x>
         <y>20</y>
-        <width>301</width>
+        <width>371</width>
         <height>22</height>
        </rect>
       </property>
@@ -663,7 +663,7 @@
      <widget class="QPushButton" name="cmdSaveCurveToFile">
       <property name="geometry">
        <rect>
-        <x>410</x>
+        <x>480</x>
         <y>20</y>
         <width>75</width>
         <height>23</height>
