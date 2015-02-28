@@ -79,6 +79,20 @@ const QString mathOpsValueLabel[] = {
 "Modulus Denominator"
 ""};
 
+const QString plotTypeNames[] = {
+   "1D",
+   "2D",
+   "FFT",
+   "FFT",
+   "AM",
+   "FM",
+   "PM",
+   "Avg",
+   "FFT",
+   "FFT"
+};
+
+
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
@@ -89,7 +103,10 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameDestCmbText(""),
    m_mathSrcCmbText(""),
    m_selectedMathOpLeft(0),
-   m_selectedMathOpRight(0)
+   m_selectedMathOpRight(0),
+   m_childCurveNewPlotNameUser(""),
+   m_childCurveNewCurveNameUser(""),
+   m_prevChildCurvePlotTypeIndex(-1)
 {
    ui->setupUi(this);
 
@@ -122,6 +139,10 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
 
    // Initialize GUI elements.
    updateGuiPlotCurveInfo(plotName, curveName);
+
+   // Set Suggested Plot / Curve Names.
+   restoreUserChildPlotNames();
+
 }
 
 curveProperties::~curveProperties()
@@ -202,6 +223,8 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    {
       fillInPropTab();
    }
+
+   restoreUserChildPlotNames();
 }
 
 void curveProperties::setCombosToPrevValues()
@@ -277,27 +300,27 @@ int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
-   bool xVis = false;
-   bool yVis = false;
+   bool xVis = plotTypeHas2DInput((ePlotType)index);
+   bool yVis = true;
    bool windowChkVis = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
+
+   storeUserChildPlotNames((ePlotType)m_prevChildCurvePlotTypeIndex);
+   m_prevChildCurvePlotTypeIndex = index;
+
    switch(index)
    {
       case E_PLOT_TYPE_1D:
       case E_PLOT_TYPE_AVERAGE:
          ui->lblYAxisSrc->setText("Y Axis Source");
-         yVis = true;
       break;
       case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
          ui->lblYAxisSrc->setText("Y Axis Source");
-         xVis = true;
-         yVis = true;
       break;
       case E_PLOT_TYPE_REAL_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          ui->lblYAxisSrc->setText("Real Source");
-         yVis = true;
          windowChkVis = true;
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
@@ -308,8 +331,6 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_PM_DEMOD:
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
-         xVis = true;
-         yVis = true;
       break;
 
    }
@@ -329,6 +350,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 
    ui->chkWindow->setVisible(windowChkVis);
+
+   restoreUserChildPlotNames();
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -412,6 +435,10 @@ void curveProperties::on_cmdApply_clicked()
             msgBox.exec();
          }
       } // End if(newChildPlotName != "" && newChildCurveName != "")
+
+      // Child curve has been created. Clear user input of plot / curve name.
+      m_childCurveNewPlotNameUser = "";
+      m_childCurveNewCurveNameUser = "";
    }
    else if(tab == TAB_CREATE_MATH)
    {
@@ -555,15 +582,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 {
    int tab = ui->tabWidget->currentIndex();
 
-   // If moving away from Child Curve Tab, need to store user
-   // input before updateGuiPlotCurveInfo wipes it out. The
-   // stored value will be returned to the New Plot Name ComboBox
-   // when returning to the Child Curve Tab.
-   if(tab != TAB_CREATE_CHILD_CURVE)
-   {
-      m_childCurveNewPlotNameUser = ui->cmbDestPlotName->currentText();
-   }
-
+   storeUserChildPlotNames((ePlotType)tab);
 
    updateGuiPlotCurveInfo();
 
@@ -574,10 +593,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_CREATE_CHILD_CURVE:
       {
          showApplyButton = true;
-         if(m_childCurveNewPlotNameUser != "")
-         {
-            ui->cmbDestPlotName->lineEdit()->setText(m_childCurveNewPlotNameUser);
-         }
+         restoreUserChildPlotNames();
       }
       break;
 
@@ -1218,3 +1234,155 @@ void curveProperties::on_cmdRemoveCurve_clicked()
       return; // removing Curve, nothing more to do.
    }
 }
+
+void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName)
+{
+   plotName = "";
+   curveName = "";
+
+   tPlotCurveAxis xSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
+   tPlotCurveAxis ySrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+
+   // Check for no plots.
+   if(ySrc.plotName == "")
+   {
+      // Properies window is open, but there are not plots. Early return.
+      return;
+   }
+
+   bool twoDInput = plotTypeHas2DInput(plotType);
+   bool plotNameMustBeUnique = false;
+
+   twoDInput = plotTypeHas2DInput(plotType);
+
+   if(plotType != E_PLOT_TYPE_AVERAGE)
+   {
+      QString plotPrefix = plotTypeNames[plotType];
+      QString plotSuffix = "";
+      QString plotMid = "";
+
+      if(twoDInput)
+      {
+         if(xSrc.plotName == ySrc.plotName)
+         {
+            if(xSrc.curveName == xSrc.curveName)
+            {
+               // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
+               // Use the Curve Name.
+               plotMid = ySrc.curveName;
+            }
+            else
+            {
+               // Use the Plot Name.
+               plotMid = ySrc.plotName;
+            }
+         }
+         else
+         {
+            // Use both Curve Names.
+            plotMid = xSrc.curveName + " - " + ySrc.curveName;
+         }
+      }
+      else
+      {
+         plotMid = ySrc.plotName + PLOT_CURVE_SEP + ySrc.curveName;
+      }
+
+      // Generate the plot name.
+      if(plotPrefix != "")
+      {
+         plotName = plotPrefix + " - " + plotMid;
+      }
+      else
+      {
+         plotName = plotMid;
+      }
+      if(plotSuffix != "")
+      {
+         plotName = plotName + " - " + plotSuffix;
+      }
+
+      curveName = plotMid;
+      plotNameMustBeUnique = true;
+   }
+   else
+   {
+      // Average Child Curve. This should remain on the default to remain on the same plot as the parent.
+      plotName = ySrc.plotName;
+      plotNameMustBeUnique = false; // Plot Name should be the same.
+      curveName = plotTypeNames[plotType] + " - " + ySrc.curveName;
+   }
+
+   if(plotNameMustBeUnique && m_curveCmdr->validPlot(plotName))
+   {
+      int numToAddToEndOfPlotName = 0;
+      QString plotNameValid = plotName + " ";
+      do
+      {
+         plotName = plotNameValid + QString::number(numToAddToEndOfPlotName);
+         ++numToAddToEndOfPlotName;
+      }
+      while(m_curveCmdr->validPlot(plotName));
+   }
+
+   if(m_curveCmdr->validCurve(plotName, curveName))
+   {
+      int numToAddToEndOfCurveName = 0;
+      QString curveNameValid = curveName + " ";
+      do
+      {
+         curveName = curveNameValid + QString::number(numToAddToEndOfCurveName);
+         ++numToAddToEndOfCurveName;
+      }
+      while(m_curveCmdr->validCurve(plotName, curveName));
+   }
+
+
+}
+
+
+void curveProperties::storeUserChildPlotNames(ePlotType plotType)
+{
+   if(plotType < 0)
+      plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+
+   QString sugPlotName;
+   QString sugCurveName;
+   getSuggestedChildPlotCurveName(plotType, sugPlotName, sugCurveName);
+
+   // Only save the plot name if it isn't already a plot name or it wasn't the suggested plot name.
+   QString curPlotNameText = ui->cmbDestPlotName->currentText();
+   m_childCurveNewPlotNameUser =
+      (m_curveCmdr->validPlot(curPlotNameText) || curPlotNameText == sugPlotName) ?
+      "" : curPlotNameText;
+
+   // Only save the curve name if it wasn't the suggested curve name.
+   QString curCurveNameText = ui->txtDestCurveName->text();
+   m_childCurveNewCurveNameUser = curCurveNameText == sugCurveName ? "" : curCurveNameText;
+
+}
+
+void curveProperties::restoreUserChildPlotNames()
+{
+   QString sugPlotName;
+   QString sugCurveName;
+   getSuggestedChildPlotCurveName((ePlotType)ui->cmbPlotType->currentIndex(), sugPlotName, sugCurveName);
+
+   if(m_childCurveNewPlotNameUser != "")
+   {
+      ui->cmbDestPlotName->lineEdit()->setText(m_childCurveNewPlotNameUser);
+   }
+   else
+   {
+      ui->cmbDestPlotName->lineEdit()->setText(sugPlotName);
+   }
+   if(m_childCurveNewCurveNameUser != "")
+   {
+      ui->txtDestCurveName->setText(m_childCurveNewCurveNameUser);
+   }
+   else
+   {
+      ui->txtDestCurveName->setText(sugCurveName);
+   }
+}
+

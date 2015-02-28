@@ -119,6 +119,10 @@ private:
    void fillInPropTab();
    void propTabApply();
 
+   void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
+
+   void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
+   void restoreUserChildPlotNames();
 
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
@@ -150,6 +154,8 @@ private:
    plotCurveNameDialog m_plotCurveDialog;
 
    QString m_childCurveNewPlotNameUser;
+   QString m_childCurveNewCurveNameUser;
+   int m_prevChildCurvePlotTypeIndex;
 };
 
 #endif // CURVEPROPERTIES_H
