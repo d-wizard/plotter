@@ -100,6 +100,10 @@ private slots:
 
    void on_cmdRemoveCurve_clicked();
 
+   void on_cmbXAxisSrc_currentIndexChanged(int index);
+
+   void on_cmbYAxisSrc_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -122,7 +126,7 @@ private:
    void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
 
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
-   void restoreUserChildPlotNames();
+   void setUserChildPlotNames();
 
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();

@@ -141,7 +141,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    updateGuiPlotCurveInfo(plotName, curveName);
 
    // Set Suggested Plot / Curve Names.
-   restoreUserChildPlotNames();
+   setUserChildPlotNames();
 
 }
 
@@ -224,7 +224,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       fillInPropTab();
    }
 
-   restoreUserChildPlotNames();
+   setUserChildPlotNames();
 }
 
 void curveProperties::setCombosToPrevValues()
@@ -351,7 +351,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 
    ui->chkWindow->setVisible(windowChkVis);
 
-   restoreUserChildPlotNames();
+   setUserChildPlotNames();
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -593,7 +593,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_CREATE_CHILD_CURVE:
       {
          showApplyButton = true;
-         restoreUserChildPlotNames();
+         setUserChildPlotNames();
       }
       break;
 
@@ -1362,7 +1362,7 @@ void curveProperties::storeUserChildPlotNames(ePlotType plotType)
 
 }
 
-void curveProperties::restoreUserChildPlotNames()
+void curveProperties::setUserChildPlotNames()
 {
    QString sugPlotName;
    QString sugCurveName;
@@ -1386,3 +1386,13 @@ void curveProperties::restoreUserChildPlotNames()
    }
 }
 
+
+void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
+{
+   setUserChildPlotNames();
+}
+
+void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
+{
+   setUserChildPlotNames();
+}
