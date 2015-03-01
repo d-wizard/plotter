@@ -1257,7 +1257,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    if(plotType != E_PLOT_TYPE_AVERAGE)
    {
-      QString plotPrefix = plotTypeNames[plotType];
+      QString plotPrefix = plotTypeNames[plotType] + " of ";
       QString plotSuffix = "";
       QString plotMid = "";
 
@@ -1265,7 +1265,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
       {
          if(xSrc.plotName == ySrc.plotName)
          {
-            if(xSrc.curveName == xSrc.curveName)
+            if(xSrc.curveName == ySrc.curveName)
             {
                // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
                // Use the Curve Name.
@@ -1285,13 +1285,13 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
       }
       else
       {
-         plotMid = ySrc.plotName + PLOT_CURVE_SEP + ySrc.curveName;
+         plotMid = ySrc.curveName;
       }
 
       // Generate the plot name.
       if(plotPrefix != "")
       {
-         plotName = plotPrefix + " - " + plotMid;
+         plotName = plotPrefix + plotMid;
       }
       else
       {
@@ -1299,7 +1299,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
       }
       if(plotSuffix != "")
       {
-         plotName = plotName + " - " + plotSuffix;
+         plotName = plotName + plotSuffix;
       }
 
       curveName = plotMid;
@@ -1310,7 +1310,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
       // Average Child Curve. This should remain on the default to remain on the same plot as the parent.
       plotName = ySrc.plotName;
       plotNameMustBeUnique = false; // Plot Name should be the same.
-      curveName = plotTypeNames[plotType] + " - " + ySrc.curveName;
+      curveName = plotTypeNames[plotType] + " of " + ySrc.curveName;
    }
 
    if(plotNameMustBeUnique && m_curveCmdr->validPlot(plotName))
