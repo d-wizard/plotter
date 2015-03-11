@@ -313,7 +313,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>0.9</string>
+      <string>0.98</string>
      </property>
     </widget>
     <widget class="QLabel" name="lblAvgAmount">
