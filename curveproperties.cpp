@@ -132,6 +132,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbDestPlotName, E_X_AXIS));
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbOpenCurvePlotName, E_X_AXIS));
    m_plotNameCombos.append(tCmbBoxAndValue(m_plotCurveDialog.getPlotNameCombo(), E_X_AXIS));
+   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbPlotToSave, E_X_AXIS));
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -1024,12 +1025,12 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 
       if(fso::GetExt(fileName.toStdString()) == "curve")
       {
-         SaveCurve packedCurve(toSaveCurveData);
+         SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_RAW);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
       }
       else if(fso::GetExt(fileName.toStdString()) == "csv")
       {
-         SaveCurve packedCurve(toSaveCurveData, plotGui);
+         SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
       }
 
@@ -1038,11 +1039,58 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 
 }
 
+
+void curveProperties::on_cmdSavePlotToFile_clicked()
+{
+   tCurveCommanderInfo allPlots = m_curveCmdr->getCurveCommanderInfo();
+   QString plotName = ui->cmbPlotToSave->currentText();
+
+   if(allPlots.find(plotName) != allPlots.end())
+   {
+
+      // Use the last saved location to determine the folder to save the curve to.
+      QString suggestedSavePath = g_curveSavePrevDir;
+      if(suggestedSavePath != "")
+      {
+         suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + plotName;
+      }
+      else
+      {
+         suggestedSavePath = plotName;
+      }
+
+      // Open the save file dialog.
+      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
+                                                       suggestedSavePath,
+                                                       tr("Plots (*.plot);;Comma Separted Values (*.csv)"));
+
+      if(fileName != "")
+      {
+         // Save off the folder the user saved the curve file to, so the next time the user
+         // saves a curve the dialog will default to the same folder.
+         g_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
+      }
+
+
+      if(fso::GetExt(fileName.toStdString()) == "plot")
+      {
+         SavePlot savePlot(plotName, allPlots[plotName], E_SAVE_RESTORE_RAW);
+         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+      }
+      else if(fso::GetExt(fileName.toStdString()) == "csv")
+      {
+         SavePlot savePlot(plotName, allPlots[plotName], E_SAVE_RESTORE_CSV);
+         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+      }
+
+   }
+}
+
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                    "",
-                                                   tr("Curves (*.curve);;All files (*.*)"));
+                                                   tr("Curves (*.curve);;Plots (*.plot)"));
    std::vector<char> curveFile;
    fso::ReadBinaryFile(fileName.toStdString(), curveFile);
 
@@ -1053,35 +1101,81 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
       plotName = "New Plot";
    }
 
-   RestoreCurve restoreCurve(curveFile);
 
-   if(restoreCurve.isValid)
+   if(fso::GetExt(fileName.toStdString()) == "curve")
    {
-      tSaveRestoreCurveParams* p = &restoreCurve.params;
-      QString newCurveName = p->curveName;
+      RestoreCurve restoreCurve(curveFile);
 
-      if(validateNewPlotCurveName(plotName, newCurveName))
+      if(restoreCurve.isValid)
       {
-         if(p->plotDim == E_PLOT_DIM_1D)
+         tSaveRestoreCurveParams* p = &restoreCurve.params;
+         QString newCurveName = p->curveName;
+
+         if(validateNewPlotCurveName(plotName, newCurveName))
          {
-            // 1D Plot
-            m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
-         }
-         else
-         {
-            // 2D Plot
-            m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
+            if(p->plotDim == E_PLOT_DIM_1D)
+            {
+               // 1D Plot
+               m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
+            }
+            else
+            {
+               // 2D Plot
+               m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
+            }
+
+            MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+            if(plot != NULL)
+            {
+               plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
+               plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
+            }
          }
 
-         MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-         if(plot != NULL)
+      } // End if(restoreCurve.isValid)
+
+   }
+   else if(fso::GetExt(fileName.toStdString()) == "plot")
+   {
+      RestorePlot restorePlot(curveFile);
+      if(restorePlot.isValid)
+      {
+         QString newPlotName = restorePlot.plotName;
+
+         int addIndex = 1;
+         while(m_curveCmdr->validPlot(newPlotName))
          {
-            plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
-            plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
+            newPlotName = restorePlot.plotName + " " + QString::number(addIndex);
+            addIndex++;
          }
+
+         for(int i = 0; i < restorePlot.params.size(); ++i)
+         {
+            tSaveRestoreCurveParams* p = &restorePlot.params[i];
+            QString newCurveName = p->curveName;
+
+            if(p->plotDim == E_PLOT_DIM_1D)
+            {
+               // 1D Plot
+               m_curveCmdr->create1dCurve(newPlotName, newCurveName, p->plotType, p->yOrigPoints);
+            }
+            else
+            {
+               // 2D Plot
+               m_curveCmdr->create2dCurve(newPlotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
+            }
+
+            MainWindow* plot = m_curveCmdr->getMainPlot(newPlotName);
+            if(plot != NULL)
+            {
+               plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
+               plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
+            }
+         }
+
       }
+   }
 
-   } // End if(restoreCurve.isValid)
 }
 
 bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)

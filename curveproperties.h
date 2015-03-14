@@ -104,6 +104,8 @@ private slots:
 
    void on_cmbYAxisSrc_currentIndexChanged(int index);
 
+   void on_cmdSavePlotToFile_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 

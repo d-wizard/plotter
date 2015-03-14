@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -23,10 +23,17 @@
 #include "DataTypes.h"
 #include "CurveData.h"
 #include "mainwindow.h"
+#include "CurveCommander.h"
 
 #define MAX_STORE_CURVE_NAME_SIZE (100)
 
 typedef std::vector<char> PackedCurveData;
+
+typedef enum
+{
+    E_SAVE_RESTORE_RAW,
+    E_SAVE_RESTORE_CSV
+}eSaveRestorePlotCurveType;
 
 typedef struct
 {
@@ -51,8 +58,7 @@ typedef struct
 class SaveCurve
 {
 public:
-   SaveCurve(CurveData* curve);
-   SaveCurve(CurveData* curve, MainWindow* plotGui);
+   SaveCurve(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
 
    PackedCurveData packedCurveData;
 private:
@@ -62,6 +68,9 @@ private:
    SaveCurve();
    SaveCurve(SaveCurve const&);
    void operator=(SaveCurve const&);
+
+   void SaveRaw(CurveData* curve);
+   void SaveCsv(MainWindow* plotGui, CurveData* curve);
 };
 
 class RestoreCurve
@@ -85,5 +94,38 @@ private:
 
 
 };
+
+class SavePlot
+{
+public:
+   SavePlot(QString plotName, tPlotGuiCurveInfo& plotInfo, eSaveRestorePlotCurveType type);
+
+   PackedCurveData packedCurveData;
+private:
+
+   SavePlot();
+   SavePlot(SavePlot const&);
+   void operator=(SavePlot const&);
+
+   void SaveRaw(QString plotName, tPlotGuiCurveInfo& plotInfo);
+   void SaveCsv(tPlotGuiCurveInfo& plotInfo);
+};
+
+class RestorePlot
+{
+public:
+   RestorePlot(PackedCurveData &packedPlot);
+
+   QString plotName;
+   QVector<tSaveRestoreCurveParams> params;
+
+   bool isValid;
+
+private:
+   RestorePlot();
+   RestorePlot(RestorePlot const&);
+   void operator=(RestorePlot const&);
+};
+
 
 #endif
