@@ -98,7 +98,7 @@ private:
 class SavePlot
 {
 public:
-   SavePlot(QString plotName, tPlotGuiCurveInfo& plotInfo, eSaveRestorePlotCurveType type);
+   SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
 
    PackedCurveData packedCurveData;
 private:
@@ -107,8 +107,8 @@ private:
    SavePlot(SavePlot const&);
    void operator=(SavePlot const&);
 
-   void SaveRaw(QString plotName, tPlotGuiCurveInfo& plotInfo);
-   void SaveCsv(tPlotGuiCurveInfo& plotInfo);
+   void SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo);
+   void SaveCsv(MainWindow* plotGui, QVector<CurveData*>& plotInfo);
 };
 
 class RestorePlot

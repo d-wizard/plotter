@@ -1071,15 +1071,23 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          g_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
       }
 
+      // Fill in vector of curve data in the correct order.
+      QVector<CurveData*> curves;
+      curves.resize(allPlots[plotName].curves.size());
+      foreach( QString key, allPlots[plotName].curves.keys() )
+      {
+         int index = allPlots[plotName].plotGui->getCurveIndex(key);
+         curves[index] = allPlots[plotName].curves[key];
+      }
 
       if(fso::GetExt(fileName.toStdString()) == "plot")
       {
-         SavePlot savePlot(plotName, allPlots[plotName], E_SAVE_RESTORE_RAW);
+         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_RAW);
          fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
       }
       else if(fso::GetExt(fileName.toStdString()) == "csv")
       {
-         SavePlot savePlot(plotName, allPlots[plotName], E_SAVE_RESTORE_CSV);
+         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
       }
 

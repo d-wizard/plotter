@@ -267,25 +267,25 @@ void RestoreCurve::unpack(void* toUnpack, size_t unpackSize)
 }
 
 
-SavePlot::SavePlot(QString plotName, tPlotGuiCurveInfo &plotInfo, eSaveRestorePlotCurveType type)
+SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type)
 {
     if(type == E_SAVE_RESTORE_RAW)
     {
-        SaveRaw(plotName, plotInfo);
+        SaveRaw(plotGui, plotName, plotInfo);
     }
     else
     {
-        SaveCsv(plotInfo);
+        SaveCsv(plotGui, plotInfo);
     }
 }
 
-void SavePlot::SaveRaw(QString plotName, tPlotGuiCurveInfo& plotInfo)
+void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo)
 {
    QVector<PackedCurveData> curveRawFiles;
    UINT_32 fileSize = 0;
-   foreach( QString key, plotInfo.curves.keys() )
+   for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotInfo.plotGui, plotInfo.curves[key], E_SAVE_RESTORE_RAW);
+      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_RAW);
       curveRawFiles.push_back(curveFile.packedCurveData);
       fileSize += curveFile.packedCurveData.size();
    }
@@ -321,12 +321,12 @@ void SavePlot::SaveRaw(QString plotName, tPlotGuiCurveInfo& plotInfo)
 
 }
 
-void SavePlot::SaveCsv(tPlotGuiCurveInfo& plotInfo)
+void SavePlot::SaveCsv(MainWindow* plotGui, QVector<CurveData*> &plotInfo)
 {
    QVector<QStringList> curveCsvFiles;
-   foreach( QString key, plotInfo.curves.keys() )
+   for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotInfo.plotGui, plotInfo.curves[key], E_SAVE_RESTORE_CSV);
+      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_CSV);
 
       int rawCurveFileSize = curveFile.packedCurveData.size();
       char* rawCurveFile = new char[rawCurveFileSize+1];
