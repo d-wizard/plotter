@@ -25,7 +25,7 @@
 #include "mainwindow.h"
 #include "CurveCommander.h"
 
-#define MAX_STORE_CURVE_NAME_SIZE (100)
+#define MAX_STORE_PLOT_CURVE_NAME_SIZE (100)
 
 typedef std::vector<char> PackedCurveData;
 

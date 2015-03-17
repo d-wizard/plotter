@@ -62,9 +62,9 @@ void SaveCurve::SaveRaw(CurveData* curve)
     unsigned long dataPointsSize1Axis = (params.numPoints * sizeof(double));
     unsigned long dataPointsSize = (params.plotDim == E_PLOT_DIM_2D) ? (2*dataPointsSize1Axis) : dataPointsSize1Axis;
 
-    if(params.curveName.size() > MAX_STORE_CURVE_NAME_SIZE)
+    if(params.curveName.size() > MAX_STORE_PLOT_CURVE_NAME_SIZE)
     {
-       params.curveName.resize(MAX_STORE_CURVE_NAME_SIZE);
+       params.curveName.resize(MAX_STORE_PLOT_CURVE_NAME_SIZE);
     }
 
     unsigned long finalSize =
@@ -167,7 +167,7 @@ RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
 
    // Validate Curve Name... find null terminator
    bool curveNameValid = false;
-   for(unsigned int i = 0; i <= MAX_STORE_CURVE_NAME_SIZE && i < m_packedSize; ++i)
+   for(unsigned int i = 0; i <= MAX_STORE_PLOT_CURVE_NAME_SIZE && i < m_packedSize; ++i)
    {
       if(m_packedArray[i] == '\0')
       {
@@ -294,7 +294,9 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
 
    UINT_32 numCurves = curveRawFiles.size();
 
-   fileSize += (plotName.size() + 1); // Plot Name plus null term.
+   int plotNamePackSize = std::min(MAX_STORE_PLOT_CURVE_NAME_SIZE, (int)plotName.size());
+
+   fileSize += (plotNamePackSize + 1); // Plot Name plus null term.
    fileSize += sizeof(numCurves);     // Storing the number of curves.
    fileSize += (numCurves * sizeof(UINT_32)); // Storing the number of bytes for each packed curve.
 
@@ -304,7 +306,7 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
    char nullTerm = '\0';
 
    //static void pack(char** packArray, const void* toPack, size_t packSize)
-   pack(&packPtr, plotName.toStdString().c_str(), plotName.size());
+   pack(&packPtr, plotName.toStdString().c_str(), plotNamePackSize);
    pack(&packPtr, &nullTerm, 1);
    pack(&packPtr, &numCurves, sizeof(numCurves));
 
@@ -384,7 +386,7 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
       return; // Invalid, early return.
 
    // Find null termination of plot name.
-   int nullTermSearchLen = std::min(1024, (int)packedSize);
+   int nullTermSearchLen = std::min(MAX_STORE_PLOT_CURVE_NAME_SIZE, (int)packedSize);
    bool nullTermFound = false;
    char* pc_packed = &packedPlot[0];
 
