@@ -134,6 +134,9 @@ private:
    QString getUniquePlotName(QString plotName);
    void restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam);
 
+   QString getOpenSavePath(QString fileName);
+   void setOpenSavePath(QString path);
+
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
    QVector<tStoredMsg> m_storedMsgs;

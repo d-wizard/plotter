@@ -1000,27 +1000,14 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
    if(toSaveCurveData != NULL)
    {
       // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = g_curveSavePrevDir;
-      if(suggestedSavePath != "")
-      {
-         suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + toSave.curveName;
-      }
-      else
-      {
-         suggestedSavePath = toSave.curveName;
-      }
+      QString suggestedSavePath = getOpenSavePath(toSave.curveName);
 
       // Open the save file dialog.
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
                                                        tr("Curves (*.curve);;Comma Separted Values (*.csv)"));
 
-      if(fileName != "")
-      {
-         // Save off the folder the user saved the curve file to, so the next time the user
-         // saves a curve the dialog will default to the same folder.
-         g_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
-      }
+      setOpenSavePath(fileName);
 
       QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
       if(ext == "curve")
@@ -1048,27 +1035,14 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
    {
 
       // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = g_curveSavePrevDir;
-      if(suggestedSavePath != "")
-      {
-         suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + plotName;
-      }
-      else
-      {
-         suggestedSavePath = plotName;
-      }
+      QString suggestedSavePath = getOpenSavePath(plotName);
 
       // Open the save file dialog.
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
                                                        tr("Plots (*.plot);;Comma Separted Values (*.csv)"));
 
-      if(fileName != "")
-      {
-         // Save off the folder the user saved the curve file to, so the next time the user
-         // saves a curve the dialog will default to the same folder.
-         g_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
-      }
+      setOpenSavePath(fileName);
 
       // Fill in vector of curve data in the correct order.
       QVector<CurveData*> curves;
@@ -1097,8 +1071,11 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
-                                                   "",
+                                                   g_curveSavePrevDir,
                                                    tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)"));
+
+   setOpenSavePath(fileName);
+
    std::vector<char> curveFile;
    fso::ReadBinaryFile(fileName.toStdString(), curveFile);
 
@@ -1509,3 +1486,24 @@ void curveProperties::restoreCurve(QString plotName, tSaveRestoreCurveParams* cu
 }
 
 
+QString curveProperties::getOpenSavePath(QString fileName)
+{
+   QString suggestedSavePath = g_curveSavePrevDir;
+   if(suggestedSavePath != "")
+   {
+      suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + fileName;
+   }
+   else
+   {
+      suggestedSavePath = fileName;
+   }
+   return suggestedSavePath;
+}
+
+void curveProperties::setOpenSavePath(QString path)
+{
+   if(path != "")
+   {
+      g_curveSavePrevDir = fso::GetDir(path.toStdString()).c_str();
+   }
+}
