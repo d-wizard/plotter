@@ -127,5 +127,21 @@ private:
    void operator=(RestorePlot const&);
 };
 
+class RestoreCsv
+{
+public:
+   RestoreCsv(PackedCurveData &packedPlot);
+
+   QVector<tSaveRestoreCurveParams> params;
+
+   bool isValid;
+   bool hasBadCells;
+
+private:
+   RestoreCsv();
+   RestoreCsv(RestoreCsv const&);
+   void operator=(RestoreCsv const&);
+};
+
 
 #endif

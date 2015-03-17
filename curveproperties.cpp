@@ -1022,18 +1022,17 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
          g_curveSavePrevDir = fso::GetDir(fileName.toStdString()).c_str();
       }
 
-
-      if(fso::GetExt(fileName.toStdString()) == "curve")
+      QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
+      if(ext == "curve")
       {
          SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_RAW);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
       }
-      else if(fso::GetExt(fileName.toStdString()) == "csv")
+      else if(ext == "csv")
       {
          SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
       }
-
 
    }
 
@@ -1080,12 +1079,13 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          curves[index] = allPlots[plotName].curves[key];
       }
 
-      if(fso::GetExt(fileName.toStdString()) == "plot")
+      QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
+      if(ext == "plot")
       {
          SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_RAW);
          fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
       }
-      else if(fso::GetExt(fileName.toStdString()) == "csv")
+      else if(ext == "csv")
       {
          SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
@@ -1098,7 +1098,7 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                    "",
-                                                   tr("Curves (*.curve);;Plots (*.plot)"));
+                                                   tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)"));
    std::vector<char> curveFile;
    fso::ReadBinaryFile(fileName.toStdString(), curveFile);
 
@@ -1109,81 +1109,58 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
       plotName = "New Plot";
    }
 
-
-   if(fso::GetExt(fileName.toStdString()) == "curve")
+   bool inputIsValid = fileName == "" ? true : false; // NULL string return is cancel, which is valid.
+   QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
+   if(ext == "curve")
    {
-      RestoreCurve restoreCurve(curveFile);
-
-      if(restoreCurve.isValid)
+      RestoreCurve t_restoreCurve(curveFile);
+      inputIsValid = t_restoreCurve.isValid;
+      if(t_restoreCurve.isValid)
       {
-         tSaveRestoreCurveParams* p = &restoreCurve.params;
-         QString newCurveName = p->curveName;
-
-         if(validateNewPlotCurveName(plotName, newCurveName))
+         if(validateNewPlotCurveName(plotName, t_restoreCurve.params.curveName))
          {
-            if(p->plotDim == E_PLOT_DIM_1D)
-            {
-               // 1D Plot
-               m_curveCmdr->create1dCurve(plotName, newCurveName, p->plotType, p->yOrigPoints);
-            }
-            else
-            {
-               // 2D Plot
-               m_curveCmdr->create2dCurve(plotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
-            }
-
-            MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-            if(plot != NULL)
-            {
-               plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
-               plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
-            }
+            restoreCurve(plotName, &t_restoreCurve.params);
          }
-
       } // End if(restoreCurve.isValid)
 
    }
-   else if(fso::GetExt(fileName.toStdString()) == "plot")
+   else if(ext == "plot")
    {
       RestorePlot restorePlot(curveFile);
+      inputIsValid = restorePlot.isValid;
       if(restorePlot.isValid)
       {
-         QString newPlotName = restorePlot.plotName;
-
-         int addIndex = 1;
-         while(m_curveCmdr->validPlot(newPlotName))
-         {
-            newPlotName = restorePlot.plotName + " " + QString::number(addIndex);
-            addIndex++;
-         }
+         QString newPlotName = getUniquePlotName(restorePlot.plotName);
 
          for(int i = 0; i < restorePlot.params.size(); ++i)
          {
-            tSaveRestoreCurveParams* p = &restorePlot.params[i];
-            QString newCurveName = p->curveName;
-
-            if(p->plotDim == E_PLOT_DIM_1D)
-            {
-               // 1D Plot
-               m_curveCmdr->create1dCurve(newPlotName, newCurveName, p->plotType, p->yOrigPoints);
-            }
-            else
-            {
-               // 2D Plot
-               m_curveCmdr->create2dCurve(newPlotName, newCurveName, p->xOrigPoints, p->yOrigPoints);
-            }
-
-            MainWindow* plot = m_curveCmdr->getMainPlot(newPlotName);
-            if(plot != NULL)
-            {
-               plot->setCurveProperties(newCurveName, E_X_AXIS, p->sampleRate, p->mathOpsXAxis);
-               plot->setCurveProperties(newCurveName, E_Y_AXIS, p->sampleRate, p->mathOpsYAxis);
-            }
+            restoreCurve(newPlotName, &restorePlot.params[i]);
          }
+      }
+   }
+   else if(ext == "csv")
+   {
+      RestoreCsv restoreCsv(curveFile);
+      inputIsValid = restoreCsv.isValid;
+      if(restoreCsv.isValid)
+      {
+         QString newPlotName = getUniquePlotName(plotName);
 
+         for(int i = 0; i < restoreCsv.params.size(); ++i)
+         {
+            restoreCurve(newPlotName, &restoreCsv.params[i]);
+         }
       }
    }
 
+   if(inputIsValid == false)
+   {
+      QString msgBoxFileName(fso::dirSepToOS(fileName.toStdString()).c_str());
+      QMessageBox::question( this,
+                             "Invalid File",
+                             msgBoxFileName + "\n is Invalid.",
+                             QMessageBox::Ok );
+   }
 }
 
 bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)
@@ -1498,3 +1475,37 @@ void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 {
    setUserChildPlotNames();
 }
+
+
+QString curveProperties::getUniquePlotName(QString plotName)
+{
+   QString newPlotName = plotName;
+   int addIndex = 1;
+   while(m_curveCmdr->validPlot(newPlotName))
+   {
+      newPlotName = plotName + " " + QString::number(addIndex);
+      addIndex++;
+   }
+   return newPlotName;
+}
+
+void curveProperties::restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam)
+{
+   if(curveParam->plotDim == E_PLOT_DIM_1D)
+   {
+      m_curveCmdr->create1dCurve(plotName, curveParam->curveName, curveParam->plotType, curveParam->yOrigPoints);
+   }
+   else
+   {
+      m_curveCmdr->create2dCurve(plotName, curveParam->curveName, curveParam->xOrigPoints, curveParam->yOrigPoints);
+   }
+
+   MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
+   if(plot != NULL)
+   {
+      plot->setCurveProperties(curveParam->curveName, E_X_AXIS, curveParam->sampleRate, curveParam->mathOpsXAxis);
+      plot->setCurveProperties(curveParam->curveName, E_Y_AXIS, curveParam->sampleRate, curveParam->mathOpsYAxis);
+   }
+}
+
+

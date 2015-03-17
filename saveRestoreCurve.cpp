@@ -21,7 +21,9 @@
 #include <sstream>
 #include <QString>
 #include <QStringList>
+#include <algorithm>
 #include "saveRestoreCurve.h"
+#include "dString.h"
 
 static const std::string CSV_LINE_DELIM = "\r\n";
 
@@ -378,7 +380,28 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
    isValid = false;
 
    UINT_32 packedSize = packedPlot.size();
-   QString testPlotName(&packedPlot[0]);
+   if(packedSize <= 0)
+      return; // Invalid, early return.
+
+   // Find null termination of plot name.
+   int nullTermSearchLen = std::min(1024, (int)packedSize);
+   bool nullTermFound = false;
+   char* pc_packed = &packedPlot[0];
+
+   for(int i = 0; i < nullTermSearchLen; ++i)
+   {
+      if(pc_packed[i] == '\0')
+      {
+         nullTermFound = true;
+         break;
+      }
+   }
+
+   if(nullTermFound == false)
+      return; // Invalid, early return.
+
+   // Null termination of plot name was found, read in the plot name from the packed data.
+   QString testPlotName(&pc_packed[0]);
 
    UINT_32 numCurves = 0;
 
@@ -391,7 +414,7 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
 
    unpackIndex = testPlotName.size() + 1;
 
-   memcpy(&numCurves, &packedPlot[unpackIndex], sizeof(numCurves));
+   memcpy(&numCurves, &pc_packed[unpackIndex], sizeof(numCurves));
    unpackIndex += sizeof(numCurves);
 
    if(numCurves == 0)
@@ -410,7 +433,7 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
    UINT_32 totalCurveSize = 0;
    for(UINT_32 i = 0; i < numCurves; ++i)
    {
-      memcpy(&packedCurveSizes[i], &packedPlot[unpackIndex], sizeof(packedCurveSizes[i]));
+      memcpy(&packedCurveSizes[i], &pc_packed[unpackIndex], sizeof(packedCurveSizes[i]));
       unpackIndex += sizeof(packedCurveSizes[i]);
       totalCurveSize += packedCurveSizes[i];
    }
@@ -425,7 +448,7 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
       PackedCurveData newPackedCurve;
       newPackedCurve.resize(packedCurveSizes[i]);
 
-      memcpy(&newPackedCurve[0], &packedPlot[unpackIndex], packedCurveSizes[i]);
+      memcpy(&newPackedCurve[0], &pc_packed[unpackIndex], packedCurveSizes[i]);
       unpackIndex += packedCurveSizes[i];
 
       RestoreCurve restoreCurve(newPackedCurve);
@@ -442,6 +465,105 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
    isValid = true;
 }
 
+RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
+{
+   isValid = false;
+   hasBadCells = false;
+
+   UINT_32 totalSamplesInCsv = 0;
+
+   if(packedPlot.size() <= 0)
+      return; // Invalid, early return.
+
+   std::string csvFile(&packedPlot[0], packedPlot.size());
+
+   csvFile = dString::ConvertLineEndingToUnix(csvFile);
+
+   std::vector<std::string> csvRows = dString::SplitV(csvFile, "\n");
+
+   try
+   {
+      std::vector<std::string> csvCells = dString::SplitV(csvRows[0], ",");
+
+      // Determine if the first row is a header row.
+      bool firstRowIsAllNums = true;
+      int numCol = csvCells.size();
+      for(int i = 0; i < numCol; ++i)
+      {
+         double testDoub;
+         if(dString::strTo(csvCells[i], testDoub) == false)
+         {
+            firstRowIsAllNums = false;
+            break;
+         }
+      }
+
+      params.resize(numCol);
+
+      // Fill in the values from the CSV File.
+      int rowStart = firstRowIsAllNums ? 0 : 1;
+      for(int i = rowStart; i < (int)csvRows.size(); ++i)
+      {
+         csvCells = dString::SplitV(csvRows[i], ",");
+         for(int j = 0; j < (int)csvCells.size(); ++j)
+         {
+            if(j < numCol && csvCells[j] != "")
+            {
+               double testDoub = 0.0;
+               if(dString::strTo(csvCells[j], testDoub))
+               {
+                  params[j].yOrigPoints.push_back(testDoub);
+               }
+               else
+               {
+                  hasBadCells = true;
+                  params[j].yOrigPoints.push_back(testDoub);
+               }
+            }
+         }
+      }
+
+      // Get curve names from first row.
+      if(firstRowIsAllNums == false)
+      {
+         csvCells = dString::SplitV(csvRows[0], ",");
+         for(int i = 0; i < numCol; ++i)
+         {
+            params[i].curveName = csvCells[i].c_str();
+         }
+      }
+      else
+      {
+         for(int i = 0; i < numCol; ++i)
+         {
+            params[i].curveName = "Curve " + QString::number(i+1);
+         }
+      }
+
+      // Fill in the rest of the parameters.
+      for(int i = 0; i < numCol; ++i)
+      {
+         params[i].plotDim = E_PLOT_DIM_1D;
+         params[i].plotType = E_PLOT_TYPE_1D;
+         params[i].numPoints = params[i].yOrigPoints.size();
+         params[i].sampleRate = 0.0;
+         params[i].numXMapOps = 0;
+         params[i].mathOpsXAxis.clear();
+         params[i].numYMapOps = 0;
+         params[i].mathOpsYAxis.clear();
+         params[i].xOrigPoints.clear();
+
+         totalSamplesInCsv += params[i].numPoints;
+      }
+
+   }
+   catch(int dontCare)
+   {
+      return; // Invalid, early return.
+   }
+
+   isValid = totalSamplesInCsv > 0;
+}
 
 
 

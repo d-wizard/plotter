@@ -26,6 +26,7 @@
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
 #include "plotcurvenamedialog.h"
+#include "saveRestoreCurve.h"
 
 namespace Ui {
 class curveProperties;
@@ -129,6 +130,9 @@ private:
 
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
    void setUserChildPlotNames();
+
+   QString getUniquePlotName(QString plotName);
+   void restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam);
 
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
