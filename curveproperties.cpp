@@ -1107,12 +1107,7 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
       inputIsValid = restorePlot.isValid;
       if(restorePlot.isValid)
       {
-         QString newPlotName = getUniquePlotName(restorePlot.plotName);
-
-         for(int i = 0; i < restorePlot.params.size(); ++i)
-         {
-            restoreCurve(newPlotName, &restorePlot.params[i]);
-         }
+         restoreMultipleCurves(restorePlot.plotName, restorePlot.params);
       }
    }
    else if(ext == "csv")
@@ -1121,12 +1116,7 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
       inputIsValid = restoreCsv.isValid;
       if(restoreCsv.isValid)
       {
-         QString newPlotName = getUniquePlotName(plotName);
-
-         for(int i = 0; i < restoreCsv.params.size(); ++i)
-         {
-            restoreCurve(newPlotName, &restoreCsv.params[i]);
-         }
+         restoreMultipleCurves(plotName, restoreCsv.params);
       }
    }
 
@@ -1485,6 +1475,35 @@ void curveProperties::restoreCurve(QString plotName, tSaveRestoreCurveParams* cu
    }
 }
 
+void curveProperties::restoreMultipleCurves(QString plotName, QVector<tSaveRestoreCurveParams>& curves)
+{
+   // Make sure inputs are valid.
+   if(plotName == "" || curves.size() == 0)
+      return;
+
+   if(m_curveCmdr->validPlot(plotName))
+   {
+      // Plot name already exists.
+
+      if(curves.size() == 1)
+      {
+         // If there is only 1 curve to add, let the user change the plot/curve name to avoid conflict.
+         if(validateNewPlotCurveName(plotName, curves[0].curveName) == false)
+            return; // User chose to ingore the new curve.
+      }
+      else
+      {
+         // There are more than 1 curves for the new plot, just use a new unique plot name.
+         plotName = getUniquePlotName(plotName);
+      }
+   }
+
+   for(int i = 0; i < curves.size(); ++i)
+   {
+      restoreCurve(plotName, &curves[i]);
+   }
+
+}
 
 QString curveProperties::getOpenSavePath(QString fileName)
 {

@@ -133,6 +133,7 @@ private:
 
    QString getUniquePlotName(QString plotName);
    void restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam);
+   void restoreMultipleCurves(QString plotName, QVector<tSaveRestoreCurveParams>& curves);
 
    QString getOpenSavePath(QString fileName);
    void setOpenSavePath(QString path);
