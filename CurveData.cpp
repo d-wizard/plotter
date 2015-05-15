@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -154,6 +154,8 @@ void CurveData::fill1DxPoints()
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
       case E_PLOT_TYPE_AVERAGE:
+      case E_PLOT_TYPE_DELTA:
+      case E_PLOT_TYPE_SUM:
       {
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {

@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -482,6 +482,54 @@ void ChildCurve::updateCurve( bool xParentChanged,
          handleLogData(&realFFTOut[0], fftSize);
 
          m_curveCmdr->create1dCurve(m_plotName, m_curveName, m_plotType, realFFTOut);
+      }
+      break;
+      case E_PLOT_TYPE_DELTA:
+      case E_PLOT_TYPE_SUM:
+      {
+         unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
+
+         int dataSize = m_ySrcData.size();
+         if(dataSize > 0)
+         {
+            int prevSize = m_prevInfo.size();
+
+            // Get index, make sure it is valid.
+            int prevIndex = (int)offset - 1;
+            if(prevIndex < 0)
+            {
+               prevIndex = prevSize - 1;
+            }
+
+            // If the prev info array size is 0, can't read from it.
+            double prevVal = prevSize <= 0 ? 0.0 : m_prevInfo[prevIndex];
+
+            // Resize if needed to allow room for new samples.
+            if(prevSize < ((int)offset + dataSize))
+            {
+               m_prevInfo.resize(offset + dataSize);
+            }
+
+            if(m_plotType == E_PLOT_TYPE_DELTA)
+            {
+               for(int i = 0; i < dataSize; ++i)
+               {
+                  m_prevInfo[offset + i] = m_ySrcData[i];
+                  m_ySrcData[i] -= prevVal;
+                  prevVal = m_prevInfo[offset + i];
+               }
+            }
+            else // Must be E_PLOT_TYPE_SUM
+            {
+               for(int i = 0; i < dataSize; ++i)
+               {
+                  m_ySrcData[i] = m_prevInfo[offset + i] = prevVal + m_ySrcData[i];
+                  prevVal = m_prevInfo[offset + i];
+               }
+            }
+
+            m_curveCmdr->update1dCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData);
+         }
       }
       break;
    }

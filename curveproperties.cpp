@@ -89,7 +89,9 @@ const QString plotTypeNames[] = {
    "PM",
    "Avg",
    "FFT",
-   "FFT"
+   "FFT",
+   "Delta",
+   "Sum"
 };
 
 
@@ -313,6 +315,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    {
       case E_PLOT_TYPE_1D:
       case E_PLOT_TYPE_AVERAGE:
+      case E_PLOT_TYPE_DELTA:
+      case E_PLOT_TYPE_SUM:
          ui->lblYAxisSrc->setText("Y Axis Source");
       break;
       case E_PLOT_TYPE_2D:

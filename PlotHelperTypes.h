@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -91,7 +91,9 @@ typedef enum
    E_PLOT_TYPE_PM_DEMOD,
    E_PLOT_TYPE_AVERAGE,
    E_PLOT_TYPE_DB_POWER_FFT_REAL,
-   E_PLOT_TYPE_DB_POWER_FFT_COMPLEX
+   E_PLOT_TYPE_DB_POWER_FFT_COMPLEX,
+   E_PLOT_TYPE_DELTA,
+   E_PLOT_TYPE_SUM
 }ePlotType;
 
 inline bool valid_ePlotType(ePlotType in)
@@ -108,6 +110,8 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_AVERAGE:
    case E_PLOT_TYPE_DB_POWER_FFT_REAL:
    case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+   case E_PLOT_TYPE_DELTA:
+   case E_PLOT_TYPE_SUM:
       return true;
       break;
    }
@@ -132,6 +136,8 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_REAL_FFT:
    case E_PLOT_TYPE_AVERAGE:
    case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+   case E_PLOT_TYPE_DELTA:
+   case E_PLOT_TYPE_SUM:
    default:
       twoDInput = false;
       break;
