@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -398,6 +398,20 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
          FLOAT_64 samp = 0;
          unpack(&samp, sizeof(samp));
          retVal = (double)samp;
+      }
+      break;
+      case E_TIME_STRUCT_64:
+      {
+         UINT_32 samp[2]; // Index 0 is seconds, index 1 is nanoseconds.
+         unpack(&samp, sizeof(samp));
+         retVal = (double)samp[0] + ((double)samp[1] / (double)1000000000.0);
+      }
+      break;
+      case E_TIME_STRUCT_128:
+      {
+         UINT_32 samp[4]; // Index 0 is seconds, index 2 is nanoseconds.
+         unpack(&samp, sizeof(samp));
+         retVal = (double)samp[0] + ((double)samp[2] / (double)1000000000.0);
       }
       break;
       case E_INVALID_DATA_TYPE:

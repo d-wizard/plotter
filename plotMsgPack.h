@@ -51,6 +51,8 @@ typedef enum
    E_UINT_64,
    E_FLOAT_32,
    E_FLOAT_64,
+   E_TIME_STRUCT_64,
+   E_TIME_STRUCT_128,
    E_INVALID_DATA_TYPE
 }ePlotDataTypes;
 
@@ -66,7 +68,9 @@ static const int PLOT_DATA_TYPE_SIZES[]=
    sizeof(INT_64),
    sizeof(UINT_64),
    sizeof(FLOAT_32),
-   sizeof(FLOAT_64)
+   sizeof(FLOAT_64),
+   sizeof(UINT_32) + sizeof(UINT_32), // E_TIME_STRUCT_64
+   sizeof(UINT_64) + sizeof(UINT_64)  // E_TIME_STRUCT_128
 };
 
 

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -85,7 +85,13 @@ inline UINT_32 getPlotDataTypeSize(ePlotDataTypes in)
    case E_FLOAT_64:
       size = sizeof(FLOAT_64);
       break;
+   case E_TIME_STRUCT_64:
+      size = sizeof(UINT_32) + sizeof(UINT_32);
+      break;
    default:
+   case E_TIME_STRUCT_128:
+      size = sizeof(UINT_64) + sizeof(UINT_64);
+      break;
    case E_INVALID_DATA_TYPE:
        size = 0;
        break;
@@ -108,6 +114,8 @@ inline bool validPlotDataTypes(ePlotDataTypes in)
    case E_UINT_64:
    case E_FLOAT_32:
    case E_FLOAT_64:
+   case E_TIME_STRUCT_64:
+   case E_TIME_STRUCT_128:
       valid = true;
       break;
    case E_INVALID_DATA_TYPE:
