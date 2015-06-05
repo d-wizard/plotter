@@ -208,6 +208,7 @@ private:
     QAction m_zoomAction;
     QAction m_cursorAction;
     QAction m_deltaCursorAction;
+    QAction m_holdZoomAction;
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
     QAction m_toggleLegendAction;
@@ -284,6 +285,7 @@ private slots:
     void toggleLegend();
     void cursorMode();
     void deltaCursorMode();
+    void holdZoom();
     void zoomMode();
     void resetZoom();
     void normalizeCurves();

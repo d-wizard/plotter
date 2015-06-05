@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 #include "PlotZoom.h"
 
 PlotZoom::PlotZoom(QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll):
+   m_holdZoom(false),
    m_qwtPlot(qwtPlot),
    m_vertScroll(vertScroll),
    m_horzScroll(horzScroll),
@@ -66,6 +67,8 @@ void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions)
     m_plotWidth = m_plotDimensions.maxX - m_plotDimensions.minX;
     m_plotHeight = m_plotDimensions.maxY - m_plotDimensions.minY;
 
+    // Check for initial case where m_zoomWidth and m_zoomHeight are still
+    // 0 from the construtor.
     if(m_zoomWidth == 0)
     {
         m_zoomWidth = m_plotWidth;
@@ -397,6 +400,12 @@ maxMinXY PlotZoom::getCurZoom()
 
 void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool saveZoom)
 {
+   if(m_holdZoom)
+   {
+      // Zoom is being held at its current value. Return early.
+      return;
+   }
+
    // Nothing in the save zoom vector, initialize it with current zoom value.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
