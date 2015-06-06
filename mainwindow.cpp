@@ -292,8 +292,19 @@ void MainWindow::resetPlot()
 
     m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
 
-    // Initialize in cursor mode
-    cursorMode();
+    // Hacky way to let the user specify whether the default mode is zoom
+    // or cursor. defaultCursorZoomModeIsZoom is defined in main.cpp
+    extern bool defaultCursorZoomModeIsZoom;
+    if(defaultCursorZoomModeIsZoom)
+    {
+       // Initialize in zoom mode
+       zoomMode();
+    }
+    else
+    {
+       // Initialize in cursor mode
+       cursorMode();
+    }
 
     m_qwtPlot->show();
     m_qwtGrid->show();

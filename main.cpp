@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -21,6 +21,8 @@
 #include "dString.h"
 #include "FileSystemOperations.h"
 #include "PackUnpackPlotMsg.h"
+
+bool defaultCursorZoomModeIsZoom = false;
 
 int main(int argc, char *argv[])
 {
@@ -85,6 +87,12 @@ int main(int argc, char *argv[])
 
          // Increase to add remove for message header.
          g_maxTcpPlotMsgSize += MAX_PLOT_MSG_HEADER_SIZE;
+      }
+
+      std::string defaultMode = dString::GetMiddle(&iniFile, "\ndefault_mode=", "\n");
+      if(defaultMode == std::string("zoom"))
+      {
+         defaultCursorZoomModeIsZoom = true;
       }
 
    } // End if(iniFile != "")
