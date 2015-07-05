@@ -137,9 +137,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addAction(&m_deltaCursorAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_resetZoomAction);
-    m_rightClickMenu.addAction(&m_holdZoomAction);
     m_rightClickMenu.addAction(&m_normalizeAction);
     m_rightClickMenu.addAction(&m_toggleLegendAction);
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_holdZoomAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);

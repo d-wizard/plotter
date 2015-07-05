@@ -411,8 +411,6 @@ void CurveData::resetNormalizeFactor()
 
 void CurveData::setCurveSamples()
 {
-   dubVect normX;
-   dubVect normY;
    if(xNormalized)
    {
       normX.resize(numPoints);
