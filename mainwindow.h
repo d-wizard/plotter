@@ -203,12 +203,15 @@ private:
 
     bool m_allowNewCurves;
 
+    bool m_scrollMode;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
     QAction m_cursorAction;
     QAction m_deltaCursorAction;
     QAction m_holdZoomAction;
+    QAction m_scrollModeAction;
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
     QAction m_toggleLegendAction;
@@ -286,6 +289,7 @@ private slots:
     void cursorMode();
     void deltaCursorMode();
     void holdZoom();
+    void scrollMode();
     void zoomMode();
     void resetZoom();
     void normalizeCurves();

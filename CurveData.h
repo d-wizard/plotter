@@ -90,8 +90,8 @@ public:
    void ResetCurveSamples(dubVect& newYPoints);
    void ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
 
-   void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex);
-   void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex);
+   void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode = false);
+   void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode = false);
 
    bool setSampleRate(double inSampleRate, bool userSpecified = true);
    double getSampleRate(){return sampleRate;}

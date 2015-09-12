@@ -61,10 +61,12 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_legendDisplayed(false),
     m_canvasXOverYRatio(1.0),
     m_allowNewCurves(true),
+    m_scrollMode(false),
     m_zoomAction("Zoom", this),
     m_cursorAction("Cursor", this),
     m_deltaCursorAction("Delta Cursor", this),
     m_holdZoomAction("Freeze Zoom", this),
+    m_scrollModeAction("Scroll Mode", this),
     m_resetZoomAction("Reset Zoom", this),
     m_normalizeAction("Normalize Curves", this),
     m_toggleLegendAction("Legend", this),
@@ -115,6 +117,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
+    connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
@@ -147,6 +150,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
+    m_rightClickMenu.addAction(&m_scrollModeAction);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
@@ -538,11 +542,11 @@ void MainWindow::createUpdateCurve( QString& name,
       {
          if(xPoints == NULL)
          {
-            m_qwtCurves[curveIndex]->UpdateCurveSamples(*yPoints, sampleStartIndex);
+            m_qwtCurves[curveIndex]->UpdateCurveSamples(*yPoints, sampleStartIndex, m_scrollMode);
          }
          else
          {
-            m_qwtCurves[curveIndex]->UpdateCurveSamples(*xPoints, *yPoints, sampleStartIndex);
+            m_qwtCurves[curveIndex]->UpdateCurveSamples(*xPoints, *yPoints, sampleStartIndex, m_scrollMode);
          }
       }
    }
@@ -698,6 +702,19 @@ void MainWindow::holdZoom()
       m_holdZoomAction.setIcon(QIcon());
       m_zoomAction.setEnabled(true);
       m_resetZoomAction.setEnabled(true);
+   }
+}
+
+void MainWindow::scrollMode()
+{
+   m_scrollMode = !m_scrollMode; // Toggle
+   if(m_scrollMode)
+   {
+      m_scrollModeAction.setIcon(m_checkedIcon);
+   }
+   else
+   {
+      m_scrollModeAction.setIcon(QIcon());
    }
 }
 
