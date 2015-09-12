@@ -488,13 +488,35 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
 {
    if(plotDim == E_PLOT_DIM_1D)
    {
+      int newPointsSize = newYPoints.size();
       bool resized = false;
-      if(yOrigPoints.size() < (sampleStartIndex + newYPoints.size()))
+      if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
       {
          resized = true;
-         yOrigPoints.resize(sampleStartIndex + newYPoints.size());
+         yOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
-      memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newYPoints.size());
+
+      if(1)
+      {
+         memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+      }
+      else
+      {
+         /////////////////////////////
+         // Scroll Mode
+         /////////////////////////////
+         if(resized)
+         {
+            // Resizing the plot, just add the samples to the right.
+            memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         }
+         else
+         {
+            int numOrigPointsToKeep = yOrigPoints.size() - newPointsSize;
+            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         }
+      }
 
       if(resized == true)
       {
@@ -515,18 +537,49 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
    if(plotDim == E_PLOT_DIM_2D)
    {
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
+      bool resized = false;
 
       if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
       {
+         resized = true;
          xOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
-      memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
 
       if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
       {
+         resized = true;
          yOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
-      memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+
+      if(1)
+      {
+         memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+         memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+      }
+      else
+      {
+         /////////////////////////////
+         // Scroll Mode
+         /////////////////////////////
+         if(resized)
+         {
+            // Resizing the plot, just add the samples to the right.
+            memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+            memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         }
+         else
+         {
+            int numOrigPoints = yOrigPoints.size(); // Assume num X points and Y points are equal.
+            int numOrigPointsToKeep = numOrigPoints - newPointsSize;
+
+            memmove(&xOrigPoints[0], &xOrigPoints[newPointsSize], sizeof(newXPoints[0]) * numOrigPointsToKeep);
+            memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+
+            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         }
+      }
+
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
