@@ -518,6 +518,13 @@ void ChildCurve::updateCurve( bool xParentChanged,
                   m_ySrcData[i] -= prevVal;
                   prevVal = m_prevInfo[offset + i];
                }
+
+               // The very first point has no previous point to take a delta against.
+               // So, set the very first delta to 'Not a Number'.
+               if(prevSize == 0)
+               {
+                  m_ySrcData[0] = NAN; // Set very first delta to 'Not a Number'
+               }
             }
             else // Must be E_PLOT_TYPE_SUM
             {

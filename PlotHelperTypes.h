@@ -61,6 +61,14 @@ typedef struct tMaxMinXY
                (maxY == rhs.maxY);
     }
 
+    bool operator!=(const struct tMaxMinXY& rhs)
+    {
+        return (minX != rhs.minX) ||
+               (minY != rhs.minY) ||
+               (maxX != rhs.maxX) ||
+               (maxY != rhs.maxY);
+    }
+
 }maxMinXY;
 
 typedef enum

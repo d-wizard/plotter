@@ -120,6 +120,8 @@ private:
    void findMaxMin();
    void initCurve();
 
+   void findRealMaxMin(const dubVect& inPoints, double& max, double& min);
+
    void performMathOnPoints();
    void doMathOnCurve(dubVect& data, tMathOpList& mathOp);
    unsigned int removeInvalidPoints();

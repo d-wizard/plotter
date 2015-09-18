@@ -272,13 +272,79 @@ unsigned int CurveData::getNumPoints()
    return numPoints;
 }
 
+// Find the max and min in the vector, but only allow real numbers to be used
+// to determine the max and min (ingore values that are not real, i.e 'Not a Number'
+// and Positive Infinity or Negative Inifinty)
+void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min)
+{
+   // Initialize max and min to +/- 1 just in case all the input points are not real numbers.
+   max = 1;
+   min = -1;
+
+   unsigned int vectSize = inPoints.size();
+
+   if(vectSize > 0)
+   {
+      unsigned int maxMinStartIndex = 0;
+
+      // Find first point that is a real number.
+      for(unsigned int i = maxMinStartIndex; i < vectSize; ++i)
+      {
+         if(isfinite(inPoints[i])) // Only allow real numbers.
+         {
+            max = inPoints[i];
+            min = inPoints[i];
+            maxMinStartIndex = i+1;
+            break;
+         }
+      }
+
+      // Loop through the input value to find the max and min.
+      for(unsigned int i = maxMinStartIndex; i < vectSize; ++i)
+      {
+         if(isfinite(inPoints[i])) // Only allow real numbers.
+         {
+            if(min > inPoints[i])
+               min = inPoints[i];
+            if(max < inPoints[i])
+               max = inPoints[i];
+         }
+      }
+   } // End if(vectSize > 0)
+}
+
+
 maxMinXY CurveData::getMaxMinXYOfCurve()
 {
    maxMinXY retVal;
+
+   // Grab max and min from directly from the curve object.
    retVal.maxX = curve->maxXValue();
    retVal.minX = curve->minXValue();
    retVal.maxY = curve->maxYValue();
    retVal.minY = curve->minYValue();
+
+   // Check if each max and min are real numbers.
+   bool validMaxX = isfinite(retVal.maxX);
+   bool validMinX = isfinite(retVal.minX);
+   bool validMaxY = isfinite(retVal.maxY);
+   bool validMinY = isfinite(retVal.minY);
+
+   // If one of the maxes or mins from the curve object are not real,
+   // use the max/min that is calculated from the points that are
+   // used to create/update the curve object.
+   if(!validMaxX || !validMinX || !validMaxY || !validMinY)
+   {
+      findMaxMin();
+      if(!validMaxX)
+         retVal.maxX = maxMin.maxX;
+      if(!validMinX)
+         retVal.minX = maxMin.minX;
+      if(!validMaxY)
+         retVal.maxY = maxMin.maxY;
+      if(!validMinY)
+         retVal.minY = maxMin.minY;
+   }
    return retVal;
 }
 
@@ -317,56 +383,23 @@ void CurveData::detach()
 
 void CurveData::findMaxMin()
 {
+   maxMinXY newMaxMin;
    int vectSize = yPoints.size();
    if(plotType != E_PLOT_TYPE_2D && plotType != E_PLOT_TYPE_COMPLEX_FFT)
    {
       // X points will be in order, use the first/last values for min/max.
-      maxMin.minX = xPoints[0];
-      maxMin.maxX = xPoints[vectSize-1];
-      maxMin.minY = yPoints[0];
-      maxMin.maxY = yPoints[0];
-      
-      for(int i = 1; i < vectSize; ++i)
-      {
-         if(maxMin.minY > yPoints[i])
-         {
-            maxMin.minY = yPoints[i];
-         }
-         if(maxMin.maxY < yPoints[i])
-         {
-            maxMin.maxY = yPoints[i];
-         }
-      }
+      newMaxMin.minX = xPoints[0];
+      newMaxMin.maxX = xPoints[vectSize-1];
+
+      findRealMaxMin(yPoints, newMaxMin.maxY, newMaxMin.minY);
    }
    else
    {
-      // X Points may not be in order, loop through all x points to find min/max.
-      maxMin.minX = xPoints[0];
-      maxMin.maxX = xPoints[0];
-      maxMin.minY = yPoints[0];
-      maxMin.maxY = yPoints[0];
-      
-      for(int i = 1; i < vectSize; ++i)
-      {
-         if(maxMin.minX > xPoints[i])
-         {
-            maxMin.minX = xPoints[i];
-         }
-         if(maxMin.maxX < xPoints[i])
-         {
-            maxMin.maxX = xPoints[i];
-         }
-         
-         if(maxMin.minY > yPoints[i])
-         {
-            maxMin.minY = yPoints[i];
-         }
-         if(maxMin.maxY < yPoints[i])
-         {
-            maxMin.maxY = yPoints[i];
-         }
-      }
+      // X Points may not be in order.
+      findRealMaxMin(xPoints, newMaxMin.maxX, newMaxMin.minX);
+      findRealMaxMin(yPoints, newMaxMin.maxY, newMaxMin.minY);
    }
+   maxMin = newMaxMin;
 }
 
 void CurveData::setNormalizeFactor(maxMinXY desiredScale)
