@@ -3,6 +3,11 @@
 # Project created by QtCreator 2013-06-21T22:30:17
 #
 #-------------------------------------------------
+revDateStampTarget.target = Makefile
+revDateStampTarget.depends = FORCE
+revDateStampTarget.commands = python ./revDateStamp.py
+QMAKE_EXTRA_TARGETS += revDateStampTarget
+
 RC_FILE = mainwindow.rc
 QWTDIR = ../qwt-6.1
 PTHREADDIR = ../pthread32

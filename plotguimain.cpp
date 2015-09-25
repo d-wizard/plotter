@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string>
+#include "revDateStamp.h"
 #include "PlotHelperTypes.h"
 
 #include "plotguimain.h"
@@ -44,6 +45,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_trayExitAction("Exit", this),
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_propertiesWindowAction("Properties", this),
+    m_revDateStampAction(REV_DATE_STAMP, this),
     m_trayMenu(NULL),
     m_curveCommander(this),
     m_allowNewCurves(true),
@@ -122,6 +124,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     m_trayMenu = new QMenu("Plot", this);
 
+    m_revDateStampAction.setEnabled(false);
+    m_trayMenu->addAction(&m_revDateStampAction);
+    m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_propertiesWindowAction);
