@@ -59,7 +59,8 @@ HEADERS  += mainwindow.h \
     plotcurvenamedialog.h \
     overwriterenamedialog.h \
     AmFmPmDemod.h \
-    handleLogData.h
+    handleLogData.h \
+    logToFile.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
