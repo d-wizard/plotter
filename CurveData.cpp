@@ -316,6 +316,8 @@ void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min
 
 maxMinXY CurveData::getMaxMinXYOfCurve()
 {
+   return maxMin;
+#if 0 // Old, slower implementation that gets Max/Min from curve object. I think returning member variable maxMin should be fine.
    maxMinXY retVal;
 
    // Grab max and min from directly from the curve object.
@@ -346,6 +348,7 @@ maxMinXY CurveData::getMaxMinXYOfCurve()
          retVal.minY = maxMin.minY;
    }
    return retVal;
+#endif
 }
 
 maxMinXY CurveData::getMaxMinXYOfData()
