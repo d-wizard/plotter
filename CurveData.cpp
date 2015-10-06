@@ -58,7 +58,6 @@ CurveData::CurveData( QwtPlot *parentPlot,
    numPoints = yOrigPoints.size();
    fill1DxPoints();
    performMathOnPoints();
-   findMaxMin();
    initCurve();
    attach();
 }
@@ -88,7 +87,6 @@ CurveData::CurveData( QwtPlot* parentPlot,
    
    numPoints = yOrigPoints.size();
    performMathOnPoints();
-   findMaxMin();
    initCurve();
    attach();
 }
@@ -497,7 +495,6 @@ void CurveData::ResetCurveSamples(dubVect& newYPoints)
    numPoints = yOrigPoints.size();
    fill1DxPoints();
    performMathOnPoints();
-   findMaxMin();
    setCurveSamples();
 }
 void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
@@ -515,7 +512,6 @@ void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
       yOrigPoints.resize(numPoints);
    }
    performMathOnPoints();
-   findMaxMin();
    setCurveSamples();
 }
 
@@ -563,7 +559,6 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
       numPoints = yOrigPoints.size();
 
       performMathOnPoints();
-      findMaxMin();
       setCurveSamples();
    }
 }
@@ -620,7 +615,6 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
       performMathOnPoints();
-      findMaxMin();
       setCurveSamples();
    }
 }
@@ -647,7 +641,6 @@ bool CurveData::setSampleRate(double inSampleRate, bool userSpecified)
 
          fill1DxPoints();
          performMathOnPoints();
-         findMaxMin();
          setCurveSamples();
 
          changed = true;
@@ -697,7 +690,6 @@ bool CurveData::setMathOps(tMathOpList& mathOpsIn, eAxis axis)
    {
       *axisMathOps = mathOpsIn;
       performMathOnPoints();
-      findMaxMin();
       setCurveSamples();
    }
    return changed;
@@ -736,10 +728,11 @@ void CurveData::performMathOnPoints()
    doMathOnCurve(xPoints, mathOpsXAxis);
    doMathOnCurve(yPoints, mathOpsYAxis);
 
+   findMaxMin();
+
    if(plotDim == E_PLOT_DIM_1D)
    // calculate linear conversion from 1D (xMin .. xMax) to (0 .. NumSamples-1)
    {
-       findMaxMin();
        linearXAxisCorrection.m = ((double)(numPoints - 1)) / (maxMin.maxX - maxMin.minX);
        linearXAxisCorrection.b = -linearXAxisCorrection.m * maxMin.minX;
    }
