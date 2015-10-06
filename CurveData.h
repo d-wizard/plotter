@@ -130,6 +130,8 @@ private:
    dubVect xOrigPoints;
    dubVect yOrigPoints;
    maxMinXY maxMin_beforeScale;
+   maxMinXY maxMin_1dXPoints;
+   maxMinXY maxMin_finalSamples;
    ePlotDim plotDim;
    ePlotType plotType;
    CurveAppearance appearance;

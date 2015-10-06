@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -127,7 +127,7 @@ void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
    }
 }
 
-void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampleRate)
+void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double& min, double& max, double sampleRate)
 {
    if(numPoints > 0)
    {
@@ -152,15 +152,19 @@ void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double sampl
          }
 
       }
+      min = xAxis[0];
+      max = xAxis[numPoints-1];
    }
    else
    {
        xAxis.clear();
+       min = 0.0;
+       max = 0.0;
    }
 
 }
 
-void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sampleRate)
+void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& min, double& max, double sampleRate)
 {
     if(numPoints > 0)
     {
@@ -201,10 +205,14 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double sa
               xAxis[i] = ((double)start++) * hzPerBin;
            }
         }
+        min = xAxis[end+1];
+        max = xAxis[end];
     }
     else
     {
         xAxis.clear();
+        min = 0.0;
+        max = 0.0;
     }
 }
 

@@ -155,34 +155,45 @@ void CurveData::fill1DxPoints()
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
       {
+         unsigned int xPointSize = xOrigPoints.size();
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
          {
-             for(unsigned int i = 0; i < xOrigPoints.size(); ++i)
+             for(unsigned int i = 0; i < xPointSize; ++i)
              {
                 xOrigPoints[i] = (double)i;
              }
          }
          else
          {
-             for(unsigned int i = 0; i < xOrigPoints.size(); ++i)
+             for(unsigned int i = 0; i < xPointSize; ++i)
              {
                 xOrigPoints[i] = (double)i * samplePeriod;
              }
          }
+         maxMin_1dXPoints.minX = xOrigPoints[0];
+         maxMin_1dXPoints.maxX = xOrigPoints[xPointSize-1];
       }
       break;
 
       case E_PLOT_TYPE_REAL_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
       {
-         getFFTXAxisValues_real(xOrigPoints, xOrigPoints.size(), sampleRate);
+         getFFTXAxisValues_real( xOrigPoints,
+                                 xOrigPoints.size(),
+                                 maxMin_1dXPoints.minX,
+                                 maxMin_1dXPoints.maxX,
+                                 sampleRate);
       }
       break;
 
       case E_PLOT_TYPE_COMPLEX_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
       {
-         getFFTXAxisValues_complex(xOrigPoints, xOrigPoints.size(), sampleRate);
+         getFFTXAxisValues_complex( xOrigPoints,
+                                    xOrigPoints.size(),
+                                    maxMin_1dXPoints.minX,
+                                    maxMin_1dXPoints.maxX,
+                                    sampleRate);
       }
       break;
 
@@ -314,39 +325,7 @@ void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min
 
 maxMinXY CurveData::getMaxMinXYOfCurve()
 {
-   return maxMin_beforeScale;
-#if 0 // Old, slower implementation that gets Max/Min from curve object. I think returning member variable maxMin should be fine.
-   maxMinXY retVal;
-
-   // Grab max and min from directly from the curve object.
-   retVal.maxX = curve->maxXValue();
-   retVal.minX = curve->minXValue();
-   retVal.maxY = curve->maxYValue();
-   retVal.minY = curve->minYValue();
-
-   // Check if each max and min are real numbers.
-   bool validMaxX = isfinite(retVal.maxX);
-   bool validMinX = isfinite(retVal.minX);
-   bool validMaxY = isfinite(retVal.maxY);
-   bool validMinY = isfinite(retVal.minY);
-
-   // If one of the maxes or mins from the curve object are not real,
-   // use the max/min that is calculated from the points that are
-   // used to create/update the curve object.
-   if(!validMaxX || !validMinX || !validMaxY || !validMinY)
-   {
-      findMaxMin();
-      if(!validMaxX)
-         retVal.maxX = maxMin_beforeScale.maxX;
-      if(!validMinX)
-         retVal.minX = maxMin_beforeScale.minX;
-      if(!validMaxY)
-         retVal.maxY = maxMin_beforeScale.maxY;
-      if(!validMinY)
-         retVal.minY = maxMin_beforeScale.minY;
-   }
-   return retVal;
-#endif
+   return maxMin_finalSamples;
 }
 
 maxMinXY CurveData::getMaxMinXYOfData()
@@ -445,6 +424,21 @@ void CurveData::resetNormalizeFactor()
 
 void CurveData::setCurveSamples()
 {
+   // To save on processing, calculate final max/min.
+   maxMinXY finalMaxMin;
+   finalMaxMin.minY = maxMin_beforeScale.minY;
+   finalMaxMin.maxY = maxMin_beforeScale.maxY;
+   if(plotDim == E_PLOT_DIM_1D)
+   {
+      finalMaxMin.minX = maxMin_1dXPoints.minX;
+      finalMaxMin.maxX = maxMin_1dXPoints.maxX;
+   }
+   else
+   {
+      finalMaxMin.minX = maxMin_beforeScale.minX;
+      finalMaxMin.maxX = maxMin_beforeScale.maxX;
+   }
+
    if(xNormalized)
    {
       normX.resize(numPoints);
@@ -452,6 +446,10 @@ void CurveData::setCurveSamples()
       {
          normX[i] = (normFactor.xAxis.m * xPoints[i]) + normFactor.xAxis.b;
       }
+
+      // To save on processing, calculate final max/min.
+      finalMaxMin.minX = (normFactor.xAxis.m * finalMaxMin.minX) + normFactor.xAxis.b;
+      finalMaxMin.maxX = (normFactor.xAxis.m * finalMaxMin.maxX) + normFactor.xAxis.b;
    }
    if(yNormalized)
    {
@@ -460,6 +458,10 @@ void CurveData::setCurveSamples()
       {
          normY[i] = (normFactor.yAxis.m * yPoints[i]) + normFactor.yAxis.b;
       }
+
+      // To save on processing, calculate final max/min.
+      finalMaxMin.minY = (normFactor.yAxis.m * finalMaxMin.minY) + normFactor.yAxis.b;
+      finalMaxMin.maxY = (normFactor.yAxis.m * finalMaxMin.maxY) + normFactor.yAxis.b;
    }
    
    if(xNormalized && yNormalized)
@@ -486,6 +488,8 @@ void CurveData::setCurveSamples()
                          &yPoints[0],
                          numPoints);
    }
+
+   maxMin_finalSamples = finalMaxMin;
 }
 
 void CurveData::ResetCurveSamples(dubVect& newYPoints)
