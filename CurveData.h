@@ -129,7 +129,7 @@ private:
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
    dubVect yOrigPoints;
-   maxMinXY maxMin;
+   maxMinXY maxMin_beforeScale;
    ePlotDim plotDim;
    ePlotType plotType;
    CurveAppearance appearance;

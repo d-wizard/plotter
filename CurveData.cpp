@@ -314,7 +314,7 @@ void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min
 
 maxMinXY CurveData::getMaxMinXYOfCurve()
 {
-   return maxMin;
+   return maxMin_beforeScale;
 #if 0 // Old, slower implementation that gets Max/Min from curve object. I think returning member variable maxMin should be fine.
    maxMinXY retVal;
 
@@ -337,13 +337,13 @@ maxMinXY CurveData::getMaxMinXYOfCurve()
    {
       findMaxMin();
       if(!validMaxX)
-         retVal.maxX = maxMin.maxX;
+         retVal.maxX = maxMin_beforeScale.maxX;
       if(!validMinX)
-         retVal.minX = maxMin.minX;
+         retVal.minX = maxMin_beforeScale.minX;
       if(!validMaxY)
-         retVal.maxY = maxMin.maxY;
+         retVal.maxY = maxMin_beforeScale.maxY;
       if(!validMinY)
-         retVal.minY = maxMin.minY;
+         retVal.minY = maxMin_beforeScale.minY;
    }
    return retVal;
 #endif
@@ -351,7 +351,7 @@ maxMinXY CurveData::getMaxMinXYOfCurve()
 
 maxMinXY CurveData::getMaxMinXYOfData()
 {
-   return maxMin;
+   return maxMin_beforeScale;
 }
 
 QString CurveData::getCurveTitle()
@@ -400,12 +400,12 @@ void CurveData::findMaxMin()
       findRealMaxMin(xPoints, newMaxMin.maxX, newMaxMin.minX);
       findRealMaxMin(yPoints, newMaxMin.maxY, newMaxMin.minY);
    }
-   maxMin = newMaxMin;
+   maxMin_beforeScale = newMaxMin;
 }
 
 void CurveData::setNormalizeFactor(maxMinXY desiredScale)
 {
-   if(desiredScale.maxX == maxMin.maxX && desiredScale.minX == maxMin.minX)
+   if(desiredScale.maxX == maxMin_beforeScale.maxX && desiredScale.minX == maxMin_beforeScale.minX)
    {
       normFactor.xAxis.m = 1.0;
       normFactor.xAxis.b = 0.0;
@@ -413,11 +413,11 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale)
    }
    else
    {
-      normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin.maxX - maxMin.minX);
-      normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin.maxX);
+      normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
+      normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
       xNormalized = true;
    }
-   if(desiredScale.maxY == maxMin.maxY && desiredScale.minY == maxMin.minY)
+   if(desiredScale.maxY == maxMin_beforeScale.maxY && desiredScale.minY == maxMin_beforeScale.minY)
    {
       normFactor.yAxis.m = 1.0;
       normFactor.yAxis.b = 0.0;
@@ -425,8 +425,8 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale)
    }
    else
    {
-      normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin.maxY - maxMin.minY);
-      normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin.maxY);
+      normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin_beforeScale.maxY - maxMin_beforeScale.minY);
+      normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin_beforeScale.maxY);
       yNormalized = true;
    }
 
@@ -733,8 +733,8 @@ void CurveData::performMathOnPoints()
    if(plotDim == E_PLOT_DIM_1D)
    // calculate linear conversion from 1D (xMin .. xMax) to (0 .. NumSamples-1)
    {
-       linearXAxisCorrection.m = ((double)(numPoints - 1)) / (maxMin.maxX - maxMin.minX);
-       linearXAxisCorrection.b = -linearXAxisCorrection.m * maxMin.minX;
+       linearXAxisCorrection.m = ((double)(numPoints - 1)) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
+       linearXAxisCorrection.b = -linearXAxisCorrection.m * maxMin_beforeScale.minX;
    }
 }
 
@@ -847,8 +847,8 @@ unsigned int CurveData::removeInvalidPoints()
    // According to the IEEE standard, NaN values have the odd property that
    // comparisons involving them are always false. That is, for a float
    // f, f != f will be true only if f is NaN
-   if( !isDoubleValid(maxMin.maxX) || !isDoubleValid(maxMin.maxY) ||
-       !isDoubleValid(maxMin.minX) || !isDoubleValid(maxMin.minY) )
+   if( !isDoubleValid(maxMin_beforeScale.maxX) || !isDoubleValid(maxMin_beforeScale.maxY) ||
+       !isDoubleValid(maxMin_beforeScale.minX) || !isDoubleValid(maxMin_beforeScale.minY) )
    {
       // One of the values is invalid. Need to remove invalid points.
       unsigned int writeIndex = 0;
