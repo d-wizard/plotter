@@ -123,7 +123,8 @@ private:
    void findRealMaxMin(const dubVect& inPoints, double& max, double& min);
 
    void performMathOnPoints();
-   void doMathOnCurve(dubVect& data, tMathOpList& mathOp);
+   void performMathOnPoints(unsigned int sampleStartIndex, unsigned int numSamples);
+   void doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples);
    unsigned int removeInvalidPoints();
 
    QwtPlot* m_parentPlot;

@@ -549,7 +549,12 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
          else
          {
             int numOrigPointsToKeep = yOrigPoints.size() - newPointsSize;
+
+            // Move old Y Points to their new position.
             memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+
+            // Copy new Y Points in.
             memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
          }
       }
@@ -562,7 +567,15 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
 
       numPoints = yOrigPoints.size();
 
-      performMathOnPoints();
+      if(scrollMode == false)
+      {
+         performMathOnPoints(sampleStartIndex, newPointsSize);
+      }
+      else
+      {
+         // New samples are at the end.
+         performMathOnPoints(numPoints - newPointsSize, newPointsSize);
+      }
       setCurveSamples();
    }
 }
@@ -586,7 +599,7 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
          yOrigPoints.resize(sampleStartIndex + newPointsSize);
       }
 
-      if(scrollMode)
+      if(scrollMode == false)
       {
          memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
          memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
@@ -607,10 +620,14 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
             int numOrigPoints = yOrigPoints.size(); // Assume num X points and Y points are equal.
             int numOrigPointsToKeep = numOrigPoints - newPointsSize;
 
+            // Move old Points to their new position.
             memmove(&xOrigPoints[0], &xOrigPoints[newPointsSize], sizeof(newXPoints[0]) * numOrigPointsToKeep);
-            memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
-
+            memmove(&xPoints[0],     &xPoints[newPointsSize],     sizeof(newXPoints[0]) * numOrigPointsToKeep);
             memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memmove(&yPoints[0],     &yPoints[newPointsSize],     sizeof(newYPoints[0]) * numOrigPointsToKeep);
+
+            // Copy new Points in.
+            memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
             memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
          }
       }
@@ -618,7 +635,15 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
-      performMathOnPoints();
+      if(scrollMode == false)
+      {
+         performMathOnPoints(sampleStartIndex, newPointsSize);
+      }
+      else
+      {
+         // New samples are at the end.
+         performMathOnPoints(numPoints - newPointsSize, newPointsSize);
+      }
       setCurveSamples();
    }
 }
@@ -710,8 +735,24 @@ tMathOpList CurveData::getMathOps(eAxis axis)
 
 void CurveData::performMathOnPoints()
 {
-   xPoints = xOrigPoints;
-   yPoints = yOrigPoints;
+   performMathOnPoints(0, yOrigPoints.size());
+}
+
+void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int numSamples)
+{
+   unsigned int finalNewSampPosition = sampleStartIndex + numSamples;
+
+   // Copy new samples.
+   if(xPoints.size() < finalNewSampPosition)
+   {
+      xPoints.resize(finalNewSampPosition);
+   }
+   if(yPoints.size() < finalNewSampPosition)
+   {
+      yPoints.resize(finalNewSampPosition);
+   }
+   memcpy(&xPoints[sampleStartIndex], &xOrigPoints[sampleStartIndex], sizeof(xOrigPoints[0]) * numSamples);
+   memcpy(&yPoints[sampleStartIndex], &yOrigPoints[sampleStartIndex], sizeof(yOrigPoints[0]) * numSamples);
 
    // If FM demod and sample rate is specified, convert phase delta to frequency (Hz)
    if(plotType == E_PLOT_TYPE_FM_DEMOD && sampleRate != 0.0)
@@ -722,15 +763,15 @@ void CurveData::performMathOnPoints()
 
       // Get the (Samp/Sec) * (1 Cycle/2Pi Rad) part
       double multiplier = (double)sampleRate / ((double)M_2X_PI);
-      for(unsigned int i = 0; i < numPoints; ++i)
+      for(unsigned int i = sampleStartIndex; i < finalNewSampPosition; ++i)
       {
          // Convert to Hz.
          yPoints[i] *= multiplier;
       }
    }
 
-   doMathOnCurve(xPoints, mathOpsXAxis);
-   doMathOnCurve(yPoints, mathOpsYAxis);
+   doMathOnCurve(xPoints, mathOpsXAxis, sampleStartIndex, numSamples);
+   doMathOnCurve(yPoints, mathOpsYAxis, sampleStartIndex, numSamples);
 
    findMaxMin();
 
@@ -742,15 +783,16 @@ void CurveData::performMathOnPoints()
    }
 }
 
-void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp)
+void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples)
 {
    bool logOpPerformed = false;
+   double* dataBasePtr = &data[sampleStartIndex];
    if(mathOp.size() > 0)
    {
-      dubVect::iterator dataIter;
       tMathOpList::iterator mathIter;
-      for(dataIter = data.begin(); dataIter != data.end(); ++dataIter)
+      for(unsigned int i = 0; i < numSamples; ++i)
       {
+         double* dataIter = &dataBasePtr[i];
          for(mathIter = mathOp.begin(); mathIter != mathOp.end(); ++mathIter)
          {
             switch(mathIter->op)
