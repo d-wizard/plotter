@@ -18,6 +18,7 @@
  */
 #include <math.h>
 #include <algorithm>
+#include <stdio.h>
 #include <assert.h>
 #include "smartMaxMin.h"
 
@@ -49,13 +50,18 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
    unsigned int newSetNumPoints = srcVectSize - startIndex;
    bool overlapFound = false;
 
+   unsigned int lastSegEndIndex = 0;
+
    // Find and remove any segments that overlap with the new segment.
    tSegList::iterator iter = m_segList.begin();
    while(iter != m_segList.end())
    {
       if(overlapFound == false)
       {
-         if( (startIndex >= iter->startIndex) && (startIndex < (iter->startIndex + iter->numPoints)) )
+
+         lastSegEndIndex = iter->startIndex + iter->numPoints;
+
+         if( (startIndex >= iter->startIndex) && (startIndex < lastSegEndIndex) )
          {
             overlapFound = true;
             newSegStartIndex = iter->startIndex;
@@ -90,6 +96,24 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       }
    }
 
+   // If there is no overlap between the new samples and the old samples, then
+   // the new samples are ahead of the old samples. Check if there is a gap between
+   // the new samples and the old samples.
+   if(overlapFound == false && lastSegEndIndex < startIndex)
+   {
+      // There is a gap between the new samples and the old samples.
+      // It is safe to assume all the samples in the gap are zero.
+      // Create a new Segment with the max and min set to 0.
+      tMaxMinSegment newSeg;
+      newSeg.maxValue = 0;
+      newSeg.minValue = 0;
+      newSeg.startIndex = lastSegEndIndex;
+      newSeg.numPoints = startIndex - lastSegEndIndex;
+      newSeg.maxIndex = newSeg.startIndex;
+      newSeg.minIndex = newSeg.startIndex;
+      m_segList.push_back(newSeg);
+   }
+
    unsigned int nextSegStartIndex = newSegStartIndex;
    unsigned int pointsRemaining = newSetNumPoints;
    while(pointsRemaining > 0)
@@ -106,6 +130,8 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
 
    m_segList.sort();
    calcTotalMaxMin();
+
+   //debug_verifyAllPointsAreInList();
 }
 
 void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
@@ -190,6 +216,35 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
          {
             seg.maxValue = srcPoints[i];
             seg.maxIndex = i;
+         }
+      }
+   }
+}
+
+void smartMaxMin::debug_verifyAllPointsAreInList()
+{
+   unsigned int srcSize = m_srcVect->size();
+   unsigned int nextSegExpectedStart = 0;
+   tSegList::iterator iter = m_segList.begin();
+   while(iter != m_segList.end())
+   {
+      unsigned int startIndex = iter->startIndex;
+      unsigned int numPoints = iter->numPoints;
+      unsigned int endIndex = startIndex + numPoints;
+
+      if(nextSegExpectedStart != startIndex)
+      {
+         printf("Gap Between Segments\n");
+      }
+
+      nextSegExpectedStart = endIndex;
+
+      ++iter;
+      if(iter == m_segList.end())
+      {
+         if(endIndex != srcSize)
+         {
+            printf("Gap Between Last Segement and End of Samples\n");
          }
       }
    }
