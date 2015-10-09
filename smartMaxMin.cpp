@@ -43,8 +43,10 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       return;
    }
 
+   unsigned int srcVectSize = m_srcVect->size();
+
    unsigned int newSegStartIndex = startIndex;
-   unsigned int newSetNumPoints = m_srcVect->size() - startIndex;
+   unsigned int newSetNumPoints = srcVectSize - startIndex;
    bool overlapFound = false;
 
    // Find and remove any segments that overlap with the new segment.
@@ -69,6 +71,8 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
          if(iter->startIndex >= (startIndex + numPoints))
          {
             newSetNumPoints = iter->startIndex - newSegStartIndex;
+
+            // Overlap is over. Break out of while early.
             break;
          }
          else
@@ -76,6 +80,13 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
             // This segment is fully encapsulated by the new points.
             m_segList.erase(iter++);
          }
+      }
+
+      // If this is the last segment and we are still overlapping,
+      // set the update size to go to the end of the vector.
+      if(iter == m_segList.end() && overlapFound == true)
+      {
+         newSetNumPoints = srcVectSize - newSegStartIndex;
       }
    }
 
@@ -92,6 +103,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       nextSegStartIndex += calcSize;
       pointsRemaining -= calcSize;
    }
+
    m_segList.sort();
    calcTotalMaxMin();
 }
