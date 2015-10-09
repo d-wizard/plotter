@@ -742,6 +742,8 @@ void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int 
 {
    unsigned int finalNewSampPosition = sampleStartIndex + numSamples;
 
+   unsigned int origXSize = xPoints.size();
+
    // Copy new samples.
    if(xPoints.size() < finalNewSampPosition)
    {
@@ -753,6 +755,14 @@ void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int 
    }
    memcpy(&xPoints[sampleStartIndex], &xOrigPoints[sampleStartIndex], sizeof(xOrigPoints[0]) * numSamples);
    memcpy(&yPoints[sampleStartIndex], &yOrigPoints[sampleStartIndex], sizeof(yOrigPoints[0]) * numSamples);
+
+   // Make sure the generated X axis points are kept up to date.
+   if(plotDim == E_PLOT_DIM_1D && origXSize < sampleStartIndex)
+   {
+      // There is a gap between last old sample and the first new sample. Make sure to copy the
+      // generated 1D X axis points in between.
+      memcpy(&xPoints[origXSize], &xOrigPoints[origXSize], sizeof(xOrigPoints[0]) * (sampleStartIndex - origXSize));
+   }
 
    // If FM demod and sample rate is specified, convert phase delta to frequency (Hz)
    if(plotType == E_PLOT_TYPE_FM_DEMOD && sampleRate != 0.0)
