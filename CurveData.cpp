@@ -664,6 +664,8 @@ void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, uns
             memmove(&xPoints[0],     &xPoints[newPointsSize],     sizeof(newXPoints[0]) * numOrigPointsToKeep);
             memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
             memmove(&yPoints[0],     &yPoints[newPointsSize],     sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            smartMaxMinXPoints.scrollModeShift(newPointsSize);
+            smartMaxMinYPoints.scrollModeShift(newPointsSize);
 
             // Copy new Points in.
             memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
