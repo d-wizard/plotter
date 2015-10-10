@@ -136,6 +136,32 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
 
 void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
 {
+   unsigned int numPointsErased = 0;
+   tSegList::iterator iter = m_segList.begin();
+   while(iter != m_segList.end())
+   {
+      unsigned int startIndex = iter->startIndex;
+      unsigned int numPoints = iter->numPoints;
+
+      if( (startIndex + numPoints) <= shiftAmount)
+      {
+         // All samples have been shifted out.
+         m_segList.erase(iter++);
+         numPointsErased += numPoints;
+      }
+      else if(startIndex < shiftAmount)
+      {
+         calcMaxMinOfSeg(0, numPoints + numPointsErased - shiftAmount, *iter);
+         ++iter;
+      }
+      else
+      {
+         iter->startIndex -= shiftAmount;
+         ++iter;
+      }
+   }
+
+   //debug_verifySegmentsAreContiguous();
 }
 
 void smartMaxMin::getMaxMin(double &retMax, double &retMin)
@@ -218,6 +244,23 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
             seg.maxIndex = i;
          }
       }
+   }
+}
+
+void smartMaxMin::debug_verifySegmentsAreContiguous()
+{
+   unsigned int nextSegExpectedStart = 0;
+   tSegList::iterator iter = m_segList.begin();
+   while(iter != m_segList.end())
+   {
+      if(nextSegExpectedStart != iter->startIndex)
+      {
+         printf("Gap Between Segments\n");
+      }
+
+      nextSegExpectedStart = iter->startIndex + iter->numPoints;
+
+      ++iter;
    }
 }
 

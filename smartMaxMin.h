@@ -68,6 +68,7 @@ private:
    void calcTotalMaxMin();
    void calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
 
+   void debug_verifySegmentsAreContiguous();
    void debug_verifyAllPointsAreInList();
 
    unsigned int m_maxSegSize;
