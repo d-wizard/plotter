@@ -25,7 +25,7 @@
 ///////////////////////////////////////////
 // Debug Switches
 ///////////////////////////////////////////
-#define DEBUG_VALIDATE_SMART_MAX_MIN
+//#define DEBUG_VALIDATE_SMART_MAX_MIN
 
 
 ///////////////////////////////////////////
@@ -381,7 +381,7 @@ void CurveData::findMaxMin()
 {
    maxMinXY newMaxMin;
    int vectSize = yPoints.size();
-   if(plotType != E_PLOT_TYPE_2D && plotType != E_PLOT_TYPE_COMPLEX_FFT)
+   if(plotDim == E_PLOT_DIM_1D)
    {
       // X points will be in order, use the first/last values for min/max.
       newMaxMin.minX = xPoints[0];
