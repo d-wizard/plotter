@@ -30,6 +30,8 @@
 #include <qwt_plot_curve.h>
 #include "PlotHelperTypes.h"
 
+#include "smartMaxMin.h"
+
 class CurveAppearance
 {
 public:
@@ -130,6 +132,8 @@ private:
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
    dubVect yOrigPoints;
+   smartMaxMin smartMaxMinXPoints;
+   smartMaxMin smartMaxMinYPoints;
    maxMinXY maxMin_beforeScale;
    maxMinXY maxMin_1dXPoints;
    maxMinXY maxMin_finalSamples;

@@ -22,6 +22,18 @@
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
 
+///////////////////////////////////////////
+// Debug Switches
+///////////////////////////////////////////
+#define DEBUG_VALIDATE_SMART_MAX_MIN
+
+
+///////////////////////////////////////////
+// Constants
+///////////////////////////////////////////
+#define MAX_SAMPLE_PER_MAXMIN_SEGMENT (1000)
+
+
 inline bool isDoubleValid(double value)
 {
    if (value != value)
@@ -49,6 +61,8 @@ CurveData::CurveData( QwtPlot *parentPlot,
                       const CurveAppearance &curveAppearance):
    m_parentPlot(parentPlot),
    yOrigPoints(newYPoints),
+   smartMaxMinXPoints(&xOrigPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinYPoints(&yOrigPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
    plotDim(E_PLOT_DIM_1D),
    plotType(newPlotType),
    appearance(curveAppearance),
@@ -70,6 +84,8 @@ CurveData::CurveData( QwtPlot* parentPlot,
    m_parentPlot(parentPlot),
    xOrigPoints(newXPoints),
    yOrigPoints(newYPoints),
+   smartMaxMinXPoints(&xOrigPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinYPoints(&yOrigPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
    plotDim(E_PLOT_DIM_2D),
    plotType(E_PLOT_TYPE_2D),
    appearance(curveAppearance),
@@ -371,13 +387,35 @@ void CurveData::findMaxMin()
       newMaxMin.minX = xPoints[0];
       newMaxMin.maxX = xPoints[vectSize-1];
 
-      findRealMaxMin(yPoints, newMaxMin.maxY, newMaxMin.minY);
+      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY);
+
+#ifdef DEBUG_VALIDATE_SMART_MAX_MIN
+      maxMinXY validateMaxMin;
+      findRealMaxMin(yPoints, validateMaxMin.maxY, validateMaxMin.minY);
+      if(validateMaxMin.maxY != newMaxMin.maxY || validateMaxMin.minY != newMaxMin.minY)
+      {
+         printf("Smart Max/Min is wrong\n");
+      }
+#endif
+
    }
    else
    {
       // X Points may not be in order.
-      findRealMaxMin(xPoints, newMaxMin.maxX, newMaxMin.minX);
-      findRealMaxMin(yPoints, newMaxMin.maxY, newMaxMin.minY);
+      smartMaxMinXPoints.getMaxMin(newMaxMin.maxX, newMaxMin.minX);
+      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY);
+
+#ifdef DEBUG_VALIDATE_SMART_MAX_MIN
+      maxMinXY validateMaxMin;
+      findRealMaxMin(xPoints, validateMaxMin.maxX, validateMaxMin.minX);
+      findRealMaxMin(yPoints, validateMaxMin.maxY, validateMaxMin.minY);
+      if( validateMaxMin.maxX != newMaxMin.maxX || validateMaxMin.minX != newMaxMin.minX ||
+          validateMaxMin.maxY != newMaxMin.maxY || validateMaxMin.minY != newMaxMin.minY )
+      {
+         printf("Smart Max/Min is wrong\n");
+      }
+#endif
+
    }
    maxMin_beforeScale = newMaxMin;
 }
@@ -553,6 +591,7 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
             // Move old Y Points to their new position.
             memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
             memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            smartMaxMinYPoints.scrollModeShift(newPointsSize);
 
             // Copy new Y Points in.
             memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
@@ -782,6 +821,16 @@ void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int 
 
    doMathOnCurve(xPoints, mathOpsXAxis, sampleStartIndex, numSamples);
    doMathOnCurve(yPoints, mathOpsYAxis, sampleStartIndex, numSamples);
+
+   if(plotDim == E_PLOT_DIM_1D)
+   {
+      smartMaxMinYPoints.updateMaxMin(sampleStartIndex, numSamples);
+   }
+   else
+   {
+      smartMaxMinXPoints.updateMaxMin(sampleStartIndex, numSamples);
+      smartMaxMinYPoints.updateMaxMin(sampleStartIndex, numSamples);
+   }
 
    findMaxMin();
 

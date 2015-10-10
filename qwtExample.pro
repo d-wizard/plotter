@@ -36,7 +36,8 @@ SOURCES += main.cpp\
     curveproperties.cpp \
     saveRestoreCurve.cpp \
     plotcurvenamedialog.cpp \
-    overwriterenamedialog.cpp
+    overwriterenamedialog.cpp \
+    smartMaxMin.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -60,7 +61,8 @@ HEADERS  += mainwindow.h \
     overwriterenamedialog.h \
     AmFmPmDemod.h \
     handleLogData.h \
-    logToFile.h
+    logToFile.h \
+    smartMaxMin.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
