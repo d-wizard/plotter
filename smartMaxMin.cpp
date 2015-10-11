@@ -38,13 +38,12 @@ smartMaxMin::~smartMaxMin()
 
 void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
 {
-   if(m_srcVect->size() < (startIndex + numPoints))
+   unsigned int srcVectSize = m_srcVect->size();
+   if(srcVectSize < (startIndex + numPoints))
    {
       assert(0);
       return;
    }
-
-   unsigned int srcVectSize = m_srcVect->size();
 
    unsigned int newSegStartIndex = startIndex;
    unsigned int newSetNumPoints = srcVectSize - startIndex;
