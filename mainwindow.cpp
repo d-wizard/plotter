@@ -108,6 +108,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     ui->verticalScrollBar->setPalette(palette);
     ui->horizontalScrollBar->setPalette(palette);
 
+    connect(this, SIGNAL(readPlotMsgSignal()),
+            this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
+
     connect(this, SIGNAL(updateCursorMenusSignal()),
             this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
 
@@ -229,6 +232,16 @@ MainWindow::~MainWindow()
     delete m_zoomCursor;
 
     delete ui;
+
+   // Make sure all plot messages that are still queued are deleted.
+    m_plotMsgQueueMutex.lock();
+    while(m_plotMsgQueue.size() > 0)
+    {
+        UnpackPlotMsg* plotMsg = m_plotMsgQueue.front();
+        m_plotMsgQueue.pop();
+        delete plotMsg;
+    }
+    m_plotMsgQueueMutex.unlock();
 
 
  }
@@ -436,24 +449,55 @@ void MainWindow::updateCursorMenus()
     setCurveStyleMenu();
 }
 
-void MainWindow::create1dCurve(QString name, ePlotType plotType, dubVect &yPoints)
+
+void MainWindow::readPlotMsg(UnpackPlotMsg* plotMsg)
 {
-    createUpdateCurve(name, true, 0, plotType, NULL, &yPoints);
+   m_plotMsgQueueMutex.lock();
+   m_plotMsgQueue.push(plotMsg);
+   m_plotMsgQueueMutex.unlock();
+   emit readPlotMsgSignal();
 }
 
-void MainWindow::create2dCurve(QString name, dubVect &xPoints, dubVect &yPoints)
+void MainWindow::readPlotMsgSlot()
 {
-    createUpdateCurve(name, true, 0, E_PLOT_TYPE_2D, &xPoints, &yPoints);
-}
+   while(m_plotMsgQueue.size() > 0)
+   {
+      UnpackPlotMsg* plotMsg = NULL;
 
-void MainWindow::update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect& yPoints)
-{
-    createUpdateCurve(name, false, sampleStartIndex, plotType, NULL, &yPoints);
-}
+      m_plotMsgQueueMutex.lock();
+      if(m_plotMsgQueue.size() > 0)
+      {
+         plotMsg = m_plotMsgQueue.front();
+         m_plotMsgQueue.pop();
+      }
+      m_plotMsgQueueMutex.unlock();
 
-void MainWindow::update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
-{
-    createUpdateCurve(name, false, sampleStartIndex, E_PLOT_TYPE_2D, &xPoints, &yPoints);
+      if(plotMsg != NULL)
+      {
+         QString plotName( plotMsg->m_plotName.c_str() );
+         QString curveName( plotMsg->m_curveName.c_str() );
+
+         switch(plotMsg->m_plotAction)
+         {
+            case E_CREATE_1D_PLOT:
+               createUpdateCurve(curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+            break;
+            case E_CREATE_2D_PLOT:
+               createUpdateCurve(curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+            break;
+            case E_UPDATE_1D_PLOT:
+               createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+            break;
+            case E_UPDATE_2D_PLOT:
+               createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+            break;
+            default:
+            break;
+         }
+
+         delete plotMsg;
+      }
+   }
 }
 
 void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified)
@@ -582,27 +626,33 @@ void MainWindow::createUpdateCurve( QString& name,
 
 void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints)
 {
-   calcMaxMin();
-
-   if(m_qwtSelectedSample->getCurve() == NULL)
+   // Only update the GUI if no more Plot Messages are queued. If more Plot Messages are queued we
+   // may as well wait until they are all processed. Basically, this avoids the processor hit that
+   // is caused by updating the GUI when we know the plot is just going to change anyway.
+   if(m_plotMsgQueue.size() == 0)
    {
-      setSelectedCurveIndex(curveIndex);
-   }
+      calcMaxMin();
 
-   replotMainPlot();
+      if(m_qwtSelectedSample->getCurve() == NULL)
+      {
+         setSelectedCurveIndex(curveIndex);
+      }
 
-   // Make sure the cursors matches the updated point.
-   if(m_qwtSelectedSample->isAttached == true)
-   {
-      m_qwtSelectedSample->showCursor();
-   }
-   if(m_qwtSelectedSampleDelta->isAttached == true)
-   {
-      m_qwtSelectedSampleDelta->showCursor();
-   }
-   updatePointDisplay();
+      replotMainPlot();
 
-   emit updateCursorMenusSignal();
+      // Make sure the cursors matches the updated point.
+      if(m_qwtSelectedSample->isAttached == true)
+      {
+         m_qwtSelectedSample->showCursor();
+      }
+      if(m_qwtSelectedSampleDelta->isAttached == true)
+      {
+         m_qwtSelectedSampleDelta->showCursor();
+      }
+      updatePointDisplay();
+
+      emit updateCursorMenusSignal();
+   }
 
    // inform parent that a curve has been added / changed
    m_curveCommander->curveUpdated( this->windowTitle(),

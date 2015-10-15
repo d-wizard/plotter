@@ -43,6 +43,8 @@
 #include <QSharedPointer >
 #include <QMutex>
 
+#include <queue>
+
 #include "PlotHelperTypes.h"
 #include "TCPMsgReader.h"
 #include "PlotZoom.h"
@@ -140,10 +142,7 @@ public:
     explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent = 0);
     ~MainWindow();
 
-    void create1dCurve(QString name, ePlotType plotType, dubVect& yPoints);
-    void create2dCurve(QString name, dubVect& xPoints, dubVect& yPoints);
-    void update1dCurve(QString name, unsigned int sampleStartIndex, ePlotType plotType, dubVect &yPoints);
-    void update2dCurve(QString name, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
+    void readPlotMsg(UnpackPlotMsg* plotMsg);
 
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
 
@@ -184,6 +183,9 @@ private:
     Cursor* m_qwtSelectedSampleDelta;
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;
+
+    std::queue<UnpackPlotMsg*> m_plotMsgQueue;
+    QMutex m_plotMsgQueueMutex;
 
     eSelectMode m_selectMode;
 
@@ -321,8 +323,10 @@ private slots:
 // Functions that could be called from a thread, but modify ui
 public slots:
     void updateCursorMenus();
+    void readPlotMsgSlot();
 signals:
     void updateCursorMenusSignal();
+    void readPlotMsgSignal();
 
 };
 

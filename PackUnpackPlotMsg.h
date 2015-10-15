@@ -27,6 +27,7 @@
 
 #include "DataTypes.h"
 #include "plotMsgPack.h"
+#include "PlotHelperTypes.h"
 
 #define MSG_SIZE_PARAM_NUM_BYTES (4)
 
@@ -182,6 +183,7 @@ public:
    std::string m_plotName;
    std::string m_curveName;
    UINT_32 m_sampleStartIndex;
+   ePlotType m_plotType;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
 

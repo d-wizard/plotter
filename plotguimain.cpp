@@ -224,30 +224,14 @@ void plotGuiMain::readPlotMsgSlot(UnpackPlotMsg* plotMsg)
 
 void plotGuiMain::readPlotMsg(UnpackPlotMsg* plotMsg)
 {
-   QString plotName = plotMsg->m_plotName.c_str();
-   QString curveName = plotMsg->m_curveName.c_str();
+   // Grab the parameters needed for storePlotMsg.
+   const char* msgPtr( plotMsg->GetMsgPtr() );
+   unsigned int msgSize( plotMsg->GetMsgPtrSize() );
+   QString plotName( plotMsg->m_plotName.c_str() );
+   QString curveName( plotMsg->m_curveName.c_str() );
 
-   switch(plotMsg->m_plotAction)
-   {
-      case E_CREATE_1D_PLOT:
-         m_curveCommander.create1dCurve(plotName, curveName, E_PLOT_TYPE_1D, plotMsg->m_yAxisValues);
-      break;
-      case E_CREATE_2D_PLOT:
-         m_curveCommander.create2dCurve(plotName, curveName, plotMsg->m_xAxisValues, plotMsg->m_yAxisValues);
-      break;
-      case E_UPDATE_1D_PLOT:
-         m_curveCommander.update1dCurve(plotName, curveName, E_PLOT_TYPE_1D, plotMsg->m_sampleStartIndex, plotMsg->m_yAxisValues);
-      break;
-      case E_UPDATE_2D_PLOT:
-         m_curveCommander.update2dCurve(plotName, curveName, plotMsg->m_sampleStartIndex, plotMsg->m_xAxisValues, plotMsg->m_yAxisValues);
-      break;
-      default:
-      break;
-   }
-
-   m_curveCommander.storePlotMsg(plotMsg->GetMsgPtr(), plotMsg->GetMsgPtrSize(), plotName, curveName);
-
-   delete plotMsg;
+   m_curveCommander.readPlotMsg(plotMsg);
+   m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
 }
 
 void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName)

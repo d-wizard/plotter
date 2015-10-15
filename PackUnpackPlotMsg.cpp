@@ -183,6 +183,11 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
    m_xAxisDataType(E_FLOAT_64),
    m_yAxisDataType(E_FLOAT_64)
 {
+   if(msg == NULL || size == 0)
+   {
+      return;
+   }
+
    unpack(&m_plotAction, sizeof(m_plotAction));
    unpack(&m_msgSize, sizeof(m_msgSize));
    if(m_msgSize == size)
@@ -193,6 +198,7 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
          {
             case E_CREATE_1D_PLOT:
             case E_UPDATE_1D_PLOT:
+               m_plotType = E_PLOT_TYPE_1D;
                unpackStr(&m_plotName);
                unpackStr(&m_curveName);
                unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
@@ -221,6 +227,7 @@ UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
             break;
             case E_CREATE_2D_PLOT:
             case E_UPDATE_2D_PLOT:
+               m_plotType = E_PLOT_TYPE_2D;
                unpackStr(&m_plotName);
                unpackStr(&m_curveName);
                unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));

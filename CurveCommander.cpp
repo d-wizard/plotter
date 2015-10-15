@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -160,31 +160,75 @@ void CurveCommander::destroyAllPlots()
    }
 }
 
+void CurveCommander::readPlotMsg(UnpackPlotMsg* plotMsg)
+{
+   QString plotName = plotMsg->m_plotName.c_str();
+   createPlot(plotName);
+   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+   showHidePlotGui(plotName);
+}
+
 void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->create1dCurve(curveName, plotType, yPoints);
+
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   plotMsg->m_plotAction = E_CREATE_1D_PLOT;
+   plotMsg->m_plotName = plotName.toStdString();
+   plotMsg->m_curveName = curveName.toStdString();
+   plotMsg->m_plotType = plotType;
+   plotMsg->m_yAxisValues = yPoints;
+   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+
    showHidePlotGui(plotName);
 }
 
 void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->create2dCurve(curveName, xPoints, yPoints);
+
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   plotMsg->m_plotAction = E_CREATE_2D_PLOT;
+   plotMsg->m_plotName = plotName.toStdString();
+   plotMsg->m_curveName = curveName.toStdString();
+   plotMsg->m_plotType = E_PLOT_TYPE_2D;
+   plotMsg->m_xAxisValues = xPoints;
+   plotMsg->m_yAxisValues = yPoints;
+   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+
    showHidePlotGui(plotName);
 }
 
 void CurveCommander::update1dCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->update1dCurve(curveName, sampleStartIndex, plotType, yPoints);
+
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   plotMsg->m_plotAction = E_UPDATE_1D_PLOT;
+   plotMsg->m_plotName = plotName.toStdString();
+   plotMsg->m_curveName = curveName.toStdString();
+   plotMsg->m_sampleStartIndex = sampleStartIndex;
+   plotMsg->m_plotType = plotType;
+   plotMsg->m_yAxisValues = yPoints;
+   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+
    showHidePlotGui(plotName);
 }
 
 void CurveCommander::update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
 {
    createPlot(plotName);
-   m_allCurves[plotName].plotGui->update2dCurve(curveName, sampleStartIndex, xPoints, yPoints);
+
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   plotMsg->m_plotAction = E_UPDATE_2D_PLOT;
+   plotMsg->m_plotName = plotName.toStdString();
+   plotMsg->m_curveName = curveName.toStdString();
+   plotMsg->m_sampleStartIndex = sampleStartIndex;
+   plotMsg->m_plotType = E_PLOT_TYPE_2D;
+   plotMsg->m_xAxisValues = xPoints;
+   plotMsg->m_yAxisValues = yPoints;
+   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+
    showHidePlotGui(plotName);
 }
 
