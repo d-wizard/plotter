@@ -60,6 +60,7 @@ public:
    // relativeMousePos is the % (0 to 1) of where the mouse is when zoom is requested
    // Keep the relative point point at the same poisition in the canvas as before the zoom.
    void Zoom(double zoomFactor, QPointF relativeMousePos);
+   void Zoom(double zoomFactor, QPointF relativeMousePos, bool holdYAxis);
 
    void ResetZoom();
 

@@ -303,10 +303,14 @@ void PlotZoom::Zoom(double zoomFactor)
     Zoom(zoomFactor, QPointF(0.5,0.5));
 }
 
+void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos)
+{
+   Zoom(zoomFactor, relativeMousePos, false);
+}
 
 // relativeMousePos is the % (0 to 1) of where the mouse is when zoom is requested
 // Keep the relative point point at the same poisition in the canvas as before the zoom.
-void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos)
+void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos, bool holdYAxis)
 {
     double newXPoint = m_zoomWidth * relativeMousePos.x() + m_zoomDimensions.minX;
     double newYPoint = m_zoomHeight * relativeMousePos.y() + m_zoomDimensions.minY;
@@ -320,10 +324,13 @@ void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos)
     double upOfPoint = newHeight - downOfPoint;
 
     maxMinXY zoom = m_zoomDimensions;
+    if(holdYAxis == false)
+    {
+        zoom.minY = newYPoint - downOfPoint;
+        zoom.maxY = newYPoint + upOfPoint;
+    }
     zoom.minX = newXPoint - leftOfPoint;
-    zoom.minY = newYPoint - downOfPoint;
     zoom.maxX = newXPoint + rightOfPoint;
-    zoom.maxY = newYPoint + upOfPoint;
 
     // If out of bounds, set within bounds and try to keep the same width/height
     if(zoom.minX < m_plotDimensions.minX)

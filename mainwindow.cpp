@@ -1205,13 +1205,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                     (double)(mousePos.x() - PLOT_CANVAS_OFFSET) / (double)(cavasSize.width() - 2*PLOT_CANVAS_OFFSET),
                     1.0 - (double)(mousePos.y() - PLOT_CANVAS_OFFSET) / (double)(cavasSize.height() - 2*PLOT_CANVAS_OFFSET));
 
+                bool holdYAxis = KeyEvent->modifiers().testFlag(Qt::ShiftModifier);
+
                 if(wheelEvent->delta() > 0)
                 {
-                    m_plotZoom->Zoom(ZOOM_IN_PERCENT, relMousePos);
+                    m_plotZoom->Zoom(ZOOM_IN_PERCENT, relMousePos, holdYAxis);
                 }
                 else if(wheelEvent->delta() < 0)
                 {
-                    m_plotZoom->Zoom(ZOOM_OUT_PERCENT, relMousePos);
+                    m_plotZoom->Zoom(ZOOM_OUT_PERCENT, relMousePos, holdYAxis);
                 }
             }
             else
