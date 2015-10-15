@@ -60,8 +60,8 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    else
    {
       notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints);
-      showHidePlotGui(plotName);
    }
+   showHidePlotGui(plotName);
 }
 
 void CurveCommander::curvePropertyChanged()
