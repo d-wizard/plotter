@@ -58,10 +58,20 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
 
        outRe.resize(N);
        outIm.resize(N);
-       for(unsigned int i = 0; i < N; ++i)
+
+       // Swap FFT result to put DC in the center.
+       unsigned int numEndFftPointsToSwap = N >> 1; // round down
+       unsigned int numBeginFftPointsToSwap = N - numEndFftPointsToSwap;
+
+       for(unsigned int i = 0; i < numEndFftPointsToSwap; ++i)
        {
-          outRe[i] = out[i][0] / (double)N;
-          outIm[i] = out[i][1] / (double)N;
+          outRe[i] = out[i+numBeginFftPointsToSwap][0] / (double)N;
+          outIm[i] = out[i+numBeginFftPointsToSwap][1] / (double)N;
+       }
+       for(unsigned int i = numEndFftPointsToSwap; i < N; ++i)
+       {
+          outRe[i] = out[i-numEndFftPointsToSwap][0] / (double)N;
+          outIm[i] = out[i-numEndFftPointsToSwap][1] / (double)N;
        }
 
        fftw_free(in);
@@ -168,14 +178,9 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& m
 {
     if(numPoints > 0)
     {
-       // Complex FFTs go from -Fs/2 to Fs/2.
+        // Complex FFTs go from -Fs/2 to Fs/2.
         int halfPoints = (int)(numPoints >> 1);
         int start = -halfPoints;
-        unsigned int end = halfPoints;
-        if((numPoints & 1) == 0)
-        {
-           --end;
-        }
 
         if(xAxis.size() != numPoints)
         {
@@ -184,29 +189,21 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& m
 
         if(sampleRate == 0.0)
         {
-           for(unsigned int i = 0; i <= end; ++i)
+           for(int i = 0; i < numPoints; ++i)
            {
-              xAxis[i] = i;
-           }
-           for(unsigned int i = (end+1); i < numPoints; ++i)
-           {
-              xAxis[i] = start++;
+              xAxis[i] = i + start;
            }
         }
         else
         {
            double hzPerBin = sampleRate / (double)numPoints;
-           for(unsigned int i = 0; i <= end; ++i)
+           for(int i = 0; i < numPoints; ++i)
            {
-              xAxis[i] = (double)i * hzPerBin;
-           }
-           for(unsigned int i = (end+1); i < numPoints; ++i)
-           {
-              xAxis[i] = ((double)start++) * hzPerBin;
+               xAxis[i] = (double)(i + start) * hzPerBin;
            }
         }
-        min = xAxis[end+1];
-        max = xAxis[end];
+        min = xAxis[0];
+        max = xAxis[numPoints-1];
     }
     else
     {
