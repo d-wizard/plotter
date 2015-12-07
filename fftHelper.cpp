@@ -189,7 +189,7 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& m
 
         if(sampleRate == 0.0)
         {
-           for(int i = 0; i < numPoints; ++i)
+           for(int i = 0; i < (int)numPoints; ++i)
            {
               xAxis[i] = i + start;
            }
@@ -197,7 +197,7 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& m
         else
         {
            double hzPerBin = sampleRate / (double)numPoints;
-           for(int i = 0; i < numPoints; ++i)
+           for(int i = 0; i < (int)numPoints; ++i)
            {
                xAxis[i] = (double)(i + start) * hzPerBin;
            }
