@@ -209,6 +209,17 @@ private:
    UCHAR m_interleaved;
 };
 
+class UnpackMultiPlotMsg
+{
+public:
+    UnpackMultiPlotMsg(const char* msg, unsigned int size);
+    ~UnpackMultiPlotMsg();
+
+    std::vector<UnpackPlotMsg*> m_plotMsgs;
+private:
+   UnpackMultiPlotMsg();
+   UINT_32 m_msgReadIndex;
+};
 
 #endif
 

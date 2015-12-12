@@ -429,5 +429,32 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
 }
 
 
+UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size):
+   m_msgReadIndex(0)
+{
+   ePlotAction plotAction;
+   UINT_32 msgSize;
 
+   if(size > (sizeof(plotAction) + sizeof(msgSize)))
+   {
+      memcpy(&plotAction, msg + m_msgReadIndex, sizeof(plotAction));
+      m_msgReadIndex += sizeof(plotAction);
+      memcpy(&msgSize, msg + m_msgReadIndex, sizeof(msgSize));
+      m_msgReadIndex += sizeof(msgSize);
 
+      if(plotAction == E_MULPITLE_PLOTS)
+      {
+
+      }
+      else
+      {
+         // Single plot in plot message.
+         m_plotMsgs.push_back(new UnpackPlotMsg(msg, size));
+      }
+
+   }
+}
+
+UnpackMultiPlotMsg::~UnpackMultiPlotMsg()
+{
+}

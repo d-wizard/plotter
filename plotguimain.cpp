@@ -205,15 +205,22 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
 
       m_storedMsgBuffMutex.unlock();
 
-      UnpackPlotMsg* msgUnpacker = new UnpackPlotMsg(msgCopy, size);
-      if(validPlotAction(msgUnpacker->m_plotAction))
+      UnpackMultiPlotMsg* msgUnpacker = new UnpackMultiPlotMsg(msgCopy, size);
+      if(msgUnpacker->m_plotMsgs.size() > 0)
       {
-         emit readPlotMsgSignal(msgUnpacker);
+         for(unsigned int i = 0; i < msgUnpacker->m_plotMsgs.size(); ++i)
+         {
+            if(validPlotAction(msgUnpacker->m_plotMsgs[i]->m_plotAction))
+            {
+               emit readPlotMsgSignal(msgUnpacker->m_plotMsgs[i]);
+            }
+            else
+            {
+               delete msgUnpacker->m_plotMsgs[i];
+            }
+         }
       }
-      else
-      {
-         delete msgUnpacker;
-      }
+      delete msgUnpacker;
    }
 }
 
