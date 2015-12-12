@@ -108,7 +108,7 @@ void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBy
          switch(m_unpackState)
          {
             case E_READ_ACTION:
-               if(validPlotAction(m_curAction))
+               if(validPlotAction(m_curAction) || m_curAction == E_MULTIPLE_PLOTS)
                {
                    setNextState(E_READ_SIZE, &m_curMsgSize, sizeof(m_curMsgSize));
                }
@@ -442,15 +442,40 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size):
       memcpy(&msgSize, msg + m_msgReadIndex, sizeof(msgSize));
       m_msgReadIndex += sizeof(msgSize);
 
-      if(plotAction == E_MULPITLE_PLOTS)
+      if(size == msgSize)
       {
+         if(plotAction == E_MULTIPLE_PLOTS)
+         {
+            UINT_32 plotMsgIndex = 0;
+            bool validMsg = true;
+            while(validMsg == true && m_msgReadIndex < msgSize)
+            {
+               // UnpackPlotMsg expects the size passed in to match the value in the packed message.
+               UINT_32 individualPlotMsgSize = 0;
+               memcpy(&individualPlotMsgSize, msg + m_msgReadIndex + sizeof(ePlotAction), sizeof(individualPlotMsgSize));
 
-      }
-      else
-      {
-         // Single plot in plot message.
-         m_plotMsgs.push_back(new UnpackPlotMsg(msg, size));
-      }
+               if(individualPlotMsgSize >= (msgSize - m_msgReadIndex))
+               {
+                  m_plotMsgs.push_back(new UnpackPlotMsg(msg + m_msgReadIndex, individualPlotMsgSize));
+                  m_msgReadIndex += individualPlotMsgSize;
+                  if(validPlotAction(m_plotMsgs[plotMsgIndex]->m_plotAction) == false || m_msgReadIndex > msgSize)
+                  {
+                     validMsg = false;
+                  }
+                  plotMsgIndex++;
+               }
+               else
+               {
+                  validMsg = false;
+               }
+            }
+         }
+         else
+         {
+            // Single plot in plot message.
+            m_plotMsgs.push_back(new UnpackPlotMsg(msg, size));
+         }
+      } // end if(size == msgSize)
 
    }
 }
