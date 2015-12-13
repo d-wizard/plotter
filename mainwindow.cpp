@@ -497,6 +497,7 @@ void MainWindow::readPlotMsgSlot()
                break;
             }
          }
+         updatePlotWithNewCurveData();
          delete multiPlotMsg;
       }
    }
@@ -623,16 +624,31 @@ void MainWindow::createUpdateCurve( QString& name,
       }
    }
 
-   handleCurveDataChange(curveIndex, sampleStartIndex, yPoints->size());
+   handleCurveDataChange(curveIndex, sampleStartIndex, yPoints->size(), true);
 }
 
-void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints)
+void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints, bool skipUpdatePlot)
 {
    if(m_qwtSelectedSample->getCurve() == NULL)
    {
       setSelectedCurveIndex(curveIndex);
    }
 
+   if(skipUpdatePlot == false)
+   {
+      updatePlotWithNewCurveData();
+   }
+
+   // inform parent that a curve has been added / changed
+   m_curveCommander->curveUpdated( this->windowTitle(),
+                                   m_qwtCurves[curveIndex]->getCurveTitle(),
+                                   m_qwtCurves[curveIndex],
+                                   sampleStartIndex,
+                                   numPoints );
+}
+
+void MainWindow::updatePlotWithNewCurveData()
+{
    // Only update the GUI if no more Plot Messages are queued. If more Plot Messages are queued we
    // may as well wait until they are all processed. Basically, this avoids the processor hit that
    // is caused by updating the GUI when we know the plot is just going to change anyway.
@@ -655,13 +671,6 @@ void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartI
 
       emit updateCursorMenusSignal();
    }
-
-   // inform parent that a curve has been added / changed
-   m_curveCommander->curveUpdated( this->windowTitle(),
-                                   m_qwtCurves[curveIndex]->getCurveTitle(),
-                                   m_qwtCurves[curveIndex],
-                                   sampleStartIndex,
-                                   numPoints );
 }
 
 void MainWindow::toggleLegend()

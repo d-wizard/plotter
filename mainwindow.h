@@ -251,7 +251,8 @@ private:
                             dubVect *xPoints,
                             dubVect *yPoints );
 
-    void handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints);
+    void handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints, bool skipUpdatePlot = false);
+    void updatePlotWithNewCurveData();
 
     void calcMaxMin();
 
