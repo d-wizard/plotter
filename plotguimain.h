@@ -59,7 +59,7 @@ public:
 
     void curveUpdated(QString plotName, QString curveName);
 
-    void readPlotMsg(UnpackPlotMsg* plotMsg);
+    void readPlotMsg(UnpackMultiPlotMsg *plotMsg);
     void restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName);
 
     CurveCommander& getCurveCommander(){return m_curveCommander;}
@@ -89,13 +89,13 @@ private:
     void closeEvent(QCloseEvent* event);
 
 public slots:
-    void readPlotMsgSlot(UnpackPlotMsg* plotMsg);
+    void readPlotMsgSlot(UnpackMultiPlotMsg* plotMsg);
     void enDisNewCurves();
     void showPropertiesGui();
     void closeAllPlotsSlot();
 
 signals:
-    void readPlotMsgSignal(UnpackPlotMsg*);
+    void readPlotMsgSignal(UnpackMultiPlotMsg*);
     void closeAllPlotsSignal();
 private slots:
     void on_cmdClose_clicked();

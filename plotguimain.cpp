@@ -55,8 +55,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     ui->setupUi(this);
     this->setFixedSize(165, 95);
 
-    QObject::connect(this, SIGNAL(readPlotMsgSignal(UnpackPlotMsg*)),
-                     this, SLOT(readPlotMsgSlot(UnpackPlotMsg*)), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(readPlotMsgSignal(UnpackMultiPlotMsg*)),
+                     this, SLOT(readPlotMsgSlot(UnpackMultiPlotMsg*)), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -208,37 +208,38 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
       UnpackMultiPlotMsg* msgUnpacker = new UnpackMultiPlotMsg(msgCopy, size);
       if(msgUnpacker->m_plotMsgs.size() > 0)
       {
-         for(unsigned int i = 0; i < msgUnpacker->m_plotMsgs.size(); ++i)
-         {
-            if(validPlotAction(msgUnpacker->m_plotMsgs[i]->m_plotAction))
-            {
-               emit readPlotMsgSignal(msgUnpacker->m_plotMsgs[i]);
-            }
-            else
-            {
-               delete msgUnpacker->m_plotMsgs[i];
-            }
-         }
+         emit readPlotMsgSignal(msgUnpacker);
       }
-      delete msgUnpacker;
+      else
+      {
+         delete msgUnpacker;
+      }
    }
 }
 
-void plotGuiMain::readPlotMsgSlot(UnpackPlotMsg* plotMsg)
+void plotGuiMain::readPlotMsgSlot(UnpackMultiPlotMsg *plotMsg)
 {
    readPlotMsg(plotMsg);
 }
 
-void plotGuiMain::readPlotMsg(UnpackPlotMsg* plotMsg)
+void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 {
-   // Grab the parameters needed for storePlotMsg.
-   const char* msgPtr( plotMsg->GetMsgPtr() );
-   unsigned int msgSize( plotMsg->GetMsgPtrSize() );
-   QString plotName( plotMsg->m_plotName.c_str() );
-   QString curveName( plotMsg->m_curveName.c_str() );
+   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   {
+      QString plotName(iter->first.c_str());
+      plotMsgGroup* group = iter->second;
+      for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+      {
+         // Grab the parameters needed for storePlotMsg.
+         const char* msgPtr( group->m_plotMsgs[i]->GetMsgPtr() );
+         unsigned int msgSize( group->m_plotMsgs[i]->GetMsgPtrSize() );
+         QString curveName( group->m_plotMsgs[i]->m_curveName.c_str() );
+         m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
+      }
+   }
 
    m_curveCommander.readPlotMsg(plotMsg);
-   m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
+   delete plotMsg;
 }
 
 void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName)

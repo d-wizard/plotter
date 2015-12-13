@@ -142,7 +142,7 @@ public:
     explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent = 0);
     ~MainWindow();
 
-    void readPlotMsg(UnpackPlotMsg* plotMsg);
+    void readPlotMsg(plotMsgGroup* plotMsg);
 
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
 
@@ -184,7 +184,7 @@ private:
     QwtPlotPicker* m_qwtPicker;
     QwtPlotGrid* m_qwtGrid;
 
-    std::queue<UnpackPlotMsg*> m_plotMsgQueue;
+    std::queue<plotMsgGroup*> m_plotMsgQueue;
     QMutex m_plotMsgQueueMutex;
 
     eSelectMode m_selectMode;

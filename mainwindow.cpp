@@ -237,7 +237,7 @@ MainWindow::~MainWindow()
     m_plotMsgQueueMutex.lock();
     while(m_plotMsgQueue.size() > 0)
     {
-        UnpackPlotMsg* plotMsg = m_plotMsgQueue.front();
+        plotMsgGroup* plotMsg = m_plotMsgQueue.front();
         m_plotMsgQueue.pop();
         delete plotMsg;
     }
@@ -450,7 +450,7 @@ void MainWindow::updateCursorMenus()
 }
 
 
-void MainWindow::readPlotMsg(UnpackPlotMsg* plotMsg)
+void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
 {
    m_plotMsgQueueMutex.lock();
    m_plotMsgQueue.push(plotMsg);
@@ -462,40 +462,42 @@ void MainWindow::readPlotMsgSlot()
 {
    while(m_plotMsgQueue.size() > 0)
    {
-      UnpackPlotMsg* plotMsg = NULL;
+      plotMsgGroup* multiPlotMsg = NULL;
 
       m_plotMsgQueueMutex.lock();
       if(m_plotMsgQueue.size() > 0)
       {
-         plotMsg = m_plotMsgQueue.front();
+         multiPlotMsg = m_plotMsgQueue.front();
          m_plotMsgQueue.pop();
       }
       m_plotMsgQueueMutex.unlock();
 
-      if(plotMsg != NULL)
+      if(multiPlotMsg != NULL)
       {
-         QString plotName( plotMsg->m_plotName.c_str() );
-         QString curveName( plotMsg->m_curveName.c_str() );
-
-         switch(plotMsg->m_plotAction)
+         for(unsigned int i = 0; i < multiPlotMsg->m_plotMsgs.size(); ++i)
          {
-            case E_CREATE_1D_PLOT:
-               createUpdateCurve(curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
-            break;
-            case E_CREATE_2D_PLOT:
-               createUpdateCurve(curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
-            break;
-            case E_UPDATE_1D_PLOT:
-               createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
-            break;
-            case E_UPDATE_2D_PLOT:
-               createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
-            break;
-            default:
-            break;
-         }
+            UnpackPlotMsg* plotMsg = multiPlotMsg->m_plotMsgs[i];
+            QString curveName( plotMsg->m_curveName.c_str() );
 
-         delete plotMsg;
+            switch(plotMsg->m_plotAction)
+            {
+               case E_CREATE_1D_PLOT:
+                  createUpdateCurve(curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+               break;
+               case E_CREATE_2D_PLOT:
+                  createUpdateCurve(curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+               break;
+               case E_UPDATE_1D_PLOT:
+                  createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+               break;
+               case E_UPDATE_2D_PLOT:
+                  createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+               break;
+               default:
+               break;
+            }
+         }
+         delete multiPlotMsg;
       }
    }
 }

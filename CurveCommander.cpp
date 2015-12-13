@@ -160,12 +160,16 @@ void CurveCommander::destroyAllPlots()
    }
 }
 
-void CurveCommander::readPlotMsg(UnpackPlotMsg* plotMsg)
+void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 {
-   QString plotName = plotMsg->m_plotName.c_str();
-   createPlot(plotName);
-   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
-   showHidePlotGui(plotName);
+   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   {
+      plotMsgGroup* group = iter->second;
+      QString plotName = iter->first.c_str();
+      createPlot(plotName);
+      m_allCurves[plotName].plotGui->readPlotMsg(group);
+      showHidePlotGui(plotName);
+   }
 }
 
 void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints)
@@ -178,7 +182,8 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotTyp
    plotMsg->m_curveName = curveName.toStdString();
    plotMsg->m_plotType = plotType;
    plotMsg->m_yAxisValues = yPoints;
-   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
 }
@@ -194,7 +199,8 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
    plotMsg->m_plotType = E_PLOT_TYPE_2D;
    plotMsg->m_xAxisValues = xPoints;
    plotMsg->m_yAxisValues = yPoints;
-   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
 }
@@ -210,7 +216,8 @@ void CurveCommander::update1dCurve(QString plotName, QString curveName, ePlotTyp
    plotMsg->m_sampleStartIndex = sampleStartIndex;
    plotMsg->m_plotType = plotType;
    plotMsg->m_yAxisValues = yPoints;
-   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
 }
@@ -227,7 +234,8 @@ void CurveCommander::update2dCurve(QString plotName, QString curveName, unsigned
    plotMsg->m_plotType = E_PLOT_TYPE_2D;
    plotMsg->m_xAxisValues = xPoints;
    plotMsg->m_yAxisValues = yPoints;
-   m_allCurves[plotName].plotGui->readPlotMsg(plotMsg);
+   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
 }

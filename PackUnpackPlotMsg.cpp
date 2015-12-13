@@ -429,40 +429,44 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
 }
 
 
-UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size):
-   m_msgReadIndex(0)
+UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
 {
-   ePlotAction plotAction;
-   UINT_32 msgSize;
+   UINT_32 msgReadIndex = 0;
+   ePlotAction plotAction = E_INVALID_PLOT_ACTION;
+   UINT_32 msgSize = 0;
 
    if(size > (sizeof(plotAction) + sizeof(msgSize)))
    {
-      memcpy(&plotAction, msg + m_msgReadIndex, sizeof(plotAction));
-      m_msgReadIndex += sizeof(plotAction);
-      memcpy(&msgSize, msg + m_msgReadIndex, sizeof(msgSize));
-      m_msgReadIndex += sizeof(msgSize);
+      memcpy(&plotAction, msg + msgReadIndex, sizeof(plotAction));
+      msgReadIndex += sizeof(plotAction);
+      memcpy(&msgSize, msg + msgReadIndex, sizeof(msgSize));
+      msgReadIndex += sizeof(msgSize);
 
       if(size == msgSize)
       {
          if(plotAction == E_MULTIPLE_PLOTS)
          {
-            UINT_32 plotMsgIndex = 0;
             bool validMsg = true;
-            while(validMsg == true && m_msgReadIndex < msgSize)
+            while(validMsg == true && msgReadIndex < msgSize)
             {
                // UnpackPlotMsg expects the size passed in to match the value in the packed message.
                UINT_32 individualPlotMsgSize = 0;
-               memcpy(&individualPlotMsgSize, msg + m_msgReadIndex + sizeof(ePlotAction), sizeof(individualPlotMsgSize));
+               memcpy(&individualPlotMsgSize, msg + msgReadIndex + sizeof(ePlotAction), sizeof(individualPlotMsgSize));
 
-               if(individualPlotMsgSize >= (msgSize - m_msgReadIndex))
+               if(individualPlotMsgSize >= (msgSize - msgReadIndex))
                {
-                  m_plotMsgs.push_back(new UnpackPlotMsg(msg + m_msgReadIndex, individualPlotMsgSize));
-                  m_msgReadIndex += individualPlotMsgSize;
-                  if(validPlotAction(m_plotMsgs[plotMsgIndex]->m_plotAction) == false || m_msgReadIndex > msgSize)
+                  UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(msg + msgReadIndex, individualPlotMsgSize);
+                  msgReadIndex += individualPlotMsgSize;
+                  if(validPlotAction(newPlotMsg->m_plotAction) == false || msgReadIndex > msgSize)
                   {
                      validMsg = false;
+                     delete newPlotMsg;
                   }
-                  plotMsgIndex++;
+                  else
+                  {
+                     plotMsgGroup* group = getPlotMsgGroup(newPlotMsg->m_plotName);
+                     group->m_plotMsgs.push_back(newPlotMsg);
+                  }
                }
                else
                {
@@ -473,7 +477,9 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size):
          else
          {
             // Single plot in plot message.
-            m_plotMsgs.push_back(new UnpackPlotMsg(msg, size));
+            UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(msg, size);
+            plotMsgGroup* group = getPlotMsgGroup(newPlotMsg->m_plotName);
+            group->m_plotMsgs.push_back(newPlotMsg);
          }
       } // end if(size == msgSize)
 
@@ -482,4 +488,14 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size):
 
 UnpackMultiPlotMsg::~UnpackMultiPlotMsg()
 {
+}
+
+plotMsgGroup* UnpackMultiPlotMsg::getPlotMsgGroup(std::string plotName)
+{
+   if(m_plotMsgs.find(plotName) == m_plotMsgs.end())
+   {
+      plotMsgGroup* newGroup = new plotMsgGroup();
+      m_plotMsgs[plotName] = newGroup;
+   }
+   return m_plotMsgs[plotName];
 }

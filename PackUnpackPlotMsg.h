@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <stdio.h>
 #include <string.h>
 #include <QElapsedTimer>
@@ -209,16 +210,38 @@ private:
    UCHAR m_interleaved;
 };
 
+class plotMsgGroup
+{
+public:
+   plotMsgGroup(){}
+
+   // Pass in pointer to dynamically allocated UnpackPlotMsg type. delete will be called in destructor.
+   plotMsgGroup(UnpackPlotMsg* unpackPlotMsg)
+   {
+      m_plotMsgs.push_back(unpackPlotMsg);
+   }
+
+   ~plotMsgGroup()
+   {
+      for(unsigned int i = 0; i < m_plotMsgs.size(); ++i)
+      {
+         delete m_plotMsgs[i];
+      }
+   }
+
+   std::vector<UnpackPlotMsg*> m_plotMsgs;
+};
+
 class UnpackMultiPlotMsg
 {
 public:
-    UnpackMultiPlotMsg(const char* msg, unsigned int size);
-    ~UnpackMultiPlotMsg();
+   UnpackMultiPlotMsg(const char* msg, unsigned int size);
+   ~UnpackMultiPlotMsg();
 
-    std::vector<UnpackPlotMsg*> m_plotMsgs;
+   std::map<std::string, plotMsgGroup*> m_plotMsgs;
 private:
    UnpackMultiPlotMsg();
-   UINT_32 m_msgReadIndex;
+   plotMsgGroup* getPlotMsgGroup(std::string plotName);
 };
 
 #endif

@@ -54,7 +54,7 @@ public:
 
     tCurveCommanderInfo& getCurveCommanderInfo();
 
-    void readPlotMsg(UnpackPlotMsg* plotMsg);
+    void readPlotMsg(UnpackMultiPlotMsg* plotMsg);
 
     void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints);
     void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints);
