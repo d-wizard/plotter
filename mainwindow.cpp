@@ -628,17 +628,17 @@ void MainWindow::createUpdateCurve( QString& name,
 
 void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints)
 {
+   if(m_qwtSelectedSample->getCurve() == NULL)
+   {
+      setSelectedCurveIndex(curveIndex);
+   }
+
    // Only update the GUI if no more Plot Messages are queued. If more Plot Messages are queued we
    // may as well wait until they are all processed. Basically, this avoids the processor hit that
    // is caused by updating the GUI when we know the plot is just going to change anyway.
    if(m_plotMsgQueue.size() == 0)
    {
       calcMaxMin();
-
-      if(m_qwtSelectedSample->getCurve() == NULL)
-      {
-         setSelectedCurveIndex(curveIndex);
-      }
 
       replotMainPlot();
 
