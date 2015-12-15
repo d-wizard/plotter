@@ -453,7 +453,7 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
                UINT_32 individualPlotMsgSize = 0;
                memcpy(&individualPlotMsgSize, msg + msgReadIndex + sizeof(ePlotAction), sizeof(individualPlotMsgSize));
 
-               if(individualPlotMsgSize >= (msgSize - msgReadIndex))
+               if(individualPlotMsgSize <= (msgSize - msgReadIndex))
                {
                   UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(msg + msgReadIndex, individualPlotMsgSize);
                   msgReadIndex += individualPlotMsgSize;
