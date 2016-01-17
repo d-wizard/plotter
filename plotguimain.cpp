@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -244,30 +244,25 @@ void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 
 void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName)
 {
-   UnpackPlotMsg msgUnpacker(msg, size);
-
-   if(validPlotAction(msgUnpacker.m_plotAction))
+   UnpackMultiPlotMsg* plotMsg = new UnpackMultiPlotMsg(msg, size);
+   if(plotMsg->m_plotMsgs.size() > 0)
    {
-      switch(msgUnpacker.m_plotAction)
+      // Change all plot/curve names that were read from the unpacked message to the plot/curve names passed into this function.
+      for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
       {
-         case E_CREATE_1D_PLOT:
-            m_curveCommander.create1dCurve(plotCurveName.plot, plotCurveName.curve, E_PLOT_TYPE_1D, msgUnpacker.m_yAxisValues);
-         break;
-         case E_CREATE_2D_PLOT:
-            m_curveCommander.create2dCurve(plotCurveName.plot, plotCurveName.curve, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-         break;
-         case E_UPDATE_1D_PLOT:
-            m_curveCommander.update1dCurve(plotCurveName.plot, plotCurveName.curve, E_PLOT_TYPE_1D, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_yAxisValues);
-         break;
-         case E_UPDATE_2D_PLOT:
-            m_curveCommander.update2dCurve(plotCurveName.plot, plotCurveName.curve, msgUnpacker.m_sampleStartIndex, msgUnpacker.m_xAxisValues, msgUnpacker.m_yAxisValues);
-         break;
-         default:
-         break;
+         plotMsgGroup* group = iter->second;
+         for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+         {
+            group->m_plotMsgs[i]->m_plotName = plotCurveName.plot.toStdString();
+            group->m_plotMsgs[i]->m_curveName = plotCurveName.curve.toStdString();
+         }
       }
-
+      emit readPlotMsgSignal(plotMsg);
    }
-
+   else
+   {
+      delete plotMsg;
+   }
 }
 
 
