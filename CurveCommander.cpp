@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -43,6 +43,18 @@ CurveCommander::~CurveCommander()
 
 }
 
+void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, bool plotDataWasChanged)
+{
+   QString plotName(plotMsg->m_plotName.c_str());
+   QString curveName(plotMsg->m_curveName.c_str());
+   unsigned int updateMsgSize = plotDataWasChanged ? plotMsg->m_yAxisValues.size() : 0;
+
+   curveUpdated( plotName,
+                 curveName,
+                 curveData,
+                 plotMsg->m_sampleStartIndex,
+                 updateMsgSize );
+}
 
 void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints)
 {
@@ -52,12 +64,13 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
 
    if(newCurve)
    {
+      // This is a new curve, thus there can't be any child curves from this curve.
       if(m_curvePropGui != NULL)
       {
          m_curvePropGui->updateGuiPlotCurveInfo();
       }
    }
-   else
+   else if(numPoints > 0)
    {
       notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints);
    }

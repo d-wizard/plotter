@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -498,6 +498,17 @@ void MainWindow::readPlotMsgSlot()
             }
          }
          updatePlotWithNewCurveData();
+
+         // Inform parent that a curve has been added / changed
+         for(unsigned int i = 0; i < multiPlotMsg->m_plotMsgs.size(); ++i)
+         {
+            UnpackPlotMsg* plotMsg = multiPlotMsg->m_plotMsgs[i];
+            QString curveName( plotMsg->m_curveName.c_str() );
+            int curveIndex = getCurveIndex(curveName);
+            m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], m_allowNewCurves);
+         }
+
+         // Done with new plot messages.
          delete multiPlotMsg;
       }
    }
@@ -512,7 +523,7 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
    {
       if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
       {
-         handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
+         handleCurveDataChange(curveIndex);
       }
    }
 }
@@ -531,7 +542,7 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
 
       if(curveChanged)
       {
-         handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
+         handleCurveDataChange(curveIndex);
       }
    }
 }
@@ -548,7 +559,7 @@ void MainWindow::setCurveHidden(QString curveName, bool hidden)
 
        if(curveChanged)
        {
-          handleCurveDataChange(curveIndex, 0, m_qwtCurves[curveIndex]->getNumPoints());
+          handleCurveDataChange(curveIndex);
        }
     }
 }
@@ -624,27 +635,29 @@ void MainWindow::createUpdateCurve( QString& name,
       }
    }
 
-   handleCurveDataChange(curveIndex, sampleStartIndex, yPoints->size(), true);
+   initCursorIndex(curveIndex);
 }
 
-void MainWindow::handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints, bool skipUpdatePlot)
+void MainWindow::initCursorIndex(int curveIndex)
 {
    if(m_qwtSelectedSample->getCurve() == NULL)
    {
       setSelectedCurveIndex(curveIndex);
    }
+}
 
-   if(skipUpdatePlot == false)
-   {
-      updatePlotWithNewCurveData();
-   }
+void MainWindow::handleCurveDataChange(int curveIndex)
+{
+   initCursorIndex(curveIndex);
+
+   updatePlotWithNewCurveData();
 
    // inform parent that a curve has been added / changed
    m_curveCommander->curveUpdated( this->windowTitle(),
                                    m_qwtCurves[curveIndex]->getCurveTitle(),
                                    m_qwtCurves[curveIndex],
-                                   sampleStartIndex,
-                                   numPoints );
+                                   0,
+                                   m_qwtCurves[curveIndex]->getNumPoints() );
 }
 
 void MainWindow::updatePlotWithNewCurveData()

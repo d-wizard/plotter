@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -251,7 +251,8 @@ private:
                             dubVect *xPoints,
                             dubVect *yPoints );
 
-    void handleCurveDataChange(int curveIndex, unsigned int sampleStartIndex, unsigned int numPoints, bool skipUpdatePlot = false);
+    void initCursorIndex(int curveIndex);
+    void handleCurveDataChange(int curveIndex);
     void updatePlotWithNewCurveData();
 
     void calcMaxMin();
