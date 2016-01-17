@@ -59,8 +59,8 @@ public:
 
     void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints);
     void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints);
-    void update1dCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints);
-    void update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
+    void update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints);
+    void update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
     void destroyAllPlots();
 
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}

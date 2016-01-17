@@ -218,7 +218,7 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::update1dCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints)
+void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints)
 {
    createPlot(plotName);
 
@@ -235,7 +235,7 @@ void CurveCommander::update1dCurve(QString plotName, QString curveName, ePlotTyp
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::update2dCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
+void CurveCommander::update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
 {
    createPlot(plotName);
 
