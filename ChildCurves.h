@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,7 +34,7 @@ public:
    ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
    ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
 
-   void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints);
+   void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints, PlotMsgIdType parentMsgId);
    QVector<tPlotCurveAxis> getParents();
 
    QString getPlotName(){return m_plotName;}
@@ -64,6 +64,7 @@ private:
 
    void updateCurve( bool xParentChanged,
                      bool yParentChanged,
+                     PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
                      unsigned int parentStartIndex = 0,
                      unsigned int parentStopIndex = 0);
 

@@ -239,6 +239,7 @@ MainWindow::~MainWindow()
     {
         plotMsgGroup* plotMsg = m_plotMsgQueue.front();
         m_plotMsgQueue.pop();
+        m_curveCommander->plotMsgGroupRemovedWithoutBeingProcessed(plotMsg);
         delete plotMsg;
     }
     m_plotMsgQueueMutex.unlock();

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -37,6 +37,8 @@ const QString PLOT_CURVE_SEP = "->";
 
 typedef std::vector<double> dubVect;
 
+typedef signed long long PlotMsgIdType; // Each plot message needs a unique number. 64 bits should ensure no number is ever used twice.
+#define PLOT_MSG_ID_TYPE_NO_PARENT_MSG (-1) // This is used to indicate a change was made to curve data that did not come from a plot message.
 
 typedef struct
 {

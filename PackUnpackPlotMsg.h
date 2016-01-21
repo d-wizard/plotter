@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -180,6 +180,8 @@ public:
    UnpackPlotMsg(const char* msg, unsigned int size);
    ~UnpackPlotMsg();
 
+   PlotMsgIdType m_plotMsgID;
+
    ePlotAction m_plotAction;
    std::string m_plotName;
    std::string m_curveName;
@@ -190,6 +192,8 @@ public:
 
    const char* GetMsgPtr(){return m_msg;}
    UINT_32 GetMsgPtrSize(){return m_msgSize;}
+
+   static PlotMsgIdType m_plotMsgCount; // This is used to generate a unique ID for each Plot Message.
 private:
    UnpackPlotMsg();
    
@@ -238,10 +242,11 @@ public:
    UnpackMultiPlotMsg(const char* msg, unsigned int size);
    ~UnpackMultiPlotMsg();
 
+   plotMsgGroup* getPlotMsgGroup(std::string plotName);
+
    std::map<std::string, plotMsgGroup*> m_plotMsgs;
 private:
    UnpackMultiPlotMsg();
-   plotMsgGroup* getPlotMsgGroup(std::string plotName);
 };
 
 #endif

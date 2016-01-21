@@ -49,14 +49,23 @@ void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, 
    QString curveName(plotMsg->m_curveName.c_str());
    unsigned int updateMsgSize = plotDataWasChanged ? plotMsg->m_yAxisValues.size() : 0;
 
+   m_childPlots_mutex.lock();
+   childPlots_addParentMsgIdToProcessedList(plotMsg->m_plotMsgID);
+   m_childPlots_mutex.unlock();
+
    curveUpdated( plotName,
                  curveName,
                  curveData,
                  plotMsg->m_sampleStartIndex,
-                 updateMsgSize );
+                 updateMsgSize,
+                 plotMsg->m_plotMsgID );
+
+   m_childPlots_mutex.lock();
+   childPlots_plot(plotMsg->m_plotMsgID);
+   m_childPlots_mutex.unlock();
 }
 
-void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints)
+void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId)
 {
    bool newCurve = !validCurve(plotName, curveName);
    m_allCurves[plotName].curves[curveName] = curveData;
@@ -72,9 +81,29 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    }
    else if(numPoints > 0)
    {
-      notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints);
+      notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
    }
    showHidePlotGui(plotName);
+}
+
+
+void CurveCommander::plotMsgGroupRemovedWithoutBeingProcessed(plotMsgGroup* plotMsgGroup)
+{
+   if(plotMsgGroup != NULL && plotMsgGroup->m_plotMsgs.size() > 0)
+   {
+      // The plot messages in the plot message group haven't been processed the normal way.
+      // Here is where any processing should be done.
+      m_childPlots_mutex.lock();
+
+      // No processing is needed. Just add the messages to the processed list.
+      childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGroup);
+
+      // All plot message in the plotMsgGroup will be in the same tParentMsgIdGroup list. So we only
+      // need to call this function once with any one of the m_plotMsgs's m_plotMsgID's.
+      childPlots_plot(plotMsgGroup->m_plotMsgs[0]->m_plotMsgID);
+      m_childPlots_mutex.unlock();
+   }
+
 }
 
 void CurveCommander::curvePropertyChanged()
@@ -175,6 +204,7 @@ void CurveCommander::destroyAllPlots()
 
 void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 {
+   childPlots_createParentMsgIdGroup(plotMsg);
    for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
    {
       plotMsgGroup* group = iter->second;
@@ -195,7 +225,9 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotTyp
    plotMsg->m_curveName = curveName.toStdString();
    plotMsg->m_plotType = plotType;
    plotMsg->m_yAxisValues = yPoints;
+
    plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   childPlots_createParentMsgIdGroup(groupMsg);
    m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
@@ -212,34 +244,49 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
    plotMsg->m_plotType = E_PLOT_TYPE_2D;
    plotMsg->m_xAxisValues = xPoints;
    plotMsg->m_yAxisValues = yPoints;
+
    plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+   childPlots_createParentMsgIdGroup(groupMsg);
    m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints)
+void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId)
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_1D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
    plotMsg->m_sampleStartIndex = sampleStartIndex;
    plotMsg->m_plotType = plotType;
    plotMsg->m_yAxisValues = yPoints;
-   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
-   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
-   showHidePlotGui(plotName);
+   if(parentMsgId == PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
+   {
+      plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+      childPlots_createParentMsgIdGroup(groupMsg);
+      m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
+      showHidePlotGui(plotName);
+   }
+   else
+   {
+      // Don't process right now, queue up the message so it can be processed when all child plot messages have been
+      // generated for a particular parent plot message group.
+      tChildAndParentID childAndParentID;
+      childAndParentID.parentMsgID = parentMsgId;
+      childAndParentID.childMsg = plotMsg;
+      childPlots_addChildUpdateToList(childAndParentID);
+   }
 }
 
-void CurveCommander::update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints)
+void CurveCommander::update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId)
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_2D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
@@ -247,10 +294,23 @@ void CurveCommander::update2dChildCurve(QString plotName, QString curveName, uns
    plotMsg->m_plotType = E_PLOT_TYPE_2D;
    plotMsg->m_xAxisValues = xPoints;
    plotMsg->m_yAxisValues = yPoints;
-   plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
-   m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
 
-   showHidePlotGui(plotName);
+   if(parentMsgId == PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
+   {
+      plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
+      childPlots_createParentMsgIdGroup(groupMsg);
+      m_allCurves[plotName].plotGui->readPlotMsg(groupMsg);
+      showHidePlotGui(plotName);
+   }
+   else
+   {
+      // Don't process right now, queue up the message so it can be processed when all child plot messages have been
+      // generated for a particular parent plot message group.
+      tChildAndParentID childAndParentID;
+      childAndParentID.parentMsgID = parentMsgId;
+      childAndParentID.childMsg = plotMsg;
+      childPlots_addChildUpdateToList(childAndParentID);
+   }
 }
 
 void CurveCommander::plotWindowCloseSlot(QString plotName)
@@ -302,13 +362,13 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
    }
 }
 
-void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints)
+void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId)
 {
    std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
 
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
-      (*iter)->anotherCurveChanged(plotName, curveName, sampleStartIndex, numPoints);
+      (*iter)->anotherCurveChanged(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
       ++iter;
    }
 }
@@ -514,6 +574,189 @@ void CurveCommander::unlinkChildFromParents(const QString& plotName, const QStri
    }
 }
 
+void CurveCommander::childPlots_createParentMsgIdGroup(plotMsgGroup* group)
+{
+   m_childPlots_mutex.lock();
+   
+   tParentMsgIdGroup parentIds;
+   // Cycle through all the individual plot messages and grab the Plot Message ID.
+   for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+   {
+      parentIds.push_back(group->m_plotMsgs[i]->m_plotMsgID);
+   }
+   m_parentMsgIdGroups.push_back(parentIds);
+   
+   m_childPlots_mutex.unlock();
+}
 
+void CurveCommander::childPlots_createParentMsgIdGroup(UnpackMultiPlotMsg* plotMsg)
+{
+   m_childPlots_mutex.lock();
+   
+   tParentMsgIdGroup parentIds;
+   // Cycle through all the individual plot messages and grab the Plot Message ID.
+   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   {
+      plotMsgGroup* group = iter->second;
+      for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+      {
+         parentIds.push_back(group->m_plotMsgs[i]->m_plotMsgID);
+      }
+   }
+   if(parentIds.size() > 0)
+   {
+      m_parentMsgIdGroups.push_back(parentIds);
+   }
+
+   m_childPlots_mutex.unlock();
+}
+
+std::list<tParentMsgIdGroup>::iterator CurveCommander::childPlots_getParentMsgIdGroupIter(PlotMsgIdType parentMsgID)
+{
+   for(std::list<tParentMsgIdGroup>::iterator i = m_parentMsgIdGroups.begin(); i != m_parentMsgIdGroups.end(); ++i)
+   {
+      for(tParentMsgIdGroup::iterator j = i->begin(); j != i->end(); ++j)
+      {
+         if((*j) == parentMsgID)
+         {
+            return i;
+         }
+      }
+   }
+
+   return m_parentMsgIdGroups.end();
+}
+
+bool CurveCommander::childPlots_haveAllMsgsBeenProcessed(PlotMsgIdType parentMsgID)
+{
+   std::list<tParentMsgIdGroup>::iterator msgGroupIter = childPlots_getParentMsgIdGroupIter(parentMsgID);
+   if(msgGroupIter != m_parentMsgIdGroups.end())
+   {
+      for(tParentMsgIdGroup::iterator curParentMsgId = msgGroupIter->begin(); curParentMsgId != msgGroupIter->end(); ++curParentMsgId)
+      {
+         bool foundMatch = false;
+         for( tParentMsgIdGroup::iterator processedParentMsgId = m_processedParentMsgIDs.begin();
+              processedParentMsgId != m_processedParentMsgIDs.end();
+              ++processedParentMsgId )
+         {
+            if((*processedParentMsgId) == (*curParentMsgId))
+            {
+               foundMatch = true;
+               break;
+            }
+         }
+         if(foundMatch == false)
+         {
+            return false;
+         }
+      }
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+void CurveCommander::childPlots_eraseParentIdsFromProcessedList(std::list<tParentMsgIdGroup>::iterator& parentMsgIdGroup)
+{
+   for(tParentMsgIdGroup::iterator parentMsgIdFromGroup = parentMsgIdGroup->begin(); parentMsgIdFromGroup != parentMsgIdGroup->end(); ++parentMsgIdFromGroup)
+   {
+      tParentMsgIdGroup::iterator parentMsgIdInProcessedList = m_processedParentMsgIDs.begin();
+      while(parentMsgIdInProcessedList != m_processedParentMsgIDs.end())
+      {
+         if( (*parentMsgIdInProcessedList) == (*parentMsgIdFromGroup) )
+         {
+            m_processedParentMsgIDs.erase(parentMsgIdInProcessedList++);
+         }
+         else
+         {
+            ++parentMsgIdInProcessedList;
+         }
+      }
+   }
+}
+void CurveCommander::childPlots_addParentMsgIdToProcessedList(PlotMsgIdType parentID)
+{
+   m_processedParentMsgIDs.push_back(parentID);
+}
+
+void CurveCommander::childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGroup* plotMsgGroup)
+{
+   if(plotMsgGroup != NULL && plotMsgGroup->m_plotMsgs.size() > 0)
+   {
+      // Loop through all the messages in the message group.
+      for(unsigned int i = 0; i < plotMsgGroup->m_plotMsgs.size(); ++i)
+      {
+         childPlots_addParentMsgIdToProcessedList(plotMsgGroup->m_plotMsgs[i]->m_plotMsgID);
+      }
+   }
+}
+
+void CurveCommander::childPlots_addChildUpdateToList(tChildAndParentID childAndParentID)
+{
+   m_childPlots_mutex.lock();
+   m_queuedChildCurveMsgs.push_back(childAndParentID);
+   m_childPlots_mutex.unlock();
+}
+
+void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
+{
+   // Note: It is expected that the Child Plot Mutex is locked before this function is called.
+   if(childPlots_haveAllMsgsBeenProcessed(parentID))
+   {
+      // All the parent messages in a message group have been processed. Now we can send all the queued
+      // child messages that have parents in the parent message group.
+      std::list<tParentMsgIdGroup>::iterator parentMsgGroupIter = childPlots_getParentMsgIdGroupIter(parentID);
+      if(parentMsgGroupIter != m_parentMsgIdGroups.end())
+      {
+         UnpackMultiPlotMsg multiChildPlotMsg(NULL, 0); // This will group all child plots from a particular parent plot message group into groups based on the child plot names.
+
+         // Loop through all the Parent Msg IDs in the group.
+         for(tParentMsgIdGroup::iterator curParentMsgId = parentMsgGroupIter->begin(); curParentMsgId != parentMsgGroupIter->end(); ++curParentMsgId)
+         {
+            // Loop through all queued child plot messages to find all the queue child curve that have parents in this message group.
+            // While looping through, erase members from queued list that will be processed now.
+            std::list<tChildAndParentID>::iterator queuedChilds = m_queuedChildCurveMsgs.begin();
+            while(queuedChilds != m_queuedChildCurveMsgs.end())
+            {
+               if(queuedChilds->parentMsgID == (*curParentMsgId))
+               {
+                  // This queued child curve is in the parent group. Add it to the multi plot message, and remove it from the queued list.
+                  plotMsgGroup* childPlotMsgGroup = multiChildPlotMsg.getPlotMsgGroup(queuedChilds->childMsg->m_plotName);
+                  childPlotMsgGroup->m_plotMsgs.push_back(queuedChilds->childMsg);
+                  m_queuedChildCurveMsgs.erase(queuedChilds++);
+               }
+               else
+               {
+                  ++queuedChilds;
+               }
+            }
+         }
+
+         if(multiChildPlotMsg.m_plotMsgs.size() > 0)
+         {
+            // It is exected that the mutex is locked before this function is called.
+            // But if child curves are going to be plotted, the mutex needs to be
+            // unlocked to send the child plot messages to the mainwindow GUI.
+            m_childPlots_mutex.unlock();
+
+            readPlotMsg(&multiChildPlotMsg);
+
+            m_childPlots_mutex.lock();
+         }
+
+         // Now that all the child plot messages that were spawned from the parent message group have been handled,
+         // we can erase the parent message IDs from the list of parent messages that have been processed by their
+         // main plot windows.
+         childPlots_eraseParentIdsFromProcessedList(parentMsgGroupIter);
+
+         // We are done processing this parent message group, erase it from the list.
+         m_parentMsgIdGroups.erase(parentMsgGroupIter);
+
+      } // End if(parentMsgGroupIter != m_parentMsgIdGroups.end())
+
+   } // End if(childPlots_haveAllMsgsBeenProcessed(parentID))
+}
 
 

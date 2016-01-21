@@ -55,7 +55,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    updateCurve(true, true);
 }
 
-void ChildCurve::anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints)
+void ChildCurve::anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints, PlotMsgIdType parentMsgId)
 {
    bool curveIsYAxisParent = (m_yAxis.dataSrc.plotName == plotName) &&
                              (m_yAxis.dataSrc.curveName == curveName);
@@ -68,6 +68,7 @@ void ChildCurve::anotherCurveChanged(QString plotName, QString curveName, unsign
    {
       updateCurve( curveIsXAxisParent,
                    curveIsYAxisParent,
+                   parentMsgId,
                    parentStartIndex,
                    parentStartIndex + parentNumPoints );
    }
@@ -228,6 +229,7 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
 
 void ChildCurve::updateCurve( bool xParentChanged,
                               bool yParentChanged,
+                              PlotMsgIdType parentMsgId,
                               unsigned int parentStartIndex,
                               unsigned int parentStopIndex )
 {
@@ -239,7 +241,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       {
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
 
-         m_curveCmdr->update1dChildCurve( m_plotName, m_curveName, m_plotType, offset, m_ySrcData );
+         m_curveCmdr->update1dChildCurve( m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
 
       }
       break;
@@ -250,7 +252,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
                                                     parentStartIndex,
                                                     parentStopIndex );
 
-         m_curveCmdr->update2dChildCurve(m_plotName, m_curveName, offset, m_xSrcData, m_ySrcData);
+         m_curveCmdr->update2dChildCurve(m_plotName, m_curveName, offset, m_xSrcData, m_ySrcData, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_REAL_FFT:
@@ -274,7 +276,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             realFFT(m_ySrcData, realFFTOut);
          }
 
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
@@ -300,8 +302,8 @@ void ChildCurve::updateCurve( bool xParentChanged,
          }
 
 
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName + COMPLEX_FFT_REAL_APPEND, m_plotType, 0, realFFTOut);
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName + COMPLEX_FFT_IMAG_APPEND, m_plotType, 0, imagFFTOut);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName + COMPLEX_FFT_REAL_APPEND, m_plotType, 0, realFFTOut, parentMsgId);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName + COMPLEX_FFT_IMAG_APPEND, m_plotType, 0, imagFFTOut, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_AM_DEMOD:
@@ -312,7 +314,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
                                                     parentStartIndex,
                                                     parentStopIndex );
          AmDemod(m_xSrcData, m_ySrcData, demodOut);
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, demodOut);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, demodOut, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_FM_DEMOD:
@@ -345,7 +347,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             }
 
             FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_prevInfo[offset], prevPhase);
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, fmDemod);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, fmDemod, parentMsgId);
          }
       }
       break;
@@ -380,7 +382,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
 
             PmDemod(m_xSrcData, m_ySrcData, &m_prevInfo[offset], prevPhase);
             pmDemod.assign(&m_prevInfo[offset], (&m_prevInfo[offset])+dataSize);
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, pmDemod);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, pmDemod, parentMsgId);
          }
       }
       break;
@@ -417,7 +419,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             }
 
 
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
          }
       }
       break;
@@ -449,7 +451,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
 
          handleLogData(&realFFTOut[0], fftSize);
 
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
@@ -481,7 +483,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
 
          handleLogData(&realFFTOut[0], fftSize);
 
-         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut);
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, 0, realFFTOut, parentMsgId);
       }
       break;
       case E_PLOT_TYPE_DELTA:
@@ -535,7 +537,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
                }
             }
 
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
          }
       }
       break;

@@ -32,6 +32,10 @@ typedef QMap<QString, CurveData*> tCurveDataInfo;
 typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
 typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
 
+typedef std::list<PlotMsgIdType> tParentMsgIdGroup;
+typedef struct{PlotMsgIdType parentMsgID; UnpackPlotMsg* childMsg;}tChildAndParentID;
+
+
 class plotGuiMain;
 class curveProperties;
 class ChildCurve;
@@ -44,7 +48,8 @@ public:
     ~CurveCommander();
 
     void curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, bool plotDataWasChanged);
-    void curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints);
+    void curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG);
+    void plotMsgGroupRemovedWithoutBeingProcessed(plotMsgGroup* plotMsgGroup);
     void curvePropertyChanged();
     void plotRemoved(QString plotName);
 
@@ -59,8 +64,8 @@ public:
 
     void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints);
     void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints);
-    void update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints);
-    void update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints);
+    void update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
+    void update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
     void destroyAllPlots();
 
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
@@ -88,9 +93,18 @@ private:
     CurveCommander();
 
     void createPlot(QString plotName);
-    void notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints);
+    void notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId);
     void removeOrphanedChildCurves();
 
+    std::list<tParentMsgIdGroup>::iterator childPlots_getParentMsgIdGroupIter(PlotMsgIdType parentMsgID);
+    bool childPlots_haveAllMsgsBeenProcessed(PlotMsgIdType parentMsgID);
+    void childPlots_eraseParentIdsFromProcessedList(std::list<tParentMsgIdGroup>::iterator& parentMsgIdGroup);
+    void childPlots_createParentMsgIdGroup(plotMsgGroup* group);
+    void childPlots_createParentMsgIdGroup(UnpackMultiPlotMsg* plotMsg);
+    void childPlots_addParentMsgIdToProcessedList(PlotMsgIdType parentID);
+    void childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGroup* plotMsgGroup);
+    void childPlots_addChildUpdateToList(tChildAndParentID childAndParentID);
+    void childPlots_plot(PlotMsgIdType parentID);
 
 
     tCurveCommanderInfo m_allCurves;
@@ -102,6 +116,11 @@ private:
 
     std::list<tStoredMsg> m_storedMsgs;
     QMutex m_storedMsgsMutex;
+
+    QMutex m_childPlots_mutex;
+    std::list<tParentMsgIdGroup> m_parentMsgIdGroups;
+    tParentMsgIdGroup m_processedParentMsgIDs;
+    std::list<tChildAndParentID> m_queuedChildCurveMsgs;
 
 public slots:
     void plotWindowCloseSlot(QString plotName);
