@@ -757,6 +757,21 @@ void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
       } // End if(parentMsgGroupIter != m_parentMsgIdGroups.end())
 
    } // End if(childPlots_haveAllMsgsBeenProcessed(parentID))
+
+#ifdef CHILD_MSG_GROUPING_DEBUG
+   childPlots_debugPrint();
+#endif
 }
 
+#ifdef CHILD_MSG_GROUPING_DEBUG
+void CurveCommander::childPlots_debugPrint()
+{
+   // Print the size of all the lists that handle Child Message Grouping (the list sizes should never grow).
+   std::stringstream ss;
+   ss << std::setw(2) << std::setfill('0') << m_parentMsgIdGroups.size() << " : " <<
+         std::setw(2) << std::setfill('0') << m_processedParentMsgIDs.size() << " : " <<
+         std::setw(2) << std::setfill('0') << m_queuedChildCurveMsgs.size();
+   LOG_LINE(ss.str());
+}
+#endif
 

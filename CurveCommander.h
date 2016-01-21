@@ -28,6 +28,13 @@
 #include "CurveData.h"
 #include "mainwindow.h"
 
+// Debug Defines
+//#define CHILD_MSG_GROUPING_DEBUG
+
+#ifdef CHILD_MSG_GROUPING_DEBUG
+#include "logToFile.h"
+#endif
+
 typedef QMap<QString, CurveData*> tCurveDataInfo;
 typedef struct{MainWindow* plotGui; tCurveDataInfo curves;}tPlotGuiCurveInfo;
 typedef QMap<QString, tPlotGuiCurveInfo> tCurveCommanderInfo;
@@ -105,6 +112,10 @@ private:
     void childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGroup* plotMsgGroup);
     void childPlots_addChildUpdateToList(tChildAndParentID childAndParentID);
     void childPlots_plot(PlotMsgIdType parentID);
+
+#ifdef CHILD_MSG_GROUPING_DEBUG
+    void childPlots_debugPrint();
+#endif
 
 
     tCurveCommanderInfo m_allCurves;
