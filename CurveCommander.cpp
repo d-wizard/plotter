@@ -736,7 +736,7 @@ void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
 
          if(multiChildPlotMsg.m_plotMsgs.size() > 0)
          {
-            // It is exected that the mutex is locked before this function is called.
+            // It is expected that the mutex is locked before this function is called.
             // But if child curves are going to be plotted, the mutex needs to be
             // unlocked to send the child plot messages to the mainwindow GUI.
             m_childPlots_mutex.unlock();
