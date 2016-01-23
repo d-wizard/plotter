@@ -1,4 +1,4 @@
-/* Copyright 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -16,4 +16,4 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#define REV_DATE_STAMP "Rev: 1946 - Date: 12/06/15"
+#define REV_DATE_STAMP "Rev: 1963 - Date: 01/22/16"
