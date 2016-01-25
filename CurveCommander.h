@@ -111,6 +111,7 @@ private:
     void childPlots_addParentMsgIdToProcessedList(PlotMsgIdType parentID);
     void childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGroup* plotMsgGroup);
     void childPlots_addChildUpdateToList(tChildAndParentID childAndParentID);
+    void childPlots_removeDuplicateChildData(UnpackMultiPlotMsg* multiPlotMsg);
     void childPlots_plot(PlotMsgIdType parentID);
 
 #ifdef CHILD_MSG_GROUPING_DEBUG

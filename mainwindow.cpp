@@ -475,9 +475,9 @@ void MainWindow::readPlotMsgSlot()
 
       if(multiPlotMsg != NULL)
       {
-         for(unsigned int i = 0; i < multiPlotMsg->m_plotMsgs.size(); ++i)
+         for(UnpackPlotMsgPtrList::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
          {
-            UnpackPlotMsg* plotMsg = multiPlotMsg->m_plotMsgs[i];
+            UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
 
             switch(plotMsg->m_plotAction)
@@ -501,9 +501,9 @@ void MainWindow::readPlotMsgSlot()
          updatePlotWithNewCurveData();
 
          // Inform parent that a curve has been added / changed
-         for(unsigned int i = 0; i < multiPlotMsg->m_plotMsgs.size(); ++i)
+         for(UnpackPlotMsgPtrList::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
          {
-            UnpackPlotMsg* plotMsg = multiPlotMsg->m_plotMsgs[i];
+            UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
             int curveIndex = getCurveIndex(curveName);
             m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], m_allowNewCurves);

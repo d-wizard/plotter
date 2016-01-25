@@ -214,6 +214,8 @@ private:
    UCHAR m_interleaved;
 };
 
+typedef std::list<UnpackPlotMsg*> UnpackPlotMsgPtrList;
+
 class plotMsgGroup
 {
 public:
@@ -227,13 +229,13 @@ public:
 
    ~plotMsgGroup()
    {
-      for(unsigned int i = 0; i < m_plotMsgs.size(); ++i)
+      for(UnpackPlotMsgPtrList::iterator iter = m_plotMsgs.begin(); iter != m_plotMsgs.end(); ++iter)
       {
-         delete m_plotMsgs[i];
+         delete (*iter);
       }
    }
 
-   std::vector<UnpackPlotMsg*> m_plotMsgs;
+   UnpackPlotMsgPtrList m_plotMsgs;
 };
 
 class UnpackMultiPlotMsg

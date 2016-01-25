@@ -100,7 +100,7 @@ void CurveCommander::plotMsgGroupRemovedWithoutBeingProcessed(plotMsgGroup* plot
 
       // All plot message in the plotMsgGroup will be in the same tParentMsgIdGroup list. So we only
       // need to call this function once with any one of the m_plotMsgs's m_plotMsgID's.
-      childPlots_plot(plotMsgGroup->m_plotMsgs[0]->m_plotMsgID);
+      childPlots_plot((*plotMsgGroup->m_plotMsgs.begin())->m_plotMsgID);
       m_childPlots_mutex.unlock();
    }
 
@@ -205,10 +205,10 @@ void CurveCommander::destroyAllPlots()
 void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 {
    childPlots_createParentMsgIdGroup(plotMsg);
-   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
    {
-      plotMsgGroup* group = iter->second;
-      QString plotName = iter->first.c_str();
+      plotMsgGroup* group = allMsgs->second;
+      QString plotName = allMsgs->first.c_str();
       createPlot(plotName);
       m_allCurves[plotName].plotGui->readPlotMsg(group);
       showHidePlotGui(plotName);
@@ -580,9 +580,9 @@ void CurveCommander::childPlots_createParentMsgIdGroup(plotMsgGroup* group)
    
    tParentMsgIdGroup parentIds;
    // Cycle through all the individual plot messages and grab the Plot Message ID.
-   for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+   for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
    {
-      parentIds.push_back(group->m_plotMsgs[i]->m_plotMsgID);
+      parentIds.push_back((*plotMsgs)->m_plotMsgID);
    }
    m_parentMsgIdGroups.push_back(parentIds);
    
@@ -595,12 +595,12 @@ void CurveCommander::childPlots_createParentMsgIdGroup(UnpackMultiPlotMsg* plotM
    
    tParentMsgIdGroup parentIds;
    // Cycle through all the individual plot messages and grab the Plot Message ID.
-   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
    {
-      plotMsgGroup* group = iter->second;
-      for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+      plotMsgGroup* group = allMsgs->second;
+      for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
       {
-         parentIds.push_back(group->m_plotMsgs[i]->m_plotMsgID);
+         parentIds.push_back((*plotMsgs)->m_plotMsgID);
       }
    }
    if(parentIds.size() > 0)
@@ -686,9 +686,9 @@ void CurveCommander::childPlots_addMsgGroupToParentMsgIdProcessedList(plotMsgGro
    if(plotMsgGroup != NULL && plotMsgGroup->m_plotMsgs.size() > 0)
    {
       // Loop through all the messages in the message group.
-      for(unsigned int i = 0; i < plotMsgGroup->m_plotMsgs.size(); ++i)
+      for(UnpackPlotMsgPtrList::iterator plotMsgs = plotMsgGroup->m_plotMsgs.begin(); plotMsgs != plotMsgGroup->m_plotMsgs.end(); ++plotMsgs)for(unsigned int i = 0; i < plotMsgGroup->m_plotMsgs.size(); ++i)
       {
-         childPlots_addParentMsgIdToProcessedList(plotMsgGroup->m_plotMsgs[i]->m_plotMsgID);
+         childPlots_addParentMsgIdToProcessedList((*plotMsgs)->m_plotMsgID);
       }
    }
 }
@@ -698,6 +698,58 @@ void CurveCommander::childPlots_addChildUpdateToList(tChildAndParentID childAndP
    m_childPlots_mutex.lock();
    m_queuedChildCurveMsgs.push_back(childAndParentID);
    m_childPlots_mutex.unlock();
+}
+
+void CurveCommander::childPlots_removeDuplicateChildData(UnpackMultiPlotMsg* multiPlotMsg)
+{
+   // Loop through all the plotMsgGroup's with unique Plot Names.
+   for(std::map<std::string, plotMsgGroup*>::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
+   {
+      plotMsgGroup* group = iter->second;
+
+      // Loop through the grouped message for a unique Plot Name.
+      // Remove messages that contain duplicate data (when a match is found
+      // remove the 1st of the 2 entries).
+      UnpackPlotMsgPtrList::iterator mainIter = group->m_plotMsgs.begin();
+      while(mainIter != group->m_plotMsgs.end())
+      {
+         UnpackPlotMsg* mainPtr = (*mainIter);
+         bool duplicateChildDataFound = false;
+
+         UnpackPlotMsgPtrList::iterator secondaryIter = mainIter;
+         secondaryIter++;
+         while(secondaryIter != group->m_plotMsgs.end())
+         {
+            UnpackPlotMsg* secendaryPtr = (*secondaryIter);
+
+            // Check if the 2 entries are duplicates (i.e. they both attempting to update
+            // the exact same memory of a curve).
+            if( mainPtr->m_curveName          == secendaryPtr->m_curveName &&
+                mainPtr->m_sampleStartIndex   == secendaryPtr->m_sampleStartIndex &&
+                mainPtr->m_plotType           == secendaryPtr->m_plotType && 
+                mainPtr->m_xAxisValues.size() == secendaryPtr->m_xAxisValues.size() && 
+                mainPtr->m_yAxisValues.size() == secendaryPtr->m_yAxisValues.size() )
+            {
+               duplicateChildDataFound = true;
+               break;
+            }
+            else
+            {
+               ++secondaryIter;
+            }
+         }
+         if(duplicateChildDataFound)
+         {
+            // This UnpackPlotMsg will never be processed, delete it now and erase it from the list.
+            delete mainPtr;
+            group->m_plotMsgs.erase(mainIter++);
+         }
+         else
+         {
+            ++mainIter;
+         }
+      }
+   }
 }
 
 void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
@@ -734,6 +786,7 @@ void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
             }
          }
 
+         childPlots_removeDuplicateChildData(&multiChildPlotMsg);
          if(multiChildPlotMsg.m_plotMsgs.size() > 0)
          {
             // It is expected that the mutex is locked before this function is called.

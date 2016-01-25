@@ -224,16 +224,16 @@ void plotGuiMain::readPlotMsgSlot(UnpackMultiPlotMsg *plotMsg)
 
 void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 {
-   for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+   for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
    {
-      QString plotName(iter->first.c_str());
-      plotMsgGroup* group = iter->second;
-      for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+      QString plotName(allMsgs->first.c_str());
+      plotMsgGroup* group = allMsgs->second;
+      for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
       {
          // Grab the parameters needed for storePlotMsg.
-         const char* msgPtr( group->m_plotMsgs[i]->GetMsgPtr() );
-         unsigned int msgSize( group->m_plotMsgs[i]->GetMsgPtrSize() );
-         QString curveName( group->m_plotMsgs[i]->m_curveName.c_str() );
+         const char* msgPtr( (*plotMsgs)->GetMsgPtr() );
+         unsigned int msgSize( (*plotMsgs)->GetMsgPtrSize() );
+         QString curveName( (*plotMsgs)->m_curveName.c_str() );
          m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
       }
    }
@@ -248,13 +248,13 @@ void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveN
    if(plotMsg->m_plotMsgs.size() > 0)
    {
       // Change all plot/curve names that were read from the unpacked message to the plot/curve names passed into this function.
-      for(std::map<std::string, plotMsgGroup*>::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+      for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
       {
-         plotMsgGroup* group = iter->second;
-         for(unsigned int i = 0; i < group->m_plotMsgs.size(); ++i)
+         plotMsgGroup* group = allMsgs->second;
+         for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
          {
-            group->m_plotMsgs[i]->m_plotName = plotCurveName.plot.toStdString();
-            group->m_plotMsgs[i]->m_curveName = plotCurveName.curve.toStdString();
+            (*plotMsgs)->m_plotName = plotCurveName.plot.toStdString();
+            (*plotMsgs)->m_curveName = plotCurveName.curve.toStdString();
          }
       }
       emit readPlotMsgSignal(plotMsg);
