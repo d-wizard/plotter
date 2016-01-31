@@ -82,6 +82,16 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>ChildCurves.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/ChildCurves.cpp</locationURI>
+		</link>
+		<link>
+			<name>ChildCurves.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/ChildCurves.h</locationURI>
+		</link>
+		<link>
 			<name>ColorCodes</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/ColorCodes</locationURI>
