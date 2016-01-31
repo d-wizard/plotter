@@ -62,6 +62,8 @@ private:
                                      unsigned int parentStartIndex = 0,
                                      unsigned int parentStopIndex = 0);
 
+   ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
+   
    void updateCurve( bool xParentChanged,
                      bool yParentChanged,
                      PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,

@@ -227,6 +227,30 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
    return startOffset;
 }
 
+// For some combinations of parent plot type and child plot type, it is better to have the child
+// plot type set to the parent plot type.
+ePlotType ChildCurve::determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType)
+{
+   ePlotType retVal = origChildPlotType;
+   ePlotType parentPlotType = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName)->getPlotType();
+
+   switch(parentPlotType)
+   {
+      // FFT plots have special processing for their x-axis. If the parent plot is an FFT plot,
+      // make the child plot type equal to the parent plot type.
+      case E_PLOT_TYPE_REAL_FFT:
+      case E_PLOT_TYPE_COMPLEX_FFT:
+      case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+      case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+         retVal = parentPlotType;
+      break;
+      default:
+         // retVal is initialized to the correct default value. Do nothing.
+      break;
+   }
+   
+   return retVal;
+}
 void ChildCurve::updateCurve( bool xParentChanged,
                               bool yParentChanged,
                               PlotMsgIdType parentMsgId,
@@ -234,14 +258,14 @@ void ChildCurve::updateCurve( bool xParentChanged,
                               unsigned int parentStopIndex )
 {
 
-
    switch(m_plotType)
    {
       case E_PLOT_TYPE_1D:
       {
+         ePlotType childCurvePlotType = determineChildPlotTypeFor1D(m_yAxis, m_plotType);
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
 
-         m_curveCmdr->update1dChildCurve( m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
+         m_curveCmdr->update1dChildCurve( m_plotName, m_curveName, childCurvePlotType, offset, m_ySrcData, parentMsgId);
 
       }
       break;
@@ -388,6 +412,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       break;
       case E_PLOT_TYPE_AVERAGE:
       {
+         ePlotType childCurvePlotType = determineChildPlotTypeFor1D(m_yAxis, m_plotType);
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
 
          int dataSize = m_ySrcData.size();
@@ -419,7 +444,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             }
 
 
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, childCurvePlotType, offset, m_ySrcData, parentMsgId);
          }
       }
       break;
@@ -489,6 +514,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
       {
+         ePlotType childCurvePlotType = determineChildPlotTypeFor1D(m_yAxis, m_plotType);
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
 
          int dataSize = m_ySrcData.size();
@@ -537,7 +563,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
                }
             }
 
-            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, m_ySrcData, parentMsgId);
+            m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, childCurvePlotType, offset, m_ySrcData, parentMsgId);
          }
       }
       break;
