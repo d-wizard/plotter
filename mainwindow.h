@@ -212,12 +212,15 @@ private:
     QAction m_zoomAction;
     QAction m_cursorAction;
     QAction m_deltaCursorAction;
+    QAction m_autoZoomAction;
     QAction m_holdZoomAction;
+    QAction m_maxHoldZoomAction;
     QAction m_scrollModeAction;
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
     QAction m_toggleLegendAction;
     QMenu m_rightClickMenu;
+    QMenu m_zoomSettingsMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
     QMenu m_stylesCurvesMenu;
@@ -292,7 +295,9 @@ private slots:
     void toggleLegend();
     void cursorMode();
     void deltaCursorMode();
+    void autoZoom();
     void holdZoom();
+    void maxHoldZoom();
     void scrollMode();
     void zoomMode();
     void resetZoom();

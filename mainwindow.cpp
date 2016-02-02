@@ -65,11 +65,14 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_zoomAction("Zoom", this),
     m_cursorAction("Cursor", this),
     m_deltaCursorAction("Delta Cursor", this),
-    m_holdZoomAction("Freeze Zoom", this),
+    m_autoZoomAction("Auto", this),
+    m_holdZoomAction("Freeze", this),
+    m_maxHoldZoomAction("Max Hold", this),
     m_scrollModeAction("Scroll Mode", this),
     m_resetZoomAction("Reset Zoom", this),
     m_normalizeAction("Normalize Curves", this),
     m_toggleLegendAction("Legend", this),
+    m_zoomSettingsMenu("Zoom Settings"),
     m_selectedCurvesMenu("Selected Curve"),
     m_visibleCurvesMenu("Visible Curves"),
     m_stylesCurvesMenu("Curve Style"),
@@ -119,7 +122,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(&m_cursorAction, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
     connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
+    connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom()));
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
+    connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
@@ -138,6 +143,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
 
+    // Initialize the right click menu.
     m_rightClickMenu.addAction(&m_zoomAction);
     m_rightClickMenu.addAction(&m_cursorAction);
     m_rightClickMenu.addAction(&m_deltaCursorAction);
@@ -146,7 +152,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addAction(&m_normalizeAction);
     m_rightClickMenu.addAction(&m_toggleLegendAction);
     m_rightClickMenu.addSeparator();
-    m_rightClickMenu.addAction(&m_holdZoomAction);
+    m_rightClickMenu.addMenu(&m_zoomSettingsMenu);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
@@ -161,6 +167,11 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_curveProperties);
 
+    // Initialize the right click menu's zoom settings sub menu.
+    m_zoomSettingsMenu.addAction(&m_autoZoomAction);
+    m_zoomSettingsMenu.addAction(&m_holdZoomAction);
+    m_zoomSettingsMenu.addAction(&m_maxHoldZoomAction);
+    m_autoZoomAction.setIcon(m_checkedIcon);
     setDisplayRightClickIcons();
 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsAutoAction,       E_DISPLAY_POINT_AUTO,       displayPointsChangeType);
@@ -763,20 +774,45 @@ void MainWindow::zoomMode()
     m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
 }
 
+void MainWindow::autoZoom()
+{
+   m_plotZoom->m_holdZoom = false;
+   m_plotZoom->m_maxHoldZoom = false;
+   m_autoZoomAction.setIcon(m_checkedIcon);
+   m_holdZoomAction.setIcon(QIcon());
+   m_maxHoldZoomAction.setIcon(QIcon());
+   m_zoomAction.setEnabled(true);
+
+   calcMaxMin();
+   m_plotZoom->ResetZoom();
+}
+
 void MainWindow::holdZoom()
 {
-   m_plotZoom->m_holdZoom = !m_plotZoom->m_holdZoom; // Toggle
-   if(m_plotZoom->m_holdZoom)
+   m_plotZoom->m_maxHoldZoom = false;
+   if(m_plotZoom->m_holdZoom == false)
    {
+      m_plotZoom->m_holdZoom = true;
+      m_autoZoomAction.setIcon(QIcon());
       m_holdZoomAction.setIcon(m_checkedIcon);
+      m_maxHoldZoomAction.setIcon(QIcon());
       m_zoomAction.setEnabled(false);
-      m_resetZoomAction.setEnabled(false);
    }
-   else
+}
+
+void MainWindow::maxHoldZoom()
+{
+   m_plotZoom->m_holdZoom = false;
+   if(m_plotZoom->m_maxHoldZoom == false)
    {
+      m_autoZoomAction.setIcon(QIcon());
       m_holdZoomAction.setIcon(QIcon());
-      m_zoomAction.setEnabled(true);
-      m_resetZoomAction.setEnabled(true);
+      m_maxHoldZoomAction.setIcon(m_checkedIcon);
+      m_zoomAction.setEnabled(false);
+
+      calcMaxMin();
+      m_plotZoom->ResetZoom();
+      m_plotZoom->m_maxHoldZoom = true;
    }
 }
 
@@ -795,8 +831,7 @@ void MainWindow::scrollMode()
 
 void MainWindow::resetZoom()
 {
-    calcMaxMin();
-    m_plotZoom->ResetZoom();
+   autoZoom();
 }
 
 void MainWindow::normalizeCurves()
