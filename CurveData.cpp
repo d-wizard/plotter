@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -846,7 +846,6 @@ void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int 
 
 void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples)
 {
-   bool logOpPerformed = false;
    double* dataBasePtr = &data[sampleStartIndex];
    if(mathOp.size() > 0)
    {
@@ -898,7 +897,6 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                break;
                case E_LOG:
                   (*dataIter) = log(*dataIter) / mathIter->helperNum;
-                  logOpPerformed = true;
                break;
                case E_MOD:
                   (*dataIter) = fmod(*dataIter, mathIter->num);
@@ -913,10 +911,6 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
       }
    }
 
-   if(logOpPerformed)
-   {
-      handleLogData(&data[0], data.size());
-   }
 }
 
 
