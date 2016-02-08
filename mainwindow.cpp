@@ -464,10 +464,26 @@ void MainWindow::updateCursorMenus()
 
 void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
 {
-   m_plotMsgQueueMutex.lock();
-   m_plotMsgQueue.push(plotMsg);
-   m_plotMsgQueueMutex.unlock();
-   emit readPlotMsgSignal();
+   // If we are allowing new curve data, then push it onto the queue. Otherwise clear it out right now.
+   if(m_allowNewCurves)
+   {
+      m_plotMsgQueueMutex.lock();
+      m_plotMsgQueue.push(plotMsg);
+      m_plotMsgQueueMutex.unlock();
+      emit readPlotMsgSignal();
+   }
+   else
+   {
+      // Not allowing new curve data, clear it out now.
+      // Inform parent that new curve data has been completely processed (in this case, no processing was needed).
+      for(UnpackPlotMsgPtrList::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
+      {
+         UnpackPlotMsg* plotMsg = (*iter);
+         QString curveName( plotMsg->m_curveName.c_str() );
+         int curveIndex = getCurveIndex(curveName);
+         m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], false);
+      }
+   }
 }
 
 void MainWindow::readPlotMsgSlot()
