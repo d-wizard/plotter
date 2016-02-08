@@ -54,7 +54,7 @@ PlotZoom::PlotZoom(QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScr
    m_horzScroll->setVisible(false);
 }
 
-void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions)
+void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput)
 {
    // Make sure min and max values are not the same (i.e. do not set the
    // plot width/height to 0).
@@ -135,13 +135,13 @@ void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions)
       }
       if(zoomChanged)
       {
-         SetZoom(modZoomDim, false);
+         SetZoom(modZoomDim, changeCausedByUserGuiInput, false);
       }
    }
    else if(m_zoomDimensions == oldPlotDim) // This checks if we are zoomed in.
    {
       // We are not zoomed in, set zoom to new plot dimensions
-      SetZoom(m_plotDimensions, false);
+      SetZoom(m_plotDimensions, changeCausedByUserGuiInput, false);
    }
    else
    {
@@ -205,13 +205,13 @@ void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions)
       }
 
       // Reset the zoom so it will be bound by new dimensions
-      SetZoom(modZoomDim, false);
+      SetZoom(modZoomDim, changeCausedByUserGuiInput, false);
    }
 }
 
 void PlotZoom::SetZoom(maxMinXY zoomDimensions)
 {
-   SetZoom(zoomDimensions, true);
+   SetZoom(zoomDimensions, true, true);
 }
 
 void PlotZoom::ResetPlotAxisScale()
@@ -280,7 +280,7 @@ void PlotZoom::ModSliderPos(eAxis axis, double changeWindowPercent)
             zoomDim.minX = m_plotDimensions.minX;
         }
 
-        SetZoom(zoomDim, false);
+        SetZoom(zoomDim, true, false);
     }
     else
     {
@@ -303,7 +303,7 @@ void PlotZoom::ModSliderPos(eAxis axis, double changeWindowPercent)
             zoomDim.minY = m_plotDimensions.minY;
         }
 
-        SetZoom(zoomDim, false);
+        SetZoom(zoomDim, true, false);
     }
 
 }
@@ -417,12 +417,12 @@ void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos, bool holdYAxis)
         }
     }
 
-    SetZoom(zoom, false);
+    SetZoom(zoom, true, false);
 }
 
 void PlotZoom::ResetZoom()
 {
-    SetZoom(m_plotDimensions, false);
+    SetZoom(m_plotDimensions, true, false);
 }
 
 void PlotZoom::changeZoomFromSavedZooms(int changeZoomDelta)
@@ -446,7 +446,7 @@ void PlotZoom::changeZoomFromSavedZooms(int changeZoomDelta)
         if(resetZoom == false && (unsigned int)newZoomIndex != m_zoomDimIndex)
         {
             m_zoomDimIndex = newZoomIndex;
-            SetZoom(m_zoomDimSave[m_zoomDimIndex], false);
+            SetZoom(m_zoomDimSave[m_zoomDimIndex], true, false);
         }
     }
 
@@ -461,14 +461,10 @@ maxMinXY PlotZoom::getCurZoom()
     return m_zoomDimensions;
 }
 
-void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool saveZoom)
+void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom)
 {
-   if(m_holdZoom)
-   {
-      // Zoom is being held at its current value. Return early.
-      return;
-   }
-
+   bool freezeZoom = changeCausedByUserGuiInput == false && m_holdZoom == true;
+   
    // Nothing in the save zoom vector, initialize it with current zoom value.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
@@ -478,7 +474,12 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool saveZoom)
 
    }
 
-   if(m_maxHoldZoom == false)
+   if(freezeZoom)
+   {
+      zoomDimensions = m_zoomDimensions;
+   }
+   
+   if(m_maxHoldZoom == false && freezeZoom == false)
    {
       BoundZoom(zoomDimensions);
    }

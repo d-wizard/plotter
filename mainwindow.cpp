@@ -679,9 +679,11 @@ void MainWindow::updatePlotWithNewCurveData()
    // is caused by updating the GUI when we know the plot is just going to change anyway.
    if(m_plotMsgQueue.size() == 0)
    {
-      calcMaxMin();
+      maxMinXY maxMin = calcMaxMin();
 
-      replotMainPlot();
+      m_plotZoom->SetPlotDimensions(maxMin, false);
+
+      replotMainPlot(false);
 
       // Make sure the cursors matches the updated point.
       if(m_qwtSelectedSample->isAttached == true)
@@ -783,7 +785,8 @@ void MainWindow::autoZoom()
    m_maxHoldZoomAction.setIcon(QIcon());
    m_zoomAction.setEnabled(true);
 
-   calcMaxMin();
+   maxMinXY maxMin = calcMaxMin();
+   m_plotZoom->SetPlotDimensions(maxMin, true);
    m_plotZoom->ResetZoom();
 }
 
@@ -796,7 +799,6 @@ void MainWindow::holdZoom()
       m_autoZoomAction.setIcon(QIcon());
       m_holdZoomAction.setIcon(m_checkedIcon);
       m_maxHoldZoomAction.setIcon(QIcon());
-      m_zoomAction.setEnabled(false);
    }
 }
 
@@ -810,7 +812,8 @@ void MainWindow::maxHoldZoom()
       m_maxHoldZoomAction.setIcon(m_checkedIcon);
       m_zoomAction.setEnabled(false);
 
-      calcMaxMin();
+      maxMinXY maxMin = calcMaxMin();
+      m_plotZoom->SetPlotDimensions(maxMin, true);
       m_plotZoom->ResetZoom();
       m_plotZoom->m_maxHoldZoom = true;
    }
@@ -844,7 +847,7 @@ void MainWindow::normalizeCurves()
     else
     {
         m_normalizeAction.setIcon(QIcon());
-        m_plotZoom->SetPlotDimensions(m_maxMin);
+        m_plotZoom->SetPlotDimensions(m_maxMin, true);
     }
     replotMainPlot();
     m_plotZoom->ResetZoom();
@@ -897,48 +900,48 @@ void MainWindow::togglePlotUpdateAbility()
    }
 }
 
-void MainWindow::calcMaxMin()
+maxMinXY MainWindow::calcMaxMin()
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
-
-    int i = 0;
-    while(i < m_qwtCurves.size() && m_qwtCurves[i]->isDisplayed() == false)
-    {
-        ++i;
-    }
-    if(i < m_qwtCurves.size())
-    {
-        m_maxMin = m_qwtCurves[i]->getMaxMinXYOfCurve();
-        while(i < m_qwtCurves.size())
-        {
-            if(m_qwtCurves[i]->isDisplayed())
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify m_maxMin at the same time.
+   
+   int i = 0;
+   while(i < m_qwtCurves.size() && m_qwtCurves[i]->isDisplayed() == false)
+   {
+      ++i;
+   }
+   if(i < m_qwtCurves.size())
+   {
+      m_maxMin = m_qwtCurves[i]->getMaxMinXYOfCurve();
+      while(i < m_qwtCurves.size())
+      {
+         if(m_qwtCurves[i]->isDisplayed())
+         {
+            maxMinXY curveMaxMinXY = m_qwtCurves[i]->getMaxMinXYOfCurve();
+            if(m_maxMin.minX > curveMaxMinXY.minX)
             {
-                maxMinXY curveMaxMinXY = m_qwtCurves[i]->getMaxMinXYOfCurve();
-                if(m_maxMin.minX > curveMaxMinXY.minX)
-                {
-                    m_maxMin.minX = curveMaxMinXY.minX;
-                }
-                if(m_maxMin.minY > curveMaxMinXY.minY)
-                {
-                    m_maxMin.minY = curveMaxMinXY.minY;
-                }
-                if(m_maxMin.maxX < curveMaxMinXY.maxX)
-                {
-                    m_maxMin.maxX = curveMaxMinXY.maxX;
-                }
-                if(m_maxMin.maxY < curveMaxMinXY.maxY)
-                {
-                    m_maxMin.maxY = curveMaxMinXY.maxY;
-                }
+               m_maxMin.minX = curveMaxMinXY.minX;
             }
-            ++i;
-        }
-    }
-    else
-    {
-        // TODO: Should do something when there are no curves displayed
-    }
-    m_plotZoom->SetPlotDimensions(m_maxMin);
+            if(m_maxMin.minY > curveMaxMinXY.minY)
+            {
+               m_maxMin.minY = curveMaxMinXY.minY;
+            }
+            if(m_maxMin.maxX < curveMaxMinXY.maxX)
+            {
+               m_maxMin.maxX = curveMaxMinXY.maxX;
+            }
+            if(m_maxMin.maxY < curveMaxMinXY.maxY)
+            {
+               m_maxMin.maxY = curveMaxMinXY.maxY;
+            }
+         }
+         ++i;
+      }
+   }
+   else
+   {
+      // TODO: Should do something when there are no curves displayed
+   }
+   return m_maxMin;
 }
 
 
@@ -1502,7 +1505,7 @@ void MainWindow::setSelectedCurveIndex(int index)
                 newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
                 newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
 
-                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
+                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), true);
                 m_plotZoom->SetZoom(newZoom);
             }
             else
@@ -1515,7 +1518,7 @@ void MainWindow::setSelectedCurveIndex(int index)
     }
 }
 
-void MainWindow::replotMainPlot()
+void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -1534,11 +1537,11 @@ void MainWindow::replotMainPlot()
 
     if(m_normalizeCurves)
     {
-        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
+        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), changeCausedByUserGuiInput);
     }
     else
     {
-        m_plotZoom->SetPlotDimensions(m_maxMin);
+        m_plotZoom->SetPlotDimensions(m_maxMin, changeCausedByUserGuiInput);
     }
     m_qwtPlot->replot();
 }
@@ -1802,7 +1805,8 @@ void MainWindow::updateCurveOrder()
 
    updatePointDisplay();
    replotMainPlot();
-   calcMaxMin();
+   maxMinXY maxMin = calcMaxMin();
+   m_plotZoom->SetPlotDimensions(maxMin, true);
    emit updateCursorMenusSignal();
 }
 

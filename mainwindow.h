@@ -258,7 +258,7 @@ private:
     void handleCurveDataChange(int curveIndex);
     void updatePlotWithNewCurveData();
 
-    void calcMaxMin();
+    maxMinXY calcMaxMin();
 
     void clearPointLabels();
     void displayPointLabels();
@@ -273,7 +273,7 @@ private:
 
     void setSelectedCurveIndex(int index);
 
-    void replotMainPlot();
+    void replotMainPlot(bool changeCausedByUserGuiInput = true);
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);

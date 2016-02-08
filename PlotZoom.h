@@ -40,7 +40,7 @@ class PlotZoom
 public:
    PlotZoom(QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll);
 
-   void SetPlotDimensions(maxMinXY plotDimensions);
+   void SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput);
 
    void SetZoom(maxMinXY zoomDimensions);
 
@@ -99,7 +99,7 @@ private:
    QVector<maxMinXY> m_zoomDimSave;
    unsigned int m_zoomDimIndex;
 
-   void SetZoom(maxMinXY zoomDimensions, bool saveZoom);
+   void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 
    bool areTheyClose(double val1, double val2);
 
