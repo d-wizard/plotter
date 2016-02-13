@@ -375,46 +375,49 @@ void PlotZoom::Zoom(double zoomFactor, QPointF relativeMousePos, bool holdYAxis)
     zoom.minX = newXPoint - leftOfPoint;
     zoom.maxX = newXPoint + rightOfPoint;
 
-    // If out of bounds, set within bounds and try to keep the same width/height
-    if(zoom.minX < m_plotDimensions.minX)
+    if(m_holdZoom == false)
     {
-        double diff = m_plotDimensions.minX - zoom.minX;
-        zoom.minX = m_plotDimensions.minX;
-        zoom.maxX += diff;
-        if(zoom.maxX > m_plotDimensions.maxX)
-        {
-            zoom.maxX = m_plotDimensions.maxX;
-        }
-    }
-    if(zoom.maxX > m_plotDimensions.maxX)
-    {
-        double diff = zoom.maxX - m_plotDimensions.maxX;
-        zoom.maxX = m_plotDimensions.maxX;
-        zoom.minX -= diff;
-        if(zoom.minX < m_plotDimensions.minX)
-        {
-            zoom.minX = m_plotDimensions.minX;
-        }
-    }
-    if(zoom.minY < m_plotDimensions.minY)
-    {
-        double diff = m_plotDimensions.minY - zoom.minY;
-        zoom.minY = m_plotDimensions.minY;
-        zoom.maxY += diff;
-        if(zoom.maxY > m_plotDimensions.maxY)
-        {
-            zoom.maxY = m_plotDimensions.maxY;
-        }
-    }
-    if(zoom.maxY > m_plotDimensions.maxY)
-    {
-        double diff = zoom.maxY - m_plotDimensions.maxY;
-        zoom.maxY = m_plotDimensions.maxY;
-        zoom.minY -= diff;
-        if(zoom.minY < m_plotDimensions.minY)
-        {
-            zoom.minY = m_plotDimensions.minY;
-        }
+       // If out of bounds, set within bounds and try to keep the same width/height
+       if(zoom.minX < m_plotDimensions.minX)
+       {
+           double diff = m_plotDimensions.minX - zoom.minX;
+           zoom.minX = m_plotDimensions.minX;
+           zoom.maxX += diff;
+           if(zoom.maxX > m_plotDimensions.maxX)
+           {
+               zoom.maxX = m_plotDimensions.maxX;
+           }
+       }
+       if(zoom.maxX > m_plotDimensions.maxX)
+       {
+           double diff = zoom.maxX - m_plotDimensions.maxX;
+           zoom.maxX = m_plotDimensions.maxX;
+           zoom.minX -= diff;
+           if(zoom.minX < m_plotDimensions.minX)
+           {
+               zoom.minX = m_plotDimensions.minX;
+           }
+       }
+       if(zoom.minY < m_plotDimensions.minY)
+       {
+           double diff = m_plotDimensions.minY - zoom.minY;
+           zoom.minY = m_plotDimensions.minY;
+           zoom.maxY += diff;
+           if(zoom.maxY > m_plotDimensions.maxY)
+           {
+               zoom.maxY = m_plotDimensions.maxY;
+           }
+       }
+       if(zoom.maxY > m_plotDimensions.maxY)
+       {
+           double diff = zoom.maxY - m_plotDimensions.maxY;
+           zoom.maxY = m_plotDimensions.maxY;
+           zoom.minY -= diff;
+           if(zoom.minY < m_plotDimensions.minY)
+           {
+               zoom.minY = m_plotDimensions.minY;
+           }
+       }
     }
 
     SetZoom(zoom, true, false);
@@ -463,8 +466,6 @@ maxMinXY PlotZoom::getCurZoom()
 
 void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom)
 {
-   bool freezeZoom = changeCausedByUserGuiInput == false && m_holdZoom == true;
-   
    // Nothing in the save zoom vector, initialize it with current zoom value.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
@@ -473,13 +474,20 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
        m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
 
    }
-
-   if(freezeZoom)
+   
+   if(changeCausedByUserGuiInput == false && m_holdZoom == true)
    {
       zoomDimensions = m_zoomDimensions;
    }
-   
-   if(m_maxHoldZoom == false && freezeZoom == false)
+
+   if(m_maxHoldZoom == true && changeCausedByUserGuiInput == true)
+   {
+      // Max hold should only keep the zoom held at max for changes caused by new data.
+      // If a change is made by the User via the GUI then hold the zoom where the user set it to.
+      m_holdZoom = true;
+   }
+
+   if(m_maxHoldZoom == false && m_holdZoom == false)
    {
       BoundZoom(zoomDimensions);
    }

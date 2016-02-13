@@ -820,19 +820,15 @@ void MainWindow::holdZoom()
 
 void MainWindow::maxHoldZoom()
 {
-   m_plotZoom->m_holdZoom = false;
-   if(m_plotZoom->m_maxHoldZoom == false)
-   {
-      m_autoZoomAction.setIcon(QIcon());
-      m_holdZoomAction.setIcon(QIcon());
-      m_maxHoldZoomAction.setIcon(m_checkedIcon);
-      m_zoomAction.setEnabled(false);
+   m_autoZoomAction.setIcon(QIcon());
+   m_holdZoomAction.setIcon(QIcon());
+   m_maxHoldZoomAction.setIcon(m_checkedIcon);
 
-      maxMinXY maxMin = calcMaxMin();
-      m_plotZoom->SetPlotDimensions(maxMin, true);
-      m_plotZoom->ResetZoom();
-      m_plotZoom->m_maxHoldZoom = true;
-   }
+   maxMinXY maxMin = calcMaxMin();
+   m_plotZoom->SetPlotDimensions(maxMin, true);
+   m_plotZoom->ResetZoom();
+   m_plotZoom->m_maxHoldZoom = true;
+   m_plotZoom->m_holdZoom = false;
 }
 
 void MainWindow::scrollMode()
