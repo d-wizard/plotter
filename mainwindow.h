@@ -207,6 +207,8 @@ private:
 
     bool m_scrollMode;
 
+    bool m_needToUpdateGuiOnNextPlotUpdate;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
@@ -256,7 +258,7 @@ private:
 
     void initCursorIndex(int curveIndex);
     void handleCurveDataChange(int curveIndex);
-    void updatePlotWithNewCurveData();
+    void updatePlotWithNewCurveData(bool onlyCurveDataChanged);
 
     maxMinXY calcMaxMin();
 

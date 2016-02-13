@@ -62,6 +62,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_canvasXOverYRatio(1.0),
     m_allowNewCurves(true),
     m_scrollMode(false),
+    m_needToUpdateGuiOnNextPlotUpdate(false),
     m_zoomAction("Zoom", this),
     m_cursorAction("Cursor", this),
     m_deltaCursorAction("Delta Cursor", this),
@@ -502,10 +503,16 @@ void MainWindow::readPlotMsgSlot()
 
       if(multiPlotMsg != NULL)
       {
+         bool newCurveAdded = false;
          for(UnpackPlotMsgPtrList::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
          {
             UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
+
+            if(getCurveIndex(curveName) < 0)
+            {
+               newCurveAdded = true;
+            }
 
             switch(plotMsg->m_plotAction)
             {
@@ -525,7 +532,7 @@ void MainWindow::readPlotMsgSlot()
                break;
             }
          }
-         updatePlotWithNewCurveData();
+         updatePlotWithNewCurveData(!newCurveAdded);
 
          // Inform parent that a curve has been added / changed
          for(UnpackPlotMsgPtrList::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
@@ -678,7 +685,7 @@ void MainWindow::handleCurveDataChange(int curveIndex)
 {
    initCursorIndex(curveIndex);
 
-   updatePlotWithNewCurveData();
+   updatePlotWithNewCurveData(false);
 
    // inform parent that a curve has been added / changed
    m_curveCommander->curveUpdated( this->windowTitle(),
@@ -688,8 +695,13 @@ void MainWindow::handleCurveDataChange(int curveIndex)
                                    m_qwtCurves[curveIndex]->getNumPoints() );
 }
 
-void MainWindow::updatePlotWithNewCurveData()
+void MainWindow::updatePlotWithNewCurveData(bool onlyCurveDataChanged)
 {
+   if(onlyCurveDataChanged == false)
+   {
+      m_needToUpdateGuiOnNextPlotUpdate = true;
+   }
+
    // Only update the GUI if no more Plot Messages are queued. If more Plot Messages are queued we
    // may as well wait until they are all processed. Basically, this avoids the processor hit that
    // is caused by updating the GUI when we know the plot is just going to change anyway.
@@ -712,7 +724,11 @@ void MainWindow::updatePlotWithNewCurveData()
       }
       updatePointDisplay();
 
-      emit updateCursorMenusSignal();
+      if(m_needToUpdateGuiOnNextPlotUpdate == true)
+      {
+         m_needToUpdateGuiOnNextPlotUpdate = false;
+         emit updateCursorMenusSignal();
+      }
    }
 }
 
