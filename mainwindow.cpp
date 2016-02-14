@@ -722,7 +722,7 @@ void MainWindow::updatePlotWithNewCurveData(bool onlyCurveDataChanged)
       {
          m_qwtSelectedSampleDelta->showCursor();
       }
-      updatePointDisplay();
+      updatePointDisplay(!m_needToUpdateGuiOnNextPlotUpdate);
 
       if(m_needToUpdateGuiOnNextPlotUpdate == true)
       {
@@ -1074,7 +1074,23 @@ void MainWindow::clearPointLabels()
         }
     }
 }
-void MainWindow::displayPointLabels()
+
+
+void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex)
+{
+   bool displayFormatSet = setDisplayIoMapipXAxis(lblText, curve);
+   lblText << "(" << curve->getXPoints()[cursorIndex] << ",";
+
+   if(displayFormatSet == false)
+   {
+       setDisplayIoMapipYAxis(lblText);
+       displayFormatSet = true;
+   }
+   lblText << curve->getYPoints()[cursorIndex] << ")";
+
+}
+
+void MainWindow::displayPointLabels_clean()
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -1085,19 +1101,9 @@ void MainWindow::displayPointLabels()
         {
             m_qwtCurves[i]->pointLabel = new QLabel("");
 
-            bool displayFormatSet = false;
             std::stringstream lblText;
-
-            displayFormatSet = setDisplayIoMapipXAxis(lblText, m_qwtCurves[i]);
-            lblText << "(" << m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex] << ",";
-
-            if(displayFormatSet == false)
-            {
-                setDisplayIoMapipYAxis(lblText);
-                displayFormatSet = true;
-            }
-            lblText << m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex] << ")";
-
+            displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
+            
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
 
             QPalette palette = this->palette();
@@ -1114,7 +1120,57 @@ void MainWindow::displayPointLabels()
         }
     }
 }
-void MainWindow::displayDeltaLabel()
+
+void MainWindow::displayPointLabels_update()
+{
+   bool successfulUpdate = true;
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
+      {
+         if(m_qwtCurves[i]->pointLabel != NULL)
+         {
+            std::stringstream lblText;
+            displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
+            
+            m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
+         }
+         else
+         {
+            successfulUpdate = false;
+            break;
+         }
+      }
+   }
+   if(successfulUpdate == false)
+   {
+      lock.unlock(); // Clean will want to lock the mutex.
+      displayPointLabels_clean();
+   }
+}
+
+void MainWindow::displayDeltaLabel_getLabelText(std::stringstream& lblText)
+{
+   CurveData* curve = m_qwtSelectedSample->m_parentCurve;
+   lblText << "(";
+   setDisplayIoMapipXAxis(lblText, curve);
+   lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
+   setDisplayIoMapipYAxis(lblText);
+   lblText << m_qwtSelectedSampleDelta->m_yPoint << ") : (";
+   setDisplayIoMapipXAxis(lblText, curve);
+   lblText << m_qwtSelectedSample->m_xPoint << ",";
+   setDisplayIoMapipYAxis(lblText);
+   lblText << m_qwtSelectedSample->m_yPoint << ") d (";
+   setDisplayIoMapipXAxis(lblText, curve);
+   lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
+   setDisplayIoMapipYAxis(lblText);
+   lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
+
+}
+
+void MainWindow::displayDeltaLabel_clean()
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -1123,21 +1179,8 @@ void MainWindow::displayDeltaLabel()
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
-        CurveData* curve = m_qwtSelectedSample->m_parentCurve;
         std::stringstream lblText;
-        lblText << "(";
-        setDisplayIoMapipXAxis(lblText, curve);
-        lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
-        setDisplayIoMapipYAxis(lblText);
-        lblText << m_qwtSelectedSampleDelta->m_yPoint << ") : (";
-        setDisplayIoMapipXAxis(lblText, curve);
-        lblText << m_qwtSelectedSample->m_xPoint << ",";
-        setDisplayIoMapipYAxis(lblText);
-        lblText << m_qwtSelectedSample->m_yPoint << ") d (";
-        setDisplayIoMapipXAxis(lblText, curve);
-        lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
-        setDisplayIoMapipYAxis(lblText);
-        lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
+        displayDeltaLabel_getLabelText(lblText);
 
         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
         QPalette palette = this->palette();
@@ -1154,21 +1197,57 @@ void MainWindow::displayDeltaLabel()
 
 }
 
-void MainWindow::updatePointDisplay()
+void MainWindow::displayDeltaLabel_update()
 {
-    clearPointLabels();
-    if(m_qwtSelectedSampleDelta->isAttached)
-    {
-        if(m_qwtSelectedSample->isAttached)
-        {
-            displayDeltaLabel();
-        }
-    }
-    else if(m_qwtSelectedSample->isAttached)
-    {
-        displayPointLabels();
-    }
+   bool successfulUpdate = true;
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   
+   if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
+   {
+      if(m_qwtCurves[m_selectedCurveIndex]->pointLabel != NULL)
+      {
+         std::stringstream lblText;
+         displayDeltaLabel_getLabelText(lblText);
+         
+         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
+      }
+      else
+      {
+         successfulUpdate = false;
+      }
+   }
+   if(successfulUpdate == false)
+   {
+      lock.unlock(); // Clean will want to lock the mutex.
+      displayDeltaLabel_clean();
+   }
+}
 
+void MainWindow::updatePointDisplay(bool onlyCurveDataChanged)
+{
+   if(onlyCurveDataChanged)
+   {
+      if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         displayDeltaLabel_update();
+      }
+      else if(!m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         displayPointLabels_update();
+      }
+   }
+   else
+   {
+      clearPointLabels();
+      if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         displayDeltaLabel_clean();
+      }
+      else if(!m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         displayPointLabels_clean();
+      }
+   }
 }
 
 void MainWindow::setDisplayRightClickIcons()
