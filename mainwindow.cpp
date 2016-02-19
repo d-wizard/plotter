@@ -484,6 +484,8 @@ void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
          int curveIndex = getCurveIndex(curveName);
          m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], false);
       }
+      // Done with new plot messages.
+      delete plotMsg;
    }
 }
 
