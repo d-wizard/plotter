@@ -24,11 +24,15 @@ SOURCES += main.cpp\
     dString.cpp \
     FileSystemOperations.cpp \
     fftHelper.cpp \
-    createfftplot.cpp \
     CurveCommander.cpp \
     PlotZoom.cpp \
-    fftPlots.cpp \
-    CurveData.cpp
+    CurveData.cpp \
+    ChildCurves.cpp \
+    curveproperties.cpp \
+    saveRestoreCurve.cpp \
+    plotcurvenamedialog.cpp \
+    overwriterenamedialog.cpp \
+    smartMaxMin.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -42,14 +46,24 @@ HEADERS  += mainwindow.h \
     plotguimain.h \
     dString.h \
     FileSystemOperations.h \
-    createfftplot.h \
     CurveCommander.h \
-    fftPlots.h \
-    fftHelper.h
+    fftHelper.h \
+    ChildCurves.h \
+    curveproperties.h \
+    UDPThreads.h \
+    saveRestoreCurve.h \
+    plotcurvenamedialog.h \
+    overwriterenamedialog.h \
+    AmFmPmDemod.h \
+    handleLogData.h \
+    logToFile.h \
+    smartMaxMin.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
-    createfftplot.ui
+    curveproperties.ui \
+    plotcurvenamedialog.ui \
+    overwriterenamedialog.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$FFTWDIR
