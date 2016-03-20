@@ -40,7 +40,7 @@
 #include <QAction>
 #include <QString>
 #include <QCursor>
-#include <QSharedPointer >
+#include <QSharedPointer>
 #include <QMutex>
 
 #include <queue>
