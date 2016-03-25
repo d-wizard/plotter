@@ -482,7 +482,8 @@ void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
          UnpackPlotMsg* plotMsg = (*iter);
          QString curveName( plotMsg->m_curveName.c_str() );
          int curveIndex = getCurveIndex(curveName);
-         m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], false);
+         CurveData* curveDataPtr = curveIndex >= 0 ? m_qwtCurves[curveIndex] : NULL;
+         m_curveCommander->curveUpdated(plotMsg, curveDataPtr, false);
       }
       // Done with new plot messages.
       delete plotMsg;

@@ -67,21 +67,24 @@ void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, 
 
 void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId)
 {
-   bool newCurve = !validCurve(plotName, curveName);
-   m_allCurves[plotName].curves[curveName] = curveData;
-   m_plotGuiMain->curveUpdated(plotName, curveName);
+   if(curveData != NULL)
+   {
+      bool newCurve = !validCurve(plotName, curveName);
+      m_allCurves[plotName].curves[curveName] = curveData;
+      m_plotGuiMain->curveUpdated(plotName, curveName);
 
-   if(newCurve)
-   {
-      // This is a new curve, thus there can't be any child curves from this curve.
-      if(m_curvePropGui != NULL)
+      if(newCurve)
       {
-         m_curvePropGui->updateGuiPlotCurveInfo();
+         // This is a new curve, thus there can't be any child curves from this curve.
+         if(m_curvePropGui != NULL)
+         {
+            m_curvePropGui->updateGuiPlotCurveInfo();
+         }
       }
-   }
-   else if(numPoints > 0)
-   {
-      notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
+      else if(numPoints > 0)
+      {
+         notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
+      }
    }
    showHidePlotGui(plotName);
 }
