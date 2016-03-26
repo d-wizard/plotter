@@ -466,7 +466,7 @@ void MainWindow::updateCursorMenus()
 void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
 {
    // If we are allowing new curve data, then push it onto the queue. Otherwise clear it out right now.
-   if(m_allowNewCurves)
+   if(m_allowNewCurves || plotMsg->m_changeCausedByUserGuiInput)
    {
       m_plotMsgQueueMutex.lock();
       m_plotMsgQueue.push(plotMsg);
@@ -543,7 +543,7 @@ void MainWindow::readPlotMsgSlot()
             UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
             int curveIndex = getCurveIndex(curveName);
-            m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], m_allowNewCurves);
+            m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], true);
          }
 
          // Done with new plot messages.
@@ -612,8 +612,7 @@ void MainWindow::createUpdateCurve( QString& name,
    QMutexLocker lock(&m_qwtCurvesMutex);
 
    // Check for any reason to not allow the adding of the new curve.
-   if( m_allowNewCurves == false ||
-       yPoints == NULL ||
+   if( yPoints == NULL ||
        (xPoints != NULL && xPoints->size() <= 0) ||
        yPoints->size() <= 0 )
    {

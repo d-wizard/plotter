@@ -219,10 +219,14 @@ typedef std::list<UnpackPlotMsg*> UnpackPlotMsgPtrList;
 class plotMsgGroup
 {
 public:
-   plotMsgGroup(){}
+   plotMsgGroup():
+      m_changeCausedByUserGuiInput(false)
+   {
+   }
 
    // Pass in pointer to dynamically allocated UnpackPlotMsg type. delete will be called in destructor.
-   plotMsgGroup(UnpackPlotMsg* unpackPlotMsg)
+   plotMsgGroup(UnpackPlotMsg* unpackPlotMsg):
+      m_changeCausedByUserGuiInput(true)
    {
       m_plotMsgs.push_back(unpackPlotMsg);
    }
@@ -236,6 +240,11 @@ public:
    }
 
    UnpackPlotMsgPtrList m_plotMsgs;
+   
+   // Indicates whether this plot msg group was created from User GUI input (example: creation of a
+   // new child curve) or this plot msg group contains the data from an external plot msg (example: a TCP
+   // plot message or a child curve that has a parent that's data was modified from a TCP plot message).
+   bool m_changeCausedByUserGuiInput;
 };
 
 class UnpackMultiPlotMsg
