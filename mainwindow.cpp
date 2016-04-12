@@ -670,6 +670,9 @@ void MainWindow::createUpdateCurve( QString& name,
       {
          m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, newCurveAppearance));
       }
+
+      // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
+      m_curveCommander->doFinalChildCurveInit(windowTitle(), name);
    }
 
    initCursorIndex(curveIndex);

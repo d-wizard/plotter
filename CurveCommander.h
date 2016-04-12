@@ -96,6 +96,9 @@ public:
 
     void unlinkChildFromParents(const QString& plotName, const QString& curveName);
 
+    // This function should be called after the child curve has been created in MainWindow.
+    void doFinalChildCurveInit(const QString& plotName, const QString& curveName);
+
 private:
     CurveCommander();
 

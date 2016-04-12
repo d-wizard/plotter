@@ -577,6 +577,31 @@ void CurveCommander::unlinkChildFromParents(const QString& plotName, const QStri
    }
 }
 
+void CurveCommander::doFinalChildCurveInit(const QString& plotName, const QString& curveName)
+{
+   bool matchFound = false;
+
+   // Search for the child curve that matches the Plot Name and Curve Name specified.
+   std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
+   while(iter != m_childCurves.end() && matchFound == false) // Iterate over all child curves until match is found.
+   {
+      if((*iter)->getPlotName() == plotName && (*iter)->getCurveName() == curveName)
+      {
+         // This is the child curve that the input plot name / curve name are refering to.
+         matchFound = true;
+
+         ///////////////////////////////////////////////////
+         // Do the Final Child Curve Initialization.
+         ///////////////////////////////////////////////////
+         (*iter)->setToParentsSampleRate();
+      }
+      else
+      {
+         ++iter;
+      }
+   }
+}
+
 void CurveCommander::childPlots_createParentMsgIdGroup(plotMsgGroup* group)
 {
    m_childPlots_mutex.lock();

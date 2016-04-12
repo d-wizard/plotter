@@ -35,6 +35,7 @@ public:
    ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
 
    void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints, PlotMsgIdType parentMsgId);
+   void setToParentsSampleRate();
    QVector<tPlotCurveAxis> getParents();
 
    QString getPlotName(){return m_plotName;}

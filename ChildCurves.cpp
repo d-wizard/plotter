@@ -569,6 +569,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
       break;
    }
 
+   setToParentsSampleRate();
+}
+
+void ChildCurve::setToParentsSampleRate()
+{
    // Try to set the child curve sample rate to the parent curves sample rate.
    MainWindow* childPlot = m_curveCmdr->getMainPlot(m_plotName);
    CurveData* parentCurve = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
@@ -586,7 +591,6 @@ void ChildCurve::updateCurve( bool xParentChanged,
          childPlot->setCurveSampleRate(m_curveName + COMPLEX_FFT_IMAG_APPEND, parentCurve->getSampleRate(), false);
       }
    }
-
 }
 
 
