@@ -1305,7 +1305,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    twoDInput = plotTypeHas2DInput(plotType);
 
-   if(plotType != E_PLOT_TYPE_AVERAGE)
+   if(plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_DELTA && plotType != E_PLOT_TYPE_SUM)
    {
       QString plotPrefix = plotTypeNames[plotType] + " of ";
       QString plotSuffix = "";
@@ -1357,7 +1357,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
    }
    else
    {
-      // Average Child Curve. This should remain on the default to remain on the same plot as the parent.
+      // This default to remain on the same plot as the parent.
       plotName = ySrc.plotName;
       plotNameMustBeUnique = false; // Plot Name should be the same.
       curveName = plotTypeNames[plotType] + " of " + ySrc.curveName;
