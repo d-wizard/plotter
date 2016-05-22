@@ -31,6 +31,7 @@
 ///////////////////////////////////////////
 // Constants
 ///////////////////////////////////////////
+#define MIN_SAMPLE_PER_MAXMIN_SEGMENT (250)
 #define MAX_SAMPLE_PER_MAXMIN_SEGMENT (1000)
 
 
@@ -61,8 +62,8 @@ CurveData::CurveData( QwtPlot *parentPlot,
                       const CurveAppearance &curveAppearance):
    m_parentPlot(parentPlot),
    yOrigPoints(newYPoints),
-   smartMaxMinXPoints(&xPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
-   smartMaxMinYPoints(&yPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinXPoints(&xPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinYPoints(&yPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
    plotDim(E_PLOT_DIM_1D),
    plotType(newPlotType),
    appearance(curveAppearance),
@@ -84,8 +85,8 @@ CurveData::CurveData( QwtPlot* parentPlot,
    m_parentPlot(parentPlot),
    xOrigPoints(newXPoints),
    yOrigPoints(newYPoints),
-   smartMaxMinXPoints(&xPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
-   smartMaxMinYPoints(&yPoints, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinXPoints(&xPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
+   smartMaxMinYPoints(&yPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
    plotDim(E_PLOT_DIM_2D),
    plotType(E_PLOT_TYPE_2D),
    appearance(curveAppearance),

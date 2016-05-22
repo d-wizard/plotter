@@ -1,4 +1,4 @@
-/* Copyright 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,7 +22,8 @@
 #include <assert.h>
 #include "smartMaxMin.h"
 
-smartMaxMin::smartMaxMin(const dubVect *srcVect, unsigned int maxSegSize):
+smartMaxMin::smartMaxMin(const dubVect *srcVect, unsigned int minSegSize, unsigned int maxSegSize):
+   m_minSegSize(minSegSize),
    m_maxSegSize(maxSegSize),
    m_srcVect(srcVect),
    m_curMax(0.0),
@@ -46,7 +47,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
    }
 
    unsigned int newSegStartIndex = startIndex;
-   unsigned int newSetNumPoints = srcVectSize - startIndex;
+   unsigned int newSegNumPoints = srcVectSize - startIndex;
    bool overlapFound = false;
 
    unsigned int lastSegEndIndex = 0;
@@ -75,7 +76,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       {
          if(iter->startIndex >= (startIndex + numPoints))
          {
-            newSetNumPoints = iter->startIndex - newSegStartIndex;
+            newSegNumPoints = iter->startIndex - newSegStartIndex;
 
             // Overlap is over. Break out of while early.
             break;
@@ -91,7 +92,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       // set the update size to go to the end of the vector.
       if(iter == m_segList.end() && overlapFound == true)
       {
-         newSetNumPoints = srcVectSize - newSegStartIndex;
+         newSegNumPoints = srcVectSize - newSegStartIndex;
       }
    }
 
@@ -114,7 +115,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
    }
 
    unsigned int nextSegStartIndex = newSegStartIndex;
-   unsigned int pointsRemaining = newSetNumPoints;
+   unsigned int pointsRemaining = newSegNumPoints;
    while(pointsRemaining > 0)
    {
       tMaxMinSegment newSeg;
@@ -128,6 +129,8 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
    }
 
    m_segList.sort();
+
+   combineSegments();
    calcTotalMaxMin();
 
    //debug_verifyAllPointsAreInList();
@@ -244,6 +247,56 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
          }
       }
    }
+}
+
+// Combine small segments.
+void smartMaxMin::combineSegments()
+{
+   // All the segments must be contiguous after this point.
+   //debug_verifySegmentsAreContiguous();
+   //debug_verifyAllPointsAreInList();
+
+   tSegList::iterator cur = m_segList.begin();
+   tSegList::iterator next;
+   while(cur != m_segList.end())
+   {
+      next = cur;
+      ++next;
+
+      if(next != m_segList.end())
+      {
+         if( (cur->numPoints + next->numPoints) < m_minSegSize )
+         {
+            // Combine the segments.
+            if(cur->maxValue < next->maxValue)
+            {
+               cur->maxValue = next->maxValue;
+               cur->maxIndex = next->maxIndex;
+            }
+            if(cur->minValue > next->minValue)
+            {
+               cur->minValue = next->minValue;
+               cur->minIndex = next->minIndex;
+            }
+            cur->numPoints += next->numPoints;
+            m_segList.erase(next);
+         }
+         else
+         {
+            // Segments aren't small enough to combine. Move on to the next pair of segments to check.
+            ++cur;
+         }
+      }
+      else
+      {
+         // Next segment is the end of the list. Increment cur to exit the loop.
+         ++cur;
+      }
+   }
+
+
+   //debug_verifySegmentsAreContiguous();
+   //debug_verifyAllPointsAreInList();
 }
 
 void smartMaxMin::debug_verifySegmentsAreContiguous()

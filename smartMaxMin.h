@@ -1,4 +1,4 @@
-/* Copyright 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -55,7 +55,7 @@ typedef std::list<tMaxMinSegment> tSegList;
 class smartMaxMin
 {
 public:
-   smartMaxMin(const dubVect* srcVect, unsigned int maxSegSize);
+   smartMaxMin(const dubVect* srcVect, unsigned int minSegSize, unsigned int maxSegSize);
    ~smartMaxMin();
 
    void updateMaxMin(unsigned int startIndex, unsigned int numPoints);
@@ -68,9 +68,12 @@ private:
    void calcTotalMaxMin();
    void calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
 
+   void combineSegments();
+
    void debug_verifySegmentsAreContiguous();
    void debug_verifyAllPointsAreInList();
 
+   unsigned int m_minSegSize;
    unsigned int m_maxSegSize;
 
    const dubVect* m_srcVect;
