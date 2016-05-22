@@ -32,7 +32,7 @@
 //////////////////////////////////////////
 QString g_curveSavePrevDir = "";
 
-
+#define MAX_NUM_MSGS_IN_QUEUE (1000)
 
 
 //#define TEST_CURVES
@@ -55,8 +55,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     ui->setupUi(this);
     this->setFixedSize(165, 95);
 
-    QObject::connect(this, SIGNAL(readPlotMsgSignal(UnpackMultiPlotMsg*)),
-                     this, SLOT(readPlotMsgSlot(UnpackMultiPlotMsg*)), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(readPlotMsgSignal()),
+                     this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -208,7 +208,24 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
       UnpackMultiPlotMsg* msgUnpacker = new UnpackMultiPlotMsg(msgCopy, size);
       if(msgUnpacker->m_plotMsgs.size() > 0)
       {
-         emit readPlotMsgSignal(msgUnpacker);
+         bool msgPopped = false;
+         m_multiPlotMsgsQueueMutex.lock();
+         while(m_multiPlotMsgs.size() > MAX_NUM_MSGS_IN_QUEUE)
+         {
+            delete m_multiPlotMsgs.front();
+            m_multiPlotMsgs.pop();
+            msgPopped = true;
+         }
+         m_multiPlotMsgs.push(msgUnpacker);
+         m_multiPlotMsgsQueueMutex.unlock();
+
+         // If a message has been popped off the queue, then there is no reason to
+         // send the signal. The signal of the popped message should still be waiting
+         // to be handled.
+         if(msgPopped == false)
+         {
+            emit readPlotMsgSignal();
+         }
       }
       else
       {
@@ -217,9 +234,28 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
    }
 }
 
-void plotGuiMain::readPlotMsgSlot(UnpackMultiPlotMsg *plotMsg)
+void plotGuiMain::readPlotMsgSlot()
 {
-   readPlotMsg(plotMsg);
+   UnpackMultiPlotMsg* plotMsg = NULL;
+   bool finishedReading = m_multiPlotMsgs.size() == 0;
+
+   while(finishedReading == false)
+   {
+      m_multiPlotMsgsQueueMutex.lock();
+      if(m_multiPlotMsgs.size() > 0)
+      {
+         plotMsg = m_multiPlotMsgs.front();
+         m_multiPlotMsgs.pop();
+      }
+      m_multiPlotMsgsQueueMutex.unlock();
+
+      readPlotMsg(plotMsg);
+
+      m_multiPlotMsgsQueueMutex.lock();
+      finishedReading = m_multiPlotMsgs.size() == 0;
+      m_multiPlotMsgsQueueMutex.unlock();
+   }
+
 }
 
 void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
@@ -257,7 +293,11 @@ void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveN
             (*plotMsgs)->m_curveName = plotCurveName.curve.toStdString();
          }
       }
-      emit readPlotMsgSignal(plotMsg);
+
+      m_multiPlotMsgsQueueMutex.lock();
+      m_multiPlotMsgs.push(plotMsg);
+      m_multiPlotMsgsQueueMutex.unlock();
+      emit readPlotMsgSignal();
    }
    else
    {

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +20,7 @@
 #define PLOTGUIMAIN_H
 
 #include <string>
+#include <queue>
 
 #include <QList>
 #include <QMainWindow>
@@ -86,16 +87,20 @@ private:
     unsigned int m_storedMsgBuffIndex;
     QMutex m_storedMsgBuffMutex;
 
+    std::queue<UnpackMultiPlotMsg*> m_multiPlotMsgs;
+    QMutex m_multiPlotMsgsQueueMutex;
+
+
     void closeEvent(QCloseEvent* event);
 
 public slots:
-    void readPlotMsgSlot(UnpackMultiPlotMsg* plotMsg);
+    void readPlotMsgSlot();
     void enDisNewCurves();
     void showPropertiesGui();
     void closeAllPlotsSlot();
 
 signals:
-    void readPlotMsgSignal(UnpackMultiPlotMsg*);
+    void readPlotMsgSignal();
     void closeAllPlotsSignal();
 private slots:
     void on_cmdClose_clicked();
