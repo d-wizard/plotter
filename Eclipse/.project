@@ -332,6 +332,26 @@
 			<locationURI>PARENT-1-PROJECT_LOC/qwtExample_LinuxLib.pro</locationURI>
 		</link>
 		<link>
+			<name>saveRestoreCurve.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/saveRestoreCurve.cpp</locationURI>
+		</link>
+		<link>
+			<name>saveRestoreCurve.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/saveRestoreCurve.h</locationURI>
+		</link>
+		<link>
+			<name>smartMaxMin.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/smartMaxMin.cpp</locationURI>
+		</link>
+		<link>
+			<name>smartMaxMin.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/smartMaxMin.h</locationURI>
+		</link>
+		<link>
 			<name>Eclipse/.cproject</name>
 			<type>1</type>
 			<locationURI>PROJECT_LOC/.cproject</locationURI>
