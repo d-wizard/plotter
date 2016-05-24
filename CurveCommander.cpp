@@ -21,6 +21,8 @@
 #include "curveproperties.h"
 #include "ChildCurves.h"
 
+#define MAX_NUM_STORED_CURVES (1000)
+
 CurveCommander::CurveCommander(plotGuiMain *parent):
    m_plotGuiMain(parent),
    m_curvePropGui(NULL)
@@ -473,6 +475,10 @@ void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QStr
    }
    m_storedMsgs.push_back(newMsg);
 
+   while(m_storedMsgs.size() > MAX_NUM_STORED_CURVES)
+   {
+      m_storedMsgs.pop_front();
+   }
 }
 
 void CurveCommander::getStoredPlotMsgs(QVector<tStoredMsg>& storedMsgs)
