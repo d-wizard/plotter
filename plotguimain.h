@@ -74,6 +74,7 @@ private:
     QAction m_trayExitAction;
     QAction m_trayEnDisNewCurvesAction;
     QAction m_propertiesWindowAction;
+    QAction m_closeAllPlotsAction;
     QAction m_revDateStampAction;
     QMenu* m_trayMenu;
 
@@ -98,6 +99,7 @@ public slots:
     void enDisNewCurves();
     void showPropertiesGui();
     void closeAllPlotsFromLibSlot();
+    void closeAllPlotsSlot();
 
 signals:
     void readPlotMsgSignal();

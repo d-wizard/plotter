@@ -45,6 +45,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_trayExitAction("Exit", this),
     m_trayEnDisNewCurvesAction("Disable New Curves", this),
     m_propertiesWindowAction("Properties", this),
+    m_closeAllPlotsAction("Close All Plots", this),
     m_revDateStampAction(REV_DATE_STAMP, this),
     m_trayMenu(NULL),
     m_curveCommander(this),
@@ -121,6 +122,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
+    connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSlot()));
 
     m_trayMenu = new QMenu("Plot", this);
 
@@ -130,6 +132,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_propertiesWindowAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_closeAllPlotsAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayExitAction);
 
@@ -179,6 +183,11 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
 {
    m_curveCommander.destroyAllPlots();
    m_sem.release();
+}
+
+void plotGuiMain::closeAllPlotsSlot()
+{
+   m_curveCommander.destroyAllPlots();
 }
 
 void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
