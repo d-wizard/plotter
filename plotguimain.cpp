@@ -55,8 +55,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     ui->setupUi(this);
     this->setFixedSize(165, 95);
 
-    QObject::connect(this, SIGNAL(readPlotMsgSignal()),
-                     this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(readPlotMsgFromLibSignal()),
+                     this, SLOT(readPlotMsgFromLibSlot()), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -169,13 +169,13 @@ plotGuiMain::~plotGuiMain()
     delete m_storedMsgBuff;
 }
 
-void plotGuiMain::closeAllPlots()
+void plotGuiMain::closeAllPlotsFromLib()
 {
-   emit closeAllPlotsSignal();
+   emit closeAllPlotsFromLibSignal();
    m_sem.acquire();
 }
 
-void plotGuiMain::closeAllPlotsSlot()
+void plotGuiMain::closeAllPlotsFromLibSlot()
 {
    m_curveCommander.destroyAllPlots();
    m_sem.release();

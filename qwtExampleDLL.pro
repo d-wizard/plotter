@@ -32,7 +32,8 @@ SOURCES +=\
     curveproperties.cpp \
     saveRestoreCurve.cpp \
     plotcurvenamedialog.cpp \
-    overwriterenamedialog.cpp
+    overwriterenamedialog.cpp \
+    smartMaxMin.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \

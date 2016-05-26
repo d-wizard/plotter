@@ -1,4 +1,4 @@
-/* Copyright 2013, 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2015 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -24,6 +24,8 @@
 
 plotGuiMain* pgm = NULL;
 volatile bool isRunning = false;
+
+bool defaultCursorZoomModeIsZoom = false;
 
 class AppThread : public QThread {
    volatile bool* m_running;
@@ -67,7 +69,7 @@ void stopPlotGui(void)
       {
          // Plots need to be closed outside this thread and
          // before pgm's destructor is called.
-         pgm->closeAllPlots();
+         pgm->closeAllPlotsFromLib();
          delete pgm;
       }
       qApp->thread()->quit();

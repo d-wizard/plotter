@@ -56,7 +56,7 @@ public:
     void startPlotMsgProcess(const char *msg, unsigned int size);
 
     void plotWindowClose(QString plotName);
-    void closeAllPlots();
+    void closeAllPlotsFromLib();
 
     void curveUpdated(QString plotName, QString curveName);
 
@@ -97,11 +97,11 @@ public slots:
     void readPlotMsgSlot();
     void enDisNewCurves();
     void showPropertiesGui();
-    void closeAllPlotsSlot();
+    void closeAllPlotsFromLibSlot();
 
 signals:
     void readPlotMsgSignal();
-    void closeAllPlotsSignal();
+    void closeAllPlotsFromLibSignal();
 private slots:
     void on_cmdClose_clicked();
 };
