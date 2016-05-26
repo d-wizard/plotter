@@ -55,8 +55,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     ui->setupUi(this);
     this->setFixedSize(165, 95);
 
-    QObject::connect(this, SIGNAL(readPlotMsgFromLibSignal()),
-                     this, SLOT(readPlotMsgFromLibSlot()), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(readPlotMsgSignal()),
+                     this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -142,8 +142,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
        m_trayIcon->show();
     }
 
-    QObject::connect(this, SIGNAL(closeAllPlotsSignal()),
-                     this, SLOT(closeAllPlotsSlot()), Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(closeAllPlotsFromLibSignal()),
+                     this, SLOT(closeAllPlotsFromLibSlot()), Qt::QueuedConnection);
 }
 
 plotGuiMain::~plotGuiMain()
