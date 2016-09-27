@@ -272,6 +272,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/mainwindow.ui</locationURI>
 		</link>
 		<link>
+			<name>persistentParameters.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/persistentParameters.cpp</locationURI>
+		</link>
+		<link>
+			<name>persistentParameters.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/persistentParameters.h</locationURI>
+		</link>
+		<link>
 			<name>plot.ico</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/plot.ico</locationURI>
