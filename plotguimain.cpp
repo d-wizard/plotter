@@ -27,11 +27,6 @@
 #include "fftHelper.h"
 
 
-//////////////////////////////////////////
-// Global Parameters.
-//////////////////////////////////////////
-QString g_curveSavePrevDir = "";
-
 #define MAX_NUM_MSGS_IN_QUEUE (1000)
 
 

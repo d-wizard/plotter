@@ -207,6 +207,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/curveColors.h</locationURI>
 		</link>
 		<link>
+			<name>curveproperties.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/curveproperties.cpp</locationURI>
+		</link>
+		<link>
+			<name>curveproperties.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/curveproperties.h</locationURI>
+		</link>
+		<link>
 			<name>dString.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/dString.cpp</locationURI>

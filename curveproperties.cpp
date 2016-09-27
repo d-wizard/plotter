@@ -29,8 +29,7 @@
 #include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
-
-extern QString g_curveSavePrevDir;
+#include "persistentParameters.h"
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
@@ -1075,7 +1074,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
-                                                   g_curveSavePrevDir,
+                                                   getOpenSaveDir(),
                                                    tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)"));
 
    setOpenSavePath(fileName);
@@ -1525,9 +1524,22 @@ void curveProperties::restoreMultipleCurves(QString plotName, QVector<tSaveResto
 
 }
 
+QString curveProperties::getOpenSaveDir()
+{
+   std::string retVal;
+   if(persistentParam_getParam_str(PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR, retVal))
+   {
+      if(fso::DirExists(retVal))
+      {
+         return QString(retVal.c_str());
+      }
+   }
+   return "";
+}
+
 QString curveProperties::getOpenSavePath(QString fileName)
 {
-   QString suggestedSavePath = g_curveSavePrevDir;
+   QString suggestedSavePath = getOpenSaveDir();
    if(suggestedSavePath != "")
    {
       suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + fileName;
@@ -1543,6 +1555,7 @@ void curveProperties::setOpenSavePath(QString path)
 {
    if(path != "")
    {
-      g_curveSavePrevDir = fso::GetDir(path.toStdString()).c_str();
+      persistentParam_setParam_str( PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR,
+                                    fso::GetDir(path.toStdString()) );
    }
 }

@@ -29,6 +29,9 @@
 #include <string.h>
 #include <string>
 
+
+static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR = "curveSavePrevDir";
+
 void persistentParam_setPath(std::string path);
 
 bool persistentParam_setParam_str(const std::string& paramName, std::string writeVal);
