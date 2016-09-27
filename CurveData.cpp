@@ -82,6 +82,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
                       const dubVect& newXPoints,
                       const dubVect& newYPoints,
                       const CurveAppearance& curveAppearance):
+   lastMsgIpAddr(0),
    m_parentPlot(parentPlot),
    xOrigPoints(newXPoints),
    yOrigPoints(newYPoints),

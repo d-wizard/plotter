@@ -1220,6 +1220,21 @@ void curveProperties::fillInPropTab()
       {
          ui->propParentCurves->addItem(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
       }
+
+	  // Fill in Last Msg Ip Addr field.
+      tPlotterIpAddr lastIpAddr = parentCurve->lastMsgIpAddr;
+      unsigned char* lastIpAddr_bytes = (unsigned char*)&lastIpAddr;
+      const int numBytesInIpAddr = 4;
+      QString lastIpAddrStr;
+      for(int i = 0; i < numBytesInIpAddr; ++i)
+      {
+         lastIpAddrStr.append(QString::number((unsigned int)lastIpAddr_bytes[i]));
+         if(i < (numBytesInIpAddr-1))
+         {
+            lastIpAddrStr.append(".");
+         }
+      }
+      ui->txtLastIp->setText(lastIpAddrStr);
    }
    else
    {
@@ -1235,6 +1250,7 @@ void curveProperties::fillInPropTab()
        ui->txtPropYMin->setText("");
        ui->txtPropYMax->setText("");
        ui->propParentCurves->clear();
+       ui->txtLastIp->setText("");
    }
 }
 

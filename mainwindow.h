@@ -249,7 +249,8 @@ private:
 
     void resetPlot();
 
-    void createUpdateCurve( QString& name,
+    void createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
+                            QString& name,
                             bool resetCurve,
                             unsigned int sampleStartIndex,
                             ePlotType plotType,

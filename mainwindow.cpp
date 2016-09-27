@@ -520,16 +520,16 @@ void MainWindow::readPlotMsgSlot()
             switch(plotMsg->m_plotAction)
             {
                case E_CREATE_1D_PLOT:
-                  createUpdateCurve(curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+                  createUpdateCurve(plotMsg, curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
                break;
                case E_CREATE_2D_PLOT:
-                  createUpdateCurve(curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+                  createUpdateCurve(plotMsg, curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
                break;
                case E_UPDATE_1D_PLOT:
-                  createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
+                  createUpdateCurve(plotMsg, curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
                break;
                case E_UPDATE_2D_PLOT:
-                  createUpdateCurve(curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
+                  createUpdateCurve(plotMsg, curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
                break;
                default:
                break;
@@ -602,7 +602,8 @@ void MainWindow::setCurveHidden(QString curveName, bool hidden)
     }
 }
 
-void MainWindow::createUpdateCurve( QString& name,
+void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
+                                    QString& name,
                                     bool resetCurve,
                                     unsigned int sampleStartIndex,
                                     ePlotType plotType,
@@ -673,6 +674,11 @@ void MainWindow::createUpdateCurve( QString& name,
 
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
       m_curveCommander->doFinalChildCurveInit(windowTitle(), name);
+   }
+
+   if(unpackPlotMsg != NULL && curveIndex >= 0)
+   {
+      m_qwtCurves[curveIndex]->lastMsgIpAddr = unpackPlotMsg->m_ipAddr;
    }
 
    initCursorIndex(curveIndex);

@@ -1186,7 +1186,7 @@ Parent</string>
      <property name="geometry">
       <rect>
        <x>500</x>
-       <y>280</y>
+       <y>290</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -1194,6 +1194,51 @@ Parent</string>
      <property name="text">
       <string>Remove</string>
      </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_12">
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>230</y>
+       <width>241</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Message Source Info</string>
+     </property>
+     <widget class="QLabel" name="label_15">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>91</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Last Msg IP Addr</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtLastIp">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>102</x>
+        <y>20</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
