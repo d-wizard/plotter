@@ -19,11 +19,12 @@
 #include <string.h>
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
+#include "TCPThreads.h" // Socket types.
 
 // Global, can be changed outside of this file.
 unsigned int g_maxTcpPlotMsgSize = (40*1024*1024) + MAX_PLOT_MSG_HEADER_SIZE; // 40 MB+
 
-GetEntirePlotMsg::GetEntirePlotMsg():
+GetEntirePlotMsg::GetEntirePlotMsg(struct sockaddr_storage* client):
    m_unpackState(E_READ_ACTION),
    m_curAction(E_INVALID_PLOT_ACTION),
    m_curMsgSize(0),
@@ -37,6 +38,17 @@ GetEntirePlotMsg::GetEntirePlotMsg():
    reset();
 
    m_timeBetweenPackets.restart();
+   
+   if(client != NULL)
+   {
+      struct sockaddr_in* sin = (struct sockaddr_in*)client;
+      unsigned char* ipV4Addr = (unsigned char *)&sin->sin_addr.s_addr;
+      memcpy(&m_ipAddr, ipV4Addr, sizeof(m_ipAddr));
+   }
+   else
+   {
+      m_ipAddr = 0;
+   }
 }
 
 GetEntirePlotMsg::~GetEntirePlotMsg()
@@ -61,18 +73,20 @@ void GetEntirePlotMsg::initNextWriteMsg()
    m_msgs[m_msgsWriteIndex].clear();
 }
 
-bool GetEntirePlotMsg::ReadPlotPackets(char** retValMsgPtr, unsigned int* retValMsgSize)
+bool GetEntirePlotMsg::ReadPlotPackets(tIncomingMsg* inMsg)
 {
    bool validMsg = (m_msgsReadIndex != m_msgsWriteIndex);
    if(validMsg)
    {
-       *retValMsgPtr = &m_msgs[m_msgsReadIndex][0];
-       *retValMsgSize = m_msgs[m_msgsReadIndex].size();
+      inMsg->msgPtr  = &m_msgs[m_msgsReadIndex][0];
+      inMsg->msgSize = m_msgs[m_msgsReadIndex].size();
+      inMsg->ipAddr  = m_ipAddr;
    }
    else
    {
-       retValMsgPtr = NULL;
-       retValMsgSize = 0;
+      inMsg->msgPtr  = NULL;
+      inMsg->msgSize = 0;
+      inMsg->ipAddr  = 0;
    }
    return validMsg;
 }
@@ -171,125 +185,133 @@ bool GetEntirePlotMsg::ReadOneByte(char inByte)
 // Initialize the static Plot Message Count variable that is used to generate a unique ID for each Plot Message.
 PlotMsgIdType UnpackPlotMsg::m_plotMsgCount = 0;
 
-UnpackPlotMsg::UnpackPlotMsg(const char *msg, unsigned int size):
+UnpackPlotMsg::UnpackPlotMsg():
    m_plotMsgID(++m_plotMsgCount),
    m_plotAction(E_INVALID_PLOT_ACTION),
    m_plotName(""),
    m_curveName(""),
    m_sampleStartIndex(0),
-   m_msg(msg),
-   m_msgSize(size),
+   m_plotType(E_PLOT_TYPE_1D),
+   m_ipAddr(0),
+   m_msg(NULL),
+   m_msgSize(0),
+   m_msgReadIndex(0),
+   m_numSamplesInPlot(0),
+   m_xAxisDataType(E_FLOAT_64),
+   m_yAxisDataType(E_FLOAT_64),
+   m_interleaved(false)
+{
+}
+
+UnpackPlotMsg::UnpackPlotMsg(tIncomingMsg* inMsg):
+   m_plotMsgID(++m_plotMsgCount),
+   m_plotAction(E_INVALID_PLOT_ACTION),
+   m_plotName(""),
+   m_curveName(""),
+   m_sampleStartIndex(0),
+   m_ipAddr(inMsg->ipAddr),
+   m_msg(inMsg->msgPtr),
+   m_msgSize(inMsg->msgSize),
    m_msgReadIndex(0),
    m_numSamplesInPlot(0),
    m_xAxisDataType(E_FLOAT_64),
    m_yAxisDataType(E_FLOAT_64)
 {
-   if(msg == NULL || size == 0)
-   {
-      return;
-   }
-
    unpack(&m_plotAction, sizeof(m_plotAction));
    unpack(&m_msgSize, sizeof(m_msgSize));
-   if(m_msgSize == size)
-   {
-      try
-      {
-         switch(m_plotAction)
-         {
-            case E_CREATE_1D_PLOT:
-            case E_UPDATE_1D_PLOT:
-               m_plotType = E_PLOT_TYPE_1D;
-               unpackStr(&m_plotName);
-               unpackStr(&m_curveName);
-               unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
-               if(m_plotAction == E_UPDATE_1D_PLOT)
-               {
-                  // Update action has an extra parameter to define where the samples should go
-                  unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
-               }
-               unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
-               if(validPlotDataTypes(m_yAxisDataType))
-               {
-                  // Calculate size of the data portion of the message.
-                  UINT_32 dataSize = getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
 
-                  // Make sure the remainder of the messages is exactly the size of the amount
-                  // of data specified in the message.
-                  if( (m_msgReadIndex + dataSize) == m_msgSize )
+   try
+   {
+      switch(m_plotAction)
+      {
+         case E_CREATE_1D_PLOT:
+         case E_UPDATE_1D_PLOT:
+            m_plotType = E_PLOT_TYPE_1D;
+            unpackStr(&m_plotName);
+            unpackStr(&m_curveName);
+            unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+            if(m_plotAction == E_UPDATE_1D_PLOT)
+            {
+               // Update action has an extra parameter to define where the samples should go
+               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
+            }
+            unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+            if(validPlotDataTypes(m_yAxisDataType))
+            {
+               // Calculate size of the data portion of the message.
+               UINT_32 dataSize = getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
+
+               // Make sure the remainder of the messages is exactly the size of the amount
+               // of data specified in the message.
+               if( (m_msgReadIndex + dataSize) == m_msgSize )
+               {
+                  m_yAxisValues.resize(m_numSamplesInPlot);
+                  for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
                   {
-                     m_yAxisValues.resize(m_numSamplesInPlot);
+                     m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
+                  }
+               }
+            }
+         break;
+         case E_CREATE_2D_PLOT:
+         case E_UPDATE_2D_PLOT:
+            m_plotType = E_PLOT_TYPE_2D;
+            unpackStr(&m_plotName);
+            unpackStr(&m_curveName);
+            unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
+            if(m_plotAction == E_UPDATE_2D_PLOT)
+            {
+               // Update action has an extra parameter to define where the samples should go
+               unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
+            }
+            unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
+            unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
+            unpack(&m_interleaved, sizeof(m_interleaved));
+
+            if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
+            {
+               // Calculate size of the data portion of the message.
+               UINT_32 dataSize = getPlotDataTypeSize(m_xAxisDataType) * m_numSamplesInPlot +
+                                  getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
+
+               // Make sure the remainder of the messages is exactly the size of the amount
+               // of data specified in the message.
+               if( (m_msgReadIndex + dataSize) == m_msgSize )
+               {
+                  m_xAxisValues.resize(m_numSamplesInPlot);
+                  m_yAxisValues.resize(m_numSamplesInPlot);
+                  if(m_interleaved == false)
+                  {
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
+                     {
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                     }
                      for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
                      {
                         m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
                      }
-                  }
-               }
-            break;
-            case E_CREATE_2D_PLOT:
-            case E_UPDATE_2D_PLOT:
-               m_plotType = E_PLOT_TYPE_2D;
-               unpackStr(&m_plotName);
-               unpackStr(&m_curveName);
-               unpack(&m_numSamplesInPlot, sizeof(m_numSamplesInPlot));
-               if(m_plotAction == E_UPDATE_2D_PLOT)
-               {
-                  // Update action has an extra parameter to define where the samples should go
-                  unpack(&m_sampleStartIndex, sizeof(m_sampleStartIndex));
-               }
-               unpack(&m_xAxisDataType, sizeof(m_xAxisDataType));
-               unpack(&m_yAxisDataType, sizeof(m_yAxisDataType));
-               unpack(&m_interleaved, sizeof(m_interleaved));
 
-               if(validPlotDataTypes(m_xAxisDataType) && validPlotDataTypes(m_yAxisDataType))
-               {
-                  // Calculate size of the data portion of the message.
-                  UINT_32 dataSize = getPlotDataTypeSize(m_xAxisDataType) * m_numSamplesInPlot +
-                                     getPlotDataTypeSize(m_yAxisDataType) * m_numSamplesInPlot;
-
-                  // Make sure the remainder of the messages is exactly the size of the amount
-                  // of data specified in the message.
-                  if( (m_msgReadIndex + dataSize) == m_msgSize )
+                  } // end if(m_interleaved == false)
+                  else
                   {
-                     m_xAxisValues.resize(m_numSamplesInPlot);
-                     m_yAxisValues.resize(m_numSamplesInPlot);
-                     if(m_interleaved == false)
+                     // Interleaved data
+                     for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
                      {
-                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                        {
-                           m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                        }
-                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                        {
-                           m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
-                        }
-
-                     } // end if(m_interleaved == false)
-                     else
-                     {
-                        // Interleaved data
-                        for(unsigned int i = 0; i < m_numSamplesInPlot; ++i)
-                        {
-                           m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
-                           m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
-                        }
+                        m_xAxisValues[i] = readSampleValue(m_xAxisDataType);
+                        m_yAxisValues[i] = readSampleValue(m_yAxisDataType);
                      }
                   }
                }
-            break;
-            default:
-               m_plotAction = E_INVALID_PLOT_ACTION;
-            break;
-         } // End switch(m_plotAction)
-      }
-      catch(int dontCare)
-      {
-         m_plotAction = E_INVALID_PLOT_ACTION; // Tried to unpack beyond the packet size, return Invalid Action enum.
-      }
+            }
+         break;
+         default:
+            m_plotAction = E_INVALID_PLOT_ACTION;
+         break;
+      } // End switch(m_plotAction)
    }
-   else
+   catch(int dontCare)
    {
-       m_plotAction = E_INVALID_PLOT_ACTION;
+      m_plotAction = E_INVALID_PLOT_ACTION; // Tried to unpack beyond the packet size, return Invalid Action enum.
    }
    
 }
@@ -429,15 +451,36 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
    return retVal;
 }
 
+UnpackMultiPlotMsg::UnpackMultiPlotMsg()
+{
+}
 
 UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
+{
+   tIncomingMsg inMsg;
+   inMsg.msgPtr = msg;
+   inMsg.msgSize = size;
+   inMsg.ipAddr = 0;
+   init(&inMsg);
+}
+
+UnpackMultiPlotMsg::UnpackMultiPlotMsg(tIncomingMsg* inMsg)
+{
+   init(inMsg);
+}
+
+
+void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg)
 {
    UINT_32 msgReadIndex = 0;
    ePlotAction plotAction = E_INVALID_PLOT_ACTION;
    UINT_32 msgSize = 0;
 
-   if(size > (sizeof(plotAction) + sizeof(msgSize)))
+   if(inMsg->msgSize > (sizeof(plotAction) + sizeof(msgSize)))
    {
+      const char* msg = inMsg->msgPtr; 
+      unsigned int size = inMsg->msgSize;
+
       memcpy(&plotAction, msg + msgReadIndex, sizeof(plotAction));
       msgReadIndex += sizeof(plotAction);
       memcpy(&msgSize, msg + msgReadIndex, sizeof(msgSize));
@@ -456,7 +499,11 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
 
                if(individualPlotMsgSize <= (msgSize - msgReadIndex))
                {
-                  UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(msg + msgReadIndex, individualPlotMsgSize);
+                  tIncomingMsg unpackMsg = *inMsg;
+                  unpackMsg.msgPtr = msg + msgReadIndex;
+                  unpackMsg.msgSize = individualPlotMsgSize;
+
+                  UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(&unpackMsg);
                   msgReadIndex += individualPlotMsgSize;
                   if(validPlotAction(newPlotMsg->m_plotAction) == false || msgReadIndex > msgSize)
                   {
@@ -478,7 +525,7 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
          else
          {
             // Single plot in plot message.
-            UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(msg, size);
+            UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(inMsg);
             plotMsgGroup* group = getPlotMsgGroup(newPlotMsg->m_plotName);
             group->m_plotMsgs.push_back(newPlotMsg);
          }

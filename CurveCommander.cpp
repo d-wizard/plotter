@@ -224,7 +224,7 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotTyp
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg();
    plotMsg->m_plotAction = E_CREATE_1D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
@@ -242,7 +242,7 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0);
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg();
    plotMsg->m_plotAction = E_CREATE_2D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
@@ -261,7 +261,7 @@ void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePl
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0); // Will be deleted when it is processed in mainwindow.cpp
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_1D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
@@ -291,7 +291,7 @@ void CurveCommander::update2dChildCurve(QString plotName, QString curveName, uns
 {
    createPlot(plotName);
 
-   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(NULL, 0); // Will be deleted when it is processed in mainwindow.cpp
+   UnpackPlotMsg* plotMsg = new UnpackPlotMsg(); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_2D_PLOT;
    plotMsg->m_plotName = plotName.toStdString();
    plotMsg->m_curveName = curveName.toStdString();
@@ -796,7 +796,7 @@ void CurveCommander::childPlots_plot(PlotMsgIdType parentID)
       std::list<tParentMsgIdGroup>::iterator parentMsgGroupIter = childPlots_getParentMsgIdGroupIter(parentID);
       if(parentMsgGroupIter != m_parentMsgIdGroups.end())
       {
-         UnpackMultiPlotMsg multiChildPlotMsg(NULL, 0); // This will group all child plots from a particular parent plot message group into groups based on the child plot names.
+         UnpackMultiPlotMsg multiChildPlotMsg;// This will group all child plots from a particular parent plot message group into groups based on the child plot names.
 
          // Loop through all the Parent Msg IDs in the group.
          for(tParentMsgIdGroup::iterator curParentMsgId = parentMsgGroupIter->begin(); curParentMsgId != parentMsgGroupIter->end(); ++curParentMsgId)

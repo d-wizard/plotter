@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -60,7 +60,7 @@ void TCPMsgReader::ClientStartCallback(void* inPtr, struct sockaddr_storage* cli
    TCPMsgReader* _this = (TCPMsgReader*)inPtr;
    if(_this->m_msgReaderMap.find(client) == _this->m_msgReaderMap.end())
    {
-      _this->m_msgReaderMap[client] = new GetEntirePlotMsg();
+      _this->m_msgReaderMap[client] = new GetEntirePlotMsg(client);
    }
 }
 
@@ -77,13 +77,12 @@ void TCPMsgReader::ClientEndCallback(void* inPtr, struct sockaddr_storage* clien
 void TCPMsgReader::RxPacketCallback(void* inPtr, struct sockaddr_storage* client, char* packet, unsigned int size)
 {
     TCPMsgReader* _this = (TCPMsgReader*)inPtr;
-    char* plotMsg = NULL;
-    unsigned int plotMsgSize = 0;
+    tIncomingMsg inMsg;
 
     _this->m_msgReaderMap[client]->ProcessPlotPacket(packet, size);
-    while(_this->m_msgReaderMap[client]->ReadPlotPackets(&plotMsg, &plotMsgSize))
+    while(_this->m_msgReaderMap[client]->ReadPlotPackets(&inMsg))
     {
-        _this->m_parent->startPlotMsgProcess(plotMsg, plotMsgSize);
+        _this->m_parent->startPlotMsgProcess(&inMsg);
         _this->m_msgReaderMap[client]->finishedReadMsg();
     }
 

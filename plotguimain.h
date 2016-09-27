@@ -53,7 +53,7 @@ public:
     explicit plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon);
     ~plotGuiMain();
 
-    void startPlotMsgProcess(const char *msg, unsigned int size);
+    void startPlotMsgProcess(tIncomingMsg* inMsg);
 
     void plotWindowClose(QString plotName);
     void closeAllPlotsFromLib();

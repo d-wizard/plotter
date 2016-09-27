@@ -135,17 +135,21 @@ class GetEntirePlotMsg
    static const qint64 MS_BETWEEN_PACKETS_FOR_REINIT = 1500;
 
 public:
-   GetEntirePlotMsg();
+   GetEntirePlotMsg(struct sockaddr_storage* client);
    ~GetEntirePlotMsg();
 
    // If reading an action and no bytes have been filled in, then not active.
    bool isActiveReceive(){ return (m_unpackState != E_READ_ACTION || m_curValueNumBytesFilled != 0); }
    void ProcessPlotPacket(const char *inBytes, unsigned int numBytes);
-   bool ReadPlotPackets(char** retValMsgPtr, unsigned int* retValMsgSize);
+   bool ReadPlotPackets(tIncomingMsg* inMsg);
    void finishedReadMsg();
 
 private:
 
+   GetEntirePlotMsg();
+   GetEntirePlotMsg(GetEntirePlotMsg const&);
+   void operator=(GetEntirePlotMsg const&);
+   
    typedef enum
    {
       E_READ_ACTION,
@@ -172,12 +176,14 @@ private:
 
    QElapsedTimer m_timeBetweenPackets;
 
+   tPlotterIpAddr m_ipAddr;
 };
 
 class UnpackPlotMsg
 {
 public:
-   UnpackPlotMsg(const char* msg, unsigned int size);
+   UnpackPlotMsg();
+   UnpackPlotMsg(tIncomingMsg* inMsg);
    ~UnpackPlotMsg();
 
    PlotMsgIdType m_plotMsgID;
@@ -187,6 +193,7 @@ public:
    std::string m_curveName;
    UINT_32 m_sampleStartIndex;
    ePlotType m_plotType;
+   tPlotterIpAddr m_ipAddr;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
 
@@ -195,7 +202,6 @@ public:
 
    static PlotMsgIdType m_plotMsgCount; // This is used to generate a unique ID for each Plot Message.
 private:
-   UnpackPlotMsg();
    
    void unpack(void* dst, unsigned int size);
    void unpackStr(std::string* dst);
@@ -250,14 +256,16 @@ public:
 class UnpackMultiPlotMsg
 {
 public:
+   UnpackMultiPlotMsg();
    UnpackMultiPlotMsg(const char* msg, unsigned int size);
+   UnpackMultiPlotMsg(tIncomingMsg* inMsg);
    ~UnpackMultiPlotMsg();
 
    plotMsgGroup* getPlotMsgGroup(std::string plotName);
 
    std::map<std::string, plotMsgGroup*> m_plotMsgs;
 private:
-   UnpackMultiPlotMsg();
+   void init(tIncomingMsg* inMsg);
 };
 
 #endif

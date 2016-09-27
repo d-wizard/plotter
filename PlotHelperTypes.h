@@ -290,6 +290,14 @@ typedef struct
    QDateTime msgTime;
 }tStoredMsg;
 
+typedef unsigned long tPlotterIpAddr;
+
+typedef struct
+{
+   const char* msgPtr;
+   unsigned int msgSize;
+   tPlotterIpAddr ipAddr;
+}tIncomingMsg;
 
 //////////////////////////////////////////////
 ////////////// Type Operators ////////////////

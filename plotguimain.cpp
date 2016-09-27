@@ -190,8 +190,11 @@ void plotGuiMain::closeAllPlotsSlot()
    m_curveCommander.destroyAllPlots();
 }
 
-void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
+void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
 {
+   const char* msg = inMsg->msgPtr;
+   unsigned int size = inMsg->msgSize;
+
    if(m_allowNewCurves == true)// && size < STORED_MSG_SIZE)
    {
       m_storedMsgBuffMutex.lock(); // Make sure multiple threads cannot modify buffer at same time
@@ -214,7 +217,10 @@ void plotGuiMain::startPlotMsgProcess(const char* msg, unsigned int size)
 
       m_storedMsgBuffMutex.unlock();
 
-      UnpackMultiPlotMsg* msgUnpacker = new UnpackMultiPlotMsg(msgCopy, size);
+      tIncomingMsg msgToUnpack = *inMsg;
+      msgToUnpack.msgPtr = msgCopy;
+
+      UnpackMultiPlotMsg* msgUnpacker = new UnpackMultiPlotMsg(&msgToUnpack);
       if(msgUnpacker->m_plotMsgs.size() > 0)
       {
          bool msgPopped = false;
