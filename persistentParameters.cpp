@@ -56,13 +56,13 @@ void persistentParam_setPath(std::string path)
    }
    else
    {
-      std::string dir = fso::GetDir(path);
+      std::string dir = path;
       if(fso::DirExists(dir))
       {
          iniPath = dir + fso::dirSep() + PERSISTENT_APPEND;
       }
    }
-   if(fso::FileExists(iniPath) == false)
+   if(iniPath != "" && fso::FileExists(iniPath) == false)
    {
       std::string iniFileInit = "";
       fso::WriteFile(iniPath, iniFileInit);

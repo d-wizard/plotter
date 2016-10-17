@@ -17,6 +17,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <QtGui/QApplication>
+#include <QProcess>
+#include <QString>
 #include "plotguimain.h"
 #include "dString.h"
 #include "FileSystemOperations.h"
@@ -24,6 +26,20 @@
 #include "persistentParameters.h"
 
 bool defaultCursorZoomModeIsZoom = false;
+
+QString getEnvVar(QString envVarNam)
+{
+   std::string searchStr = envVarNam.toStdString() + "=";
+   QStringList envList(QProcess::systemEnvironment());
+   foreach(QString env, envList)
+   {
+      if(dString::Left(env.toStdString(), searchStr.size()) == searchStr)
+      {
+         return dString::SplitRight(env.toStdString(), searchStr).c_str();
+      }
+   }
+   return "";
+}
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +58,13 @@ int main(int argc, char *argv[])
       }
    }
 
+#ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
+   QString appDataPath = getEnvVar("APPDATA");
+
+   persistentParam_setPath(appDataPath.toStdString());
+#else
    persistentParam_setPath(argv[0]);
+#endif
 
    std::string iniName(fso::GetFileNameNoExt(argv[0]));
    iniName.append(".ini");

@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -54,7 +54,7 @@
    #define closesocket(fd) close(fd)
 #endif
 
-#define MAX_PACKET_SIZE (20480)
+#define MAX_PACKET_SIZE (2048)
 #define MAX_PACKETS (2048)
 #define MAX_STORED_PACKETS (2048)
 
