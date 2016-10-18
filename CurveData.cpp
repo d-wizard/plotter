@@ -389,7 +389,7 @@ void CurveData::findMaxMin()
       newMaxMin.minX = xPoints[0];
       newMaxMin.maxX = xPoints[vectSize-1];
 
-      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY);
+      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY, newMaxMin.realY);
 
 #ifdef DEBUG_VALIDATE_SMART_MAX_MIN
       maxMinXY validateMaxMin;
@@ -404,8 +404,8 @@ void CurveData::findMaxMin()
    else
    {
       // X Points may not be in order.
-      smartMaxMinXPoints.getMaxMin(newMaxMin.maxX, newMaxMin.minX);
-      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY);
+      smartMaxMinXPoints.getMaxMin(newMaxMin.maxX, newMaxMin.minX, newMaxMin.realX);
+      smartMaxMinYPoints.getMaxMin(newMaxMin.maxY, newMaxMin.minY, newMaxMin.realY);
 
 #ifdef DEBUG_VALIDATE_SMART_MAX_MIN
       maxMinXY validateMaxMin;
@@ -466,17 +466,20 @@ void CurveData::setCurveSamples()
 {
    // To save on processing, calculate final max/min.
    maxMinXY finalMaxMin;
-   finalMaxMin.minY = maxMin_beforeScale.minY;
-   finalMaxMin.maxY = maxMin_beforeScale.maxY;
+   finalMaxMin.minY  = maxMin_beforeScale.minY;
+   finalMaxMin.maxY  = maxMin_beforeScale.maxY;
+   finalMaxMin.realY = maxMin_beforeScale.realY;
    if(plotDim == E_PLOT_DIM_1D)
    {
-      finalMaxMin.minX = maxMin_1dXPoints.minX;
-      finalMaxMin.maxX = maxMin_1dXPoints.maxX;
+      finalMaxMin.minX  = maxMin_1dXPoints.minX;
+      finalMaxMin.maxX  = maxMin_1dXPoints.maxX;
+      finalMaxMin.realX = true; // 1D X Point are generated, thus they are always valid.
    }
    else
    {
-      finalMaxMin.minX = maxMin_beforeScale.minX;
-      finalMaxMin.maxX = maxMin_beforeScale.maxX;
+      finalMaxMin.minX  = maxMin_beforeScale.minX;
+      finalMaxMin.maxX  = maxMin_beforeScale.maxX;
+      finalMaxMin.realX = maxMin_beforeScale.realX;
    }
 
    if(xNormalized)

@@ -54,6 +54,8 @@ typedef struct tMaxMinXY
     double minY;
     double maxX;
     double maxY;
+    bool realX; // If true at least one of the X samples is real. If false all the X samples are not real (i.e. NaN, -inf, +inf, etc)
+    bool realY; // If true at least one of the Y samples is real. If false all the Y samples are not real (i.e. NaN, -inf, +inf, etc)
 
     bool operator==(const struct tMaxMinXY& rhs)
     {

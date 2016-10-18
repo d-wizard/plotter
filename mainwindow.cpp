@@ -956,21 +956,47 @@ maxMinXY MainWindow::calcMaxMin()
          if(m_qwtCurves[i]->isDisplayed())
          {
             maxMinXY curveMaxMinXY = m_qwtCurves[i]->getMaxMinXYOfCurve();
-            if(m_maxMin.minX > curveMaxMinXY.minX)
+
+            if(curveMaxMinXY.realX)
             {
-               m_maxMin.minX = curveMaxMinXY.minX;
+               if(m_maxMin.realX == false)
+               {
+                  m_maxMin.minX  = curveMaxMinXY.minX;
+                  m_maxMin.maxX  = curveMaxMinXY.maxX;
+               }
+               else
+               {
+                  if(m_maxMin.minX > curveMaxMinXY.minX)
+                  {
+                     m_maxMin.minX = curveMaxMinXY.minX;
+                  }
+                  if(m_maxMin.maxX < curveMaxMinXY.maxX)
+                  {
+                     m_maxMin.maxX = curveMaxMinXY.maxX;
+                  }
+               }
+               m_maxMin.realX = true;
             }
-            if(m_maxMin.minY > curveMaxMinXY.minY)
+
+            if(curveMaxMinXY.realY)
             {
-               m_maxMin.minY = curveMaxMinXY.minY;
-            }
-            if(m_maxMin.maxX < curveMaxMinXY.maxX)
-            {
-               m_maxMin.maxX = curveMaxMinXY.maxX;
-            }
-            if(m_maxMin.maxY < curveMaxMinXY.maxY)
-            {
-               m_maxMin.maxY = curveMaxMinXY.maxY;
+               if(m_maxMin.realY == false)
+               {
+                  m_maxMin.minY  = curveMaxMinXY.minY;
+                  m_maxMin.maxY  = curveMaxMinXY.maxY;
+               }
+               else
+               {
+                  if(m_maxMin.maxY < curveMaxMinXY.maxY)
+                  {
+                     m_maxMin.maxY = curveMaxMinXY.maxY;
+                  }
+                  if(m_maxMin.minY > curveMaxMinXY.minY)
+                  {
+                     m_maxMin.minY = curveMaxMinXY.minY;
+                  }
+               }
+               m_maxMin.realY = true;
             }
          }
          ++i;

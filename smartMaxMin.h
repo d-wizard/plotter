@@ -30,6 +30,7 @@ typedef struct MaxMinSegment
    double maxValue;
    unsigned int minIndex;
    double minValue;
+   bool realPoints; // If true at least 1 of the points in the segment is a real, valid value.
 
 
    bool operator>(const struct MaxMinSegment& rhs)
@@ -61,7 +62,7 @@ public:
    void updateMaxMin(unsigned int startIndex, unsigned int numPoints);
    void scrollModeShift(unsigned int shiftAmount);
 
-   void getMaxMin(double& retMax, double& retMin);
+   void getMaxMin(double& retMax, double& retMin, bool& retReal);
 private:
    smartMaxMin();
 
@@ -80,6 +81,7 @@ private:
    tSegList m_segList;
    double m_curMax;
    double m_curMin;
+   bool m_curMaxMinHasRealPoints;
 };
 
 #endif // SMARTMAXMIN_H

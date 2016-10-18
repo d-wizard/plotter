@@ -27,7 +27,8 @@ smartMaxMin::smartMaxMin(const dubVect *srcVect, unsigned int minSegSize, unsign
    m_maxSegSize(maxSegSize),
    m_srcVect(srcVect),
    m_curMax(0.0),
-   m_curMin(0.0)
+   m_curMin(0.0),
+   m_curMaxMinHasRealPoints(false)
 {
 }
 
@@ -111,6 +112,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       newSeg.numPoints = startIndex - lastSegEndIndex;
       newSeg.maxIndex = newSeg.startIndex;
       newSeg.minIndex = newSeg.startIndex;
+      newSeg.realPoints = true;
       m_segList.push_back(newSeg);
    }
 
@@ -166,10 +168,11 @@ void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
    //debug_verifySegmentsAreContiguous();
 }
 
-void smartMaxMin::getMaxMin(double &retMax, double &retMin)
+void smartMaxMin::getMaxMin(double &retMax, double &retMin, bool& retReal)
 {
-   retMax = m_curMax;
-   retMin = m_curMin;
+   retMax  = m_curMax;
+   retMin  = m_curMin;
+   retReal = m_curMaxMinHasRealPoints;
 }
 
 void smartMaxMin::calcTotalMaxMin()
@@ -179,6 +182,7 @@ void smartMaxMin::calcTotalMaxMin()
    {
       double newMax = iter->maxValue;
       double newMin = iter->minValue;
+      bool maxMinIsRealValue = iter->realPoints;
       ++iter;
 
       while(iter != m_segList.end())
@@ -191,11 +195,16 @@ void smartMaxMin::calcTotalMaxMin()
          {
             newMin = iter->minValue;
          }
+         if(iter->realPoints == true)
+         {
+            maxMinIsRealValue = true;
+         }
          ++iter;
       }
 
       m_curMax = newMax;
       m_curMin = newMin;
+      m_curMaxMinHasRealPoints = maxMinIsRealValue;
    }
 }
 
@@ -212,6 +221,7 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    seg.minIndex = -1;
    seg.startIndex = startIndex;
    seg.numPoints = numPoints;
+   seg.realPoints = false;
 
    const double* srcPoints = &((*m_srcVect)[0]);
    unsigned int stopIndex = startIndex + numPoints;
@@ -225,6 +235,7 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
          seg.minValue = srcPoints[i];
          seg.maxIndex = i;
          seg.minIndex = i;
+         seg.realPoints = true;
          startIndex = i+1;
          break;
       }
@@ -277,6 +288,10 @@ void smartMaxMin::combineSegments()
             {
                cur->minValue = next->minValue;
                cur->minIndex = next->minIndex;
+            }
+            if(cur->realPoints || next->realPoints)
+            {
+               cur->realPoints = true;
             }
             cur->numPoints += next->numPoints;
             m_segList.erase(next);
