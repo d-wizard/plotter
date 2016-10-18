@@ -26,9 +26,17 @@
 #include "persistentParameters.h"
 #include "sendTCPPacket.h"
 
+// Local Variables.
+static bool g_validPort = false;
+static unsigned short g_port = 0xFFFF;
+
+// Global Variables (might be extern'd)
 bool defaultCursorZoomModeIsZoom = false;
 
-QString getEnvVar(QString envVarNam)
+
+
+// Local Functions
+static QString getEnvVar(QString envVarNam)
 {
    std::string searchStr = envVarNam.toStdString() + "=";
    QStringList envList(QProcess::systemEnvironment());
@@ -42,17 +50,13 @@ QString getEnvVar(QString envVarNam)
    return "";
 }
 
-int isApplicationAlreadyRunning(unsigned short port)
+static int connectToExistingAppInstance()
 {
-   return sendTCPPacket_init("127.0.0.1", port);
+   return sendTCPPacket_init("127.0.0.1", g_port);
 }
 
-
-int main(int argc, char *argv[])
+static void processCmdLineArgs(int argc, char *argv[])
 {
-   bool validPort = false;
-   unsigned short port = 0xFFFF;
-
    // First argument is path to executable,
    // argc must be 2 or more for command line parameters.
    if(argc >= 2)
@@ -60,19 +64,14 @@ int main(int argc, char *argv[])
       unsigned int cmdLinePort = atoi(argv[1]);
       if(cmdLinePort > 0 && cmdLinePort <= 0xFFFF)
       {
-         validPort = true;
-         port = cmdLinePort;
+         g_validPort = true;
+         g_port = cmdLinePort;
       }
    }
+}
 
-#ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
-   QString appDataPath = getEnvVar("APPDATA");
-
-   persistentParam_setPath(appDataPath.toStdString());
-#else
-   persistentParam_setPath(argv[0]);
-#endif
-
+static void processIniFile(int argc, char *argv[])
+{
    std::string iniName(fso::GetFileNameNoExt(argv[0]));
    iniName.append(".ini");
 
@@ -87,7 +86,7 @@ int main(int argc, char *argv[])
       // suround with new line for easier searching
       iniFile = std::string("\n") + iniFile + std::string("\n");
 
-      if(validPort == false)
+      if(g_validPort == false)
       {
          std::string portFromIni = dString::SplitRight(iniFile, "\nport=");
          portFromIni = dString::GetNumFromStr(portFromIni);
@@ -96,8 +95,8 @@ int main(int argc, char *argv[])
             unsigned int iniPort = atoi(portFromIni.c_str());
             if(iniPort > 0 && iniPort <= 0xFFFF)
             {
-               validPort = true;
-               port = iniPort;
+               g_validPort = true;
+               g_port = iniPort;
             }
          }
       } // End if(validPort == false)
@@ -128,36 +127,65 @@ int main(int argc, char *argv[])
       }
 
    } // End if(iniFile != "")
+}
 
+static void setPersistentParamPath()
+{
+#ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
+   QString appDataPath = getEnvVar("APPDATA");
 
-   if(validPort == true && isApplicationAlreadyRunning(port) >= 0)
-   {
-      QApplication::quit();
-      return -1;
-   }
+   persistentParam_setPath(appDataPath.toStdString());
+#else
+   persistentParam_setPath(argv[0]);
+#endif
+}
 
+static int startGuiApp()
+{
+   int dummyArgc = 0;
+   QApplication a(dummyArgc, NULL);
 
-   if(validPort == true)
-   {
-      int dummyArgc = 0;
-      QApplication a(dummyArgc, NULL);
-
-      a.setQuitOnLastWindowClosed(false);
+   a.setQuitOnLastWindowClosed(false);
 
 #if (defined(_WIN32) || defined(__WIN32__))
-      plotGuiMain pgm(NULL, port, true);
+   plotGuiMain pgm(NULL, g_port, true);
 #else
-      // Linux doesn't seem to have a tray, so show the GUI with similar functions
-      plotGuiMain pgm(NULL, port, false);
-      pgm.show();
+   // Linux doesn't seem to have a tray, so show the GUI with similar functions
+   plotGuiMain pgm(NULL, port, false);
+   pgm.show();
 #endif
 
-      return a.exec();
+   return a.exec();
+}
+
+static int stopGuiApp()
+{
+   QApplication::quit();
+   return -1;
+}
+
+
+int main(int argc, char *argv[])
+{
+   processCmdLineArgs(argc, argv);
+   processIniFile(argc, argv);
+
+   if(g_validPort == true)
+   {
+      int connectionToExistingAppInstance = connectToExistingAppInstance();
+
+      if(connectionToExistingAppInstance >= 0)
+      {
+         return stopGuiApp();
+      }
+
+      setPersistentParamPath();
+
+      return startGuiApp();
    }
    else
    {
-      QApplication::quit();
-      return -1;
+      return stopGuiApp();
    }
 
 }
