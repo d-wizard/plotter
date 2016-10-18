@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
 
       if(connectionToExistingAppInstance >= 0)
       {
+         // There is already an instance of the plot app running. Close this new instance now.
          return stopGuiApp();
       }
 
