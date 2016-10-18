@@ -362,6 +362,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/saveRestoreCurve.h</locationURI>
 		</link>
 		<link>
+			<name>sendTCPPacket.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/sendTCPPacket.h</locationURI>
+		</link>
+		<link>
 			<name>smartMaxMin.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/smartMaxMin.cpp</locationURI>

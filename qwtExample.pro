@@ -64,7 +64,8 @@ HEADERS  += mainwindow.h \
     handleLogData.h \
     logToFile.h \
     smartMaxMin.h \
-    persistentParameters.h
+    persistentParameters.h \
+    sendTCPPacket.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

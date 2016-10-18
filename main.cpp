@@ -24,6 +24,7 @@
 #include "FileSystemOperations.h"
 #include "PackUnpackPlotMsg.h"
 #include "persistentParameters.h"
+#include "sendTCPPacket.h"
 
 bool defaultCursorZoomModeIsZoom = false;
 
@@ -40,6 +41,12 @@ QString getEnvVar(QString envVarNam)
    }
    return "";
 }
+
+int isApplicationAlreadyRunning(unsigned short port)
+{
+   return sendTCPPacket_init("127.0.0.1", port);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -121,6 +128,14 @@ int main(int argc, char *argv[])
       }
 
    } // End if(iniFile != "")
+
+
+   if(validPort == true && isApplicationAlreadyRunning(port) >= 0)
+   {
+      QApplication::quit();
+      return -1;
+   }
+
 
    if(validPort == true)
    {
