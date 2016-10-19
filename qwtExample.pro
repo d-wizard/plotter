@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     plotcurvenamedialog.cpp \
     overwriterenamedialog.cpp \
     smartMaxMin.cpp \
-    persistentParameters.cpp
+    persistentParameters.cpp \
+    localPlotCreate.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -65,7 +66,8 @@ HEADERS  += mainwindow.h \
     logToFile.h \
     smartMaxMin.h \
     persistentParameters.h \
-    sendTCPPacket.h
+    sendTCPPacket.h \
+    localPlotCreate.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

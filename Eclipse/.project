@@ -257,6 +257,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/fftPlots.h</locationURI>
 		</link>
 		<link>
+			<name>localPlotCreate.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/localPlotCreate.cpp</locationURI>
+		</link>
+		<link>
+			<name>localPlotCreate.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/localPlotCreate.h</locationURI>
+		</link>
+		<link>
 			<name>main.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/main.cpp</locationURI>

@@ -25,7 +25,6 @@
 #include <list>
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
-#include "plotcurvenamedialog.h"
 #include "saveRestoreCurve.h"
 
 namespace Ui {
@@ -131,10 +130,6 @@ private:
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
    void setUserChildPlotNames();
 
-   QString getUniquePlotName(QString plotName);
-   void restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam);
-   void restoreMultipleCurves(QString plotName, QVector<tSaveRestoreCurveParams>& curves);
-
    QString getOpenSaveDir();
    QString getOpenSavePath(QString fileName);
    void setOpenSavePath(QString path);
@@ -165,8 +160,6 @@ private:
 
    QVector<tCmbBoxAndValue> m_plotCurveCombos;
    QVector<tCmbBoxAndValue> m_plotNameCombos;
-
-   plotCurveNameDialog m_plotCurveDialog;
 
    QString m_childCurveNewPlotNameUser;
    QString m_childCurveNewCurveNameUser;

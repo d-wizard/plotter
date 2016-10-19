@@ -30,6 +30,7 @@
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
 #include "persistentParameters.h"
+#include "localPlotCreate.h"
 
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
@@ -132,7 +133,6 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameCombos.clear();
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbDestPlotName, E_X_AXIS));
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbOpenCurvePlotName, E_X_AXIS));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_plotCurveDialog.getPlotNameCombo(), E_X_AXIS));
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbPlotToSave, E_X_AXIS));
 
    // Set current tab index.
@@ -1079,111 +1079,13 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
 
    setOpenSavePath(fileName);
 
-   std::vector<char> curveFile;
-   fso::ReadBinaryFile(fileName.toStdString(), curveFile);
+   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, ui->cmbOpenCurvePlotName->currentText());
 
-   // Get plot name.
-   QString plotName = ui->cmbOpenCurvePlotName->currentText();
-   if(plotName == "")
-   {
-      plotName = "New Plot";
-   }
-
-   bool inputIsValid = fileName == "" ? true : false; // NULL string return is cancel, which is valid.
-   QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
-   if(ext == "curve")
-   {
-      RestoreCurve t_restoreCurve(curveFile);
-      inputIsValid = t_restoreCurve.isValid;
-      if(t_restoreCurve.isValid)
-      {
-         if(validateNewPlotCurveName(plotName, t_restoreCurve.params.curveName))
-         {
-            restoreCurve(plotName, &t_restoreCurve.params);
-         }
-      } // End if(restoreCurve.isValid)
-
-   }
-   else if(ext == "plot")
-   {
-      RestorePlot restorePlot(curveFile);
-      inputIsValid = restorePlot.isValid;
-      if(restorePlot.isValid)
-      {
-         restoreMultipleCurves(restorePlot.plotName, restorePlot.params);
-      }
-   }
-   else if(ext == "csv")
-   {
-      RestoreCsv restoreCsv(curveFile);
-      inputIsValid = restoreCsv.isValid;
-      if(restoreCsv.isValid)
-      {
-         restoreMultipleCurves(plotName, restoreCsv.params);
-      }
-   }
-
-   if(inputIsValid == false)
-   {
-      QString msgBoxFileName(fso::dirSepToOS(fileName.toStdString()).c_str());
-      QMessageBox::question( this,
-                             "Invalid File",
-                             msgBoxFileName + "\n is Invalid.",
-                             QMessageBox::Ok );
-   }
 }
 
 bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)
 {
-   bool namesAreValid = false;
-   bool finished = false;
-
-   if(m_curveCmdr->validCurve(plotName, curveName) == false)
-   {
-      // plot->curve does not exist, the input names are valid.
-      namesAreValid = true;
-   }
-   else
-   {
-      // plot->curve does exists, ask user whether to overwrite existing curve, rename
-      // the new curve or cancel creation of new curve.
-      do
-      {
-         overwriteRenameDialog overRenameDlg(NULL);
-         ePlotExistsReturn whatToDo = overRenameDlg.askUserAboutExistingPlot(plotName, curveName);
-         if(whatToDo == RENAME)
-         {
-            bool renamed = m_plotCurveDialog.getPlotCurveNameFromUser(plotName, curveName);
-            if(renamed == true && m_curveCmdr->validCurve(plotName, curveName) == false)
-            {
-               // Renamed to a unique plot->curve name. Return valid.
-               namesAreValid = true;
-               finished = true;
-            }
-            else if(renamed == false)
-            {
-               // User clicked cancel. Return invalid.
-               namesAreValid = false;
-               finished = true;
-            }
-         }
-         else if(whatToDo == OVERWRITE)
-         {
-            // Overwrite. Do not rename. Return valid.
-            namesAreValid = true;
-            finished = true;
-         }
-         else
-         {
-            // Cancel. Return invalid.
-            namesAreValid = false;
-            finished = true;
-         }
-
-      }while(finished == false);
-   }
-
-   return namesAreValid;
+   return localPlotCreate::validateNewPlotCurveName(m_curveCmdr, plotName, curveName);
 }
 
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
@@ -1460,68 +1362,6 @@ void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
 void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 {
    setUserChildPlotNames();
-}
-
-
-QString curveProperties::getUniquePlotName(QString plotName)
-{
-   QString newPlotName = plotName;
-   int addIndex = 1;
-   while(m_curveCmdr->validPlot(newPlotName))
-   {
-      newPlotName = plotName + " " + QString::number(addIndex);
-      addIndex++;
-   }
-   return newPlotName;
-}
-
-void curveProperties::restoreCurve(QString plotName, tSaveRestoreCurveParams* curveParam)
-{
-   if(curveParam->plotDim == E_PLOT_DIM_1D)
-   {
-      m_curveCmdr->create1dCurve(plotName, curveParam->curveName, curveParam->plotType, curveParam->yOrigPoints);
-   }
-   else
-   {
-      m_curveCmdr->create2dCurve(plotName, curveParam->curveName, curveParam->xOrigPoints, curveParam->yOrigPoints);
-   }
-
-   MainWindow* plot = m_curveCmdr->getMainPlot(plotName);
-   if(plot != NULL)
-   {
-      plot->setCurveProperties(curveParam->curveName, E_X_AXIS, curveParam->sampleRate, curveParam->mathOpsXAxis);
-      plot->setCurveProperties(curveParam->curveName, E_Y_AXIS, curveParam->sampleRate, curveParam->mathOpsYAxis);
-   }
-}
-
-void curveProperties::restoreMultipleCurves(QString plotName, QVector<tSaveRestoreCurveParams>& curves)
-{
-   // Make sure inputs are valid.
-   if(plotName == "" || curves.size() == 0)
-      return;
-
-   if(m_curveCmdr->validPlot(plotName))
-   {
-      // Plot name already exists.
-
-      if(curves.size() == 1)
-      {
-         // If there is only 1 curve to add, let the user change the plot/curve name to avoid conflict.
-         if(validateNewPlotCurveName(plotName, curves[0].curveName) == false)
-            return; // User chose to ingore the new curve.
-      }
-      else
-      {
-         // There are more than 1 curves for the new plot, just use a new unique plot name.
-         plotName = getUniquePlotName(plotName);
-      }
-   }
-
-   for(int i = 0; i < curves.size(); ++i)
-   {
-      restoreCurve(plotName, &curves[i]);
-   }
-
 }
 
 QString curveProperties::getOpenSaveDir()
