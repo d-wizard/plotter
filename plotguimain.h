@@ -21,8 +21,8 @@
 
 #include <string>
 #include <queue>
+#include <list>
 
-#include <QList>
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 #include <QMenu>
@@ -65,6 +65,8 @@ public:
 
     CurveCommander& getCurveCommander(){return m_curveCommander;}
 
+    void restorePlotFile(std::string plotFilePath);
+
 private:
 
     Ui::plotGuiMain *ui;
@@ -91,6 +93,8 @@ private:
     std::queue<UnpackMultiPlotMsg*> m_multiPlotMsgs;
     QMutex m_multiPlotMsgsQueueMutex;
 
+    std::list<std::string> m_plotFilesToRestoreList;
+    QMutex m_plotFilesToRestoreMutex;
 
     void closeEvent(QCloseEvent* event);
 
@@ -100,10 +104,12 @@ public slots:
     void showPropertiesGui();
     void closeAllPlotsFromLibSlot();
     void closeAllPlotsSlot();
+    void restorePlotFilesInListSlot();
 
 signals:
     void readPlotMsgSignal();
     void closeAllPlotsFromLibSignal();
+    void restorePlotFilesInListSignal();
 private slots:
     void on_cmdClose_clicked();
 };

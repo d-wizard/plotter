@@ -26,6 +26,7 @@
 #include "createfftplot.h"
 #include "fftHelper.h"
 
+#include "localPlotCreate.h"
 
 #define MAX_NUM_MSGS_IN_QUEUE (1000)
 
@@ -53,6 +54,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     QObject::connect(this, SIGNAL(readPlotMsgSignal()),
                      this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
+
+    QObject::connect(this, SIGNAL(restorePlotFilesInListSignal()),
+                     this, SLOT(restorePlotFilesInListSlot()), Qt::QueuedConnection);
 
 #ifdef TEST_CURVES
     QString plotName = "Test Plot";
@@ -185,6 +189,23 @@ void plotGuiMain::closeAllPlotsSlot()
    m_curveCommander.destroyAllPlots();
 }
 
+void plotGuiMain::restorePlotFilesInListSlot()
+{
+   m_plotFilesToRestoreMutex.lock();
+   std::list<std::string>::iterator iter = m_plotFilesToRestoreList.begin();
+   while(iter != m_plotFilesToRestoreList.end())
+   {
+      std::string plotFilePath = *iter;
+      m_plotFilesToRestoreMutex.unlock();
+
+      localPlotCreate::restorePlotFromFile(&m_curveCommander, plotFilePath.c_str(), "");
+
+      m_plotFilesToRestoreMutex.lock();
+      m_plotFilesToRestoreList.erase(iter++);
+   }
+   m_plotFilesToRestoreMutex.unlock();
+}
+
 void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
 {
    const char* msg = inMsg->msgPtr;
@@ -315,6 +336,14 @@ void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveN
    }
 }
 
+void plotGuiMain::restorePlotFile(std::string plotFilePath)
+{
+   m_plotFilesToRestoreMutex.lock();
+   m_plotFilesToRestoreList.push_back(plotFilePath);
+   m_plotFilesToRestoreMutex.unlock();
+
+   emit restorePlotFilesInListSignal();
+}
 
 void plotGuiMain::enDisNewCurves()
 {
