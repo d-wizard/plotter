@@ -119,8 +119,19 @@ void sendRestorePlotPathsToActiveInstance(int connectionToExistingAppInstance)
 
 static void processIniFile(int argc, char *argv[])
 {
+   // Try to find .ini file in Current Working Directory.
    std::string iniName(fso::GetFileNameNoExt(argv[0]));
    iniName.append(".ini");
+
+   // Check if .ini file exists in Current Working Directory.
+   if(fso::FileExists(iniName) == false)
+   {
+      // .ini file doesn't exist in Current Working Directory.
+      // Try to find it in the same directory as the plotter binary.
+      iniName = fso::RemoveExt(argv[0]);
+      iniName.append(".ini");
+   }
+
 
    std::string iniFile = fso::ReadFile(iniName);
 
