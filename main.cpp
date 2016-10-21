@@ -19,16 +19,20 @@
 #include <QtGui/QApplication>
 #include <QProcess>
 #include <QString>
+#include <assert.h>
+#include <vector>
 #include "plotguimain.h"
 #include "dString.h"
 #include "FileSystemOperations.h"
 #include "PackUnpackPlotMsg.h"
 #include "persistentParameters.h"
 #include "sendTCPPacket.h"
+#include "plotMsgPack.h"
 
 // Local Variables.
 static bool g_validPort = false;
 static unsigned short g_port = 0xFFFF;
+static std::vector<std::string> g_cmdLineRestorePlotFilePaths;
 
 // Global Variables (might be extern'd)
 bool defaultCursorZoomModeIsZoom = false;
@@ -57,8 +61,9 @@ static int connectToExistingAppInstance()
 
 static void processCmdLineArgs(int argc, char *argv[])
 {
-   // First argument is path to executable,
-   // argc must be 2 or more for command line parameters.
+   // First argument is path to executable.
+
+   // If the second argument is a valid port number, use it for the socket server port number.
    if(argc >= 2)
    {
       unsigned int cmdLinePort = atoi(argv[1]);
@@ -68,6 +73,48 @@ static void processCmdLineArgs(int argc, char *argv[])
          g_port = cmdLinePort;
       }
    }
+
+   // If any of the command line arguments are valid file paths, assume they are stored plot files
+   // and restore them from the files.
+   for(int argIndex = 1; argIndex < argc; ++argIndex)
+   {
+      std::string plotFilePath(argv[argIndex]);
+      if(fso::FileExists(plotFilePath))
+      {
+         g_cmdLineRestorePlotFilePaths.push_back(plotFilePath);
+      }
+   }
+}
+
+void sendRestorePlotPathsToActiveInstance(int connectionToExistingAppInstance)
+{
+   ePlotAction plotAction = E_OPEN_PLOT_FILE;
+   unsigned long totalMsgSize = 0; // will be set later.
+
+   totalMsgSize = sizeof(plotAction) + sizeof(totalMsgSize);
+   for(unsigned int i = 0; i <g_cmdLineRestorePlotFilePaths.size(); ++i)
+   {
+      totalMsgSize += (g_cmdLineRestorePlotFilePaths[i].size() + 1); // Add 1 to include string null terminator.
+   }
+
+   std::vector<char> packedPlotMsg;
+   packedPlotMsg.resize(totalMsgSize);
+   unsigned int packIndex = 0;
+
+   memcpy(&packedPlotMsg[packIndex], &plotAction, sizeof(plotAction));
+   packIndex += sizeof(plotAction);
+   memcpy(&packedPlotMsg[packIndex], &totalMsgSize, sizeof(totalMsgSize));
+   packIndex += sizeof(totalMsgSize);
+   for(unsigned int i = 0; i <g_cmdLineRestorePlotFilePaths.size(); ++i)
+   {
+      unsigned long strPackSize = g_cmdLineRestorePlotFilePaths[i].size() + 1; // Add 1 to include string null terminator.
+      memcpy(&packedPlotMsg[packIndex], g_cmdLineRestorePlotFilePaths[i].c_str(), strPackSize);
+      packIndex += strPackSize;
+   }
+
+   assert(packIndex == packedPlotMsg.size());
+
+   sendTCPPacket_send(connectionToExistingAppInstance, &packedPlotMsg[0], packIndex);
 }
 
 static void processIniFile(int argc, char *argv[])
@@ -176,6 +223,11 @@ int main(int argc, char *argv[])
 
       if(connectionToExistingAppInstance >= 0)
       {
+         if(g_cmdLineRestorePlotFilePaths.size() > 0)
+         {
+            sendRestorePlotPathsToActiveInstance(connectionToExistingAppInstance);
+         }
+
          // There is already an instance of the plot app running. Close this new instance now.
          return stopGuiApp();
       }
