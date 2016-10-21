@@ -98,7 +98,11 @@ void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString f
    // Get plot name.
    if(plotName == "")
    {
-      plotName = "New Plot";
+      plotName = QString(fso::GetFileNameNoExt(fileName.toStdString()).c_str());
+      if(plotName == "")
+      {
+         plotName = "New Plot";
+      }
    }
 
    bool inputIsValid = fileName == "" ? true : false; // NULL string return is cancel, which is valid.
