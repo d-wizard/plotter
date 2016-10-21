@@ -60,8 +60,6 @@ public:
 
     void curveUpdated(QString plotName, QString curveName);
 
-    bool processNonSamplePlotMsgs(UnpackMultiPlotMsg* plotMsg);
-
     void readPlotMsg(UnpackMultiPlotMsg *plotMsg);
     void restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName);
 
@@ -99,6 +97,8 @@ private:
     QMutex m_plotFilesToRestoreMutex;
 
     void closeEvent(QCloseEvent* event);
+
+    bool processNonSamplePlotMsgs(UnpackMultiPlotMsg* plotMsg);
 
 public slots:
     void readPlotMsgSlot();
