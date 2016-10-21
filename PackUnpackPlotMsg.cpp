@@ -304,6 +304,25 @@ UnpackPlotMsg::UnpackPlotMsg(tIncomingMsg* inMsg):
                }
             }
          break;
+         case E_OPEN_PLOT_FILE:
+         {
+            m_plotType = E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE;
+            std::string plotFilePath;
+            bool finishedParsingMsg = false;
+            while(finishedParsingMsg == false)
+            {
+               try
+               {
+                  unpackStr(&plotFilePath);
+                  m_restorePlotFromFileList.push_back(plotFilePath);
+               }
+               catch(int dontCare)
+               {
+                  finishedParsingMsg = true;
+               }
+            }
+         }
+         break;
          default:
             m_plotAction = E_INVALID_PLOT_ACTION;
          break;

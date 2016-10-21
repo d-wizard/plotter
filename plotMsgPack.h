@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -37,6 +37,7 @@ typedef enum
    E_CREATE_2D_PLOT = 0x7A123F89,
    E_UPDATE_1D_PLOT = 0xF1331DFF,
    E_UPDATE_2D_PLOT = 0x0FAF479C,
+   E_OPEN_PLOT_FILE = 0x5C635471,
    E_INVALID_PLOT_ACTION = 0x079C7B2C
 }ePlotAction;
 

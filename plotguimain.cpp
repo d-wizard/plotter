@@ -196,12 +196,13 @@ void plotGuiMain::restorePlotFilesInListSlot()
    while(iter != m_plotFilesToRestoreList.end())
    {
       std::string plotFilePath = *iter;
+      m_plotFilesToRestoreList.erase(iter); // Erase iterator (this will always be begin())
       m_plotFilesToRestoreMutex.unlock();
 
       localPlotCreate::restorePlotFromFile(&m_curveCommander, plotFilePath.c_str(), "");
 
       m_plotFilesToRestoreMutex.lock();
-      m_plotFilesToRestoreList.erase(iter++);
+      iter = m_plotFilesToRestoreList.begin(); // Grab next iterator from begin()
    }
    m_plotFilesToRestoreMutex.unlock();
 }
@@ -241,6 +242,8 @@ void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
       {
          bool msgPopped = false;
          m_multiPlotMsgsQueueMutex.lock();
+         // If the queue of plot messages is getting too big (i.e. we aren't keeping up)
+         // remove the oldest messages from the queue (i.e. drop them on the ground).
          while(m_multiPlotMsgs.size() > MAX_NUM_MSGS_IN_QUEUE)
          {
             delete m_multiPlotMsgs.front();
@@ -289,23 +292,68 @@ void plotGuiMain::readPlotMsgSlot()
 
 }
 
-void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
+bool plotGuiMain::processNonSamplePlotMsgs(UnpackMultiPlotMsg* plotMsg)
 {
-   for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
+   bool nonSamplePlotMsg = false;
+   if( plotMsg->m_plotMsgs.find("") != plotMsg->m_plotMsgs.end() )
    {
-      QString plotName(allMsgs->first.c_str());
-      plotMsgGroup* group = allMsgs->second;
-      for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
+      nonSamplePlotMsg = true;
+
+      plotMsgGroup* noPlotName = plotMsg->m_plotMsgs[""];
+
+      // Read out all the individual plot messages in the message group.
+      UnpackPlotMsgPtrList::iterator plotMsgIter = noPlotName->m_plotMsgs.begin();
+      while(plotMsgIter != noPlotName->m_plotMsgs.end())
       {
-         // Grab the parameters needed for storePlotMsg.
-         const char* msgPtr( (*plotMsgs)->GetMsgPtr() );
-         unsigned int msgSize( (*plotMsgs)->GetMsgPtrSize() );
-         QString curveName( (*plotMsgs)->m_curveName.c_str() );
-         m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
+         UnpackPlotMsg* unpackedMsg = *plotMsgIter;
+
+         // Process the E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE messages (if they exists).
+         if(unpackedMsg->m_restorePlotFromFileList.size() > 0)
+         {
+            std::list<std::string>::iterator restoreFileIter = unpackedMsg->m_restorePlotFromFileList.begin();
+            while(restoreFileIter != unpackedMsg->m_restorePlotFromFileList.end())
+            {
+               // Call restore function.
+               restorePlotFile(*restoreFileIter);
+               ++restoreFileIter;
+            }
+         }
+
+         // Make sure to delete.
+         delete unpackedMsg;
+
+         ++plotMsgIter;
       }
    }
+   return nonSamplePlotMsg;
+}
 
-   m_curveCommander.readPlotMsg(plotMsg);
+void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
+{
+   // Check for special plot messages that don't contain actual samples to plot.
+   // TODO: I should probably remove the plot message group with the plot name of ""
+   // from plotMsg and continue processing any remaining plot groups in the list.
+   // It just doesn't seem very likely that there ever would be a mixture of both
+   // types of message in one UnpackMultiPlotMsg message.
+   if(processNonSamplePlotMsgs(plotMsg) == false)
+   {
+      for(std::map<std::string, plotMsgGroup*>::iterator allMsgs = plotMsg->m_plotMsgs.begin(); allMsgs != plotMsg->m_plotMsgs.end(); ++allMsgs)
+      {
+         QString plotName(allMsgs->first.c_str());
+         plotMsgGroup* group = allMsgs->second;
+         for(UnpackPlotMsgPtrList::iterator plotMsgs = group->m_plotMsgs.begin(); plotMsgs != group->m_plotMsgs.end(); ++plotMsgs)
+         {
+            // Grab the parameters needed for storePlotMsg.
+            const char* msgPtr( (*plotMsgs)->GetMsgPtr() );
+            unsigned int msgSize( (*plotMsgs)->GetMsgPtrSize() );
+            QString curveName( (*plotMsgs)->m_curveName.c_str() );
+            m_curveCommander.storePlotMsg(msgPtr, msgSize, plotName, curveName);
+         }
+      }
+
+      m_curveCommander.readPlotMsg(plotMsg);
+   }
+
    delete plotMsg;
 }
 

@@ -105,7 +105,8 @@ typedef enum
    E_PLOT_TYPE_DB_POWER_FFT_REAL,
    E_PLOT_TYPE_DB_POWER_FFT_COMPLEX,
    E_PLOT_TYPE_DELTA,
-   E_PLOT_TYPE_SUM
+   E_PLOT_TYPE_SUM,
+   E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE
 }ePlotType;
 
 inline bool valid_ePlotType(ePlotType in)
@@ -124,6 +125,7 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
+   case E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE:
       return true;
       break;
    }

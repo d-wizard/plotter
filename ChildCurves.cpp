@@ -567,6 +567,9 @@ void ChildCurve::updateCurve( bool xParentChanged,
          }
       }
       break;
+      default:
+         // TODO should I do something here???
+      break;
    }
 
    setToParentsSampleRate();

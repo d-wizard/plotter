@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <stdio.h>
 #include <string.h>
@@ -44,6 +45,7 @@ inline bool validPlotAction(ePlotAction in)
    case E_CREATE_2D_PLOT:
    case E_UPDATE_1D_PLOT:
    case E_UPDATE_2D_PLOT:
+   case E_OPEN_PLOT_FILE:
       valid = true;
       break;
    default:
@@ -196,6 +198,8 @@ public:
    tPlotterIpAddr m_ipAddr;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
+
+   std::list<std::string> m_restorePlotFromFileList;
 
    const char* GetMsgPtr(){return m_msg;}
    UINT_32 GetMsgPtrSize(){return m_msgSize;}
