@@ -75,15 +75,20 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
       m_allCurves[plotName].curves[curveName] = curveData;
       m_plotGuiMain->curveUpdated(plotName, curveName);
 
-      if(newCurve)
+      if(m_curvePropGui != NULL)
       {
-         // This is a new curve, thus there can't be any child curves from this curve.
-         if(m_curvePropGui != NULL)
+         if(newCurve)
          {
             m_curvePropGui->updateGuiPlotCurveInfo();
          }
+         else
+         {
+            m_curvePropGui->existingPlotsChanged();
+         }
       }
-      else if(numPoints > 0)
+
+      // New curves can't have children, so only check for children if this isn't a new curve.
+      if(newCurve == false && numPoints > 0)
       {
          notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
       }

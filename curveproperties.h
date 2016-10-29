@@ -57,6 +57,8 @@ public:
 
    void updateGuiPlotCurveInfo(QString plotName = "", QString curveName = "");
    
+   void existingPlotsChanged();
+
 private slots:
    void on_cmbPlotType_currentIndexChanged(int index);
    void on_cmdApply_clicked();

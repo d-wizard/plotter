@@ -229,6 +229,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    setUserChildPlotNames();
 }
 
+// This function is called when an existing plot has changed (i.e. no new plot has been created).
+void curveProperties::existingPlotsChanged()
+{
+   if(ui->tabWidget->currentIndex() == TAB_PROPERTIES)
+   {
+      fillInPropTab();
+   }
+}
+
 void curveProperties::setCombosToPrevValues()
 {
    // Set Plot/Curve Name Combos to previous values
