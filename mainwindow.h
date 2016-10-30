@@ -254,6 +254,7 @@ private:
     unsigned int m_activityIndicator_inactiveCount;
     QPalette m_activityIndicator_onPallet;
     QPalette m_activityIndicator_offPallet;
+    QMutex m_activityIndicator_mutex;
     void resetActivityIndicator();
 
     void resetPlot();

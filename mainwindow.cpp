@@ -2027,6 +2027,8 @@ void MainWindow::toggleCurveVisability(const QString& curveName)
 
 void MainWindow::resetActivityIndicator()
 {
+   QMutexLocker lock(&m_activityIndicator_mutex); // Scoped mutex lock.
+
    m_activityIndicator_plotIsActive = true;
    m_activityIndicator_inactiveCount = 0;
    if(m_activityIndicator_timer.isActive() == false)
@@ -2037,6 +2039,8 @@ void MainWindow::resetActivityIndicator()
 
 void MainWindow::activityIndicatorTimerSlot()
 {
+   QMutexLocker lock(&m_activityIndicator_mutex); // Scoped mutex lock.
+
    if( m_activityIndicator_plotIsActive == false &&
        ++m_activityIndicator_inactiveCount >= ACTIVITY_INDICATOR_PERIODS_TO_TIMEOUT )
    {
