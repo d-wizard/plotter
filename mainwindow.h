@@ -42,6 +42,7 @@
 #include <QCursor>
 #include <QSharedPointer>
 #include <QMutex>
+#include <QTimer>
 
 #include <queue>
 
@@ -247,6 +248,14 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
 
+    QTimer m_activityIndicator_timer;
+    bool m_activityIndicator_plotIsActive;
+    bool m_activityIndicator_indicatorState;
+    unsigned int m_activityIndicator_inactiveCount;
+    QPalette m_activityIndicator_onPallet;
+    QPalette m_activityIndicator_offPallet;
+    void resetActivityIndicator();
+
     void resetPlot();
 
     void createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
@@ -333,6 +342,8 @@ private slots:
     void displayPointsChangePrecision(int precision);
 
     void updateCurveOrder();
+
+    void activityIndicatorTimerSlot();
 
 // Functions that could be called from a thread, but modify ui
 public slots:

@@ -40,6 +40,10 @@ mapperAction.m_mapper.setMapping(&mapperAction.m_action, (int)intVal); \
 connect(&mapperAction.m_action,SIGNAL(triggered()), &mapperAction.m_mapper,SLOT(map())); \
 connect(&mapperAction.m_mapper, SIGNAL(mapped(int)), SLOT(callback(int)) );
 
+#define ACTIVITY_INDICATOR_ON_PERIOD_MS (750)
+#define ACTIVITY_INDICATOR_PERIODS_TO_TIMEOUT (3)
+static const unsigned char activityIndicatorStr[2] = {'.', 0};
+
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
     QMainWindow(parent),
@@ -89,7 +93,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_displayPointsPrecisionUpAction("Precision +1", this),
     m_displayPointsPrecisionDownAction("Precision -1", this),
     m_displayPointsPrecisionUpBigAction("Precision +3", this),
-    m_displayPointsPrecisionDownBigAction("Precision -3", this)
+    m_displayPointsPrecisionDownBigAction("Precision -3", this),
+    m_activityIndicator_plotIsActive(true),
+    m_activityIndicator_indicatorState(true),
+    m_activityIndicator_inactiveCount(0)
 {
     ui->setupUi(this);
 
@@ -186,6 +193,21 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownAction,    -1, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownBigAction, -3, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
+
+    // Initialize Activity Indicator.
+    m_activityIndicator_onPallet = palette;
+    m_activityIndicator_onPallet.setColor( QPalette::WindowText, Qt::green);
+
+    m_activityIndicator_offPallet = palette;
+    m_activityIndicator_offPallet.setColor( QPalette::WindowText, Qt::black);
+
+    ui->activityIndicator->setPalette(m_activityIndicator_onPallet);
+    ui->activityIndicator->setText((char*)activityIndicatorStr);
+
+    connect(&m_activityIndicator_timer, SIGNAL(timeout()), this, SLOT(activityIndicatorTimerSlot()));
+
+    m_activityIndicator_timer.start(ACTIVITY_INDICATOR_ON_PERIOD_MS);
+
 }
 
 MainWindow::~MainWindow()
@@ -680,6 +702,8 @@ void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
    {
       m_qwtCurves[curveIndex]->lastMsgIpAddr = unpackPlotMsg->m_ipAddr;
    }
+
+   resetActivityIndicator();
 
    initCursorIndex(curveIndex);
 }
@@ -2001,6 +2025,34 @@ void MainWindow::toggleCurveVisability(const QString& curveName)
    }
 }
 
+void MainWindow::resetActivityIndicator()
+{
+   m_activityIndicator_plotIsActive = true;
+   m_activityIndicator_inactiveCount = 0;
+   if(m_activityIndicator_timer.isActive() == false)
+   {
+      m_activityIndicator_timer.start(ACTIVITY_INDICATOR_ON_PERIOD_MS);
+   }
+}
 
+void MainWindow::activityIndicatorTimerSlot()
+{
+   if( m_activityIndicator_plotIsActive == false &&
+       ++m_activityIndicator_inactiveCount >= ACTIVITY_INDICATOR_PERIODS_TO_TIMEOUT )
+   {
+      m_activityIndicator_indicatorState = false;
+      m_activityIndicator_timer.stop();
+   }
+   else
+   {
+      m_activityIndicator_indicatorState = !m_activityIndicator_indicatorState;
+   }
+
+   m_activityIndicator_plotIsActive = false;
+
+   ui->activityIndicator->setPalette(m_activityIndicator_indicatorState ?
+                                     m_activityIndicator_onPallet : m_activityIndicator_offPallet);
+
+}
 
 
