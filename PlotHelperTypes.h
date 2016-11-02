@@ -303,6 +303,14 @@ typedef struct
    tPlotterIpAddr ipAddr;
 }tIncomingMsg;
 
+
+typedef struct
+{
+   double sampleRate;
+   tMathOpList mathOpsXAxis;
+   tMathOpList mathOpsYAxis;
+}tCurveMathProperties;
+
 //////////////////////////////////////////////
 ////////////// Type Operators ////////////////
 //////////////////////////////////////////////

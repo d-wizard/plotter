@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -53,11 +53,11 @@ void SaveCurve::SaveRaw(CurveData* curve)
     params.plotDim = curve->getPlotDim();
     params.plotType = curve->getPlotType();
     params.numPoints = curve->getNumPoints();
-    params.sampleRate = curve->getSampleRate();
-    params.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
-    params.numXMapOps = params.mathOpsXAxis.size();
-    params.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
-    params.numYMapOps = params.mathOpsYAxis.size();
+    params.mathProps.sampleRate = curve->getSampleRate();
+    params.mathProps.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
+    params.numXMapOps = params.mathProps.mathOpsXAxis.size();
+    params.mathProps.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
+    params.numYMapOps = params.mathProps.mathOpsYAxis.size();
 
     unsigned long dataPointsSize1Axis = (params.numPoints * sizeof(double));
     unsigned long dataPointsSize = (params.plotDim == E_PLOT_DIM_2D) ? (2*dataPointsSize1Axis) : dataPointsSize1Axis;
@@ -72,7 +72,7 @@ void SaveCurve::SaveRaw(CurveData* curve)
           sizeof(params.plotDim) +
           sizeof(params.plotType) +
           sizeof(params.numPoints) +
-          sizeof(params.sampleRate) +
+          sizeof(params.mathProps.sampleRate) +
           sizeof(params.numXMapOps) +
           (params.numXMapOps * sizeof(tOperation)) +
           sizeof(params.numYMapOps) +
@@ -90,16 +90,16 @@ void SaveCurve::SaveRaw(CurveData* curve)
     pack(&packArray, &params.plotDim, sizeof(params.plotDim));
     pack(&packArray, &params.plotType, sizeof(params.plotType));
     pack(&packArray, &params.numPoints, sizeof(params.numPoints));
-    pack(&packArray, &params.sampleRate, sizeof(params.sampleRate));
+    pack(&packArray, &params.mathProps.sampleRate, sizeof(params.mathProps.sampleRate));
 
     // Pack X Axis Math Operations
     pack(&packArray, &params.numXMapOps, sizeof(params.numXMapOps));
-    for(tMathOpList::iterator iter = params.mathOpsXAxis.begin(); iter != params.mathOpsXAxis.end(); ++iter)
+    for(tMathOpList::iterator iter = params.mathProps.mathOpsXAxis.begin(); iter != params.mathProps.mathOpsXAxis.end(); ++iter)
        pack(&packArray, &(*iter), sizeof(*iter));
 
     // Pack Y Axis Math Operations
     pack(&packArray, &params.numYMapOps, sizeof(params.numYMapOps));
-    for(tMathOpList::iterator iter = params.mathOpsYAxis.begin(); iter != params.mathOpsYAxis.end(); ++iter)
+    for(tMathOpList::iterator iter = params.mathProps.mathOpsYAxis.begin(); iter != params.mathProps.mathOpsYAxis.end(); ++iter)
        pack(&packArray, &(*iter), sizeof(*iter));
 
     // Pack Y Axis Data
@@ -116,11 +116,11 @@ void SaveCurve::SaveCsv(MainWindow *plotGui, CurveData *curve)
     params.plotDim = curve->getPlotDim();
     params.plotType = curve->getPlotType();
     params.numPoints = curve->getNumPoints();
-    params.sampleRate = curve->getSampleRate();
-    params.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
-    params.numXMapOps = params.mathOpsXAxis.size();
-    params.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
-    params.numYMapOps = params.mathOpsYAxis.size();
+    params.mathProps.sampleRate = curve->getSampleRate();
+    params.mathProps.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
+    params.numXMapOps = params.mathProps.mathOpsXAxis.size();
+    params.mathProps.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
+    params.numYMapOps = params.mathProps.mathOpsYAxis.size();
 
 
     std::stringstream csvFile;
@@ -203,11 +203,11 @@ RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
       if(params.numPoints <= 0)
          return;
 
-      unpack(&params.sampleRate, sizeof(params.sampleRate));
+      unpack(&params.mathProps.sampleRate, sizeof(params.mathProps.sampleRate));
 
       // Get X Axis Math Operations
       unpack(&params.numXMapOps, sizeof(params.numXMapOps));
-      params.mathOpsXAxis.clear();
+      params.mathProps.mathOpsXAxis.clear();
       for(unsigned int i = 0; i < params.numXMapOps; ++i)
       {
          tOperation newOp;
@@ -215,14 +215,14 @@ RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
 
          // Validate new operation... return if invalid.
          if(valid_eMathOp(newOp.op))
-            params.mathOpsXAxis.push_back(newOp);
+            params.mathProps.mathOpsXAxis.push_back(newOp);
          else
             return;
       }
 
       // Get Y Axis Math Operations
       unpack(&params.numYMapOps, sizeof(params.numYMapOps));
-      params.mathOpsYAxis.clear();
+      params.mathProps.mathOpsYAxis.clear();
       for(unsigned int i = 0; i < params.numYMapOps; ++i)
       {
          tOperation newOp;
@@ -230,7 +230,7 @@ RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
 
          // Validate new operation... return if invalid.
          if(valid_eMathOp(newOp.op))
-            params.mathOpsYAxis.push_back(newOp);
+            params.mathProps.mathOpsYAxis.push_back(newOp);
          else
             return;
       }
@@ -548,11 +548,11 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
          params[i].plotDim = E_PLOT_DIM_1D;
          params[i].plotType = E_PLOT_TYPE_1D;
          params[i].numPoints = params[i].yOrigPoints.size();
-         params[i].sampleRate = 0.0;
+         params[i].mathProps.sampleRate = 0.0;
          params[i].numXMapOps = 0;
-         params[i].mathOpsXAxis.clear();
+         params[i].mathProps.mathOpsXAxis.clear();
          params[i].numYMapOps = 0;
-         params[i].mathOpsYAxis.clear();
+         params[i].mathProps.mathOpsYAxis.clear();
          params[i].xOrigPoints.clear();
 
          totalSamplesInCsv += params[i].numPoints;

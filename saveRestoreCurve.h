@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2016 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -42,13 +42,10 @@ typedef struct
    ePlotDim plotDim;
    ePlotType plotType;
    UINT_32 numPoints;
-   double sampleRate;
 
    UINT_32 numXMapOps;
-   tMathOpList mathOpsXAxis;
-
    UINT_32 numYMapOps;
-   tMathOpList mathOpsYAxis;
+   tCurveMathProperties mathProps;
 
    dubVect xOrigPoints;
    dubVect yOrigPoints;

@@ -225,7 +225,7 @@ void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
    }
 }
 
-void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints)
+void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints, tCurveMathProperties* mathProps)
 {
    createPlot(plotName);
 
@@ -235,6 +235,11 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotTyp
    plotMsg->m_curveName = curveName.toStdString();
    plotMsg->m_plotType = plotType;
    plotMsg->m_yAxisValues = yPoints;
+   if(mathProps != NULL)
+   {
+      plotMsg->m_useCurveMathProps = true;
+      plotMsg->m_curveMathProps = *mathProps;
+   }
 
    plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
    childPlots_createParentMsgIdGroup(groupMsg);
@@ -243,7 +248,7 @@ void CurveCommander::create1dCurve(QString plotName, QString curveName, ePlotTyp
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints)
+void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints, tCurveMathProperties* mathProps)
 {
    createPlot(plotName);
 
@@ -254,6 +259,11 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
    plotMsg->m_plotType = E_PLOT_TYPE_2D;
    plotMsg->m_xAxisValues = xPoints;
    plotMsg->m_yAxisValues = yPoints;
+   if(mathProps != NULL)
+   {
+      plotMsg->m_useCurveMathProps = true;
+      plotMsg->m_curveMathProps = *mathProps;
+   }
 
    plotMsgGroup* groupMsg = new plotMsgGroup(plotMsg);
    childPlots_createParentMsgIdGroup(groupMsg);

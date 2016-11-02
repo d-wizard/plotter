@@ -153,19 +153,13 @@ void localPlotCreate::restoreCurve(CurveCommander* p_curveCmdr, QString plotName
 {
    if(curveParam->plotDim == E_PLOT_DIM_1D)
    {
-      p_curveCmdr->create1dCurve(plotName, curveParam->curveName, curveParam->plotType, curveParam->yOrigPoints);
+      p_curveCmdr->create1dCurve(plotName, curveParam->curveName, curveParam->plotType, curveParam->yOrigPoints, &curveParam->mathProps);
    }
    else
    {
-      p_curveCmdr->create2dCurve(plotName, curveParam->curveName, curveParam->xOrigPoints, curveParam->yOrigPoints);
+      p_curveCmdr->create2dCurve(plotName, curveParam->curveName, curveParam->xOrigPoints, curveParam->yOrigPoints, &curveParam->mathProps);
    }
 
-   MainWindow* plot = p_curveCmdr->getMainPlot(plotName);
-   if(plot != NULL)
-   {
-      plot->setCurveProperties(curveParam->curveName, E_X_AXIS, curveParam->sampleRate, curveParam->mathOpsXAxis);
-      plot->setCurveProperties(curveParam->curveName, E_Y_AXIS, curveParam->sampleRate, curveParam->mathOpsYAxis);
-   }
 }
 
 void localPlotCreate::restoreMultipleCurves(CurveCommander* p_curveCmdr, QString plotName, QVector<tSaveRestoreCurveParams>& curves)

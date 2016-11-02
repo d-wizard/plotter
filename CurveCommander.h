@@ -69,8 +69,8 @@ public:
 
     void readPlotMsg(UnpackMultiPlotMsg* plotMsg);
 
-    void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints);
-    void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints);
+    void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints, tCurveMathProperties* mathProps = NULL);
+    void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints, tCurveMathProperties* mathProps = NULL);
     void update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
     void update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
     void destroyAllPlots();

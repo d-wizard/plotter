@@ -556,6 +556,14 @@ void MainWindow::readPlotMsgSlot()
                default:
                break;
             }
+
+            if(plotMsg->m_useCurveMathProps)
+            {
+               setCurveProperties(
+                  curveName, E_X_AXIS, plotMsg->m_curveMathProps.sampleRate, plotMsg->m_curveMathProps.mathOpsXAxis);
+               setCurveProperties(
+                  curveName, E_Y_AXIS, plotMsg->m_curveMathProps.sampleRate, plotMsg->m_curveMathProps.mathOpsYAxis);
+            }
          }
          updatePlotWithNewCurveData(!newCurveAdded);
 

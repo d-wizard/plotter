@@ -201,6 +201,9 @@ public:
 
    std::list<std::string> m_restorePlotFromFileList;
 
+   bool m_useCurveMathProps;
+   tCurveMathProperties m_curveMathProps;
+
    const char* GetMsgPtr(){return m_msg;}
    UINT_32 GetMsgPtrSize(){return m_msgSize;}
 
