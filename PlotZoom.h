@@ -101,6 +101,8 @@ private:
 
    void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 
+   void UpdateScrollBars();
+
    bool areTheyClose(double val1, double val2);
 
    PlotZoom();

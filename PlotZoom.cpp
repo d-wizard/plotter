@@ -469,9 +469,9 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
    // Nothing in the save zoom vector, initialize it with current zoom value.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
-       m_zoomDimSave.resize(1);
-       m_zoomDimIndex = 0;
-       m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
+      m_zoomDimSave.resize(1);
+      m_zoomDimIndex = 0;
+      m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
 
    }
    
@@ -497,65 +497,118 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
 
    if(zoomWidth > 0.0 && zoomHeight > 0.0)
    {
-       m_zoomDimensions = zoomDimensions;
-       m_zoomWidth = zoomWidth;
-       m_zoomHeight = zoomHeight;
+      m_zoomDimensions = zoomDimensions;
+      m_zoomWidth = zoomWidth;
+      m_zoomHeight = zoomHeight;
 
-       ResetPlotAxisScale();
+      ResetPlotAxisScale();
 
-       if(m_maxHoldZoom == false)
-       {
-          // Update Scroll Bar variables.
-          m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
-          m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
-          m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
-          m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
+      UpdateScrollBars();
 
-          m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
-          m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
+      // Remove any next zooms and set the current zoom.
+      if(saveZoom == true)
+      {
+         ++m_zoomDimIndex;
+         m_zoomDimSave.resize(m_zoomDimIndex+1);
+         m_zoomDimSave[m_zoomDimIndex] = m_zoomDimensions;
+      }
 
-          // Check if zoom and plot are the same, take into account rounding error
-          if( areTheyClose(m_zoomDimensions.minX, m_plotDimensions.minX) &&
-              areTheyClose(m_zoomDimensions.maxX, m_plotDimensions.maxX) )
-          {
-              m_horzScroll->setRange(0, 0);
-              m_horzScroll->setVisible(false);
-              m_curXScrollPos = -1;
-          }
-          else
-          {
-              m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
-              m_horzScroll->setVisible(true);
-              BoundScroll(m_horzScroll, m_curXScrollPos);
-              m_horzScroll->setSliderPosition(m_curXScrollPos);
-          }
+      m_qwtPlot->replot();
+   }
 
-          // Check if zoom and plot are the same, take into account rounding error
-          if( areTheyClose(m_zoomDimensions.minY, m_plotDimensions.minY) &&
-              areTheyClose(m_zoomDimensions.maxY, m_plotDimensions.maxY) )
-          {
-              m_vertScroll->setRange(0, 0);
-              m_vertScroll->setVisible(false);
-              m_curYScrollPos = -1;
-          }
-          else
-          {
-              m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
-              m_vertScroll->setVisible(true);
-              BoundScroll(m_vertScroll, m_curYScrollPos);
-              m_vertScroll->setSliderPosition(m_curYScrollPos);
-          }
-       }
+}
 
-       // Remove any next zooms and set the current zoom.
-       if(saveZoom == true)
-       {
-           ++m_zoomDimIndex;
-           m_zoomDimSave.resize(m_zoomDimIndex+1);
-           m_zoomDimSave[m_zoomDimIndex] = m_zoomDimensions;
-       }
 
-       m_qwtPlot->replot();
+void PlotZoom::UpdateScrollBars()
+{
+   // Update Scroll Bar variables.
+   m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
+   m_xAxisB = (-m_xAxisM) * m_plotDimensions.minX;
+   m_yAxisM = (double)(1-m_scrollBarResYAxis)/ (m_plotHeight - m_zoomHeight);
+   m_yAxisB = (-m_yAxisM) * (m_plotDimensions.maxY - m_zoomHeight);
+
+   m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
+   m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
+
+   // Check if zoom and plot are the same, take into account rounding error
+   bool areTheyClose_minX = areTheyClose(m_zoomDimensions.minX, m_plotDimensions.minX);
+   bool areTheyClose_maxX = areTheyClose(m_zoomDimensions.maxX, m_plotDimensions.maxX);
+   bool areTheyClose_minY = areTheyClose(m_zoomDimensions.minY, m_plotDimensions.minY);
+   bool areTheyClose_maxY = areTheyClose(m_zoomDimensions.maxY, m_plotDimensions.maxY);
+
+   bool setXScrollBars = false;
+   bool setYScrollBars = false;
+
+   if( areTheyClose_minX && areTheyClose_maxX )
+   {
+      // Zoom and plot are the same, no need for scroll bar.
+      setXScrollBars = false;
+   }
+   else if(m_maxHoldZoom == false)
+   {
+      // Max hold is off, show scroll bar.
+      setXScrollBars = true;
+   }
+   else if( (areTheyClose_minX || m_zoomDimensions.minX < m_plotDimensions.minX) &&
+            (areTheyClose_maxX || m_zoomDimensions.maxX > m_plotDimensions.maxX))
+   {
+      // Max hold is on and plot is within zoom, no need for scroll bar.
+      setXScrollBars = false;
+   }
+   else
+   {
+      // Max hold is on but zoom is narrower than plot dimensions, show scroll bar.
+      setXScrollBars = true;
+   }
+
+   if( areTheyClose_minY && areTheyClose_maxY )
+   {
+      // Zoom and plot are the same, no need for scroll bar.
+      setYScrollBars = false;
+   }
+   else if(m_maxHoldZoom == false)
+   {
+      // Max hold is off, show scroll bar.
+      setYScrollBars = true;
+   }
+   else if( (areTheyClose_minY || m_zoomDimensions.minY < m_plotDimensions.minY) &&
+            (areTheyClose_maxY || m_zoomDimensions.maxY > m_plotDimensions.maxY))
+   {
+      // Max hold is on and plot is within zoom, no need for scroll bar.
+      setYScrollBars = false;
+   }
+   else
+   {
+      // Max hold is on but zoom is narrower than plot dimensions, show scroll bar.
+      setYScrollBars = true;
+   }
+
+   if(setXScrollBars == false)
+   {
+      m_horzScroll->setRange(0, 0);
+      m_horzScroll->setVisible(false);
+      m_curXScrollPos = -1;
+   }
+   else
+   {
+      m_horzScroll->setRange(0, m_scrollBarResXAxis-1);
+      m_horzScroll->setVisible(true);
+      BoundScroll(m_horzScroll, m_curXScrollPos);
+      m_horzScroll->setSliderPosition(m_curXScrollPos);
+   }
+
+   if(setYScrollBars == false)
+   {
+      m_vertScroll->setRange(0, 0);
+      m_vertScroll->setVisible(false);
+      m_curYScrollPos = -1;
+   }
+   else
+   {
+      m_vertScroll->setRange(0, m_scrollBarResYAxis-1);
+      m_vertScroll->setVisible(true);
+      BoundScroll(m_vertScroll, m_curYScrollPos);
+      m_vertScroll->setSliderPosition(m_curYScrollPos);
    }
 
 }
