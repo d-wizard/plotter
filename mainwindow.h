@@ -252,7 +252,8 @@ private:
     bool m_activityIndicator_plotIsActive;
     bool m_activityIndicator_indicatorState;
     unsigned int m_activityIndicator_inactiveCount;
-    QPalette m_activityIndicator_onPallet;
+    QPalette m_activityIndicator_onEnabledPallet;
+    QPalette m_activityIndicator_onDisabledPallet;
     QPalette m_activityIndicator_offPallet;
     QMutex m_activityIndicator_mutex;
     void resetActivityIndicator();

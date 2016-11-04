@@ -195,13 +195,16 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
 
     // Initialize Activity Indicator.
-    m_activityIndicator_onPallet = palette;
-    m_activityIndicator_onPallet.setColor( QPalette::WindowText, Qt::green);
+    m_activityIndicator_onEnabledPallet = palette;
+    m_activityIndicator_onEnabledPallet.setColor( QPalette::WindowText, Qt::green);
+
+    m_activityIndicator_onDisabledPallet = palette;
+    m_activityIndicator_onDisabledPallet.setColor( QPalette::WindowText, Qt::yellow);
 
     m_activityIndicator_offPallet = palette;
     m_activityIndicator_offPallet.setColor( QPalette::WindowText, Qt::black);
 
-    ui->activityIndicator->setPalette(m_activityIndicator_onPallet);
+    ui->activityIndicator->setPalette(m_activityIndicator_onEnabledPallet);
     ui->activityIndicator->setText((char*)activityIndicatorStr);
 
     connect(&m_activityIndicator_timer, SIGNAL(timeout()), this, SLOT(activityIndicatorTimerSlot()));
@@ -510,6 +513,8 @@ void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
       // Done with new plot messages.
       delete plotMsg;
    }
+
+   resetActivityIndicator();
 }
 
 void MainWindow::readPlotMsgSlot()
@@ -710,8 +715,6 @@ void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
    {
       m_qwtCurves[curveIndex]->lastMsgIpAddr = unpackPlotMsg->m_ipAddr;
    }
-
-   resetActivityIndicator();
 
    initCursorIndex(curveIndex);
 }
@@ -2062,8 +2065,15 @@ void MainWindow::activityIndicatorTimerSlot()
 
    m_activityIndicator_plotIsActive = false;
 
-   ui->activityIndicator->setPalette(m_activityIndicator_indicatorState ?
-                                     m_activityIndicator_onPallet : m_activityIndicator_offPallet);
+   if(m_activityIndicator_indicatorState)
+   {
+      ui->activityIndicator->setPalette(m_allowNewCurves ?
+         m_activityIndicator_onEnabledPallet : m_activityIndicator_onDisabledPallet);
+   }
+   else
+   {
+      ui->activityIndicator->setPalette(m_activityIndicator_offPallet);
+   }
 
 }
 
