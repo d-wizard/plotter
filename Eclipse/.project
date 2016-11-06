@@ -307,9 +307,19 @@
 			<locationURI>PARENT-1-PROJECT_LOC/plot.ico</locationURI>
 		</link>
 		<link>
+			<name>plotBar.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/plotBar.cpp</locationURI>
+		</link>
+		<link>
 			<name>plotMsgPack.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/plotMsgPack.h</locationURI>
+		</link>
+		<link>
+			<name>plotbar.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/plotbar.h</locationURI>
 		</link>
 		<link>
 			<name>plotguimain.cpp</name>
