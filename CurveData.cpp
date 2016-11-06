@@ -942,7 +942,9 @@ bool CurveData::setHidden(bool isHidden)
 void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
 {
    appearance = curveAppearance;
-   curve->setPen(appearance.color);
+   qreal width = appearance.style == QwtPlotCurve::Dots ? 3.0 : 0.0;
+
+   curve->setPen(appearance.color, width);
    curve->setStyle(appearance.style);
    m_parentPlot->replot();
 }
