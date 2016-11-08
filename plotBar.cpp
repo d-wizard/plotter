@@ -126,11 +126,6 @@ bool plotBar::isSelectionCloseToBar( const QPointF& pos,
    return selectionDelta_pixels <= m_barSelectThresh_pixels;
 }
 
-void plotBar::setBar(double newBarPos, const maxMinXY& zoomDim)
-{
-   m_zoomDim = zoomDim;
-}
-
 void plotBar::moveBar(const QPointF& pos)
 {
    double newBarPos = m_barAxis == E_X_AXIS ? pos.x() : pos.y();

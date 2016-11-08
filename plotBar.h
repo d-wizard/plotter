@@ -48,7 +48,6 @@ public:
                                const int canvasWidth_pixels,
                                const int canvasHeight_pixels);
 
-   void setBar(double newBarPos, const maxMinXY& zoomDim);
    void moveBar(const QPointF& pos);
    
    void updateZoom(const maxMinXY& zoomDim);
