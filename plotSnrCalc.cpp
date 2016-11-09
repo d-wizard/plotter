@@ -21,6 +21,7 @@
 
 
 plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot):
+   m_parentPlot(parentPlot),
    m_isVisable(false),
    m_activeBarIndex(-1)
 {
@@ -74,8 +75,9 @@ void plotSnrCalc::updateZoom(const maxMinXY& zoomDim)
 {
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
-      m_allBars[i]->updateZoom(zoomDim);
+      m_allBars[i]->updateZoom(zoomDim, true);
    }
+   m_parentPlot->replot();
 }
 
 

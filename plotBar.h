@@ -50,7 +50,7 @@ public:
 
    void moveBar(const QPointF& pos);
    
-   void updateZoom(const maxMinXY& zoomDim);
+   void updateZoom(const maxMinXY& zoomDim, bool skipReplot = false);
    
 private:
    // Eliminate default, copy, assign

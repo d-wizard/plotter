@@ -50,6 +50,7 @@ private:
    void operator=(plotSnrCalc const&);
 
 
+   QwtPlot* m_parentPlot;
    bool m_isVisable;
 
    plotBar* m_noiseBars[2];

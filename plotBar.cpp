@@ -134,9 +134,15 @@ void plotBar::moveBar(const QPointF& pos)
    m_parentPlot->replot();
 }
 
-void plotBar::updateZoom(const maxMinXY& zoomDim)
+void plotBar::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
 {
    m_zoomDim = zoomDim;
+   setBarPoints(m_curBarPos, m_zoomDim);
+   m_curve->setSamples(m_xPoints, m_yPoints, 2);
+   if(skipReplot == false)
+   {
+      m_parentPlot->replot();
+   }
 }
 
 void plotBar::setBarPoints(double newBarPos, const maxMinXY& zoomDim)
