@@ -20,20 +20,27 @@
 
 
 
-plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot):
+plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
    m_parentPlot(parentPlot),
+   m_snrLabel(snrLabel),
+   m_parentCurve(NULL),
    m_isVisable(false),
    m_activeBarIndex(-1)
 {
+   m_snrLabel->setVisible(m_isVisable);
+
    unsigned int allBarsIndex = 0;
    for(size_t i = 0; i < ARRAY_SIZE(m_noiseBars); ++i)
    {
-      m_noiseBars[i] = new plotBar(parentPlot, E_X_AXIS, Qt::white, 3, Qt::DashLine, QwtPlotCurve::Lines);
+      QString barName = "Noise Bar " + QString::number(i + 1);
+      m_noiseBars[i] = new plotBar(parentPlot, barName, E_X_AXIS, Qt::white, 3, Qt::DashLine, QwtPlotCurve::Lines);
       m_allBars[allBarsIndex++] = m_noiseBars[i];
    }
    for(size_t i = 0; i < ARRAY_SIZE(m_signalBars); ++i)
    {
-      m_signalBars[i] = new plotBar(parentPlot, E_X_AXIS, Qt::green, 3, Qt::DashLine, QwtPlotCurve::Lines);
+      QString barName = "Signal Bar " + QString::number(i + 1);
+      QColor lightGreen = QColor(128,255,128);
+      m_signalBars[i] = new plotBar(parentPlot, barName, E_X_AXIS, lightGreen, 3, Qt::DashLine, QwtPlotCurve::Lines);
       m_allBars[allBarsIndex++] = m_signalBars[i];
    }
 
@@ -55,6 +62,8 @@ void plotSnrCalc::show(const maxMinXY& zoomDim)
       m_allBars[i]->show(zoomDim);
    }
    m_isVisable = true;
+   calcSnr();
+   m_snrLabel->setVisible(m_isVisable);
 }
 
 void plotSnrCalc::hide()
@@ -64,6 +73,7 @@ void plotSnrCalc::hide()
       m_allBars[i]->hide();
    }
    m_isVisable = false;
+   m_snrLabel->setVisible(m_isVisable);
 }
 
 bool plotSnrCalc::isVisable()
@@ -71,13 +81,16 @@ bool plotSnrCalc::isVisable()
    return m_isVisable;
 }
 
-void plotSnrCalc::updateZoom(const maxMinXY& zoomDim)
+void plotSnrCalc::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
 {
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
       m_allBars[i]->updateZoom(zoomDim, true);
    }
-   m_parentPlot->replot();
+   if(skipReplot == false)
+   {
+      m_parentPlot->replot();
+   }
 }
 
 
@@ -105,5 +118,123 @@ void plotSnrCalc::moveBar(const QPointF& pos)
    {
       m_allBars[m_activeBarIndex]->moveBar(pos);
    }
+   calcSnr();
 }
 
+
+void plotSnrCalc::moveToFront(bool skipReplot)
+{
+   if(m_isVisable)
+   {
+      for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+      {
+         m_allBars[i]->moveToFront();
+      }
+      if(skipReplot == false)
+      {
+         m_parentPlot->replot();
+      }
+   }
+}
+
+void plotSnrCalc::setCurve(CurveData* curve)
+{
+   if(curve != m_parentCurve)
+   {
+      m_parentCurve = curve;
+      calcSnr();
+   }
+}
+
+void plotSnrCalc::calcSnr()
+{
+   if(m_isVisable && m_parentCurve != NULL)
+   {
+      unsigned int numPoints = m_parentCurve->getNumPoints();
+      ePlotType plotType = m_parentCurve->getPlotType();
+      const double* xPoints = m_parentCurve->getXPoints();
+      const double* yPoints = m_parentCurve->getYPoints();
+      QColor color = m_parentCurve->getColor();
+
+      // Noise
+      calcPower(
+         m_noiseBars[0]->getBarPos(),
+         m_noiseBars[1]->getBarPos(),
+         &m_noiseWidth,
+         &m_noisePower,
+         numPoints,
+         plotType,
+         xPoints,
+         yPoints);
+
+      // Signal
+      calcPower(
+         m_signalBars[0]->getBarPos(),
+         m_signalBars[1]->getBarPos(),
+         &m_signalWidth,
+         &m_signalPower,
+         numPoints,
+         plotType,
+         xPoints,
+         yPoints);
+
+
+      double snr = m_signalPower - m_noisePower;
+
+
+      QPalette palette = m_snrLabel->palette();
+      palette.setColor( QPalette::WindowText, color);
+      palette.setColor( QPalette::Text, color);
+      m_snrLabel->setPalette(palette);
+      m_snrLabel->setText(QString::number(snr) + " dB");
+
+   }
+}
+
+void plotSnrCalc::calcPower(
+   double start,
+   double stop,
+   double* width,
+   double* power,
+   unsigned int numPoints,
+   ePlotType plotType,
+   const double* xPoints,
+   const double* yPoints )
+{
+   if(start > stop)
+   {
+      double swap = start;
+      start = stop;
+      stop = swap;
+   }
+
+   double minX = stop;
+   double maxX = start;
+
+   double powerSumLinear = 0;
+
+   for(unsigned int i = 0; i <= numPoints; ++i)
+   {
+      if(xPoints[i] >= start && xPoints[i] <= stop)
+      {
+         if(plotType == E_PLOT_TYPE_DB_POWER_FFT_REAL || plotType == E_PLOT_TYPE_DB_POWER_FFT_COMPLEX)
+         {
+            powerSumLinear += pow(10.0, yPoints[i] / 10.0);
+         }
+         else
+         {
+            powerSumLinear += yPoints[i];
+         }
+
+         if(xPoints[i] < minX)
+            minX = xPoints[i];
+         if(xPoints[i] > maxX)
+            maxX = xPoints[i];
+
+      }
+   }
+
+   *width = maxX - minX;
+   *power = 10.0 * log10(powerSumLinear);
+
+}

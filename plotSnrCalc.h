@@ -19,14 +19,16 @@
 #ifndef PLOTSNRCALC_H
 #define PLOTSNRCALC_H
 
+#include <QLabel>
 #include "plotBar.h"
+#include "CurveData.h"
 
 
 class plotSnrCalc
 {
 public:
 
-   plotSnrCalc(QwtPlot* parentPlot);
+   plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel);
    ~plotSnrCalc();
 
 
@@ -34,7 +36,7 @@ public:
    void hide();
    bool isVisable();
 
-   void updateZoom(const maxMinXY& zoomDim);
+   void updateZoom(const maxMinXY& zoomDim, bool skipReplot = false);
 
    bool isSelectionCloseToBar( const QPointF& pos,
                                const maxMinXY& zoomDim,
@@ -43,20 +45,43 @@ public:
 
    void moveBar(const QPointF& pos);
 
+   void moveToFront(bool skipReplot = false);
+
+   void setCurve(CurveData* curve);
+
 private:
    // Eliminate default, copy, assign
    plotSnrCalc();
    plotSnrCalc(plotSnrCalc const&);
    void operator=(plotSnrCalc const&);
 
+   void calcSnr();
+   void calcPower(
+         double start,
+         double stop,
+         double* width,
+         double* power,
+         unsigned int numPoints,
+         ePlotType plotType,
+         const double* xPoints,
+         const double* yPoints );
 
    QwtPlot* m_parentPlot;
+   QLabel* m_snrLabel;
+   CurveData* m_parentCurve;
    bool m_isVisable;
 
    plotBar* m_noiseBars[2];
    plotBar* m_signalBars[2];
 
    plotBar* m_allBars[4];
+
+   double m_noiseWidth;
+   double m_signalWidth;
+
+   double m_noisePower;
+   double m_signalPower;
+
 
    int m_activeBarIndex;
 };

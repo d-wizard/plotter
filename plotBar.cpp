@@ -20,13 +20,15 @@
 
 
 plotBar::plotBar( QwtPlot* parentPlot,
+                  QString barName,
                   eAxis barAxis,
-                  QColor color, 
-                  qreal width, 
+                  QColor color,
+                  qreal width,
                   Qt::PenStyle penStyle,
                   QwtPlotCurve::CurveStyle curveStyle)
 {
-   init(parentPlot,
+   init( parentPlot,
+         barName,
          barAxis,
          color,
          width,
@@ -42,6 +44,7 @@ plotBar::~plotBar()
 }
 
 void plotBar::init( QwtPlot* parentPlot,
+                    QString barName,
                     eAxis barAxis,
                     QColor color, 
                     qreal width, 
@@ -51,7 +54,7 @@ void plotBar::init( QwtPlot* parentPlot,
 {
    m_parentPlot = parentPlot;
    
-   m_curve = new QwtPlotCurve;
+   m_curve = new QwtPlotCurve(barName);
    m_curve->setPen(color, width, penStyle);
    m_curve->setStyle(curveStyle);
    
@@ -90,6 +93,15 @@ void plotBar::hide()
 bool plotBar::isVisable()
 {
    return m_isVisable;
+}
+
+void plotBar::moveToFront()
+{
+   if(m_isVisable)
+   {
+      m_curve->detach();
+      m_curve->attach(m_parentPlot);
+   }
 }
 
 bool plotBar::isSelectionCloseToBar( const QPointF& pos, 

@@ -29,6 +29,7 @@ class plotBar
 {
 public:
    plotBar( QwtPlot* parentPlot,
+            QString barName,
             eAxis barAxis,
             QColor color, 
             qreal width, 
@@ -42,6 +43,7 @@ public:
    void show(const maxMinXY& zoomDim);
    void hide();
    bool isVisable();
+   void moveToFront();
    
    bool isSelectionCloseToBar( const QPointF& pos, 
                                const maxMinXY& zoomDim, 
@@ -51,6 +53,8 @@ public:
    void moveBar(const QPointF& pos);
    
    void updateZoom(const maxMinXY& zoomDim, bool skipReplot = false);
+
+   double getBarPos(){return m_curBarPos;}
    
 private:
    // Eliminate default, copy, assign
@@ -60,12 +64,13 @@ private:
 
 
    void init( QwtPlot* parentPlot,
-               eAxis barAxis,
-               QColor color, 
-               qreal width, 
-               Qt::PenStyle penStyle,
-               QwtPlotCurve::CurveStyle curveStyle,
-               double barSelectThresh_pixels);
+              QString barName,
+              eAxis barAxis,
+              QColor color,
+              qreal width,
+              Qt::PenStyle penStyle,
+              QwtPlotCurve::CurveStyle curveStyle,
+              double barSelectThresh_pixels);
    
    void setBarPoints(double newBarPos, const maxMinXY& zoomDim);
    
