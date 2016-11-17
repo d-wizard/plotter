@@ -37,6 +37,9 @@
 
 inline bool isDoubleValid(double value)
 {
+   // According to the IEEE standard, NaN values have the odd property that
+   // comparisons involving them are always false. That is, for a float
+   // f, f != f will be true only if f is NaN
    if (value != value)
    {
       return false;
@@ -952,9 +955,6 @@ void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
 unsigned int CurveData::removeInvalidPoints()
 {
    unsigned int numPointsInCurve = numPoints;
-   // According to the IEEE standard, NaN values have the odd property that
-   // comparisons involving them are always false. That is, for a float
-   // f, f != f will be true only if f is NaN
    if( !isDoubleValid(maxMin_beforeScale.maxX) || !isDoubleValid(maxMin_beforeScale.maxY) ||
        !isDoubleValid(maxMin_beforeScale.minX) || !isDoubleValid(maxMin_beforeScale.minY) )
    {
