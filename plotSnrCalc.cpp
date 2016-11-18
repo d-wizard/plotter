@@ -16,6 +16,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <assert.h>
 #include "plotSnrCalc.h"
 
 
@@ -25,7 +26,8 @@ plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
    m_snrLabel(snrLabel),
    m_parentCurve(NULL),
    m_isVisable(false),
-   m_activeBarIndex(-1)
+   m_activeBarIndex(-1),
+   m_dcBinIndex(-1)
 {
    m_snrLabel->setVisible(m_isVisable);
 
@@ -148,6 +150,19 @@ void plotSnrCalc::setCurve(CurveData* curve)
 
 void plotSnrCalc::calcSnr()
 {
+   if(m_noiseChunk.indexes.startIndex < 0 || m_signalChunk.indexes.startIndex < 0)
+   {
+      calcSnrSlow();
+   }
+   else
+   {
+      calcSnrFast();
+   }
+}
+
+void plotSnrCalc::calcSnrSlow()
+{
+
    if(m_isVisable && m_parentCurve != NULL)
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();
@@ -156,31 +171,144 @@ void plotSnrCalc::calcSnr()
       const double* yPoints = m_parentCurve->getYPoints();
       QColor color = m_parentCurve->getColor();
 
+      double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
+
+      findDcBinIndex(numPoints, xPoints);
+
+      tCurveDataIndexes newNoiseIndexes  = m_noiseChunk.indexes;
+      tCurveDataIndexes newSignalIndexes = m_signalChunk.indexes;
+
       // Noise
-      calcPower(
+      findIndexes(
          m_noiseBars[0]->getBarPos(),
          m_noiseBars[1]->getBarPos(),
-         &m_noiseWidth,
-         &m_noisePower,
+         &newNoiseIndexes,
          numPoints,
-         plotType,
          xPoints,
-         yPoints);
+         hzPerBin);
 
       // Signal
-      calcPower(
+      findIndexes(
          m_signalBars[0]->getBarPos(),
          m_signalBars[1]->getBarPos(),
-         &m_signalWidth,
-         &m_signalPower,
+         &newSignalIndexes,
          numPoints,
-         plotType,
          xPoints,
-         yPoints);
+         hzPerBin);
+
+      tCurveDataIndexes newSignalNoiseOverlapIndexes = determineBinOverlap(newNoiseIndexes, newSignalIndexes);
+
+      calcFftChunk(&m_noiseChunk,              newNoiseIndexes);
+      calcFftChunk(&m_signalChunk,             newSignalIndexes);
+      calcFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
+
+      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
+
+      QPalette palette = m_snrLabel->palette();
+      palette.setColor( QPalette::WindowText, color);
+      palette.setColor( QPalette::Text, color);
+      m_snrLabel->setPalette(palette);
+      m_snrLabel->setText(QString::number(snr) + " dB");
+
+   }
+}
+
+void plotSnrCalc::calcSnrFast()
+{
+   if(m_isVisable && m_parentCurve != NULL)
+   {
+      unsigned int numPoints = m_parentCurve->getNumPoints();
+      ePlotType plotType = m_parentCurve->getPlotType();
+      const double* xPoints = m_parentCurve->getXPoints();
+      const double* yPoints = m_parentCurve->getYPoints();
+      QColor color = m_parentCurve->getColor();
+
+      double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
+
+      findDcBinIndex(numPoints, xPoints);
 
 
-      double snr = m_signalPower - m_noisePower;
+      tCurveDataIndexes newNoiseIndexes  = m_noiseChunk.indexes;
+      tCurveDataIndexes newSignalIndexes = m_signalChunk.indexes;
 
+      if(m_activeBarIndex < 2)
+      {
+         // Noise
+         findIndexes(
+            m_noiseBars[0]->getBarPos(),
+            m_noiseBars[1]->getBarPos(),
+            &newNoiseIndexes,
+            numPoints,
+            xPoints,
+            hzPerBin);
+      }
+      if(m_activeBarIndex >= 2)
+      {
+         // Signal
+         findIndexes(
+            m_signalBars[0]->getBarPos(),
+            m_signalBars[1]->getBarPos(),
+            &newSignalIndexes,
+            numPoints,
+            xPoints,
+            hzPerBin);
+      }
+      tCurveDataIndexes newSignalNoiseOverlapIndexes = determineBinOverlap(newNoiseIndexes, newSignalIndexes);
+
+      updateFftChunk(&m_noiseChunk,              newNoiseIndexes);
+      updateFftChunk(&m_signalChunk,             newSignalIndexes);
+      updateFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
+
+#if 1
+
+      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
+#else
+
+
+      if(m_activeBarIndex < 2 || m_noiseChunk.indexes.startIndex < 0 || m_noiseChunk.indexes.stopIndex < 0)
+      {
+         // Noise
+         tFftBinChunk newNoiseChunk;
+         findIndexes(
+            m_noiseBars[0]->getBarPos(),
+            m_noiseBars[1]->getBarPos(),
+            &newNoiseChunk.indexes,
+            numPoints,
+            xPoints,
+            hzPerBin);
+
+         calcPower(
+            &newNoiseChunk,
+            plotType,
+            xPoints,
+            yPoints,
+            hzPerBin);
+         m_noiseChunk = newNoiseChunk;
+      }
+      if(m_activeBarIndex >= 2 || m_signalChunk.indexes.startIndex < 0 || m_signalChunk.indexes.stopIndex < 0)
+      {
+         // Signal
+         tFftBinChunk newSignalChunk;
+         findIndexes(
+            m_signalBars[0]->getBarPos(),
+            m_signalBars[1]->getBarPos(),
+            &newSignalChunk.indexes,
+            numPoints,
+            xPoints,
+            hzPerBin);
+
+         calcPower(
+            &newSignalChunk,
+            plotType,
+            xPoints,
+            yPoints,
+            hzPerBin);
+         m_signalChunk = newSignalChunk;
+      }
+
+
+      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear);
+#endif
 
       QPalette palette = m_snrLabel->palette();
       palette.setColor( QPalette::WindowText, color);
@@ -192,49 +320,277 @@ void plotSnrCalc::calcSnr()
 }
 
 void plotSnrCalc::calcPower(
-   double start,
-   double stop,
-   double* width,
-   double* power,
-   unsigned int numPoints,
+   tFftBinChunk* fftChunk,
    ePlotType plotType,
    const double* xPoints,
-   const double* yPoints )
+   const double *yPoints,
+   double hzPerBin )
 {
-   if(start > stop)
-   {
-      double swap = start;
-      start = stop;
-      stop = swap;
-   }
-
-   double minX = stop;
-   double maxX = start;
-
    double powerSumLinear = 0;
 
-   for(unsigned int i = 0; i <= numPoints; ++i)
+   if(plotType == E_PLOT_TYPE_DB_POWER_FFT_REAL || plotType == E_PLOT_TYPE_DB_POWER_FFT_COMPLEX)
    {
-      if(xPoints[i] >= start && xPoints[i] <= stop)
+      for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
       {
-         if(plotType == E_PLOT_TYPE_DB_POWER_FFT_REAL || plotType == E_PLOT_TYPE_DB_POWER_FFT_COMPLEX)
-         {
-            powerSumLinear += pow(10.0, yPoints[i] / 10.0);
-         }
-         else
-         {
-            powerSumLinear += yPoints[i];
-         }
-
-         if(xPoints[i] < minX)
-            minX = xPoints[i];
-         if(xPoints[i] > maxX)
-            maxX = xPoints[i];
-
+         powerSumLinear += pow(10.0, yPoints[i] / 10.0);
+      }
+   }
+   else
+   {
+      for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
+      {
+         powerSumLinear += yPoints[i];
       }
    }
 
-   *width = maxX - minX;
-   *power = 10.0 * log10(powerSumLinear);
+   fftChunk->powerLinear = powerSumLinear;
+   fftChunk->bandwidth =
+      xPoints[fftChunk->indexes.stopIndex] - xPoints[fftChunk->indexes.startIndex] + hzPerBin; // Start and stop are inclusive, need to add 1 more bin.
 
 }
+
+bool plotSnrCalc::findDcBinIndex(unsigned int numPoints, const double* xPoints)
+{
+   int newDcBinIndex = -1;
+
+   if(xPoints[0] == 0.0)
+   {
+      newDcBinIndex = 0;
+   }
+   else
+   {
+      // The DC bin should be right in the middle. Search in the middle for the DC bin.
+      int numBinsToCheck = 3;
+      if(numPoints < (unsigned int)numBinsToCheck)
+      {
+         numBinsToCheck = numPoints;
+      }
+
+      int midBin = (int)numPoints >> 1;
+      int binStart = numBinsToCheck >> 1;
+      int startSearchBin = midBin - binStart;
+      for(int i = startSearchBin; i < (startSearchBin + numBinsToCheck); ++i)
+      {
+         if(xPoints[i] == 0.0)
+         {
+            newDcBinIndex = i;
+            break;
+         }
+      }
+   }
+
+   bool changed = newDcBinIndex != m_dcBinIndex;
+   m_dcBinIndex = newDcBinIndex;
+   return changed;
+}
+
+void plotSnrCalc::findIndexes(
+      double start,
+      double stop,
+      tCurveDataIndexes* indexes,
+      int numPoints,
+      const double* xPoints,
+      double hzPerBin)
+{
+   if(start < stop)
+   {
+      // Correct order.
+      indexes->startIndex = findIndex(start, numPoints, xPoints, hzPerBin, false);
+      indexes->stopIndex  = findIndex(stop, numPoints, xPoints, hzPerBin, true);
+   }
+   else
+   {
+      // Swap bar order.
+      indexes->startIndex = findIndex(stop, numPoints, xPoints, hzPerBin, false);
+      indexes->stopIndex  = findIndex(start, numPoints, xPoints, hzPerBin, true);
+   }
+
+}
+
+int plotSnrCalc::findIndex(double barPoint, int numPoints, const double* xPoints, double hzPerBin, bool highSide)
+{
+   int retVal = -1;
+   int numBinsToCheck = 5;
+   if(numPoints < numBinsToCheck)
+   {
+      numBinsToCheck = numPoints;
+   }
+
+   int midSearchBin = barPoint / hzPerBin;
+   int binStart = numBinsToCheck >> 1;
+   int startSearchBin = midSearchBin - binStart;
+   if(highSide == true)
+   {
+      for(int i = (startSearchBin + numBinsToCheck - 1); i >= startSearchBin; --i)
+      {
+         int index = i + m_dcBinIndex;
+         if(index < 0)
+         {
+            index = 0;
+         }
+         else if(index >= numPoints)
+         {
+            index = numPoints - 1;
+         }
+
+         if(xPoints[index] <= barPoint)
+         {
+            retVal = index;
+            break;
+         }
+      }
+   }
+   else
+   {
+      for(int i = startSearchBin; i < (startSearchBin + numBinsToCheck); ++i)
+      {
+         int index = i + m_dcBinIndex;
+         if(index < 0)
+         {
+            index = 0;
+         }
+         else if(index >= numPoints)
+         {
+            index = numPoints - 1;
+         }
+
+         if(xPoints[index] >= barPoint)
+         {
+            retVal = index;
+            break;
+         }
+      }
+   }
+
+   return retVal;
+}
+
+
+plotSnrCalc::tCurveDataIndexes plotSnrCalc::determineBinOverlap(const tCurveDataIndexes &indexes1, const tCurveDataIndexes &indexes2)
+{
+   tCurveDataIndexes retVal;
+   if( (indexes1.startIndex > indexes2.stopIndex) || (indexes2.startIndex > indexes1.stopIndex) )
+   {
+      // No Overlap.
+   }
+   else
+   {
+      retVal.startIndex = std::max(indexes1.startIndex, indexes2.startIndex);
+      retVal.stopIndex  = std::min(indexes1.stopIndex,  indexes2.stopIndex);
+   }
+   return retVal;
+}
+
+bool plotSnrCalc::calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurveDataIndexes& newIndexes, tFftBinChunk* retFftBinChunk)
+{
+   unsigned int numPoints = m_parentCurve->getNumPoints();
+   ePlotType plotType = m_parentCurve->getPlotType();
+   const double* xPoints = m_parentCurve->getXPoints();
+   const double* yPoints = m_parentCurve->getYPoints();
+   double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
+
+   bool binsAdded = false;
+   bool indexesAreDifferent = true;
+
+   // Assume only start or stop has moved. Not both.
+   if(newIndexes.startIndex < oldIndexes.startIndex)
+   {
+      // Adding to bottom.
+      assert(newIndexes.stopIndex == oldIndexes.stopIndex);
+      retFftBinChunk->indexes.startIndex = newIndexes.startIndex;
+      retFftBinChunk->indexes.stopIndex = oldIndexes.startIndex - 1;
+      binsAdded = true;
+   }
+   else if(newIndexes.stopIndex > oldIndexes.stopIndex)
+   {
+      // Adding to end.
+      assert(newIndexes.startIndex == oldIndexes.startIndex);
+      retFftBinChunk->indexes.startIndex = oldIndexes.stopIndex + 1;
+      retFftBinChunk->indexes.stopIndex = newIndexes.stopIndex;
+      binsAdded = true;
+   }
+   else if(newIndexes.startIndex > oldIndexes.startIndex)
+   {
+      // Removing from bottom.
+      assert(newIndexes.stopIndex == oldIndexes.stopIndex);
+      retFftBinChunk->indexes.startIndex = oldIndexes.startIndex;
+      retFftBinChunk->indexes.stopIndex = newIndexes.startIndex - 1;
+      binsAdded = false;
+   }
+   else if(newIndexes.stopIndex < oldIndexes.stopIndex)
+   {
+      // Removing from end.
+      assert(newIndexes.startIndex == oldIndexes.startIndex);
+      retFftBinChunk->indexes.startIndex = newIndexes.stopIndex + 1;
+      retFftBinChunk->indexes.stopIndex = oldIndexes.stopIndex;
+      binsAdded = false;
+   }
+   else
+   {
+      indexesAreDifferent = false;
+   }
+
+   if(indexesAreDifferent)
+   {
+      if(retFftBinChunk->indexes.startIndex < 0)
+         retFftBinChunk->indexes.startIndex = 0;
+      if(retFftBinChunk->indexes.stopIndex >= (int)numPoints)
+         retFftBinChunk->indexes.stopIndex = numPoints - 1;
+
+      calcPower(
+         retFftBinChunk,
+         plotType,
+         xPoints,
+         yPoints,
+         hzPerBin);
+   }
+
+   return binsAdded;
+}
+
+void plotSnrCalc::updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes)
+{
+   if(fftChunk->indexes != newIndexes)
+   {
+      // If only one index changed, we can just calculate the delta.
+      if( fftChunk->indexes.startIndex == newIndexes.startIndex ||
+          fftChunk->indexes.stopIndex == newIndexes.stopIndex )
+      {
+         tFftBinChunk delta;
+         bool binsAdded = calcBinDelta(fftChunk->indexes, newIndexes, &delta);
+         if(binsAdded)
+         {
+            fftChunk->bandwidth += delta.bandwidth;
+            fftChunk->powerLinear += delta.powerLinear;
+         }
+         else
+         {
+            fftChunk->bandwidth -= delta.bandwidth;
+            fftChunk->powerLinear -= delta.powerLinear;
+         }
+      }
+      else
+      {
+         calcFftChunk(fftChunk, newIndexes);
+      }
+      fftChunk->indexes = newIndexes;
+   }
+}
+
+void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes)
+{
+   unsigned int numPoints = m_parentCurve->getNumPoints();
+   ePlotType plotType = m_parentCurve->getPlotType();
+   const double* xPoints = m_parentCurve->getXPoints();
+   const double* yPoints = m_parentCurve->getYPoints();
+   double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
+
+   fftChunk->indexes = newIndexes;
+   calcPower(
+      fftChunk,
+      plotType,
+      xPoints,
+      yPoints,
+      hzPerBin);
+}
+

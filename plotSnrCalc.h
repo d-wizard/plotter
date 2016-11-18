@@ -50,21 +50,61 @@ public:
    void setCurve(CurveData* curve);
 
 private:
+
+   typedef struct curveDataIndexes
+   {
+      int startIndex; // Inclusive
+      int stopIndex;  // Inclusive
+
+      bool operator==(const struct curveDataIndexes& rhs)
+      {
+          return (startIndex == rhs.startIndex) &&
+                 (stopIndex == rhs.stopIndex);
+      }
+
+      bool operator!=(const struct curveDataIndexes& rhs)
+      {
+          return (startIndex != rhs.startIndex) ||
+                 (stopIndex != rhs.stopIndex);
+      }
+      curveDataIndexes(): startIndex(-1), stopIndex(-1){}
+   }tCurveDataIndexes;
+
+   typedef struct fftBinChunk
+   {
+      tCurveDataIndexes indexes;
+      double powerLinear;
+      double bandwidth;
+      fftBinChunk(): powerLinear(0.0), bandwidth(0.0){}
+   }tFftBinChunk;
+
+
    // Eliminate default, copy, assign
    plotSnrCalc();
    plotSnrCalc(plotSnrCalc const&);
    void operator=(plotSnrCalc const&);
 
    void calcSnr();
+   void calcSnrSlow();
+   void calcSnrFast();
    void calcPower(
-         double start,
-         double stop,
-         double* width,
-         double* power,
-         unsigned int numPoints,
+         tFftBinChunk* fftChunk,
          ePlotType plotType,
-         const double* xPoints,
-         const double* yPoints );
+         const double *xPoints,
+         const double *yPoints,
+         double hzPerBin );
+
+   bool findDcBinIndex(unsigned int numPoints, const double* xPoints);
+   void findIndexes(double start, double stop, tCurveDataIndexes* indexes, int numPoints, const double* xPoints, double hzPerBin);
+   int findIndex(double barPoint, int numPoints, const double* xPoints, double hzPerBin, bool highSide);
+
+   tCurveDataIndexes determineBinOverlap(const tCurveDataIndexes& indexes1, const tCurveDataIndexes& indexes2);
+
+   bool calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurveDataIndexes& newIndexes, tFftBinChunk* retFftBinChunk);
+
+   void calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
+   void updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
+
 
    QwtPlot* m_parentPlot;
    QLabel* m_snrLabel;
@@ -76,14 +116,15 @@ private:
 
    plotBar* m_allBars[4];
 
-   double m_noiseWidth;
-   double m_signalWidth;
-
-   double m_noisePower;
-   double m_signalPower;
-
-
    int m_activeBarIndex;
+
+   int m_dcBinIndex;
+
+   tFftBinChunk m_noiseChunk;
+   tFftBinChunk m_signalChunk;
+   tFftBinChunk m_signalNoiseOverlapChunk;
+
+
 };
 
 
