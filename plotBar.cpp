@@ -64,6 +64,7 @@ void plotBar::init( QwtPlot* parentPlot,
    
    m_barSelectThresh_pixels = barSelectThresh_pixels;
 
+   m_curBarPos = 0;
    m_zoomDim.maxX = 0;
    m_zoomDim.minX = 0;
    m_zoomDim.maxY = 0;
@@ -149,7 +150,19 @@ void plotBar::moveBar(const QPointF& pos)
 void plotBar::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
 {
    m_zoomDim = zoomDim;
-   setBarPoints(m_curBarPos, m_zoomDim);
+
+   // Update bar end points to match zoom.
+   if(m_barAxis == E_X_AXIS)
+   {
+      m_yPoints[0] = zoomDim.minY;
+      m_yPoints[1] = zoomDim.maxY;
+   }
+   else
+   {
+      m_xPoints[0] = zoomDim.minX;
+      m_xPoints[1] = zoomDim.maxX;
+   }
+
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
    if(skipReplot == false)
    {
