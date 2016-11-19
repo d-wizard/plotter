@@ -166,9 +166,7 @@ void plotSnrCalc::calcSnrSlow()
    if(m_isVisable && m_parentCurve != NULL)
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();
-      ePlotType plotType = m_parentCurve->getPlotType();
       const double* xPoints = m_parentCurve->getXPoints();
-      const double* yPoints = m_parentCurve->getYPoints();
       QColor color = m_parentCurve->getColor();
 
       double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
@@ -218,15 +216,12 @@ void plotSnrCalc::calcSnrFast()
    if(m_isVisable && m_parentCurve != NULL)
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();
-      ePlotType plotType = m_parentCurve->getPlotType();
       const double* xPoints = m_parentCurve->getXPoints();
-      const double* yPoints = m_parentCurve->getYPoints();
       QColor color = m_parentCurve->getColor();
 
       double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
 
       findDcBinIndex(numPoints, xPoints);
-
 
       tCurveDataIndexes newNoiseIndexes  = m_noiseChunk.indexes;
       tCurveDataIndexes newSignalIndexes = m_signalChunk.indexes;
@@ -259,56 +254,7 @@ void plotSnrCalc::calcSnrFast()
       updateFftChunk(&m_signalChunk,             newSignalIndexes);
       updateFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
 
-#if 1
-
       double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-#else
-
-
-      if(m_activeBarIndex < 2 || m_noiseChunk.indexes.startIndex < 0 || m_noiseChunk.indexes.stopIndex < 0)
-      {
-         // Noise
-         tFftBinChunk newNoiseChunk;
-         findIndexes(
-            m_noiseBars[0]->getBarPos(),
-            m_noiseBars[1]->getBarPos(),
-            &newNoiseChunk.indexes,
-            numPoints,
-            xPoints,
-            hzPerBin);
-
-         calcPower(
-            &newNoiseChunk,
-            plotType,
-            xPoints,
-            yPoints,
-            hzPerBin);
-         m_noiseChunk = newNoiseChunk;
-      }
-      if(m_activeBarIndex >= 2 || m_signalChunk.indexes.startIndex < 0 || m_signalChunk.indexes.stopIndex < 0)
-      {
-         // Signal
-         tFftBinChunk newSignalChunk;
-         findIndexes(
-            m_signalBars[0]->getBarPos(),
-            m_signalBars[1]->getBarPos(),
-            &newSignalChunk.indexes,
-            numPoints,
-            xPoints,
-            hzPerBin);
-
-         calcPower(
-            &newSignalChunk,
-            plotType,
-            xPoints,
-            yPoints,
-            hzPerBin);
-         m_signalChunk = newSignalChunk;
-      }
-
-
-      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear);
-#endif
 
       QPalette palette = m_snrLabel->palette();
       palette.setColor( QPalette::WindowText, color);
