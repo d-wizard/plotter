@@ -64,7 +64,7 @@ void plotSnrCalc::show(const maxMinXY& zoomDim)
       m_allBars[i]->show(zoomDim);
    }
    m_isVisable = true;
-   calcSnr();
+   calcSnrSlow();
    m_snrLabel->setVisible(m_isVisable);
 }
 
@@ -144,7 +144,15 @@ void plotSnrCalc::setCurve(CurveData* curve)
    if(curve != m_parentCurve)
    {
       m_parentCurve = curve;
-      calcSnr();
+      calcSnrSlow();
+   }
+}
+
+void plotSnrCalc::curveUpdated(CurveData* curve)
+{
+   if(m_isVisable && curve == m_parentCurve && m_parentCurve != NULL)
+   {
+      calcSnrSlow();
    }
 }
 
@@ -162,7 +170,6 @@ void plotSnrCalc::calcSnr()
 
 void plotSnrCalc::calcSnrSlow()
 {
-
    if(m_isVisable && m_parentCurve != NULL)
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();

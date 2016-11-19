@@ -49,6 +49,7 @@ public:
 
    void setCurve(CurveData* curve);
 
+   void curveUpdated(CurveData* curve);
 private:
 
    typedef struct curveDataIndexes
