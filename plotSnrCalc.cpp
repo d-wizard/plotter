@@ -251,14 +251,7 @@ void plotSnrCalc::calcSnrSlow()
       calcFftChunk(&m_signalChunk,             newSignalIndexes);
       calcFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
 
-      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-
-      QPalette palette = m_snrLabel->palette();
-      palette.setColor( QPalette::WindowText, color);
-      palette.setColor( QPalette::Text, color);
-      m_snrLabel->setPalette(palette);
-      m_snrLabel->setText(QString::number(snr) + " dB");
-
+      setLabel();
    }
 }
 
@@ -305,14 +298,7 @@ void plotSnrCalc::calcSnrFast()
       updateFftChunk(&m_signalChunk,             newSignalIndexes);
       updateFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
 
-      double snr = 10*log10(m_signalChunk.powerLinear) - 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-
-      QPalette palette = m_snrLabel->palette();
-      palette.setColor( QPalette::WindowText, color);
-      palette.setColor( QPalette::Text, color);
-      m_snrLabel->setPalette(palette);
-      m_snrLabel->setText(QString::number(snr) + " dB");
-
+      setLabel();
    }
 }
 
@@ -591,23 +577,60 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
       hzPerBin);
 }
 
+QString plotSnrCalc::numToStrDb(double num, QString units)
+{
+   int sigFigs = 4;
+   return QString::number(num, 'g', sigFigs) + " " + units;
+}
+
+QString plotSnrCalc::numToHz(double num)
+{
+   int sigFigs = 4;
+   if(num < 1000.0)
+   {
+      return QString::number(num, 'g', sigFigs) + " Hz";
+   }
+   else if(num < 1000000.0)
+   {
+      return QString::number(num / 1000.0, 'g', sigFigs) + " kHz";
+   }
+   else if(num < 1000000000.0)
+   {
+      return QString::number(num / 1000000.0, 'g', sigFigs) + " MHz";
+   }
+   return QString::number(num / 1000000000.0, 'g', sigFigs) + " GHz";
+}
+
 void plotSnrCalc::setLabel()
 {
    QColor color = m_parentCurve->getColor();
 
    double signalPower = 10*log10(m_signalChunk.powerLinear);
-   //double signalBandwidth = m_signalChunk.bandwidth;
+   double signalBandwidth = m_signalChunk.bandwidth;
 
    double noisePower = 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-   //double noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
+   double noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
+   double noiseBwPerHz = noisePower - 10*log10(noiseBandwidth);
 
-
-
-   double snr = signalPower - noisePower;
+   QString lblText =
+         "S: " +
+         numToStrDb(signalPower, "dB") +
+         " / " +
+         numToHz(signalBandwidth) +
+         " | N: " +
+         numToStrDb(noisePower, "dB") +
+         " / " +
+         numToHz(noiseBandwidth) +
+         " / " +
+         numToStrDb(noiseBwPerHz, "dB/Hz") +
+         " | SNR: " +
+         numToStrDb(signalPower - noisePower, "dB") +
+         " / " +
+         numToStrDb(signalPower - noiseBwPerHz, "dB/Hz");
 
    QPalette palette = m_snrLabel->palette();
    palette.setColor( QPalette::WindowText, color);
    palette.setColor( QPalette::Text, color);
    m_snrLabel->setPalette(palette);
-   m_snrLabel->setText(QString::number(snr) + " dB");
+   m_snrLabel->setText(lblText);
 }

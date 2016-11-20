@@ -108,6 +108,8 @@ private:
    void calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
    void updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
 
+   QString numToStrDb(double num, QString units);
+   QString numToHz(double num);
    void setLabel();
 
    QwtPlot* m_parentPlot;
