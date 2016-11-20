@@ -16,6 +16,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <limits>       // std::numeric_limits
 #include <assert.h>
 #include "plotSnrCalc.h"
 
@@ -106,14 +107,24 @@ bool plotSnrCalc::isSelectionCloseToBar( const QPointF& pos,
                                          const int canvasHeight_pixels)
 {
    bool barFound = false;
+   double closestBarDelta = std::numeric_limits<double>::max();
+   int closestBarIndex = -1; // invalid initial value.
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
-      barFound = m_allBars[i]->isSelectionCloseToBar(pos, zoomDim, canvasWidth_pixels, canvasHeight_pixels);
+      double delta;
+      barFound = m_allBars[i]->isSelectionCloseToBar(pos, zoomDim, canvasWidth_pixels, canvasHeight_pixels, &delta);
       if(barFound)
       {
-         m_activeBarIndex = i;
-         break;
+         if(delta < closestBarDelta)
+         {
+            closestBarDelta = delta;
+            closestBarIndex = i;
+         }
       }
+   }
+   if(barFound)
+   {
+      m_activeBarIndex = closestBarIndex;
    }
    return barFound;
 }

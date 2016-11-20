@@ -48,7 +48,8 @@ public:
    bool isSelectionCloseToBar( const QPointF& pos, 
                                const maxMinXY& zoomDim, 
                                const int canvasWidth_pixels,
-                               const int canvasHeight_pixels);
+                               const int canvasHeight_pixels,
+                               double* delta);
 
    void moveBar(const QPointF& pos);
    

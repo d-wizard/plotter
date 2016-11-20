@@ -108,7 +108,8 @@ void plotBar::moveToFront()
 bool plotBar::isSelectionCloseToBar( const QPointF& pos, 
                             const maxMinXY& zoomDim, 
                             const int canvasWidth_pixels,
-                            const int canvasHeight_pixels)
+                            const int canvasHeight_pixels,
+                            double* delta)
 {
    m_zoomDim = zoomDim;
 
@@ -135,6 +136,8 @@ bool plotBar::isSelectionCloseToBar( const QPointF& pos,
    zoomLen = zoomMax - zoomMin;
 
    double selectionDelta_pixels = fabs(selectionPosition - m_curBarPos) * numPixels / zoomLen;
+
+   *delta = selectionDelta_pixels;
 
    return selectionDelta_pixels <= m_barSelectThresh_pixels;
 }
