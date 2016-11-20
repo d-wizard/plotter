@@ -49,7 +49,9 @@ public:
 
    void setCurve(CurveData* curve);
 
-   void curveUpdated(CurveData* curve);
+   bool curveUpdated(CurveData* curve);
+
+   void sampleRateChanged();
 private:
 
    typedef struct curveDataIndexes
@@ -106,10 +108,12 @@ private:
    void calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
    void updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& newIndexes);
 
+   void setLabel();
 
    QwtPlot* m_parentPlot;
    QLabel* m_snrLabel;
    CurveData* m_parentCurve;
+   double m_curveSampleRate;
    bool m_isVisable;
 
    plotBar* m_noiseBars[2];

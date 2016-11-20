@@ -25,6 +25,7 @@ plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
    m_parentPlot(parentPlot),
    m_snrLabel(snrLabel),
    m_parentCurve(NULL),
+   m_curveSampleRate(0.0),
    m_isVisable(false),
    m_activeBarIndex(-1),
    m_dcBinIndex(-1)
@@ -85,13 +86,16 @@ bool plotSnrCalc::isVisable()
 
 void plotSnrCalc::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
 {
-   for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+   if(m_isVisable)
    {
-      m_allBars[i]->updateZoom(zoomDim, true);
-   }
-   if(skipReplot == false)
-   {
-      m_parentPlot->replot();
+      for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+      {
+         m_allBars[i]->updateZoom(zoomDim, true);
+      }
+      if(skipReplot == false)
+      {
+         m_parentPlot->replot();
+      }
    }
 }
 
@@ -144,15 +148,55 @@ void plotSnrCalc::setCurve(CurveData* curve)
    if(curve != m_parentCurve)
    {
       m_parentCurve = curve;
+      m_curveSampleRate = m_parentCurve->getSampleRate();
       calcSnrSlow();
    }
 }
 
-void plotSnrCalc::curveUpdated(CurveData* curve)
+bool plotSnrCalc::curveUpdated(CurveData* curve)
 {
+   bool curveIsAValidFftForSnrCalc = false;
    if(m_isVisable && curve == m_parentCurve && m_parentCurve != NULL)
    {
       calcSnrSlow();
+   }
+   if(curve != NULL)
+   {
+      switch(curve->getPlotType())
+      {
+         case E_PLOT_TYPE_REAL_FFT:
+         case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+         case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+            curveIsAValidFftForSnrCalc = true;
+         break;
+         default:
+            // Nothing to do.
+         break;
+      }
+   }
+   return curveIsAValidFftForSnrCalc;
+}
+
+void plotSnrCalc::sampleRateChanged()
+{
+   if(m_isVisable && m_parentCurve != NULL)
+   {
+      double newSampRate = m_parentCurve->getSampleRate();
+      if(m_curveSampleRate != newSampRate)
+      {
+         if(m_curveSampleRate <= 0.0)
+         {
+            m_curveSampleRate = (double)m_parentCurve->getNumPoints();
+         }
+
+         for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+         {
+            QPointF newBarPos;
+            newBarPos.setX(m_allBars[i]->getBarPos() * newSampRate / m_curveSampleRate);
+            m_allBars[i]->moveBar(newBarPos);
+         }
+         m_curveSampleRate = newSampRate;
+      }
    }
 }
 
@@ -547,3 +591,23 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
       hzPerBin);
 }
 
+void plotSnrCalc::setLabel()
+{
+   QColor color = m_parentCurve->getColor();
+
+   double signalPower = 10*log10(m_signalChunk.powerLinear);
+   //double signalBandwidth = m_signalChunk.bandwidth;
+
+   double noisePower = 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
+   //double noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
+
+
+
+   double snr = signalPower - noisePower;
+
+   QPalette palette = m_snrLabel->palette();
+   palette.setColor( QPalette::WindowText, color);
+   palette.setColor( QPalette::Text, color);
+   m_snrLabel->setPalette(palette);
+   m_snrLabel->setText(QString::number(snr) + " dB");
+}
