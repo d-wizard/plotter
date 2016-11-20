@@ -106,27 +106,28 @@ bool plotSnrCalc::isSelectionCloseToBar( const QPointF& pos,
                                          const int canvasWidth_pixels,
                                          const int canvasHeight_pixels)
 {
-   bool barFound = false;
+   bool closeBarFound = false;
    double closestBarDelta = std::numeric_limits<double>::max();
    int closestBarIndex = -1; // invalid initial value.
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
       double delta;
-      barFound = m_allBars[i]->isSelectionCloseToBar(pos, zoomDim, canvasWidth_pixels, canvasHeight_pixels, &delta);
+      bool barFound = m_allBars[i]->isSelectionCloseToBar(pos, zoomDim, canvasWidth_pixels, canvasHeight_pixels, &delta);
       if(barFound)
       {
          if(delta < closestBarDelta)
          {
             closestBarDelta = delta;
             closestBarIndex = i;
+            closeBarFound = true;
          }
       }
    }
-   if(barFound)
+   if(closeBarFound)
    {
       m_activeBarIndex = closestBarIndex;
    }
-   return barFound;
+   return closeBarFound;
 }
 
 void plotSnrCalc::moveBar(const QPointF& pos)
