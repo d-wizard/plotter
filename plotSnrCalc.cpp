@@ -211,6 +211,8 @@ void plotSnrCalc::sampleRateChanged()
             m_allBars[i]->moveBar(newBarPos);
          }
          m_curveSampleRate = newSampRate;
+         calcSnrSlow();
+         setLabel();
       }
    }
 }
