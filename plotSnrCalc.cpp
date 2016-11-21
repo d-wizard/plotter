@@ -23,6 +23,7 @@
 
 
 plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
+   m_barsAreItialized(false),
    m_parentPlot(parentPlot),
    m_snrLabel(snrLabel),
    m_parentCurve(NULL),
@@ -66,6 +67,7 @@ void plotSnrCalc::show(const maxMinXY& zoomDim)
       m_allBars[i]->show(zoomDim);
    }
    m_isVisable = true;
+   autoSetBars();
    calcSnrSlow();
    m_snrLabel->setVisible(m_isVisable);
 }
@@ -161,6 +163,7 @@ void plotSnrCalc::setCurve(CurveData* curve)
    {
       m_parentCurve = curve;
       m_curveSampleRate = m_parentCurve->getSampleRate();
+      autoSetBars();
       calcSnrSlow();
    }
 }
@@ -208,6 +211,39 @@ void plotSnrCalc::sampleRateChanged()
             m_allBars[i]->moveBar(newBarPos);
          }
          m_curveSampleRate = newSampRate;
+      }
+   }
+}
+
+void plotSnrCalc::autoSetBars()
+{
+   if(m_isVisable && m_parentCurve != NULL)
+   {
+      unsigned int numPoints = m_parentCurve->getNumPoints();
+      const double* xPoints = m_parentCurve->getXPoints();
+
+      // Compute full range. 0 to numPoints-1 is off by 1 bin. Add the average Hz per bin to range to finish the computation.
+      double range = xPoints[numPoints-1] - xPoints[0];
+      double hzPerBin = range / (double)(numPoints-1);
+      range += hzPerBin;
+
+      findDcBinIndex(numPoints, xPoints);
+
+      if(m_barsAreItialized == false)
+      {
+         m_barsAreItialized = true;
+
+         QPointF barPoint;
+
+         barPoint.setX(xPoints[0] + range * 0.1);
+         m_noiseBars[0]->moveBar(barPoint);
+         barPoint.setX(xPoints[0] + range * 0.9);
+         m_noiseBars[1]->moveBar(barPoint);
+
+         barPoint.setX(xPoints[0] + range * 0.4);
+         m_signalBars[0]->moveBar(barPoint);
+         barPoint.setX(xPoints[0] + range * 0.6);
+         m_signalBars[1]->moveBar(barPoint);
       }
    }
 }

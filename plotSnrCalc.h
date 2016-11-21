@@ -87,6 +87,8 @@ private:
    plotSnrCalc(plotSnrCalc const&);
    void operator=(plotSnrCalc const&);
 
+   void autoSetBars();
+
    void calcSnr();
    void calcSnrSlow();
    void calcSnrFast();
@@ -112,6 +114,7 @@ private:
    QString numToHz(double num);
    void setLabel();
 
+   bool m_barsAreItialized;
    QwtPlot* m_parentPlot;
    QLabel* m_snrLabel;
    CurveData* m_parentCurve;
