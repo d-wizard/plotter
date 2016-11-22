@@ -62,13 +62,13 @@ plotSnrCalc::~plotSnrCalc()
 
 void plotSnrCalc::show(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions)
 {
-   m_isVisable = true;
-   updatePlotDim(plotDimensions);
-   updateZoomDim(zoomDimensions);
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
+      m_allBars[i]->updatePlotDim(plotDimensions);
+      m_allBars[i]->updateZoomDim(zoomDimensions);
       m_allBars[i]->show();
    }
+   m_isVisable = true;
    autoSetBars();
    calcSnrSlow();
    m_snrLabel->setVisible(m_isVisable);
