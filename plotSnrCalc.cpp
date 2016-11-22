@@ -60,13 +60,15 @@ plotSnrCalc::~plotSnrCalc()
 }
 
 
-void plotSnrCalc::show(const maxMinXY& zoomDim)
+void plotSnrCalc::show(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions)
 {
+   m_isVisable = true;
+   updatePlotDim(plotDimensions);
+   updateZoomDim(zoomDimensions);
    for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
    {
-      m_allBars[i]->show(zoomDim);
+      m_allBars[i]->show();
    }
-   m_isVisable = true;
    autoSetBars();
    calcSnrSlow();
    m_snrLabel->setVisible(m_isVisable);
@@ -87,17 +89,24 @@ bool plotSnrCalc::isVisable()
    return m_isVisable;
 }
 
-void plotSnrCalc::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
+void plotSnrCalc::updateZoomDim(const maxMinXY& zoomDim)
 {
    if(m_isVisable)
    {
       for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
       {
-         m_allBars[i]->updateZoom(zoomDim, true);
+         m_allBars[i]->updateZoomDim(zoomDim);
       }
-      if(skipReplot == false)
+   }
+}
+
+void plotSnrCalc::updatePlotDim(const maxMinXY& plotDim)
+{
+   if(m_isVisable)
+   {
+      for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
       {
-         m_parentPlot->replot();
+         m_allBars[i]->updatePlotDim(plotDim);
       }
    }
 }

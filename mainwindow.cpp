@@ -321,7 +321,7 @@ void MainWindow::resetPlot()
         delete m_plotZoom;
         m_plotZoom = NULL;
     }
-    m_plotZoom = new PlotZoom(m_qwtPlot, ui->verticalScrollBar, ui->horizontalScrollBar);
+    m_plotZoom = new PlotZoom(this, m_qwtPlot, ui->verticalScrollBar, ui->horizontalScrollBar);
 
     if(m_qwtSelectedSample != NULL)
     {
@@ -834,7 +834,7 @@ void MainWindow::calcSnrToggle()
     if(m_calcSnrDisplayed)
     {
         m_toggleSnrCalcAction.setIcon(m_checkedIcon);
-        m_snrCalcBars->show(m_plotZoom->getCurZoom());
+        m_snrCalcBars->show(m_plotZoom->getCurPlotDim(), m_plotZoom->getCurZoom());
     }
     else
     {
@@ -914,8 +914,6 @@ void MainWindow::autoZoom()
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);
    m_plotZoom->ResetZoom();
-
-   m_snrCalcBars->updateZoom(m_plotZoom->getCurZoom());
 }
 
 void MainWindow::holdZoom()
@@ -1148,6 +1146,7 @@ void MainWindow::rectSelected(const QRectF &pos)
 void MainWindow::pickerMoved(const QPointF &pos)
 {
    m_snrCalcBars->moveBar(pos);
+   m_qwtPlot->replot();
 }
 
 void MainWindow::on_verticalScrollBar_sliderMoved(int /*position*/)
@@ -1800,7 +1799,8 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput)
 
     if(m_snrCalcBars != NULL)
     {
-      m_snrCalcBars->updateZoom(m_plotZoom->getCurZoom(), true);
+       m_snrCalcBars->updateZoomDim(m_plotZoom->getCurZoom());
+       m_snrCalcBars->updatePlotDim(m_plotZoom->getCurPlotDim());
     }
 
     m_qwtPlot->replot();
@@ -2163,4 +2163,14 @@ void MainWindow::activityIndicatorTimerSlot()
 
 }
 
+// This function is to be called by the PlotZoom object whenever it is about to change the zoom.
+// This allows us to perform some operations whenever the zoom or plot dimensions change.
+void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions)
+{
+   if(m_snrCalcBars != NULL)
+   {
+      m_snrCalcBars->updateZoomDim(zoomDimensions);
+      m_snrCalcBars->updatePlotDim(plotDimensions);
+   }
+}
 

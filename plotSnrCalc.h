@@ -32,11 +32,12 @@ public:
    ~plotSnrCalc();
 
 
-   void show(const maxMinXY& zoomDim);
+   void show(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions);
    void hide();
    bool isVisable();
 
-   void updateZoom(const maxMinXY& zoomDim, bool skipReplot = false);
+   void updateZoomDim(const maxMinXY& zoomDim);
+   void updatePlotDim(const maxMinXY& plotDim);
 
    bool isSelectionCloseToBar( const QPointF& pos,
                                const maxMinXY& zoomDim,

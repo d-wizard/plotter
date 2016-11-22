@@ -171,6 +171,8 @@ public:
     void toggleCurveVisability(const QString& curveName);
 
     void setLegendState(bool showLegend);
+
+    void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions);
 private:
     Ui::MainWindow *ui;
 

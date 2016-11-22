@@ -35,10 +35,12 @@
 #define ZOOM_IN_PERCENT (0.9)
 #define ZOOM_OUT_PERCENT (1.1)
 
+class MainWindow;
+
 class PlotZoom
 {
 public:
-   PlotZoom(QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll);
+   PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll);
 
    void SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput);
 
@@ -67,11 +69,14 @@ public:
    void changeZoomFromSavedZooms(int changeZoomDelta);
 
    maxMinXY getCurZoom();
+   maxMinXY getCurPlotDim();
 
    bool m_holdZoom;
    bool m_maxHoldZoom;
 
 private:
+   MainWindow* m_mainWindow;
+
    QwtPlot* m_qwtPlot;
    
    QScrollBar* m_vertScroll;

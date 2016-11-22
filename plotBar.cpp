@@ -69,14 +69,14 @@ void plotBar::init( QwtPlot* parentPlot,
    m_zoomDim.minX = 0;
    m_zoomDim.maxY = 0;
    m_zoomDim.minY = 0;
+   m_plotDim = m_zoomDim; // Set all plot dimensions to 0.
 
 }
 
 
-void plotBar::show(const maxMinXY& zoomDim)
+void plotBar::show()
 {
-   m_zoomDim = zoomDim;
-   setBarPoints(m_curBarPos, m_zoomDim);
+   setBarPoints(m_curBarPos);
 
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
    
@@ -145,59 +145,59 @@ bool plotBar::isSelectionCloseToBar( const QPointF& pos,
 void plotBar::moveBar(const QPointF& pos)
 {
    double newBarPos = m_barAxis == E_X_AXIS ? pos.x() : pos.y();
-   setBarPoints(newBarPos, m_zoomDim);
+   setBarPoints(newBarPos);
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
-   m_parentPlot->replot();
 }
 
-void plotBar::updateZoom(const maxMinXY& zoomDim, bool skipReplot)
+void plotBar::updateZoomDim(const maxMinXY& zoomDim)
 {
    m_zoomDim = zoomDim;
+}
 
-   // Update bar end points to match zoom.
+void plotBar::updatePlotDim(const maxMinXY& plotDim)
+{
+   m_plotDim = plotDim;
+
+   // Update bar end points to match plot dimensions.
    if(m_barAxis == E_X_AXIS)
    {
-      m_yPoints[0] = zoomDim.minY;
-      m_yPoints[1] = zoomDim.maxY;
+      m_yPoints[0] = m_plotDim.minY;
+      m_yPoints[1] = m_plotDim.maxY;
    }
    else
    {
-      m_xPoints[0] = zoomDim.minX;
-      m_xPoints[1] = zoomDim.maxX;
+      m_xPoints[0] = m_plotDim.minX;
+      m_xPoints[1] = m_plotDim.maxX;
    }
 
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
-   if(skipReplot == false)
-   {
-      m_parentPlot->replot();
-   }
 }
 
-void plotBar::setBarPoints(double newBarPos, const maxMinXY& zoomDim)
+void plotBar::setBarPoints(double newBarPos)
 {
    if(m_barAxis == E_X_AXIS)
    {
-      if(newBarPos < zoomDim.minX)
-         newBarPos = zoomDim.minX;
-      else if(newBarPos > zoomDim.maxX)
-         newBarPos = zoomDim.maxX;
+      if(newBarPos < m_zoomDim.minX)
+         newBarPos = m_zoomDim.minX;
+      else if(newBarPos > m_zoomDim.maxX)
+         newBarPos = m_zoomDim.maxX;
       m_xPoints[0] = newBarPos;
       m_xPoints[1] = newBarPos;
-      m_yPoints[0] = zoomDim.minY;
-      m_yPoints[1] = zoomDim.maxY;
+      m_yPoints[0] = m_plotDim.minY;
+      m_yPoints[1] = m_plotDim.maxY;
       
       m_curBarPos = newBarPos;
    }
    else
    {
-      if(newBarPos < zoomDim.minY)
-         newBarPos = zoomDim.minY;
-      else if(newBarPos > zoomDim.maxY)
-         newBarPos = zoomDim.maxY;
+      if(newBarPos < m_zoomDim.minY)
+         newBarPos = m_zoomDim.minY;
+      else if(newBarPos > m_zoomDim.maxY)
+         newBarPos = m_zoomDim.maxY;
       m_yPoints[0] = newBarPos;
       m_yPoints[1] = newBarPos;;
-      m_xPoints[0] = zoomDim.minX;
-      m_xPoints[1] = zoomDim.maxX;
+      m_xPoints[0] = m_plotDim.minX;
+      m_xPoints[1] = m_plotDim.maxX;
       
       m_curBarPos = newBarPos;
    }

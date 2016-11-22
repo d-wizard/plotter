@@ -40,7 +40,7 @@ public:
    ~plotBar();
    
    
-   void show(const maxMinXY& zoomDim);
+   void show();
    void hide();
    bool isVisable();
    void moveToFront();
@@ -52,8 +52,9 @@ public:
                                double* delta);
 
    void moveBar(const QPointF& pos);
-   
-   void updateZoom(const maxMinXY& zoomDim, bool skipReplot = false);
+
+   void updateZoomDim(const maxMinXY& zoomDim);
+   void updatePlotDim(const maxMinXY& plotDim);
 
    double getBarPos(){return m_curBarPos;}
    
@@ -73,7 +74,7 @@ private:
               QwtPlotCurve::CurveStyle curveStyle,
               double barSelectThresh_pixels);
    
-   void setBarPoints(double newBarPos, const maxMinXY& zoomDim);
+   void setBarPoints(double newBarPos);
    
    QwtPlot* m_parentPlot;
    QwtPlotCurve* m_curve;
@@ -82,7 +83,8 @@ private:
    bool m_isVisable;
    
    double m_barSelectThresh_pixels;
-   
+
+   maxMinXY m_plotDim;
    maxMinXY m_zoomDim;
    
    double m_curBarPos;

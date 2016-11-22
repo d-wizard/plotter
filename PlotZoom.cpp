@@ -17,10 +17,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include "PlotZoom.h"
+#include "mainwindow.h"
 
-PlotZoom::PlotZoom(QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll):
+PlotZoom::PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll):
    m_holdZoom(false),
    m_maxHoldZoom(false),
+   m_mainWindow(mainWindow),
    m_qwtPlot(qwtPlot),
    m_vertScroll(vertScroll),
    m_horzScroll(horzScroll),
@@ -464,6 +466,11 @@ maxMinXY PlotZoom::getCurZoom()
     return m_zoomDimensions;
 }
 
+maxMinXY PlotZoom::getCurPlotDim()
+{
+   return m_plotDimensions;
+}
+
 void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom)
 {
    // Nothing in the save zoom vector, initialize it with current zoom value.
@@ -512,6 +519,9 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
          m_zoomDimSave.resize(m_zoomDimIndex+1);
          m_zoomDimSave[m_zoomDimIndex] = m_zoomDimensions;
       }
+
+      // Call function in parent... The parent might have some stuff to do before replot is called.
+      m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions);
 
       m_qwtPlot->replot();
    }
