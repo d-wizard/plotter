@@ -46,57 +46,62 @@ static const unsigned char activityIndicatorStr[2] = {'.', 0};
 
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    m_curveCommander(curveCmdr),
-    m_plotGuiMain(plotGui),
-    m_qwtPlot(NULL),
-    m_qwtCurvesMutex(QMutex::Recursive),
-    m_qwtSelectedSample(NULL),
-    m_qwtSelectedSampleDelta(NULL),
-    m_qwtPicker(NULL),
-    m_qwtGrid(NULL),
-    m_selectMode(E_CURSOR),
-    m_selectedCurveIndex(0),
-    m_plotZoom(NULL),
-    m_checkedIcon(":/check.png"),
-    m_zoomCursor(NULL),
-    m_normalizeCurves(false),
-    m_legendDisplayed(false),
-    m_canvasXOverYRatio(1.0),
-    m_allowNewCurves(true),
-    m_scrollMode(false),
-    m_needToUpdateGuiOnNextPlotUpdate(false),
-    m_zoomAction("Zoom", this),
-    m_cursorAction("Cursor", this),
-    m_deltaCursorAction("Delta Cursor", this),
-    m_autoZoomAction("Auto", this),
-    m_holdZoomAction("Freeze", this),
-    m_maxHoldZoomAction("Max Hold", this),
-    m_scrollModeAction("Scroll Mode", this),
-    m_resetZoomAction("Reset Zoom", this),
-    m_normalizeAction("Normalize Curves", this),
-    m_toggleLegendAction("Legend", this),
-    m_zoomSettingsMenu("Zoom Settings"),
-    m_selectedCurvesMenu("Selected Curve"),
-    m_visibleCurvesMenu("Visible Curves"),
-    m_stylesCurvesMenu("Curve Style"),
-    m_enableDisablePlotUpdate("Disable New Curves", this),
-    m_curveProperties("Properties", this),
-    m_defaultCurveStyle(QwtPlotCurve::Lines),
-    m_displayType(E_DISPLAY_POINT_AUTO),
-    m_displayPrecision(8),
-    m_displayPointsAutoAction("Auto", this),
-    m_displayPointsFixedAction("Decimal", this),
-    m_displayPointsScientificAction("Scientific", this),
-    m_displayPointsPrecisionAutoAction("Auto", this),
-    m_displayPointsPrecisionUpAction("Precision +1", this),
-    m_displayPointsPrecisionDownAction("Precision -1", this),
-    m_displayPointsPrecisionUpBigAction("Precision +3", this),
-    m_displayPointsPrecisionDownBigAction("Precision -3", this),
-    m_activityIndicator_plotIsActive(true),
-    m_activityIndicator_indicatorState(true),
-    m_activityIndicator_inactiveCount(0)
+   QMainWindow(parent),
+   ui(new Ui::MainWindow),
+   m_curveCommander(curveCmdr),
+   m_plotGuiMain(plotGui),
+   m_qwtPlot(NULL),
+   m_qwtCurvesMutex(QMutex::Recursive),
+   m_qwtSelectedSample(NULL),
+   m_qwtSelectedSampleDelta(NULL),
+   m_qwtPicker(NULL),
+   m_qwtGrid(NULL),
+   m_selectMode(E_CURSOR),
+   m_selectedCurveIndex(0),
+   m_plotZoom(NULL),
+   m_checkedIcon(":/check.png"),
+   m_zoomCursor(NULL),
+   m_normalizeCurves(false),
+   m_legendDisplayed(false),
+   m_calcSnrDisplayed(false),
+   m_canvasWidth_pixels(1),
+   m_canvasHeight_pixels(1),
+   m_canvasXOverYRatio(1.0),
+   m_allowNewCurves(true),
+   m_scrollMode(false),
+   m_needToUpdateGuiOnNextPlotUpdate(false),
+   m_zoomAction("Zoom", this),
+   m_cursorAction("Cursor", this),
+   m_deltaCursorAction("Delta Cursor", this),
+   m_autoZoomAction("Auto", this),
+   m_holdZoomAction("Freeze", this),
+   m_maxHoldZoomAction("Max Hold", this),
+   m_scrollModeAction("Scroll Mode", this),
+   m_resetZoomAction("Reset Zoom", this),
+   m_normalizeAction("Normalize Curves", this),
+   m_toggleLegendAction("Legend", this),
+   m_toggleSnrCalcAction("Calculate SNR", this),
+   m_zoomSettingsMenu("Zoom Settings"),
+   m_selectedCurvesMenu("Selected Curve"),
+   m_visibleCurvesMenu("Visible Curves"),
+   m_stylesCurvesMenu("Curve Style"),
+   m_enableDisablePlotUpdate("Disable New Curves", this),
+   m_curveProperties("Properties", this),
+   m_defaultCurveStyle(QwtPlotCurve::Lines),
+   m_displayType(E_DISPLAY_POINT_AUTO),
+   m_displayPrecision(8),
+   m_displayPointsAutoAction("Auto", this),
+   m_displayPointsFixedAction("Decimal", this),
+   m_displayPointsScientificAction("Scientific", this),
+   m_displayPointsPrecisionAutoAction("Auto", this),
+   m_displayPointsPrecisionUpAction("Precision +1", this),
+   m_displayPointsPrecisionDownAction("Precision -1", this),
+   m_displayPointsPrecisionUpBigAction("Precision +3", this),
+   m_displayPointsPrecisionDownBigAction("Precision -3", this),
+   m_activityIndicator_plotIsActive(true),
+   m_activityIndicator_indicatorState(true),
+   m_activityIndicator_inactiveCount(0),
+   m_snrCalcBars(NULL)
 {
     ui->setupUi(this);
 
@@ -136,6 +141,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollMode()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
+    connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
 
@@ -165,6 +171,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_rightClickMenu.addMenu(&m_visibleCurvesMenu);
     m_rightClickMenu.addMenu(&m_selectedCurvesMenu);
 
+    m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_toggleSnrCalcAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
     m_rightClickMenu.addAction(&m_scrollModeAction);
@@ -211,10 +219,17 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
 
     m_activityIndicator_timer.start(ACTIVITY_INDICATOR_ON_PERIOD_MS);
 
+    // Disable SNR Calc Action by default. It will be activated (i.e. made visable) if there is a curve
+    // that is an FFT curve.
+    m_toggleSnrCalcAction.setVisible(false);
+    m_snrCalcBars = new plotSnrCalc(m_qwtPlot, ui->snrLabel);
+
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_snrCalcBars;
+
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
         // No need to check against NULL. All values in the list
@@ -579,10 +594,25 @@ void MainWindow::readPlotMsgSlot()
             QString curveName( plotMsg->m_curveName.c_str() );
             int curveIndex = getCurveIndex(curveName);
             m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], true);
+
+            // Make sure the SNR Calc bars are updated. If a new curve is plotted that is a
+            // valid SNR curve, make sure the SNR Calc action is made visable.
+            bool validSnrCurve = m_snrCalcBars->curveUpdated(m_qwtCurves[curveIndex]);
+            if(validSnrCurve && m_toggleSnrCalcAction.isVisible() == false)
+            {
+               m_toggleSnrCalcAction.setVisible(true);
+            }
          }
 
          // Done with new plot messages.
          delete multiPlotMsg;
+
+         // If the SNR Calc Bars are visable, make sure they are displayed in front of any new curves.
+         if(newCurveAdded)
+         {
+            m_snrCalcBars->moveToFront();
+         }
+
       }
    }
 }
@@ -616,6 +646,7 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
       if(curveChanged)
       {
          handleCurveDataChange(curveIndex);
+         m_snrCalcBars->sampleRateChanged();
       }
    }
 }
@@ -796,6 +827,23 @@ void MainWindow::toggleLegend()
     }
 }
 
+
+void MainWindow::calcSnrToggle()
+{
+    m_calcSnrDisplayed = !m_calcSnrDisplayed;
+    if(m_calcSnrDisplayed)
+    {
+        m_toggleSnrCalcAction.setIcon(m_checkedIcon);
+        m_snrCalcBars->show(m_plotZoom->getCurZoom());
+    }
+    else
+    {
+        m_toggleSnrCalcAction.setIcon(QIcon());
+        m_snrCalcBars->hide();
+    }
+    m_qwtPlot->replot();
+}
+
 void MainWindow::setLegendState(bool showLegend)
 {
     if(m_legendDisplayed != showLegend)
@@ -866,6 +914,8 @@ void MainWindow::autoZoom()
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);
    m_plotZoom->ResetZoom();
+
+   m_snrCalcBars->updateZoom(m_plotZoom->getCurZoom());
 }
 
 void MainWindow::holdZoom()
@@ -1049,14 +1099,33 @@ maxMinXY MainWindow::calcMaxMin()
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
-    if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
-    {
-        m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+   // Check if we should switch to dragging SNR Calc Bar mode.
+   if( m_selectMode == E_CURSOR && m_snrCalcBars->isVisable() &&
+       m_snrCalcBars->isSelectionCloseToBar(pos, m_plotZoom->getCurZoom(),
+                                       m_canvasWidth_pixels, m_canvasHeight_pixels))
+   {
+      // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
+      // movement while the left mouse button is held down.
+      connect(m_qwtPicker, SIGNAL(moved(QPointF)),
+              this, SLOT(pickerMoved(QPointF)));
+      // We are not selecting a cursor point, instead we are dragging a SNR Calc Bar. Nothing more to do.
+      return;
+   }
+   else
+   {
+      // We are not dragging an SNR Calc Bar. Make sure the slot for tracking that is disconnected.
+      disconnect(m_qwtPicker, SIGNAL(moved(QPointF)), 0, 0);
+   }
 
-        updatePointDisplay();
-        replotMainPlot();
+   // Update the cursor with the selected point.
+   if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
+   {
+      m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
 
-    }
+      updatePointDisplay();
+      replotMainPlot();
+
+   }
 
 }
 
@@ -1074,6 +1143,11 @@ void MainWindow::rectSelected(const QRectF &pos)
 
     }
 
+}
+
+void MainWindow::pickerMoved(const QPointF &pos)
+{
+   m_snrCalcBars->moveBar(pos);
 }
 
 void MainWindow::on_verticalScrollBar_sliderMoved(int /*position*/)
@@ -1671,6 +1745,7 @@ void MainWindow::setSelectedCurveIndex(int index)
         int oldSelectCursor = m_selectedCurveIndex;
         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
+        m_snrCalcBars->setCurve(m_qwtCurves[index]);
         m_selectedCurveIndex = index;
         if(m_normalizeCurves)
         {
@@ -1722,6 +1797,12 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput)
     {
         m_plotZoom->SetPlotDimensions(m_maxMin, changeCausedByUserGuiInput);
     }
+
+    if(m_snrCalcBars != NULL)
+    {
+      m_snrCalcBars->updateZoom(m_plotZoom->getCurZoom(), true);
+    }
+
     m_qwtPlot->replot();
 }
 
@@ -1808,8 +1889,12 @@ void MainWindow::closeEvent(QCloseEvent* /*event*/)
 
 void MainWindow::resizeEvent(QResizeEvent* /*event*/)
 {
-    QSize cavasSize = m_qwtPlot->canvas()->frameSize();
-    m_canvasXOverYRatio = (cavasSize.width() - (2.0*PLOT_CANVAS_OFFSET)) / (cavasSize.height() - (2.0*PLOT_CANVAS_OFFSET));
+    QSize canvasSize = m_qwtPlot->canvas()->frameSize();
+
+    m_canvasWidth_pixels  = canvasSize.width()  - (2*PLOT_CANVAS_OFFSET);
+    m_canvasHeight_pixels = canvasSize.height() - (2*PLOT_CANVAS_OFFSET);
+
+    m_canvasXOverYRatio = (double)m_canvasWidth_pixels / (double)m_canvasHeight_pixels;
 }
 
 
@@ -1983,6 +2068,7 @@ void MainWindow::updateCurveOrder()
    }
 
    updatePointDisplay();
+   m_snrCalcBars->moveToFront(true);
    replotMainPlot();
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);

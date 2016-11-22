@@ -39,7 +39,9 @@ SOURCES += main.cpp\
     overwriterenamedialog.cpp \
     smartMaxMin.cpp \
     persistentParameters.cpp \
-    localPlotCreate.cpp
+    localPlotCreate.cpp \
+    plotBar.cpp \
+    plotSnrCalc.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -67,7 +69,9 @@ HEADERS  += mainwindow.h \
     smartMaxMin.h \
     persistentParameters.h \
     sendTCPPacket.h \
-    localPlotCreate.h
+    localPlotCreate.h \
+    plotBar.h \
+    plotSnrCalc.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

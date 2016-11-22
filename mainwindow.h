@@ -51,6 +51,7 @@
 #include "PlotZoom.h"
 #include "Cursor.h"
 #include "CurveData.h"
+#include "plotSnrCalc.h"
 
 #define PLOT_CANVAS_OFFSET (6)
 
@@ -201,7 +202,10 @@ private:
     bool m_normalizeCurves;
 
     bool m_legendDisplayed;
+    bool m_calcSnrDisplayed;
 
+    int m_canvasWidth_pixels;
+    int m_canvasHeight_pixels;
     double m_canvasXOverYRatio;
 
     bool m_allowNewCurves;
@@ -222,6 +226,7 @@ private:
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
     QAction m_toggleLegendAction;
+    QAction m_toggleSnrCalcAction;
     QMenu m_rightClickMenu;
     QMenu m_zoomSettingsMenu;
     QMenu m_selectedCurvesMenu;
@@ -257,6 +262,9 @@ private:
     QPalette m_activityIndicator_offPallet;
     QMutex m_activityIndicator_mutex;
     void resetActivityIndicator();
+
+    plotSnrCalc* m_snrCalcBars;
+
 
     void resetPlot();
 
@@ -308,9 +316,11 @@ private:
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
+    void pickerMoved(const QPointF &pos);
 
     // Menu Commands
     void toggleLegend();
+    void calcSnrToggle();
     void cursorMode();
     void deltaCursorMode();
     void autoZoom();
