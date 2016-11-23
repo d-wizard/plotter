@@ -863,7 +863,7 @@ void MainWindow::cursorMode()
     m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
     updatePointDisplay();
-    replotMainPlot();
+    replotMainPlot(true, true);
 }
 
 
@@ -888,7 +888,7 @@ void MainWindow::deltaCursorMode()
     }
     m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
     updatePointDisplay();
-    replotMainPlot();
+    replotMainPlot(true, true);
 }
 
 
@@ -1121,7 +1121,7 @@ void MainWindow::pointSelected(const QPointF &pos)
       m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
 
       updatePointDisplay();
-      replotMainPlot();
+      replotMainPlot(true, true);
 
    }
 
@@ -1771,7 +1771,7 @@ void MainWindow::setSelectedCurveIndex(int index)
     }
 }
 
-void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput)
+void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChanged)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -1788,13 +1788,17 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput)
         m_qwtCurves[i]->setCurveSamples();
     }
 
-    if(m_normalizeCurves)
+    // If just the cursor point changed, there is no need to update plot dimesions.
+    if(cursorChanged == false)
     {
-        m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), changeCausedByUserGuiInput);
-    }
-    else
-    {
-        m_plotZoom->SetPlotDimensions(m_maxMin, changeCausedByUserGuiInput);
+       if(m_normalizeCurves)
+       {
+           m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), changeCausedByUserGuiInput);
+       }
+       else
+       {
+           m_plotZoom->SetPlotDimensions(m_maxMin, changeCausedByUserGuiInput);
+       }
     }
 
     if(m_snrCalcBars != NULL)

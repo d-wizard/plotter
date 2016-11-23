@@ -301,7 +301,7 @@ private:
 
     void setSelectedCurveIndex(int index);
 
-    void replotMainPlot(bool changeCausedByUserGuiInput = true);
+    void replotMainPlot(bool changeCausedByUserGuiInput = true, bool cursorChanged = false);
 
     // Key Press Functions
     bool keyPressModifyZoom(int key);
