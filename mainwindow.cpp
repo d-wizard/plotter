@@ -830,18 +830,20 @@ void MainWindow::toggleLegend()
 
 void MainWindow::calcSnrToggle()
 {
-    m_calcSnrDisplayed = !m_calcSnrDisplayed;
-    if(m_calcSnrDisplayed)
-    {
-        m_toggleSnrCalcAction.setIcon(m_checkedIcon);
-        m_snrCalcBars->show(m_plotZoom->getCurPlotDim(), m_plotZoom->getCurZoom());
-    }
-    else
-    {
-        m_toggleSnrCalcAction.setIcon(QIcon());
-        m_snrCalcBars->hide();
-    }
-    m_qwtPlot->replot();
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   m_calcSnrDisplayed = !m_calcSnrDisplayed;
+   if(m_calcSnrDisplayed)
+   {
+      m_toggleSnrCalcAction.setIcon(m_checkedIcon);
+      m_snrCalcBars->show(m_plotZoom->getCurPlotDim(), m_plotZoom->getCurZoom());
+   }
+   else
+   {
+      m_toggleSnrCalcAction.setIcon(QIcon());
+      m_snrCalcBars->hide();
+   }
+   m_qwtPlot->replot();
 }
 
 void MainWindow::setLegendState(bool showLegend)
