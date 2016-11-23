@@ -288,7 +288,7 @@ private:
     void displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex);
     void displayPointLabels_clean();
     void displayPointLabels_update();
-    void displayDeltaLabel_getLabelText(std::stringstream& lblText);
+    void displayDeltaLabel_getLabelText(QString& lblTextResult);
     void displayDeltaLabel_clean();
     void displayDeltaLabel_update();
     void updatePointDisplay(bool onlyCurveDataChanged = false);

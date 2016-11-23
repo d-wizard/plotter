@@ -42,7 +42,7 @@ connect(&mapperAction.m_mapper, SIGNAL(mapped(int)), SLOT(callback(int)) );
 
 #define ACTIVITY_INDICATOR_ON_PERIOD_MS (750)
 #define ACTIVITY_INDICATOR_PERIODS_TO_TIMEOUT (3)
-static const unsigned char activityIndicatorStr[2] = {'.', 0};
+QString activityIndicatorStr = QChar(0xCF, 0x25); // Black Circle Character.
 
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
@@ -213,7 +213,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     m_activityIndicator_offPallet.setColor( QPalette::WindowText, Qt::black);
 
     ui->activityIndicator->setPalette(m_activityIndicator_onEnabledPallet);
-    ui->activityIndicator->setText((char*)activityIndicatorStr);
+    ui->activityIndicator->setText(activityIndicatorStr);
 
     connect(&m_activityIndicator_timer, SIGNAL(timeout()), this, SLOT(activityIndicatorTimerSlot()));
 
@@ -1296,9 +1296,11 @@ void MainWindow::displayPointLabels_update()
    }
 }
 
-void MainWindow::displayDeltaLabel_getLabelText(std::stringstream& lblText)
+void MainWindow::displayDeltaLabel_getLabelText(QString& lblTextResult)
 {
    CurveData* curve = m_qwtSelectedSample->m_parentCurve;
+
+   std::stringstream lblText;
    lblText << "(";
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
@@ -1307,12 +1309,22 @@ void MainWindow::displayDeltaLabel_getLabelText(std::stringstream& lblText)
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << m_qwtSelectedSample->m_xPoint << ",";
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSample->m_yPoint << ") d (";
+   lblText << m_qwtSelectedSample->m_yPoint << ") ";
+
+   // Using the Delta character in QT is tricky. Write what we have thus far to the result,
+   // add the Delta character, then clear the stringstream that we have been using.
+   static const QString deltaChar = QChar(0x94, 0x03);
+   lblTextResult = QString(lblText.str().c_str()) + deltaChar;
+   lblText.str("");
+
+   lblText << " (";
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
    setDisplayIoMapipYAxis(lblText);
    lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
 
+   // Write the rest of the label
+   lblTextResult += QString(lblText.str().c_str());
 }
 
 void MainWindow::displayDeltaLabel_clean()
@@ -1324,10 +1336,10 @@ void MainWindow::displayDeltaLabel_clean()
     {
         m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
 
-        std::stringstream lblText;
+        QString lblText;
         displayDeltaLabel_getLabelText(lblText);
 
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
+        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText);
         QPalette palette = this->palette();
         palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->getColor());
         palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->getColor());
@@ -1351,10 +1363,10 @@ void MainWindow::displayDeltaLabel_update()
    {
       if(m_qwtCurves[m_selectedCurveIndex]->pointLabel != NULL)
       {
-         std::stringstream lblText;
+         QString lblText;
          displayDeltaLabel_getLabelText(lblText);
          
-         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText.str().c_str());
+         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText);
       }
       else
       {
