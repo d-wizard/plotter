@@ -46,7 +46,7 @@ public:
 
    void moveBar(const QPointF& pos);
 
-   void moveToFront(bool skipReplot = false);
+   void moveToFront();
 
    void setCurve(CurveData* curve);
 

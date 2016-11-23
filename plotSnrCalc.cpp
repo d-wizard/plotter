@@ -151,17 +151,13 @@ void plotSnrCalc::moveBar(const QPointF& pos)
 }
 
 
-void plotSnrCalc::moveToFront(bool skipReplot)
+void plotSnrCalc::moveToFront()
 {
    if(m_isVisable)
    {
       for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
       {
          m_allBars[i]->moveToFront();
-      }
-      if(skipReplot == false)
-      {
-         m_parentPlot->replot();
       }
    }
 }

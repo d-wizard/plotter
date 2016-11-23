@@ -608,9 +608,11 @@ void MainWindow::readPlotMsgSlot()
          delete multiPlotMsg;
 
          // If the SNR Calc Bars are visable, make sure they are displayed in front of any new curves.
-         if(newCurveAdded)
+         if(newCurveAdded && m_snrCalcBars->isVisable())
          {
+            QMutexLocker lock(&m_qwtCurvesMutex);
             m_snrCalcBars->moveToFront();
+            m_qwtPlot->replot();
          }
 
       }
@@ -2086,7 +2088,7 @@ void MainWindow::updateCurveOrder()
    }
 
    updatePointDisplay();
-   m_snrCalcBars->moveToFront(true);
+   m_snrCalcBars->moveToFront();
    replotMainPlot();
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);
