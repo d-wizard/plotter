@@ -73,8 +73,9 @@ private:
               Qt::PenStyle penStyle,
               QwtPlotCurve::CurveStyle curveStyle,
               double barSelectThresh_pixels);
-   
-   void setBarPoints(double newBarPos);
+
+   void setBarEndPoints();
+   void boundBarPosition(double newBarPos);
    
    QwtPlot* m_parentPlot;
    QwtPlotCurve* m_curve;

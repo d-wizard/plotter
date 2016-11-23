@@ -76,7 +76,7 @@ void plotBar::init( QwtPlot* parentPlot,
 
 void plotBar::show()
 {
-   setBarPoints(m_curBarPos);
+   boundBarPosition(m_curBarPos);
 
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
    
@@ -145,36 +145,53 @@ bool plotBar::isSelectionCloseToBar( const QPointF& pos,
 void plotBar::moveBar(const QPointF& pos)
 {
    double newBarPos = m_barAxis == E_X_AXIS ? pos.x() : pos.y();
-   setBarPoints(newBarPos);
+   boundBarPosition(newBarPos);
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
 }
 
 void plotBar::updateZoomDim(const maxMinXY& zoomDim)
 {
    m_zoomDim = zoomDim;
+   setBarEndPoints();
+   m_curve->setSamples(m_xPoints, m_yPoints, 2);
 }
 
 void plotBar::updatePlotDim(const maxMinXY& plotDim)
 {
    m_plotDim = plotDim;
-
-   // Update bar end points to match plot dimensions.
-   if(m_barAxis == E_X_AXIS)
-   {
-      m_yPoints[0] = m_plotDim.minY;
-      m_yPoints[1] = m_plotDim.maxY;
-   }
-   else
-   {
-      m_xPoints[0] = m_plotDim.minX;
-      m_xPoints[1] = m_plotDim.maxX;
-   }
-
+   setBarEndPoints();
    m_curve->setSamples(m_xPoints, m_yPoints, 2);
 }
 
-void plotBar::setBarPoints(double newBarPos)
+void plotBar::setBarEndPoints()
 {
+   // Update bar end points to match max of plot/zoom dimensions.
+   maxMinXY limit = m_plotDim;
+   if(m_barAxis == E_X_AXIS)
+   {
+      if(m_zoomDim.minY < limit.minY)
+         limit.minY = m_zoomDim.minY;
+      if(m_zoomDim.maxY > limit.maxY)
+         limit.maxY = m_zoomDim.maxY;
+
+      m_yPoints[0] = limit.minY;
+      m_yPoints[1] = limit.maxY;
+   }
+   else
+   {
+      if(m_zoomDim.minX < limit.minX)
+         limit.minX = m_zoomDim.minX;
+      if(m_zoomDim.maxX > limit.maxX)
+         limit.maxX = m_zoomDim.maxX;
+
+      m_xPoints[0] = limit.minX;
+      m_xPoints[1] = limit.maxX;
+   }
+}
+
+void plotBar::boundBarPosition(double newBarPos)
+{
+   setBarEndPoints();
    if(m_barAxis == E_X_AXIS)
    {
       if(newBarPos < m_zoomDim.minX)
@@ -183,8 +200,6 @@ void plotBar::setBarPoints(double newBarPos)
          newBarPos = m_zoomDim.maxX;
       m_xPoints[0] = newBarPos;
       m_xPoints[1] = newBarPos;
-      m_yPoints[0] = m_plotDim.minY;
-      m_yPoints[1] = m_plotDim.maxY;
       
       m_curBarPos = newBarPos;
    }
@@ -195,9 +210,7 @@ void plotBar::setBarPoints(double newBarPos)
       else if(newBarPos > m_zoomDim.maxY)
          newBarPos = m_zoomDim.maxY;
       m_yPoints[0] = newBarPos;
-      m_yPoints[1] = newBarPos;;
-      m_xPoints[0] = m_plotDim.minX;
-      m_xPoints[1] = m_plotDim.maxX;
+      m_yPoints[1] = newBarPos;
       
       m_curBarPos = newBarPos;
    }
