@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string>
+#include <QProcess>
 #include "revDateStamp.h"
 #include "PlotHelperTypes.h"
 
@@ -34,20 +35,21 @@
 //#define TEST_CURVES
 
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon) :
-    QMainWindow(parent),
-    ui(new Ui::plotGuiMain),
-    m_tcpMsgReader(NULL),
-    m_trayIcon(NULL),
-    m_trayExitAction("Exit", this),
-    m_trayEnDisNewCurvesAction("Disable New Curves", this),
-    m_propertiesWindowAction("Properties", this),
-    m_closeAllPlotsAction("Close All Plots", this),
-    m_revDateStampAction(REV_DATE_STAMP, this),
-    m_trayMenu(NULL),
-    m_curveCommander(this),
-    m_allowNewCurves(true),
-    m_storedMsgBuff(new char[STORED_MSG_SIZE]),
-    m_storedMsgBuffIndex(0)
+   QMainWindow(parent),
+   ui(new Ui::plotGuiMain),
+   m_tcpMsgReader(NULL),
+   m_trayIcon(NULL),
+   m_trayExitAction("Exit", this),
+   m_trayEnDisNewCurvesAction("Disable New Curves", this),
+   m_propertiesWindowAction("Properties", this),
+   m_closeAllPlotsAction("Close All Plots", this),
+   m_revDateStampAction(REV_DATE_STAMP, this),
+   m_updateBinaryAction("Update", this),
+   m_trayMenu(NULL),
+   m_curveCommander(this),
+   m_allowNewCurves(true),
+   m_storedMsgBuff(new char[STORED_MSG_SIZE]),
+   m_storedMsgBuffIndex(0)
 {
     ui->setupUi(this);
     this->setFixedSize(165, 95);
@@ -122,11 +124,14 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
     connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSlot()));
+    connect(&m_updateBinaryAction, SIGNAL(triggered(bool)), this, SLOT(updateBinarySlot()));
 
     m_trayMenu = new QMenu("Plot", this);
 
+    m_updateBinaryAction.setVisible(false);
     m_revDateStampAction.setEnabled(false);
     m_trayMenu->addAction(&m_revDateStampAction);
+    m_trayMenu->addAction(&m_updateBinaryAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
@@ -205,6 +210,13 @@ void plotGuiMain::restorePlotFilesInListSlot()
       iter = m_plotFilesToRestoreList.begin(); // Grab next iterator from begin()
    }
    m_plotFilesToRestoreMutex.unlock();
+}
+
+void plotGuiMain::updateBinarySlot()
+{
+   //QProcess process(this);
+   //QString file = "mspaint.exe";
+   //process.startDetached(file);
 }
 
 void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)

@@ -78,6 +78,7 @@ private:
     QAction m_propertiesWindowAction;
     QAction m_closeAllPlotsAction;
     QAction m_revDateStampAction;
+    QAction m_updateBinaryAction;
     QMenu* m_trayMenu;
 
     QSemaphore m_sem;
@@ -107,7 +108,7 @@ public slots:
     void closeAllPlotsFromLibSlot();
     void closeAllPlotsSlot();
     void restorePlotFilesInListSlot();
-
+    void updateBinarySlot();
 signals:
     void readPlotMsgSignal();
     void closeAllPlotsFromLibSignal();
