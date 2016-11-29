@@ -18,6 +18,8 @@
  */
 #include <string>
 #include <QProcess>
+#include <QMessageBox>
+#include "FileSystemOperations.h"
 #include "revDateStamp.h"
 #include "PlotHelperTypes.h"
 
@@ -128,7 +130,6 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     m_trayMenu = new QMenu("Plot", this);
 
-    m_updateBinaryAction.setVisible(false);
     m_revDateStampAction.setEnabled(false);
     m_trayMenu->addAction(&m_revDateStampAction);
     m_trayMenu->addAction(&m_updateBinaryAction);
@@ -214,9 +215,33 @@ void plotGuiMain::restorePlotFilesInListSlot()
 
 void plotGuiMain::updateBinarySlot()
 {
-   //QProcess process(this);
-   //QString file = "mspaint.exe";
-   //process.startDetached(file);
+   std::string pathToThisBinary = QCoreApplication::applicationFilePath().toStdString();
+
+   std::string updateBinaryFileName = "update";
+#ifdef Q_OS_WIN32
+   updateBinaryFileName = "update.exe";
+#endif
+
+   pathToThisBinary = fso::dirSepToOS(pathToThisBinary);
+   std::string pathToUpdateBinary = fso::GetDir(pathToThisBinary) + fso::dirSep() + updateBinaryFileName;
+
+   if(fso::FileExists(pathToUpdateBinary))
+   {
+      // Add quotes around pathToUpdateBinary and pathToThisBinary
+      std::string updateCmd = "\"" + pathToUpdateBinary + "\" -p \"" + pathToThisBinary + "\"";
+
+      QProcess process(this);
+      process.startDetached(updateCmd.c_str());
+      QApplication::quit();
+   }
+   else
+   {
+      QMessageBox Msgbox;
+      Msgbox.setWindowTitle("Update Failed");
+      Msgbox.setText("Failed to find update executable.");
+      Msgbox.exec();
+   }
+
 }
 
 void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
