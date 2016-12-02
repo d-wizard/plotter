@@ -1478,7 +1478,7 @@ void MainWindow::updateCursors()
     updatePointDisplay();
     if(m_qwtSelectedSample->isAttached || m_qwtSelectedSampleDelta->isAttached)
     {
-        replotMainPlot();
+        replotMainPlot(true, true);
     }
 }
 
