@@ -34,15 +34,39 @@ class curveProperties;
 class tCmbBoxAndValue
 {
 public:
+   typedef enum
+   {
+      E_PREFERRED_AXIS_X,
+      E_PREFERRED_AXIS_Y,
+      E_PREFERRED_AXIS_DONT_CARE
+   }ePreferredAxis;
+
    tCmbBoxAndValue(){}
-   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, eAxis defaultAxisIn):
-      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn), displayAxesSeparately(true){}
-   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, eAxis defaultAxisIn, bool displayAxesSeparate):
-      cmbBoxPtr(cmbBoxPtrIn), cmbBoxVal(""), defaultAxis(defaultAxisIn), displayAxesSeparately(displayAxesSeparate){}
-   QComboBox* cmbBoxPtr;
-   QString    cmbBoxVal;
-   eAxis      defaultAxis; // Used when determining whether to initialize to x or y axis of 2D plot
-   bool       displayAxesSeparately;
+   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn):
+      cmbBoxPtr(cmbBoxPtrIn),
+      cmbBoxVal(""),
+      displayAxesSeparately(true),
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+   {}
+
+   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, bool displayAxesSeparate):
+      cmbBoxPtr(cmbBoxPtrIn),
+      cmbBoxVal(""),
+      displayAxesSeparately(displayAxesSeparate),
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+   {}
+
+   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
+      cmbBoxPtr(cmbBoxPtrIn),
+      cmbBoxVal(""),
+      displayAxesSeparately(true),
+      preferredAxis(preferredAxisIn)
+   {}
+
+   QComboBox*     cmbBoxPtr;
+   QString        cmbBoxVal;
+   bool           displayAxesSeparately;
+   ePreferredAxis preferredAxis;
 };
 
 class CurveCommander;
@@ -112,7 +136,8 @@ private:
    void closeEvent(QCloseEvent* event);
 
    void setCombosToPrevValues();
-   void setCombosToPlotCurve(QString plotName, QString curveName);
+   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName);
+   void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
    int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
 
