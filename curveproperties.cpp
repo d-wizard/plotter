@@ -183,13 +183,14 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       tCurveDataInfo* curves = &(allCurves[curPlotName].curves);
       foreach( QString curveName, curves->keys() )
       {
-         if(curPlotName == plotName)
+         CurveData* curveData = (*curves)[curveName];
+         if(curPlotName == plotName && curveData->isDisplayed())
          {
             curveNames.push_back(curveName); // Fill in list of all curve names for the given plot.
          }
 
          QString plotCurveName = curPlotName + PLOT_CURVE_SEP + curveName;
-         if( (*curves)[curveName]->getPlotDim() == E_PLOT_DIM_1D)
+         if( curveData->getPlotDim() == E_PLOT_DIM_1D)
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
@@ -405,8 +406,8 @@ int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
-   bool xVis = plotTypeHas2DInput((ePlotType)index);
-   bool yVis = true;
+   bool xVis = true;
+   bool yVis = plotTypeHas2DInput((ePlotType)index);
    bool windowChkVis = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
 
@@ -419,7 +420,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_AVERAGE:
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
-         ui->lblYAxisSrc->setText("Y Axis Source");
+         ui->lblXAxisSrc->setText("Source");
       break;
       case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
@@ -427,7 +428,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       break;
       case E_PLOT_TYPE_REAL_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
-         ui->lblYAxisSrc->setText("Real Source");
+         ui->lblXAxisSrc->setText("Real Source");
          windowChkVis = true;
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
@@ -477,26 +478,26 @@ void curveProperties::on_cmdApply_clicked()
             ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
             if( plotTypeHas2DInput(plotType) == false )
             {
-               tParentCurveInfo yAxisParent;
-               yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+               tParentCurveInfo axisParent;
+               axisParent.dataSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
                if(ui->chkSrcSlice->checkState() == Qt::Checked)
                {
-                  yAxisParent.startIndex = ui->spnYSrcStart->value();
-                  yAxisParent.stopIndex = ui->spnYSrcStop->value();
+                  axisParent.startIndex = ui->spnXSrcStart->value();
+                  axisParent.stopIndex = ui->spnXSrcStop->value();
                }
                else
                {
-                  yAxisParent.startIndex = 0;
-                  yAxisParent.stopIndex = 0;
+                  axisParent.startIndex = 0;
+                  axisParent.stopIndex = 0;
                }
 
-               yAxisParent.windowFFT = ui->chkWindow->isChecked();
-               yAxisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
+               axisParent.windowFFT = ui->chkWindow->isChecked();
+               axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
 
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
-                                              yAxisParent);
+                                              axisParent);
             }
             else
             {
@@ -1355,7 +1356,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
       }
       else
       {
-         plotMid = ySrc.curveName;
+         plotMid = xSrc.curveName;
       }
 
       // Generate the plot name.
@@ -1377,10 +1378,10 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
    }
    else
    {
-      // This default to remain on the same plot as the parent.
-      plotName = ySrc.plotName;
+      // This defaults to remain on the same plot as the parent.
+      plotName = xSrc.plotName;
       plotNameMustBeUnique = false; // Plot Name should be the same.
-      curveName = plotTypeNames[plotType] + " of " + ySrc.curveName;
+      curveName = plotTypeNames[plotType] + " of " + xSrc.curveName;
    }
 
    if(plotNameMustBeUnique && m_curveCmdr->validPlot(plotName))
