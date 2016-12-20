@@ -738,7 +738,6 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
       case TAB_IP_BLOCK:
       {
-         showApplyButton = true;
          fillInIpBlockTab();
       }
       break;
