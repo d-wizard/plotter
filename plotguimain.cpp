@@ -249,6 +249,8 @@ void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
    const char* msg = inMsg->msgPtr;
    unsigned int size = inMsg->msgSize;
 
+   m_curveCommander.getIpBlocker()->addIpAddrToList(inMsg->ipAddr); // Store off the IP address
+
    if(m_allowNewCurves == true)// && size < STORED_MSG_SIZE)
    {
       m_storedMsgBuffMutex.lock(); // Make sure multiple threads cannot modify buffer at same time

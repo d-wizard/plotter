@@ -132,6 +132,14 @@ private slots:
 
    void on_cmdSavePlotToFile_clicked();
 
+   void on_cmdIpBlockAdd_clicked();
+
+   void on_cmdIpBlockRemove_clicked();
+
+   void on_chkBlockAll_clicked();
+
+   void on_cmdIpBlockRemoveAll_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -169,6 +177,9 @@ private:
    QVector<QString> m_restoreFilterPlotName;
    QVector<QString> m_restoreFilterCurveName;
 
+   // IP Block Functions / Parameters
+   ipBlocker* m_ipBlocker;
+   void fillInIpBlockTab();
 
 
    Ui::curveProperties *ui;

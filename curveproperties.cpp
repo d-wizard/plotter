@@ -39,7 +39,8 @@ const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
-const int TAB_PROPERTIES = 4;
+const int TAB_IP_BLOCK = 4;
+const int TAB_PROPERTIES = 5;
 
 const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751058;
 const double CURVE_PROP_2PI = 6.2831853071795864769252867665590057683943387987502116;
@@ -98,6 +99,7 @@ const QString plotTypeNames[] = {
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
+   m_ipBlocker(curveCmdr->getIpBlocker()),
    ui(new Ui::curveProperties),
    m_curveCmdr(curveCmdr),
    m_xAxisSrcCmbText(""),
@@ -134,6 +136,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbDestPlotName));
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbOpenCurvePlotName));
    m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbPlotToSave));
+   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbIpBlockPlotNames));
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -733,6 +736,13 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       }
       break;
 
+      case TAB_IP_BLOCK:
+      {
+         showApplyButton = true;
+         fillInIpBlockTab();
+      }
+      break;
+
       case TAB_PROPERTIES:
       {
          showApplyButton = true;
@@ -1226,20 +1236,8 @@ void curveProperties::fillInPropTab()
          ui->propParentCurves->addItem(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
       }
 
-	  // Fill in Last Msg Ip Addr field.
-      tPlotterIpAddr lastIpAddr = parentCurve->lastMsgIpAddr;
-      unsigned char* lastIpAddr_bytes = (unsigned char*)&lastIpAddr;
-      const int numBytesInIpAddr = 4;
-      QString lastIpAddrStr;
-      for(int i = 0; i < numBytesInIpAddr; ++i)
-      {
-         lastIpAddrStr.append(QString::number((unsigned int)lastIpAddr_bytes[i]));
-         if(i < (numBytesInIpAddr-1))
-         {
-            lastIpAddrStr.append(".");
-         }
-      }
-      ui->txtLastIp->setText(lastIpAddrStr);
+      // Fill in Last Msg Ip Addr field.
+      ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->lastMsgIpAddr.m_ipV4Addr));
    }
    else
    {
@@ -1502,4 +1500,83 @@ void curveProperties::setOpenSavePath(QString path)
       persistentParam_setParam_str( PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR,
                                     fso::GetDir(path.toStdString()) );
    }
+}
+
+void curveProperties::fillInIpBlockTab()
+{
+   ipBlocker::tIpAddrs ipAddrs = m_ipBlocker->getIpAddrList();
+   ui->cmbIpAddrs->clear();
+   for(ipBlocker::tIpAddrs::iterator ipAddrsIter = ipAddrs.begin(); ipAddrsIter != ipAddrs.end(); ++ipAddrsIter)
+   {
+      ui->cmbIpAddrs->addItem(tPlotterIpAddr::convert(ipAddrsIter->m_ipV4Addr));
+   }
+
+   ipBlocker::tMapOfBlockedIps blockIps = m_ipBlocker->getBlockList();
+   ui->ipBlockPlotNames->clear();
+   foreach(tPlotterIpAddr ipAddr, blockIps.keys())
+   {
+      QString ipAddrStr = tPlotterIpAddr::convert(ipAddr.m_ipV4Addr);
+
+      if(blockIps[ipAddr].size() > 0)
+      {
+         for(ipBlocker::tIpBlockListOfPlotNames::iterator iter = blockIps[ipAddr].begin(); iter != blockIps[ipAddr].end(); ++iter)
+         {
+            ui->ipBlockPlotNames->addItem(ipAddrStr + PLOT_CURVE_SEP + *iter);
+         }
+      }
+      else
+      {
+         ui->ipBlockPlotNames->addItem(ipAddrStr + PLOT_CURVE_SEP + "*");
+      }
+   }
+
+   ui->grpIpBlockPlotNames->setVisible(!ui->chkBlockAll->isChecked());
+
+}
+
+
+void curveProperties::on_cmdIpBlockAdd_clicked()
+{
+   if(ui->chkBlockAll->isChecked())
+   {
+      m_ipBlocker->addToBlockList(tPlotterIpAddr::convert(ui->cmbIpAddrs->currentText()));
+   }
+   else
+   {
+      m_ipBlocker->addToBlockList(tPlotterIpAddr::convert(ui->cmbIpAddrs->currentText()), ui->cmbIpBlockPlotNames->currentText());
+   }
+   fillInIpBlockTab();
+}
+
+void curveProperties::on_cmdIpBlockRemove_clicked()
+{
+   QList<QListWidgetItem*> selectedItems = ui->ipBlockPlotNames->selectedItems();
+   for(QList<QListWidgetItem*>::iterator iter = selectedItems.begin(); iter != selectedItems.end(); ++iter)
+   {
+      QListWidgetItem* item = *iter;
+      QString ipBlockPlotNameStr = item->text();
+      QString ipAddr = dString::SplitLeft(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
+      QString plotName = dString::SplitRight(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
+
+      if(plotName == "*")
+      {
+         m_ipBlocker->removeFromBlockList(tPlotterIpAddr::convert(ipAddr));
+      }
+      else
+      {
+         m_ipBlocker->removeFromBlockList(tPlotterIpAddr::convert(ipAddr), plotName);
+      }
+   }
+   fillInIpBlockTab();
+}
+
+void curveProperties::on_chkBlockAll_clicked()
+{
+   fillInIpBlockTab();
+}
+
+void curveProperties::on_cmdIpBlockRemoveAll_clicked()
+{
+    m_ipBlocker->clearBlockList();
+    fillInIpBlockTab();
 }

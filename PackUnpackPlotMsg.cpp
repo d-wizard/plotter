@@ -42,8 +42,11 @@ GetEntirePlotMsg::GetEntirePlotMsg(struct sockaddr_storage* client):
    if(client != NULL)
    {
       struct sockaddr_in* sin = (struct sockaddr_in*)client;
-      unsigned char* ipV4Addr = (unsigned char *)&sin->sin_addr.s_addr;
-      memcpy(&m_ipAddr, ipV4Addr, sizeof(m_ipAddr));
+      unsigned char* ipV4AddrCharArray = (unsigned char *)&sin->sin_addr.s_addr;
+
+      tPlotterIpAddr::tIpV4 ipV4Addr;
+      memcpy(&ipV4Addr, ipV4AddrCharArray, sizeof(ipV4Addr));
+      m_ipAddr.setIpV4Addr(ipV4Addr);
    }
    else
    {
@@ -496,6 +499,8 @@ void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg)
    UINT_32 msgReadIndex = 0;
    ePlotAction plotAction = E_INVALID_PLOT_ACTION;
    UINT_32 msgSize = 0;
+
+   m_msgSourceIpAddr = inMsg->ipAddr;
 
    if(inMsg->msgSize > (sizeof(plotAction) + sizeof(msgSize)))
    {

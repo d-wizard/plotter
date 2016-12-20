@@ -219,9 +219,20 @@ void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
    {
       plotMsgGroup* group = allMsgs->second;
       QString plotName = allMsgs->first.c_str();
-      createPlot(plotName);
-      m_allCurves[plotName].plotGui->readPlotMsg(group);
-      showHidePlotGui(plotName);
+
+      if(!m_ipBlocker.isInBlockList(plotMsg->m_msgSourceIpAddr, plotName))
+      {
+         // IP Address / Plot Name is not blocked. Create the plot.
+         createPlot(plotName);
+         m_allCurves[plotName].plotGui->readPlotMsg(group);
+         showHidePlotGui(plotName);
+      }
+      else
+      {
+         // IP Address / Plot Name are blocked. Delete the plot message group.
+         delete group;
+      }
+
    }
 }
 

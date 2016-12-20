@@ -23,6 +23,7 @@
 
 
 #include <QString>
+#include <QStringList>
 #include <QList>
 #include <QVector>
 #include <QString>
@@ -294,7 +295,77 @@ typedef struct
    QDateTime msgTime;
 }tStoredMsg;
 
-typedef unsigned long tPlotterIpAddr;
+class tPlotterIpAddr
+{
+public:
+   // Types
+   typedef unsigned long tIpV4;
+
+   static QString convert(tIpV4 ipV4Addr)
+   {
+      unsigned char* newIpV4Val_bytes = (unsigned char*)&ipV4Addr;
+      QString newIpV4Val = "";
+      for(size_t i = 0; i < sizeof(tIpV4); ++i)
+      {
+         newIpV4Val.append(QString::number((unsigned int)newIpV4Val_bytes[i]));
+         if(i < (sizeof(tIpV4)-1))
+         {
+            newIpV4Val.append(".");
+         }
+      }
+      return newIpV4Val;
+   }
+   static tIpV4 convert(QString ipV4Addr)
+   {
+      tIpV4 newIpV4Val = 0;
+      QStringList stringOctets = ipV4Addr.split(".");
+      if(stringOctets.size() == sizeof(tIpV4))
+      {
+         char* newIpV4Val_bytes = (char*)&newIpV4Val;
+         for(int i = 0; i < stringOctets.size(); ++i)
+         {
+            int octet = stringOctets[i].toInt();
+            char* bytes = (char*)&octet;
+            newIpV4Val_bytes[i] = bytes[0];
+         }
+      }
+      return newIpV4Val;
+   }
+
+   tPlotterIpAddr(){}
+   tPlotterIpAddr(tIpV4 ipV4Addr): m_ipV4Addr(ipV4Addr) {}
+   tPlotterIpAddr(QString ipV4Addr){m_ipV4Addr = convert(ipV4Addr);}
+
+   bool operator== (const tPlotterIpAddr &c1)
+   {
+       return c1.m_ipV4Addr == this->m_ipV4Addr;
+   }
+   bool operator!= (const tPlotterIpAddr &c1)
+   {
+       return c1.m_ipV4Addr != this->m_ipV4Addr;
+   }
+   bool operator> (const tPlotterIpAddr &c1) const
+   {
+       return c1.m_ipV4Addr > this->m_ipV4Addr;
+   }
+   bool operator>= (const tPlotterIpAddr &c1) const
+   {
+       return c1.m_ipV4Addr >= this->m_ipV4Addr;
+   }
+   bool operator< (const tPlotterIpAddr &c1) const
+   {
+       return c1.m_ipV4Addr < this->m_ipV4Addr;
+   }
+   bool operator<= (const tPlotterIpAddr &c1) const
+   {
+       return c1.m_ipV4Addr <= this->m_ipV4Addr;
+   }
+
+   void setIpV4Addr(tIpV4& ipV4Addr){m_ipV4Addr = ipV4Addr;}
+   void setIpV4Addr(QString& ipV4Addr){m_ipV4Addr = convert(ipV4Addr);}
+
+   unsigned long m_ipV4Addr;
+};
 
 typedef struct
 {

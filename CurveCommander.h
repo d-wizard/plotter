@@ -27,6 +27,7 @@
 #include <QSharedPointer>
 #include "CurveData.h"
 #include "mainwindow.h"
+#include "ipBlocker.h"
 
 // Debug Defines
 //#define CHILD_MSG_GROUPING_DEBUG
@@ -99,6 +100,7 @@ public:
     // This function should be called after the child curve has been created in MainWindow.
     void doFinalChildCurveInit(const QString& plotName, const QString& curveName);
 
+    ipBlocker* getIpBlocker(){return &m_ipBlocker;}
 private:
     CurveCommander();
 
@@ -136,6 +138,8 @@ private:
     std::list<tParentMsgIdGroup> m_parentMsgIdGroups;
     tParentMsgIdGroup m_processedParentMsgIDs;
     std::list<tChildAndParentID> m_queuedChildCurveMsgs;
+
+    ipBlocker m_ipBlocker;
 
 public slots:
     void plotWindowCloseSlot(QString plotName);

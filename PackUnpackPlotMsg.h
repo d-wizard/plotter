@@ -271,6 +271,9 @@ public:
    plotMsgGroup* getPlotMsgGroup(std::string plotName);
 
    std::map<std::string, plotMsgGroup*> m_plotMsgs;
+
+   tPlotterIpAddr m_msgSourceIpAddr;
+
 private:
    void init(tIncomingMsg* inMsg);
 };

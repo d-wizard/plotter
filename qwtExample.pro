@@ -41,7 +41,8 @@ SOURCES += main.cpp\
     persistentParameters.cpp \
     localPlotCreate.cpp \
     plotBar.cpp \
-    plotSnrCalc.cpp
+    plotSnrCalc.cpp \
+    ipBlocker.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -71,7 +72,8 @@ HEADERS  += mainwindow.h \
     sendTCPPacket.h \
     localPlotCreate.h \
     plotBar.h \
-    plotSnrCalc.h
+    plotSnrCalc.h \
+    ipBlocker.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
