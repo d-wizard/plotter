@@ -92,7 +92,8 @@ const QString plotTypeNames[] = {
    "FFT",
    "FFT",
    "Delta",
-   "Sum"
+   "Sum",
+   "Math"
 };
 
 
@@ -413,6 +414,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    bool yVis = plotTypeHas2DInput((ePlotType)index);
    bool windowChkVis = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
+   bool mathCmbVis = false;
 
    storeUserChildPlotNames((ePlotType)m_prevChildCurvePlotTypeIndex);
    m_prevChildCurvePlotTypeIndex = index;
@@ -443,6 +445,11 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          ui->lblXAxisSrc->setText("Real Source");
          ui->lblYAxisSrc->setText("Imag Source");
       break;
+      case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+         ui->lblXAxisSrc->setText("Math LHS");
+         ui->lblYAxisSrc->setText("Math RHS");
+         mathCmbVis = true;
+      break;
 
    }
    ui->lblXAxisSrc->setVisible(xVis);
@@ -461,6 +468,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 
    ui->chkWindow->setVisible(windowChkVis);
+   ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
    setUserChildPlotNames();
 }
@@ -526,8 +534,14 @@ void curveProperties::on_cmdApply_clicked()
                   yAxisParent.stopIndex = 0;
                }
 
+               // Read values from GUI.
                xAxisParent.windowFFT = ui->chkWindow->isChecked();
-               yAxisParent.windowFFT = ui->chkWindow->isChecked();
+               xAxisParent.mathBetweenCurvesOperator =
+                  (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
+
+               // Y Axis values need to match X Axis value.
+               yAxisParent.windowFFT = xAxisParent.windowFFT;
+               yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
 
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,

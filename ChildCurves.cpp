@@ -567,6 +567,40 @@ void ChildCurve::updateCurve( bool xParentChanged,
          }
       }
       break;
+      case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+      {
+         dubVect mathOut;
+         unsigned int offset = getDataFromParent2D( xParentChanged,
+                                                    yParentChanged,
+                                                    parentStartIndex,
+                                                    parentStopIndex );
+
+         unsigned int outSize = std::min(m_xSrcData.size(), m_ySrcData.size());
+         mathOut.resize(outSize);
+         switch(m_yAxis.mathBetweenCurvesOperator)
+         {
+            default:
+            case E_MATH_BETWEEN_CURVES_ADD:
+               for(unsigned int i = 0; i < outSize; ++i)
+                  mathOut[i] = m_xSrcData[i] + m_ySrcData[i];
+            break;
+            case E_MATH_BETWEEN_CURVES_SUBTRACT:
+               for(unsigned int i = 0; i < outSize; ++i)
+                  mathOut[i] = m_xSrcData[i] - m_ySrcData[i];
+            break;
+            case E_MATH_BETWEEN_CURVES_MULTILPY:
+               for(unsigned int i = 0; i < outSize; ++i)
+                  mathOut[i] = m_xSrcData[i] * m_ySrcData[i];
+            break;
+            case E_MATH_BETWEEN_CURVES_DIVIDE:
+               for(unsigned int i = 0; i < outSize; ++i)
+                  mathOut[i] = m_xSrcData[i] / m_ySrcData[i];
+            break;
+         }
+
+         m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, mathOut, parentMsgId);
+      }
+      break;
       default:
          // TODO should I do something here???
       break;

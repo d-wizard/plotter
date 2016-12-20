@@ -107,8 +107,21 @@ typedef enum
    E_PLOT_TYPE_DB_POWER_FFT_COMPLEX,
    E_PLOT_TYPE_DELTA,
    E_PLOT_TYPE_SUM,
-   E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE
+   E_PLOT_TYPE_MATH_BETWEEN_CURVES,
+
+   // The following values are not represented in the GUI. Since these value
+   // don't need to match a GUI value, enumerate from the end.
+   E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE = -1
 }ePlotType;
+
+
+typedef enum // Must match cmbChildMathOperators
+{
+   E_MATH_BETWEEN_CURVES_ADD,
+   E_MATH_BETWEEN_CURVES_SUBTRACT,
+   E_MATH_BETWEEN_CURVES_MULTILPY,
+   E_MATH_BETWEEN_CURVES_DIVIDE
+}eMathBetweenCurves_operators;
 
 inline bool valid_ePlotType(ePlotType in)
 {
@@ -126,6 +139,7 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
+   case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
    case E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE:
       return true;
       break;
@@ -144,6 +158,7 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_FM_DEMOD:
    case E_PLOT_TYPE_PM_DEMOD:
    case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+   case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
       twoDInput = true;
       break;
 
@@ -215,6 +230,7 @@ typedef struct
    int stopIndex;
    double avgAmount;
    bool windowFFT;
+   eMathBetweenCurves_operators mathBetweenCurvesOperator;
 }tParentCurveInfo;
 
 typedef enum
