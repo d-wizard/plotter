@@ -1513,13 +1513,21 @@ void curveProperties::setOpenSavePath(QString path)
 
 void curveProperties::fillInIpBlockTab()
 {
+   // Fill In IP Address Combo Box
+   QString origIpAddrText = ui->cmbIpAddrs->currentText();
    ipBlocker::tIpAddrs ipAddrs = m_ipBlocker->getIpAddrList();
    ui->cmbIpAddrs->clear();
    for(ipBlocker::tIpAddrs::iterator ipAddrsIter = ipAddrs.begin(); ipAddrsIter != ipAddrs.end(); ++ipAddrsIter)
    {
       ui->cmbIpAddrs->addItem(tPlotterIpAddr::convert(ipAddrsIter->m_ipV4Addr));
    }
+   if(origIpAddrText != "")
+   {
+      // Restore combo box text.
+      ui->cmbIpAddrs->lineEdit()->setText(origIpAddrText);
+   }
 
+   // Fill In IP Address Combo Box
    ipBlocker::tMapOfBlockedIps blockIps = m_ipBlocker->getBlockList();
    ui->ipBlockPlotNames->clear();
    foreach(tPlotterIpAddr ipAddr, blockIps.keys())
@@ -1535,6 +1543,7 @@ void curveProperties::fillInIpBlockTab()
       }
       else
       {
+         // Empty list means block all. Use * to indicate that all plots are blocked.
          ui->ipBlockPlotNames->addItem(ipAddrStr + PLOT_CURVE_SEP + "*");
       }
    }
