@@ -186,11 +186,6 @@ private:
 
    CurveCommander* m_curveCmdr;
 
-   QString m_xAxisSrcCmbText;
-   QString m_yAxisSrcCmbText;
-   QString m_plotNameDestCmbText;
-   QString m_mathSrcCmbText;
-
    int m_selectedMathOpLeft;
    int m_selectedMathOpRight;
 
