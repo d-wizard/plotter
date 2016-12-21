@@ -21,18 +21,22 @@
 #include <stdio.h>
 #include <QSignalMapper>
 #include <QKeyEvent>
+#include <QClipboard>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <QBitmap>
 #include <qwt_plot_canvas.h>
-
 #include "CurveCommander.h"
 #include "plotguimain.h"
+#include "dString.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
 
+#define DISPLAY_POINT_START "("
+#define DISPLAY_POINT_MID   ","
+#define DISPLAY_POINT_STOP  ")"
 
 #define MAPPER_ACTION_TO_SLOT(menu, mapperAction, intVal, callback) \
 menu.addAction(&mapperAction.m_action); \
@@ -98,6 +102,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
    m_displayPointsPrecisionDownAction("Precision -1", this),
    m_displayPointsPrecisionUpBigAction("Precision +3", this),
    m_displayPointsPrecisionDownBigAction("Precision -3", this),
+   m_displayPointsCopyToClipboard("Copy to Clipboard", this),
    m_activityIndicator_plotIsActive(true),
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
@@ -201,6 +206,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownAction,    -1, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownBigAction, -3, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
+
+    m_displayPointsMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsCopyToClipboard,     0, displayPointsCopyToClipboard);
+
 
     // Initialize Activity Indicator.
     m_activityIndicator_onEnabledPallet = palette;
@@ -1228,14 +1237,14 @@ void MainWindow::clearPointLabels()
 void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex)
 {
    bool displayFormatSet = setDisplayIoMapipXAxis(lblText, curve);
-   lblText << "(" << curve->getXPoints()[cursorIndex] << ",";
+   lblText << DISPLAY_POINT_START << curve->getXPoints()[cursorIndex] << DISPLAY_POINT_MID;
 
    if(displayFormatSet == false)
    {
        setDisplayIoMapipYAxis(lblText);
        displayFormatSet = true;
    }
-   lblText << curve->getYPoints()[cursorIndex] << ")";
+   lblText << curve->getYPoints()[cursorIndex] << DISPLAY_POINT_STOP;
 
 }
 
@@ -1305,15 +1314,15 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& lblTextResult)
    CurveData* curve = m_qwtSelectedSample->m_parentCurve;
 
    std::stringstream lblText;
-   lblText << "(";
+   lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << m_qwtSelectedSampleDelta->m_xPoint << ",";
+   lblText << m_qwtSelectedSampleDelta->m_xPoint << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSampleDelta->m_yPoint << ") : (";
+   lblText << m_qwtSelectedSampleDelta->m_yPoint << DISPLAY_POINT_STOP << " : " << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << m_qwtSelectedSample->m_xPoint << ",";
+   lblText << m_qwtSelectedSample->m_xPoint << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSample->m_yPoint << ") ";
+   lblText << m_qwtSelectedSample->m_yPoint << DISPLAY_POINT_STOP << " ";
 
    // Using the Delta character in QT is tricky. Write what we have thus far to the result,
    // add the Delta character, then clear the stringstream that we have been using.
@@ -1323,9 +1332,9 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& lblTextResult)
 
    lblText << " (";
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << ",";
+   lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << ")";
+   lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << DISPLAY_POINT_STOP;
 
    // Write the rest of the label
    lblTextResult += QString(lblText.str().c_str());
@@ -1462,6 +1471,50 @@ void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
     updatePointDisplay();
 }
 
+void MainWindow::displayPointsCopyToClipboard(int dummy)
+{
+   std::string clipboardStr = "";
+   std::string delim = "\t"; // Use tab as the delimiter to work best with Excel.
+
+   { // Mutex lock scope.
+      QMutexLocker lock(&m_qwtCurvesMutex);
+
+      if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         // Delta
+         std::string label(m_qwtCurves[m_selectedCurveIndex]->pointLabel->text().toStdString());
+         while(dString::InStr(label, DISPLAY_POINT_START) >= 0)
+         {
+            // Get text between "(" and ")"
+            std::string clipboardTemp = dString::GetMiddle(&label, DISPLAY_POINT_START, DISPLAY_POINT_STOP);
+            clipboardTemp = dString::Replace(clipboardTemp, DISPLAY_POINT_MID, delim);
+            clipboardStr.append(clipboardTemp + delim);
+         }
+
+      }
+      else if(!m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         // Non-Delta
+         for(int i = 0; i < m_qwtCurves.size(); ++i)
+         {
+            if(m_qwtCurves[i]->pointLabel != NULL)
+            {
+               std::string label(m_qwtCurves[i]->pointLabel->text().toStdString());
+
+               // Get text between "(" and ")"
+               std::string clipboardTemp = dString::GetMiddle(&label, DISPLAY_POINT_START, DISPLAY_POINT_STOP);
+               clipboardTemp = dString::Replace(clipboardTemp, DISPLAY_POINT_MID, delim);
+               clipboardStr.append(clipboardTemp + delim);
+            }
+         }
+      }
+   } // End Mutex lock scope.
+
+   clipboardStr = dString::DontEndWithThis(clipboardStr, delim);
+   QClipboard* pClipboard = QApplication::clipboard();
+   pClipboard->setText(clipboardStr.c_str());
+
+}
 
 void MainWindow::updateCursors()
 {

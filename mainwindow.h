@@ -254,6 +254,7 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionDownAction;
     tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
+    tQMenuActionMapper m_displayPointsCopyToClipboard;
 
     QTimer m_activityIndicator_timer;
     bool m_activityIndicator_plotIsActive;
@@ -354,6 +355,7 @@ private slots:
 
     void displayPointsChangeType(int type);
     void displayPointsChangePrecision(int precision);
+    void displayPointsCopyToClipboard(int dummy);
 
     void updateCurveOrder();
 
