@@ -31,8 +31,9 @@ typedef std::vector<char> PackedCurveData;
 
 typedef enum
 {
-    E_SAVE_RESTORE_RAW,
-    E_SAVE_RESTORE_CSV
+   E_SAVE_RESTORE_RAW,
+   E_SAVE_RESTORE_CSV,
+   E_SAVE_RESTORE_TAB_DELIM
 }eSaveRestorePlotCurveType;
 
 typedef struct
@@ -67,7 +68,7 @@ private:
    void operator=(SaveCurve const&);
 
    void SaveRaw(CurveData* curve);
-   void SaveCsv(MainWindow* plotGui, CurveData* curve);
+   void SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim);
 };
 
 class RestoreCurve
@@ -105,7 +106,7 @@ private:
    void operator=(SavePlot const&);
 
    void SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo);
-   void SaveCsv(MainWindow* plotGui, QVector<CurveData*>& plotInfo);
+   void SaveExcel(MainWindow* plotGui, QVector<CurveData*>& plotInfo, std::string delim);
 };
 
 class RestorePlot
