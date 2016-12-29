@@ -30,6 +30,7 @@
 #include "CurveCommander.h"
 #include "plotguimain.h"
 #include "dString.h"
+#include "saveRestoreCurve.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -1553,6 +1554,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_Y && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                 m_plotZoom->changeZoomFromSavedZooms(1);
+            }
+            else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               QMutexLocker lock(&m_qwtCurvesMutex);
+               QVector<CurveData*> curveVect = m_qwtCurves.toVector();
+               SavePlot savePlot(this, windowTitle(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
+
+               // Null Terminate.
+               size_t origSize = savePlot.packedCurveData.size();
+               savePlot.packedCurveData.resize(origSize + 1);
+               savePlot.packedCurveData[origSize] = '\0';
+
+               QClipboard* pClipboard = QApplication::clipboard();
+               pClipboard->setText(&savePlot.packedCurveData[0]);
+
             }
             else
             {
