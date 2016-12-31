@@ -1129,9 +1129,11 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(toSave.curveName);
 
       // Open the save file dialog.
+      QString selectedFilter;
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
-                                                       tr("Curves (*.curve);;Comma Separted Values (*.csv)"));
+                                                       tr("Curves (*.curve);;Comma Separted Values (*.csv);;C Header - Integer (*.h);;C Header - Float (*.h)"),
+                                                       &selectedFilter);
 
       setOpenSavePath(fileName);
 
@@ -1145,6 +1147,19 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       {
          SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+      }
+      else if(ext == "h")
+      {
+         if(dString::InStr(selectedFilter.toStdString(), "Integer") >= 0) // There is probably a better way to determine if the user selected integer vs float.
+         {
+            SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_C_HEADER_INT);
+            fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+         }
+         else
+         {
+            SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_C_HEADER_FLOAT);
+            fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+         }
       }
 
    }
@@ -1164,9 +1179,11 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(plotName);
 
       // Open the save file dialog.
+      QString selectedFilter;
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
-                                                       tr("Plots (*.plot);;Comma Separted Values (*.csv)"));
+                                                       tr("Plots (*.plot);;Comma Separted Values (*.csv);;C Header - Integer (*.h);;C Header - Float (*.h)"),
+                                                       &selectedFilter);
 
       setOpenSavePath(fileName);
 
@@ -1189,6 +1206,19 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       {
          SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_CSV);
          fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+      }
+      else if(ext == "h")
+      {
+         if(dString::InStr(selectedFilter.toStdString(), "Integer") >= 0) // There is probably a better way to determine if the user selected integer vs float.
+         {
+            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_C_HEADER_INT);
+            fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+         }
+         else
+         {
+            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_C_HEADER_FLOAT);
+            fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+         }
       }
 
    }

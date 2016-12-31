@@ -27,7 +27,9 @@
 
 static const std::string EXCEL_LINE_DELIM = "\r\n";
 static const std::string CSV_CELL_DELIM = ",";
-static const std::string TAB_CELL_DELIM = "\t";
+static const std::string CLIPBOARD_EXCEL_CELL_DELIM = "\t";
+
+static const std::string C_HEADER_LINE_DELIM = "\r\n";
 
 static void pack(char** packArray, const void* toPack, size_t packSize)
 {
@@ -35,6 +37,61 @@ static void pack(char** packArray, const void* toPack, size_t packSize)
    (*packArray) += packSize;
 }
 
+static std::string convertToValidCName(std::string inStr)
+{
+   const char* in_cstr = inStr.c_str();
+   int in_size = inStr.size();
+
+   std::string retVal;
+   for(int i = 0; i < in_size; ++i)
+   {
+      if(in_cstr[i] >= 'A' && in_cstr[i] <= 'Z')
+         retVal += in_cstr[i];
+      else if(in_cstr[i] >= 'a' && in_cstr[i] <= 'z')
+         retVal += (in_cstr[i] - 'a' + 'A'); // To Upper.
+      else if(in_cstr[i] >= '0' && in_cstr[i] <= '9')
+      {
+         if(retVal == "") // Can't start with number.
+            retVal = "_"; // Prepend number with underscore.
+         retVal += in_cstr[i];
+      }
+      else
+         retVal += '_';
+   }
+   return retVal;
+}
+
+static std::string getPlotNameCHeaderTypeName(QString plotName)
+{
+   std::string retVal = convertToValidCName(plotName.toStdString());
+   if(retVal == "")
+      retVal = "PLOT_NAME";
+   retVal += "_T";
+   return retVal;
+}
+
+static std::string getPlotNameCHeaderVariableName(QString curveName)
+{
+   std::string retVal = convertToValidCName(curveName.toStdString());
+   if(retVal == "")
+      retVal = "CURVE_NAME";
+   return retVal;
+}
+
+static std::string getCHeaderTypedefStr(QString plotName, CurveData* curve, eSaveRestorePlotCurveType type)
+{
+   std::string typeStr = "double";
+   if(type == E_SAVE_RESTORE_C_HEADER_INT)
+   {
+      typeStr = "long long";
+   }
+
+   std::string typeNameStr = getPlotNameCHeaderTypeName(plotName);
+   return "#ifndef " + typeNameStr + C_HEADER_LINE_DELIM +
+          "#define " + typeNameStr + " " + typeStr + C_HEADER_LINE_DELIM +
+          "#endif" + C_HEADER_LINE_DELIM;
+   //return "typedef " + typeStr + " " +  + ";" + C_HEADER_LINE_DELIM;
+}
 
 SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type)
 {
@@ -47,8 +104,12 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
       case E_SAVE_RESTORE_CSV:
          SaveExcel(plotGui, curve, CSV_CELL_DELIM);
       break;
-      case E_SAVE_RESTORE_TAB_DELIM:
-         SaveExcel(plotGui, curve, TAB_CELL_DELIM);
+      case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
+         SaveExcel(plotGui, curve, CLIPBOARD_EXCEL_CELL_DELIM);
+      break;
+      case E_SAVE_RESTORE_C_HEADER_INT:
+      case E_SAVE_RESTORE_C_HEADER_FLOAT:
+         SaveCHeader(plotGui, curve, type);
       break;
    }
 }
@@ -56,6 +117,7 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
 
 void SaveCurve::SaveRaw(CurveData* curve)
 {
+    tSaveRestoreCurveParams params;
     params.curveName = curve->getCurveTitle();
     params.plotDim = curve->getPlotDim();
     params.plotType = curve->getPlotType();
@@ -119,17 +181,6 @@ void SaveCurve::SaveRaw(CurveData* curve)
 
 void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim)
 {
-    params.curveName = curve->getCurveTitle();
-    params.plotDim = curve->getPlotDim();
-    params.plotType = curve->getPlotType();
-    params.numPoints = curve->getNumPoints();
-    params.mathProps.sampleRate = curve->getSampleRate();
-    params.mathProps.mathOpsXAxis = curve->getMathOps(E_X_AXIS);
-    params.numXMapOps = params.mathProps.mathOpsXAxis.size();
-    params.mathProps.mathOpsYAxis = curve->getMathOps(E_Y_AXIS);
-    params.numYMapOps = params.mathProps.mathOpsYAxis.size();
-
-
     std::stringstream csvFile;
     if(curve->getPlotDim() == E_PLOT_DIM_2D)
     {
@@ -160,6 +211,103 @@ void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string del
 
     packedCurveData.resize(csvFile.str().size());
     memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
+}
+
+void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type)
+{
+   std::stringstream outFile;
+   static const int MAX_SAMP_PER_LINE = 10;
+   int sampPerLineCount = 0;
+
+   unsigned int numSamplesToWrite = curve->getNumPoints();
+
+   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve , type) << C_HEADER_LINE_DELIM;
+
+   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   {
+      const double* xPoints = curve->getXPoints();
+      const double* yPoints = curve->getYPoints();
+      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName()) << " " <<
+                 getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
+                 "[" << curve->getNumPoints() << "][2] = {" << C_HEADER_LINE_DELIM;
+
+      if(type == E_SAVE_RESTORE_C_HEADER_INT)
+      {
+         for(unsigned int i = 0; i < numSamplesToWrite; ++i)
+         {
+            outFile << "{" << (INT_64)xPoints[i] << "," << (INT_64)yPoints[i] << "}";
+            if(i < (numSamplesToWrite-1))
+               outFile << ", ";
+            if(++sampPerLineCount >= MAX_SAMP_PER_LINE)
+            {
+               outFile << C_HEADER_LINE_DELIM;
+               sampPerLineCount = 0;
+            }
+         }
+      }
+      else
+      {
+         for(unsigned int i = 0; i < numSamplesToWrite; ++i)
+         {
+            plotGui->setDisplayIoMapipXAxis(outFile, curve);
+            outFile << "{" << xPoints[i] << ",";
+            plotGui->setDisplayIoMapipYAxis(outFile);
+            outFile << yPoints[i] << "}";
+            if(i < (numSamplesToWrite-1))
+               outFile << ", ";
+            if(++sampPerLineCount >= MAX_SAMP_PER_LINE)
+            {
+               outFile << C_HEADER_LINE_DELIM;
+               sampPerLineCount = 0;
+            }
+         }
+         plotGui->clearDisplayIoMapIp(outFile);
+      }
+      outFile << "};" << C_HEADER_LINE_DELIM << C_HEADER_LINE_DELIM;
+   }
+   else
+   {
+      const double* yPoints = curve->getYPoints();
+      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName()) << " " <<
+                 getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
+                 "[" << curve->getNumPoints() << "] = {" << C_HEADER_LINE_DELIM;
+
+      if(type == E_SAVE_RESTORE_C_HEADER_INT)
+      {
+         for(unsigned int i = 0; i < numSamplesToWrite; ++i)
+         {
+            outFile << (INT_64)yPoints[i];
+            if(i < (numSamplesToWrite-1))
+               outFile << ", ";
+            if(++sampPerLineCount >= MAX_SAMP_PER_LINE)
+            {
+               outFile << C_HEADER_LINE_DELIM;
+               sampPerLineCount = 0;
+            }
+         }
+      }
+      else
+      {
+         plotGui->setDisplayIoMapipYAxis(outFile);
+         for(unsigned int i = 0; i < numSamplesToWrite; ++i)
+         {
+            outFile << yPoints[i];
+            if(i < (numSamplesToWrite-1))
+               outFile << ", ";
+            if(++sampPerLineCount >= MAX_SAMP_PER_LINE)
+            {
+               outFile << C_HEADER_LINE_DELIM;
+               sampPerLineCount = 0;
+            }
+         }
+         plotGui->clearDisplayIoMapIp(outFile);
+      }
+      outFile << "};" << C_HEADER_LINE_DELIM << C_HEADER_LINE_DELIM;
+   }
+
+
+   packedCurveData.resize(outFile.str().size());
+   memcpy(&packedCurveData[0], outFile.str().c_str(), outFile.str().size());
 }
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
@@ -287,8 +435,12 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
       case E_SAVE_RESTORE_CSV:
          SaveExcel(plotGui, plotInfo, CSV_CELL_DELIM);
       break;
-      case E_SAVE_RESTORE_TAB_DELIM:
-         SaveExcel(plotGui, plotInfo, TAB_CELL_DELIM);
+      case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
+         SaveExcel(plotGui, plotInfo, CLIPBOARD_EXCEL_CELL_DELIM);
+      break;
+      case E_SAVE_RESTORE_C_HEADER_INT:
+      case E_SAVE_RESTORE_C_HEADER_FLOAT:
+         SaveCHeader(plotGui, plotInfo, type);
       break;
    }
 }
@@ -343,15 +495,8 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, std
    for(int i = 0; i < plotInfo.size(); ++i)
    {
       SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_CSV);
-
-      int rawCurveFileSize = curveFile.packedCurveData.size();
-      char* rawCurveFile = new char[rawCurveFileSize+1];
-      memcpy(rawCurveFile, &curveFile.packedCurveData[0], rawCurveFileSize);
-      rawCurveFile[rawCurveFileSize] = '\0';
-
-      curveCsvFiles.push_back(QString(rawCurveFile).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
-
-      delete [] rawCurveFile;
+      curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
+      curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
    }
 
    int maxNumLines = 0;
@@ -388,6 +533,14 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, std
    memcpy(&packedCurveData[0], packed.toStdString().c_str(), packed.size());
 }
 
+void SavePlot::SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type)
+{
+   for(int i = 0; i < plotInfo.size(); ++i)
+   {
+      SaveCurve curveFile(plotGui, plotInfo[i], type);
+      packedCurveData.insert(packedCurveData.end(), curveFile.packedCurveData.begin(), curveFile.packedCurveData.end());
+   }
+}
 
 RestorePlot::RestorePlot(PackedCurveData &packedPlot)
 {

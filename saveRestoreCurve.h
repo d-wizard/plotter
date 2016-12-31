@@ -33,7 +33,9 @@ typedef enum
 {
    E_SAVE_RESTORE_RAW,
    E_SAVE_RESTORE_CSV,
-   E_SAVE_RESTORE_TAB_DELIM
+   E_SAVE_RESTORE_CLIPBOARD_EXCEL,
+   E_SAVE_RESTORE_C_HEADER_INT,
+   E_SAVE_RESTORE_C_HEADER_FLOAT
 }eSaveRestorePlotCurveType;
 
 typedef struct
@@ -61,14 +63,13 @@ public:
    PackedCurveData packedCurveData;
 private:
 
-   tSaveRestoreCurveParams params;
-
    SaveCurve();
    SaveCurve(SaveCurve const&);
    void operator=(SaveCurve const&);
 
    void SaveRaw(CurveData* curve);
    void SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim);
+   void SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
 };
 
 class RestoreCurve
@@ -107,6 +108,7 @@ private:
 
    void SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo);
    void SaveExcel(MainWindow* plotGui, QVector<CurveData*>& plotInfo, std::string delim);
+   void SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
 };
 
 class RestorePlot
