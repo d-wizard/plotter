@@ -751,7 +751,7 @@ void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
       }
 
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
-      m_curveCommander->doFinalChildCurveInit(windowTitle(), name);
+      m_curveCommander->doFinalChildCurveInit(getPlotName(), name);
    }
 
    if(unpackPlotMsg != NULL && curveIndex >= 0)
@@ -777,7 +777,7 @@ void MainWindow::handleCurveDataChange(int curveIndex)
    updatePlotWithNewCurveData(false);
 
    // inform parent that a curve has been added / changed
-   m_curveCommander->curveUpdated( this->windowTitle(),
+   m_curveCommander->curveUpdated( this->getPlotName(),
                                    m_qwtCurves[curveIndex]->getCurveTitle(),
                                    m_qwtCurves[curveIndex],
                                    0,
@@ -1020,7 +1020,7 @@ void MainWindow::selectedCursorMenuSelect(int index)
 void MainWindow::showCurveProperties()
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
-   m_curveCommander->showCurvePropertiesGui(windowTitle(), m_qwtCurves[m_selectedCurveIndex]->getCurveTitle());
+   m_curveCommander->showCurvePropertiesGui(getPlotName(), m_qwtCurves[m_selectedCurveIndex]->getCurveTitle());
 }
 
 void MainWindow::togglePlotUpdateAbility()
@@ -1566,7 +1566,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                      curveVect.push_back(m_qwtCurves[i]);
                   }
                }
-               SavePlot savePlot(this, windowTitle(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
+               SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
 
                // Null Terminate.
                size_t origSize = savePlot.packedCurveData.size();
@@ -1980,7 +1980,7 @@ void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
 
 void MainWindow::closeEvent(QCloseEvent* /*event*/)
 {
-    m_curveCommander->plotWindowClose(this->windowTitle());
+    m_curveCommander->plotWindowClose(this->getPlotName());
 }
 
 void MainWindow::resizeEvent(QResizeEvent* /*event*/)

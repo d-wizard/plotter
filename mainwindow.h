@@ -173,6 +173,8 @@ public:
     void setLegendState(bool showLegend);
 
     void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions);
+
+    QString getPlotName(){return windowTitle();}
 private:
     Ui::MainWindow *ui;
 
