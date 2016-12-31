@@ -1558,7 +1558,14 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
-               QVector<CurveData*> curveVect = m_qwtCurves.toVector();
+               QVector<CurveData*> curveVect;
+               for(int i = 0; i < m_qwtCurves.size(); ++i)
+               {
+                  if(m_qwtCurves[i]->isDisplayed())
+                  {
+                     curveVect.push_back(m_qwtCurves[i]);
+                  }
+               }
                SavePlot savePlot(this, windowTitle(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
 
                // Null Terminate.
