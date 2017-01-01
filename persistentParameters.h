@@ -32,6 +32,9 @@
 
 static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR = "curveSavePrevDir";
 
+static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION = "plotSavePrevSaveSelection";
+static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION = "curveSavePrevSaveSelection";
+
 void persistentParam_setPath(std::string path);
 
 bool persistentParam_setParam_str(const std::string& paramName, std::string writeVal);

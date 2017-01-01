@@ -46,6 +46,15 @@ const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751
 const double CURVE_PROP_2PI = 6.2831853071795864769252867665590057683943387987502116;
 const double CURVE_PROP_E = 2.7182818284590452353602874713526624977572470936999595;
 
+const QString OPEN_SAVE_FILTER_PLOT_STR = "Plots (*.plot)";
+const QString OPEN_SAVE_FILTER_CURVE_STR = "Curves (*.curve)";
+const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separted Values (*.csv)";
+const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
+const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
+
+const QString OPEN_SAVE_FILTER_DELIM = ";;";
+
+
 const QString mathOpsStr[] = {
 "ADD",
 "MUTIPLY",
@@ -1128,40 +1137,48 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       // Use the last saved location to determine the folder to save the curve to.
       QString suggestedSavePath = getOpenSavePath(toSave.curveName);
 
-      // Open the save file dialog.
+      // Read the last used filter from persistent memory.
+      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentReadValue;
+      persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
+
+      // Generate Filter List string (i.e. the File Save types)
+      QStringList filterList;
+      filterList.append(OPEN_SAVE_FILTER_CURVE_STR);
+      filterList.append(OPEN_SAVE_FILTER_CSV_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
+
+      // Initialize selection with stored value (if there was one).
       QString selectedFilter;
+      if(filterList.contains(persistentReadValue.c_str()))
+         selectedFilter = persistentReadValue.c_str();
+
+      // Open the save file dialog.
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
-                                                       tr("Curves (*.curve);;Comma Separted Values (*.csv);;C Header - Integer (*.h);;C Header - Float (*.h)"),
+                                                       filterString,
                                                        &selectedFilter);
-
+      // Write user selections to persisent memory.
       setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
-      QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
-      if(ext == "curve")
+      eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
+      if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
+         saveType = E_SAVE_RESTORE_RAW;
+      else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
+         saveType = E_SAVE_RESTORE_CSV;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_INT;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+
+      if(saveType != E_SAVE_RESTORE_INVALID)
       {
-         SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_RAW);
+         SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
          fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
       }
-      else if(ext == "csv")
-      {
-         SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_CSV);
-         fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
-      }
-      else if(ext == "h")
-      {
-         if(dString::InStr(selectedFilter.toStdString(), "Integer") >= 0) // There is probably a better way to determine if the user selected integer vs float.
-         {
-            SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_C_HEADER_INT);
-            fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
-         }
-         else
-         {
-            SaveCurve packedCurve(plotGui, toSaveCurveData, E_SAVE_RESTORE_C_HEADER_FLOAT);
-            fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
-         }
-      }
-
    }
 
 }
@@ -1174,18 +1191,35 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
 
    if(allPlots.find(plotName) != allPlots.end())
    {
-
       // Use the last saved location to determine the folder to save the curve to.
       QString suggestedSavePath = getOpenSavePath(plotName);
 
-      // Open the save file dialog.
-      QString selectedFilter;
-      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
-                                                       suggestedSavePath,
-                                                       tr("Plots (*.plot);;Comma Separted Values (*.csv);;C Header - Integer (*.h);;C Header - Float (*.h)"),
-                                                       &selectedFilter);
+      // Read the last used filter from persistent memory.
+      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentReadValue;
+      persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
 
+      // Generate Filter List string (i.e. the File Save types)
+      QStringList filterList;
+      filterList.append(OPEN_SAVE_FILTER_PLOT_STR);
+      filterList.append(OPEN_SAVE_FILTER_CSV_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
+
+      // Initialize selection with stored value (if there was one).
+      QString selectedFilter;
+      if(filterList.contains(persistentReadValue.c_str()))
+         selectedFilter = persistentReadValue.c_str();
+
+      // Open the save file dialog.
+      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Plot To File"),
+                                                       suggestedSavePath,
+                                                       filterString,
+                                                       &selectedFilter);
+      // Write user selections to persisent memory.
       setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
       // Fill in vector of curve data in the correct order.
       QVector<CurveData*> curves;
@@ -1196,31 +1230,21 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          curves[index] = allPlots[plotName].curves[key];
       }
 
-      QString ext(fso::GetExt(dString::Lower(fileName.toStdString())).c_str());
-      if(ext == "plot")
-      {
-         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_RAW);
-         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
-      }
-      else if(ext == "csv")
-      {
-         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_CSV);
-         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
-      }
-      else if(ext == "h")
-      {
-         if(dString::InStr(selectedFilter.toStdString(), "Integer") >= 0) // There is probably a better way to determine if the user selected integer vs float.
-         {
-            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_C_HEADER_INT);
-            fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
-         }
-         else
-         {
-            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, E_SAVE_RESTORE_C_HEADER_FLOAT);
-            fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
-         }
-      }
+      eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
+      if(selectedFilter == OPEN_SAVE_FILTER_PLOT_STR)
+         saveType = E_SAVE_RESTORE_RAW;
+      else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
+         saveType = E_SAVE_RESTORE_CSV;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_INT;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
 
+      if(saveType != E_SAVE_RESTORE_INVALID)
+      {
+         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
+         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+      }
    }
 }
 
