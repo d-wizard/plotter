@@ -207,8 +207,8 @@ void CurveCommander::destroyAllPlots()
    tCurveCommanderInfo::iterator iter = m_allCurves.begin();
    while(iter != m_allCurves.end())
    {
-      plotWindowCloseSlot(iter.key());
-      iter = m_allCurves.erase(iter);
+      plotWindowCloseSlot(iter.key()); // Cleans everything up and removes the instance from m_allCurves.
+      iter = m_allCurves.begin(); // Set iter to the next plot to destroy.
    }
 }
 
