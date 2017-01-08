@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,6 +29,7 @@
 #include <QString>
 #include <QDateTime>
 
+#include "plotMsgPack.h"
 
 const QString PLOT_CURVE_SEP = "->";
 
@@ -79,19 +80,42 @@ typedef struct tMaxMinXY
 typedef enum
 {
     E_PLOT_DIM_1D,
-    E_PLOT_DIM_2D
+    E_PLOT_DIM_2D,
+    E_PLOT_DIM_INVALID
 }ePlotDim;
 inline bool valid_ePlotDim(ePlotDim in)
 {
    switch(in)
    {
-   case E_PLOT_DIM_1D:
-   case E_PLOT_DIM_2D:
-      return true;
+      case E_PLOT_DIM_1D:
+      case E_PLOT_DIM_2D:
+         return true;
+      break;
+      default:
+         return false;
       break;
    }
    return false;
 }
+inline ePlotDim plotActionToPlotDim(ePlotAction action)
+{
+   switch(action)
+   {
+      case E_CREATE_1D_PLOT:
+      case E_UPDATE_1D_PLOT:
+         return E_PLOT_DIM_1D;
+      break;
+      case E_CREATE_2D_PLOT:
+      case E_UPDATE_2D_PLOT:
+         return E_PLOT_DIM_2D;
+      break;
+      default:
+         return E_PLOT_DIM_INVALID;
+      break;
+   }
+   return E_PLOT_DIM_INVALID;
+}
+
 
 typedef enum
 {

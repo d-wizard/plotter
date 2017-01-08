@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -58,58 +58,41 @@ inline bool isDoubleValid(double value)
    }
 }
 
-CurveData::CurveData( QwtPlot *parentPlot,
-                      const QString& curveName,
-                      const ePlotType newPlotType,
-                      const dubVect &newYPoints,
-                      const CurveAppearance &curveAppearance):
-   m_parentPlot(parentPlot),
-   yOrigPoints(newYPoints),
-   smartMaxMinXPoints(&xPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
-   smartMaxMinYPoints(&yPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
-   plotDim(E_PLOT_DIM_1D),
-   plotType(newPlotType),
-   appearance(curveAppearance),
-   curve(new QwtPlotCurve(curveName))
-{
-   init();
-   numPoints = yOrigPoints.size();
-   fill1DxPoints();
-   performMathOnPoints();
-   initCurve();
-   attach();
-}
-
 CurveData::CurveData( QwtPlot* parentPlot,
-                      const QString& curveName,
-                      const dubVect& newXPoints,
-                      const dubVect& newYPoints,
-                      const CurveAppearance& curveAppearance):
-   lastMsgIpAddr(0),
+                      const CurveAppearance &curveAppearance,
+                      const UnpackPlotMsg *data):
    m_parentPlot(parentPlot),
-   xOrigPoints(newXPoints),
-   yOrigPoints(newYPoints),
+   xOrigPoints(data->m_xAxisValues),
+   yOrigPoints(data->m_yAxisValues),
    smartMaxMinXPoints(&xPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
    smartMaxMinYPoints(&yPoints, MIN_SAMPLE_PER_MAXMIN_SEGMENT, MAX_SAMPLE_PER_MAXMIN_SEGMENT),
-   plotDim(E_PLOT_DIM_2D),
-   plotType(E_PLOT_TYPE_2D),
+   plotDim(plotActionToPlotDim(data->m_plotAction)),
+   plotType(data->m_plotType),
    appearance(curveAppearance),
-   curve(new QwtPlotCurve(curveName))
+   curve(new QwtPlotCurve(data->m_curveName.c_str())),
+   lastMsgIpAddr(0)
 {
    init();
-   if(xOrigPoints.size() > yOrigPoints.size())
+   if(plotDim != E_PLOT_DIM_1D)
    {
-      xOrigPoints.resize(yOrigPoints.size());
+      // Make sure the number of points are the same for x and y.
+      if(xOrigPoints.size() > yOrigPoints.size())
+         xOrigPoints.resize(yOrigPoints.size());
+      else if(xOrigPoints.size() < yOrigPoints.size())
+         yOrigPoints.resize(xOrigPoints.size());
    }
-   else if(xOrigPoints.size() < yOrigPoints.size())
-   {
-      yOrigPoints.resize(xOrigPoints.size());
-   }
-   
+
    numPoints = yOrigPoints.size();
+
+   if(plotDim == E_PLOT_DIM_1D)
+   {
+      fill1DxPoints();
+   }
+
    performMathOnPoints();
    initCurve();
    attach();
+   storeLastMsgStats(data);
 }
 
 CurveData::~CurveData()
@@ -539,35 +522,48 @@ void CurveData::setCurveSamples()
    maxMin_finalSamples = finalMaxMin;
 }
 
-void CurveData::ResetCurveSamples(dubVect& newYPoints)
+void CurveData::ResetCurveSamples(const UnpackPlotMsg* data)
 {
-   plotDim = E_PLOT_DIM_1D;
-   yOrigPoints = newYPoints;
-   numPoints = yOrigPoints.size();
-   fill1DxPoints();
-   performMathOnPoints();
-   setCurveSamples();
-}
-void CurveData::ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints)
-{
-   plotDim = E_PLOT_DIM_2D;
-   xOrigPoints = newXPoints;
-   yOrigPoints = newYPoints;
-   numPoints = std::min(xOrigPoints.size(), yOrigPoints.size());
-   if(xOrigPoints.size() > numPoints)
+   plotDim = plotActionToPlotDim(data->m_plotAction);
+
+   if(plotDim == E_PLOT_DIM_1D)
    {
-      xOrigPoints.resize(numPoints);
+      yOrigPoints = data->m_yAxisValues;
+      numPoints = yOrigPoints.size();
+      fill1DxPoints();
    }
-   if(yOrigPoints.size() > numPoints)
+   else
    {
-      yOrigPoints.resize(numPoints);
+      xOrigPoints = data->m_xAxisValues;
+      yOrigPoints = data->m_yAxisValues;
+      numPoints = std::min(xOrigPoints.size(), yOrigPoints.size());
+      if(xOrigPoints.size() > numPoints)
+         xOrigPoints.resize(numPoints);
+      if(yOrigPoints.size() > numPoints)
+         yOrigPoints.resize(numPoints);
    }
    performMathOnPoints();
    setCurveSamples();
+   storeLastMsgStats(data);
 }
 
+void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode)
+{
+   if(plotDim == plotActionToPlotDim(data->m_plotAction))
+   {
+      if(plotDim == E_PLOT_DIM_1D)
+      {
+         UpdateCurveSamples(data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+      }
+      else
+      {
+         UpdateCurveSamples(data->m_xAxisValues, data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+      }
+      storeLastMsgStats(data);
+   }
+}
 
-void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
 {
    if(plotDim == E_PLOT_DIM_1D)
    {
@@ -628,7 +624,7 @@ void CurveData::UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStart
    }
 }
 
-void CurveData::UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
 {
    if(plotDim == E_PLOT_DIM_2D)
    {
@@ -982,4 +978,8 @@ unsigned int CurveData::removeInvalidPoints()
    return numPointsInCurve;
 }
 
+void CurveData::storeLastMsgStats(const UnpackPlotMsg* data)
+{
+   lastMsgIpAddr = data->m_ipAddr;
+}
 

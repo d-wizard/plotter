@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -569,23 +569,7 @@ void MainWindow::readPlotMsgSlot()
                newCurveAdded = true;
             }
 
-            switch(plotMsg->m_plotAction)
-            {
-               case E_CREATE_1D_PLOT:
-                  createUpdateCurve(plotMsg, curveName, true, 0, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
-               break;
-               case E_CREATE_2D_PLOT:
-                  createUpdateCurve(plotMsg, curveName, true, 0, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
-               break;
-               case E_UPDATE_1D_PLOT:
-                  createUpdateCurve(plotMsg, curveName, false, plotMsg->m_sampleStartIndex, plotMsg->m_plotType, NULL, &plotMsg->m_yAxisValues);
-               break;
-               case E_UPDATE_2D_PLOT:
-                  createUpdateCurve(plotMsg, curveName, false, plotMsg->m_sampleStartIndex, E_PLOT_TYPE_2D, &plotMsg->m_xAxisValues, &plotMsg->m_yAxisValues);
-               break;
-               default:
-               break;
-            }
+            createUpdateCurve(plotMsg);
 
             if(plotMsg->m_useCurveMathProps)
             {
@@ -680,20 +664,28 @@ void MainWindow::setCurveHidden(QString curveName, bool hidden)
     }
 }
 
-void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
-                                    QString& name,
-                                    bool resetCurve,
-                                    unsigned int sampleStartIndex,
-                                    ePlotType plotType,
-                                    dubVect *xPoints,
-                                    dubVect *yPoints )
+void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
+   QString name = unpackPlotMsg->m_curveName.c_str();
+   ePlotDim plotDim = plotActionToPlotDim(unpackPlotMsg->m_plotAction);
+
+   bool resetCurve = false;
+   switch(unpackPlotMsg->m_plotAction)
+   {
+      case E_CREATE_1D_PLOT:
+      case E_CREATE_2D_PLOT:
+         resetCurve = true; // Reset curves on "Create" plot messages.
+      break;
+      default:
+         // Keep variables at their initialized values.
+      break;
+   }
+
    // Check for any reason to not allow the adding of the new curve.
-   if( yPoints == NULL ||
-       (xPoints != NULL && xPoints->size() <= 0) ||
-       yPoints->size() <= 0 )
+   if( plotDim == E_PLOT_DIM_INVALID || unpackPlotMsg->m_yAxisValues.size() <= 0 ||
+       (plotDim != E_PLOT_DIM_1D && unpackPlotMsg->m_xAxisValues.size() <= 0) )
    {
       return;
    }
@@ -701,62 +693,38 @@ void MainWindow::createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
    int curveIndex = getCurveIndex(name);
    if(curveIndex >= 0)
    {
+      // Curve Exists.
       if(resetCurve == true)
       {
-         if(xPoints == NULL)
-         {
-            m_qwtCurves[curveIndex]->ResetCurveSamples(*yPoints);
-         }
-         else
-         {
-            m_qwtCurves[curveIndex]->ResetCurveSamples(*xPoints, *yPoints);
-         }
+         m_qwtCurves[curveIndex]->ResetCurveSamples(unpackPlotMsg);
       }
       else
       {
-         if(xPoints == NULL)
-         {
-            m_qwtCurves[curveIndex]->UpdateCurveSamples(*yPoints, sampleStartIndex, m_scrollMode);
-         }
-         else
-         {
-            m_qwtCurves[curveIndex]->UpdateCurveSamples(*xPoints, *yPoints, sampleStartIndex, m_scrollMode);
-         }
+         m_qwtCurves[curveIndex]->UpdateCurveSamples(unpackPlotMsg, m_scrollMode);
       }
    }
    else
    {
+      // Curve Does Not Exist. Create the new curve.
       curveIndex = m_qwtCurves.size();
       int colorLookupIndex = findNextUnusedColorIndex();
 
-      if(resetCurve == false && sampleStartIndex > 0)
+      if(resetCurve == false && unpackPlotMsg->m_sampleStartIndex > 0)
       {
          // New curve, but starting in the middle. Prepend vector with zeros.
-         if(xPoints != NULL)
+         if(plotDim != E_PLOT_DIM_1D)
          {
-            xPoints->insert(xPoints->begin(), sampleStartIndex, 0.0);
+            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
          }
-         yPoints->insert(yPoints->begin(), sampleStartIndex, 0.0);
+         unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
       }
 
       CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
 
-      if(xPoints == NULL)
-      {
-         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, plotType, *yPoints, newCurveAppearance));
-      }
-      else
-      {
-         m_qwtCurves.push_back(new CurveData(m_qwtPlot, name, *xPoints, *yPoints, newCurveAppearance));
-      }
+      m_qwtCurves.push_back(new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg));
 
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
       m_curveCommander->doFinalChildCurveInit(getPlotName(), name);
-   }
-
-   if(unpackPlotMsg != NULL && curveIndex >= 0)
-   {
-      m_qwtCurves[curveIndex]->lastMsgIpAddr = unpackPlotMsg->m_ipAddr;
    }
 
    initCursorIndex(curveIndex);

@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1300,7 +1300,7 @@ void curveProperties::fillInPropTab()
       }
 
       // Fill in Last Msg Ip Addr field.
-      ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->lastMsgIpAddr.m_ipV4Addr));
+      ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->getLastMsgIpAddr().m_ipV4Addr));
    }
    else
    {

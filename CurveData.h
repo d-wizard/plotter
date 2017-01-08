@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,6 +29,7 @@
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include "PlotHelperTypes.h"
+#include "PackUnpackPlotMsg.h"
 
 #include "smartMaxMin.h"
 
@@ -46,16 +47,8 @@ class CurveData
 {
 public:
    CurveData( QwtPlot* parentPlot,
-              const QString& curveName,
-              const ePlotType newPlotType,
-              const dubVect& newYPoints,
-              const CurveAppearance& curveAppearance);
-
-   CurveData( QwtPlot* parentPlot,
-              const QString& curveName,
-              const dubVect& newXPoints,
-              const dubVect& newYPoints,
-              const CurveAppearance& curveAppearance);
+              const CurveAppearance& curveAppearance,
+              const UnpackPlotMsg* data);
 
    ~CurveData();
 
@@ -89,11 +82,8 @@ public:
    void resetNormalizeFactor();
    void setCurveSamples();
 
-   void ResetCurveSamples(dubVect& newYPoints);
-   void ResetCurveSamples(dubVect& newXPoints, dubVect& newYPoints);
-
-   void UpdateCurveSamples(dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode = false);
-   void UpdateCurveSamples(dubVect& newXPoints, dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode = false);
+   void ResetCurveSamples(const UnpackPlotMsg* data);
+   void UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode);
 
    bool setSampleRate(double inSampleRate, bool userSpecified = true);
    double getSampleRate(){return sampleRate;}
@@ -111,12 +101,12 @@ public:
 
    void setCurveAppearance(CurveAppearance curveAppearance);
 
+   tPlotterIpAddr getLastMsgIpAddr(){return lastMsgIpAddr;}
+
    QLabel* pointLabel;
    QAction* curveAction;
    QSignalMapper* mapper;
 
-   tPlotterIpAddr lastMsgIpAddr;
-   
 private:
    CurveData();
    void init();
@@ -130,6 +120,11 @@ private:
    void performMathOnPoints(unsigned int sampleStartIndex, unsigned int numSamples);
    void doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples);
    unsigned int removeInvalidPoints();
+
+   void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
+   void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
+
+   void storeLastMsgStats(const UnpackPlotMsg* data);
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
@@ -171,6 +166,10 @@ private:
 
    tMathOpList mathOpsXAxis;
    tMathOpList mathOpsYAxis;
+
+   // Stats about the last message.
+   tPlotterIpAddr lastMsgIpAddr;
+
 };
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -273,13 +273,7 @@ private:
 
     void resetPlot();
 
-    void createUpdateCurve( UnpackPlotMsg* unpackPlotMsg,
-                            QString& name,
-                            bool resetCurve,
-                            unsigned int sampleStartIndex,
-                            ePlotType plotType,
-                            dubVect *xPoints,
-                            dubVect *yPoints );
+    void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
 
     void initCursorIndex(int curveIndex);
     void handleCurveDataChange(int curveIndex);
