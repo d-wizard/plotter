@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -197,8 +197,7 @@ void CurveCommander::createPlot(QString plotName)
 {
    if(validPlot(plotName) == false)
    {
-      m_allCurves[plotName].plotGui = new MainWindow(this, m_plotGuiMain);
-      m_allCurves[plotName].plotGui->setWindowTitle(plotName);
+      m_allCurves[plotName].plotGui = new MainWindow(this, m_plotGuiMain, plotName);
    }
 }
 

@@ -50,9 +50,10 @@ connect(&mapperAction.m_mapper, SIGNAL(mapped(int)), SLOT(callback(int)) );
 QString activityIndicatorStr = QChar(0xCF, 0x25); // Black Circle Character.
 
 
-MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent) :
+MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent) :
    QMainWindow(parent),
    ui(new Ui::MainWindow),
+   m_plotName(plotName),
    m_curveCommander(curveCmdr),
    m_plotGuiMain(plotGui),
    m_qwtPlot(NULL),
@@ -110,6 +111,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget 
    m_snrCalcBars(NULL)
 {
     ui->setupUi(this);
+    setWindowTitle(m_plotName);
 
     srand((unsigned)time(0));
 

@@ -141,7 +141,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QWidget *parent = 0);
+    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent = 0);
     ~MainWindow();
 
     void readPlotMsg(plotMsgGroup* plotMsg);
@@ -174,9 +174,11 @@ public:
 
     void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions);
 
-    QString getPlotName(){return windowTitle();}
+    QString getPlotName(){return m_plotName;}
 private:
     Ui::MainWindow *ui;
+
+    QString m_plotName;
 
     CurveCommander* m_curveCommander;
     plotGuiMain* m_plotGuiMain;
