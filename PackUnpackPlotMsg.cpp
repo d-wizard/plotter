@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -195,14 +195,14 @@ UnpackPlotMsg::UnpackPlotMsg():
    m_curveName(""),
    m_sampleStartIndex(0),
    m_plotType(E_PLOT_TYPE_1D),
+   m_xAxisDataType(E_FLOAT_64),
+   m_yAxisDataType(E_FLOAT_64),
    m_ipAddr(0),
    m_useCurveMathProps(false),
    m_msg(NULL),
    m_msgSize(0),
    m_msgReadIndex(0),
    m_numSamplesInPlot(0),
-   m_xAxisDataType(E_FLOAT_64),
-   m_yAxisDataType(E_FLOAT_64),
    m_interleaved(false)
 {
 }
@@ -213,14 +213,14 @@ UnpackPlotMsg::UnpackPlotMsg(tIncomingMsg* inMsg):
    m_plotName(""),
    m_curveName(""),
    m_sampleStartIndex(0),
+   m_xAxisDataType(E_FLOAT_64),
+   m_yAxisDataType(E_FLOAT_64),
    m_ipAddr(inMsg->ipAddr),
    m_useCurveMathProps(false),
    m_msg(inMsg->msgPtr),
    m_msgSize(inMsg->msgSize),
    m_msgReadIndex(0),
-   m_numSamplesInPlot(0),
-   m_xAxisDataType(E_FLOAT_64),
-   m_yAxisDataType(E_FLOAT_64)
+   m_numSamplesInPlot(0)
 {
    unpack(&m_plotAction, sizeof(m_plotAction));
    unpack(&m_msgSize, sizeof(m_msgSize));

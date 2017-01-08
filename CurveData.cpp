@@ -70,7 +70,9 @@ CurveData::CurveData( QwtPlot* parentPlot,
    plotType(data->m_plotType),
    appearance(curveAppearance),
    curve(new QwtPlotCurve(data->m_curveName.c_str())),
-   lastMsgIpAddr(0)
+   lastMsgIpAddr(0),
+   lastMsgXAxisType(E_INVALID_DATA_TYPE),
+   lastMsgYAxisType(E_INVALID_DATA_TYPE)
 {
    init();
    if(plotDim != E_PLOT_DIM_1D)
@@ -981,5 +983,7 @@ unsigned int CurveData::removeInvalidPoints()
 void CurveData::storeLastMsgStats(const UnpackPlotMsg* data)
 {
    lastMsgIpAddr = data->m_ipAddr;
+   lastMsgXAxisType = data->m_xAxisDataType;
+   lastMsgYAxisType = data->m_yAxisDataType;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -195,6 +195,8 @@ public:
    std::string m_curveName;
    UINT_32 m_sampleStartIndex;
    ePlotType m_plotType;
+   ePlotDataTypes m_xAxisDataType;
+   ePlotDataTypes m_yAxisDataType;
    tPlotterIpAddr m_ipAddr;
    std::vector<double> m_xAxisValues;
    std::vector<double> m_yAxisValues;
@@ -221,8 +223,6 @@ private:
    UINT_32 m_msgReadIndex;
 
    UINT_32 m_numSamplesInPlot;
-   ePlotDataTypes m_xAxisDataType;
-   ePlotDataTypes m_yAxisDataType;
 
    UCHAR m_interleaved;
 };

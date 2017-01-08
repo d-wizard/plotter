@@ -169,6 +169,9 @@ private:
 
    // Stats about the last message.
    tPlotterIpAddr lastMsgIpAddr;
+   ePlotDataTypes lastMsgXAxisType;
+   ePlotDataTypes lastMsgYAxisType;
+
 
 };
 
