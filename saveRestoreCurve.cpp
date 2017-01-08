@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -78,19 +78,77 @@ static std::string getPlotNameCHeaderVariableName(QString curveName)
    return retVal;
 }
 
-static std::string getCHeaderTypedefStr(QString plotName, CurveData* curve, eSaveRestorePlotCurveType type)
+static std::string getCHeaderDataType(eSaveRestorePlotCurveType type, ePlotDataTypes xAxis, ePlotDataTypes yAxis, bool& isInt)
 {
-   std::string typeStr = "double";
-   if(type == E_SAVE_RESTORE_C_HEADER_INT)
+   std::string typeStr;
+   isInt = true; // assume int until proven otherwise
+   switch(type)
    {
-      typeStr = "long long";
+      case E_SAVE_RESTORE_C_HEADER_INT:
+         typeStr = "long long";
+      break;
+      case E_SAVE_RESTORE_C_HEADER_FLOAT:
+         typeStr = "double";
+         isInt = false;
+      break;
+      default:
+      {
+         if(xAxis != yAxis && xAxis != E_INVALID_DATA_TYPE)
+         {
+            // 2D plot, but X axis type doesn't match Y axis type. Just use double to be sure.
+            typeStr = "double";
+            isInt = false;
+         }
+         else
+         {
+            switch(yAxis)
+            {
+               case E_CHAR:
+                  typeStr = "signed char";
+               break;
+               case E_UCHAR:
+                  typeStr = "unsigned char";
+               break;
+               case E_INT_16:
+                  typeStr = "short";
+               break;
+               case E_UINT_16:
+                  typeStr = "unsigned short";
+               break;
+               case E_INT_32:
+                  typeStr = "long";
+               break;
+               case E_UINT_32:
+                  typeStr = "unsigned long";
+               break;
+               case E_INT_64:
+                  typeStr = "long long";
+               break;
+               case E_UINT_64:
+                  typeStr = "unsigned long long";
+               break;
+               case E_FLOAT_32:
+                  typeStr = "float";
+                  isInt = false;
+               break;
+               default:
+                  typeStr = "double";
+                  isInt = false;
+               break;
+            }
+         }
+      }
+      break;
    }
+   return typeStr;
+}
 
+static std::string getCHeaderTypedefStr(QString plotName, CurveData* curve, std::string dataTypeStr)
+{
    std::string typeNameStr = getPlotNameCHeaderTypeName(plotName);
    return "#ifndef " + typeNameStr + C_HEADER_LINE_DELIM +
-          "#define " + typeNameStr + " " + typeStr + C_HEADER_LINE_DELIM +
+          "#define " + typeNameStr + " " + dataTypeStr + C_HEADER_LINE_DELIM +
           "#endif" + C_HEADER_LINE_DELIM;
-   //return "typedef " + typeStr + " " +  + ";" + C_HEADER_LINE_DELIM;
 }
 
 SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type)
@@ -107,6 +165,7 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
       case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
          SaveExcel(plotGui, curve, CLIPBOARD_EXCEL_CELL_DELIM);
       break;
+      case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
       case E_SAVE_RESTORE_C_HEADER_INT:
       case E_SAVE_RESTORE_C_HEADER_FLOAT:
          SaveCHeader(plotGui, curve, type);
@@ -221,9 +280,17 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
 
    unsigned int numSamplesToWrite = curve->getNumPoints();
 
-   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve , type) << C_HEADER_LINE_DELIM;
+   // Determine the data type string (i.e. long, double, unsigned char, etc)
+   bool dataType_isInt = false;
+   std::string dataType_str = getCHeaderDataType(
+      type,
+      curve->getPlotDim() == E_PLOT_DIM_1D ? E_INVALID_DATA_TYPE : curve->getLastMsgDataType(E_X_AXIS),
+      curve->getLastMsgDataType(E_Y_AXIS),
+      dataType_isInt);
 
-   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve, dataType_str) << C_HEADER_LINE_DELIM;
+
+   if(curve->getPlotDim() != E_PLOT_DIM_1D)
    {
       const double* xPoints = curve->getXPoints();
       const double* yPoints = curve->getYPoints();
@@ -231,7 +298,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
                  getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
                  "[" << curve->getNumPoints() << "][2] = {" << C_HEADER_LINE_DELIM;
 
-      if(type == E_SAVE_RESTORE_C_HEADER_INT)
+      if(dataType_isInt)
       {
          for(unsigned int i = 0; i < numSamplesToWrite; ++i)
          {
@@ -272,7 +339,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
                  getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
                  "[" << curve->getNumPoints() << "] = {" << C_HEADER_LINE_DELIM;
 
-      if(type == E_SAVE_RESTORE_C_HEADER_INT)
+      if(dataType_isInt)
       {
          for(unsigned int i = 0; i < numSamplesToWrite; ++i)
          {
@@ -438,6 +505,7 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
       case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
          SaveExcel(plotGui, plotInfo, CLIPBOARD_EXCEL_CELL_DELIM);
       break;
+      case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
       case E_SAVE_RESTORE_C_HEADER_INT:
       case E_SAVE_RESTORE_C_HEADER_FLOAT:
          SaveCHeader(plotGui, plotInfo, type);

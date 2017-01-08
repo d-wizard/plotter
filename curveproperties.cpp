@@ -49,6 +49,7 @@ const double CURVE_PROP_E = 2.71828182845904523536028747135266249775724709369995
 const QString OPEN_SAVE_FILTER_PLOT_STR = "Plots (*.plot)";
 const QString OPEN_SAVE_FILTER_CURVE_STR = "Curves (*.curve)";
 const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separted Values (*.csv)";
+const QString OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR = "C Header - Auto Type (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
 
@@ -1146,6 +1147,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       QStringList filterList;
       filterList.append(OPEN_SAVE_FILTER_CURVE_STR);
       filterList.append(OPEN_SAVE_FILTER_CSV_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
@@ -1169,6 +1171,8 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
          saveType = E_SAVE_RESTORE_RAW;
       else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
          saveType = E_SAVE_RESTORE_CSV;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_INT;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
@@ -1203,6 +1207,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       QStringList filterList;
       filterList.append(OPEN_SAVE_FILTER_PLOT_STR);
       filterList.append(OPEN_SAVE_FILTER_CSV_STR);
+      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
@@ -1235,6 +1240,8 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          saveType = E_SAVE_RESTORE_RAW;
       else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
          saveType = E_SAVE_RESTORE_CSV;
+      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
+         saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_INT;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)

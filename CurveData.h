@@ -102,6 +102,7 @@ public:
    void setCurveAppearance(CurveAppearance curveAppearance);
 
    tPlotterIpAddr getLastMsgIpAddr(){return lastMsgIpAddr;}
+   ePlotDataTypes getLastMsgDataType(eAxis axis){return axis == E_X_AXIS ? lastMsgXAxisType : lastMsgYAxisType;}
 
    QLabel* pointLabel;
    QAction* curveAction;
