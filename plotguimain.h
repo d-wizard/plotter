@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -50,7 +50,7 @@ class plotGuiMain : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon);
+    explicit plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, bool showTrayIcon);
     ~plotGuiMain();
 
     void startPlotMsgProcess(tIncomingMsg* inMsg);
@@ -70,7 +70,7 @@ public:
 private:
 
     Ui::plotGuiMain *ui;
-    TCPMsgReader* m_tcpMsgReader;
+    std::vector<TCPMsgReader*> m_tcpMsgReaders;
 
     QSystemTrayIcon* m_trayIcon;
     QAction m_trayExitAction;

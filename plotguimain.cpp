@@ -34,10 +34,9 @@
 #define MAX_NUM_MSGS_IN_QUEUE (1000)
 
 
-plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon) :
+plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, bool showTrayIcon) :
    QMainWindow(parent),
    ui(new Ui::plotGuiMain),
-   m_tcpMsgReader(NULL),
    m_trayIcon(NULL),
    m_trayExitAction("Exit", this),
    m_trayEnDisNewCurvesAction("Disable New Curves", this),
@@ -60,13 +59,16 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
     QObject::connect(this, SIGNAL(restorePlotFilesInListSignal()),
                      this, SLOT(restorePlotFilesInListSlot()), Qt::QueuedConnection);
 
-    if(tcpPort != 0)
+    if(tcpPorts.size() > 0)
     {
-        m_tcpMsgReader = new TCPMsgReader(this, tcpPort);
+       for(size_t i = 0; i < tcpPorts.size(); ++i)
+       {
+          m_tcpMsgReaders.push_back(new TCPMsgReader(this, tcpPorts[i]));
 
-        char tcpPortStr[10];
-        snprintf(tcpPortStr, sizeof(tcpPortStr), "%d", tcpPort);
-        ui->lblPort->setText(tcpPortStr);
+          char tcpPortStr[10];
+          snprintf(tcpPortStr, sizeof(tcpPortStr), "%d", tcpPorts[i]);
+          ui->lblPort->setText(tcpPortStr);
+       }
     }
     else
     {
@@ -109,9 +111,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
 plotGuiMain::~plotGuiMain()
 {
-    if(m_tcpMsgReader != NULL)
+    for(size_t i = 0; i < m_tcpMsgReaders.size(); ++i)
     {
-        delete m_tcpMsgReader;
+       delete m_tcpMsgReaders[i];
     }
 
     if(m_trayIcon != NULL)

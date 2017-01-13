@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -30,8 +30,8 @@
 #include "plotMsgPack.h"
 
 // Local Variables.
-static bool g_validPort = false;
-static unsigned short g_port = 0xFFFF;
+static bool g_portsSpecifiedViaCmdLine = false;
+static std::vector<unsigned short> g_ports;
 static std::vector<std::string> g_cmdLineRestorePlotFilePaths;
 
 // Global Variables (might be extern'd)
@@ -54,9 +54,9 @@ static QString getEnvVar(QString envVarNam)
    return "";
 }
 
-static int connectToExistingAppInstance()
+static int connectToExistingAppInstance(unsigned short port)
 {
-   return sendTCPPacket_init("127.0.0.1", g_port);
+   return sendTCPPacket_init("127.0.0.1", port);
 }
 
 static void processCmdLineArgs(int argc, char *argv[])
@@ -69,8 +69,8 @@ static void processCmdLineArgs(int argc, char *argv[])
       unsigned int cmdLinePort = atoi(argv[1]);
       if(cmdLinePort > 0 && cmdLinePort <= 0xFFFF)
       {
-         g_validPort = true;
-         g_port = cmdLinePort;
+         g_portsSpecifiedViaCmdLine = true;
+         g_ports.push_back(cmdLinePort);
       }
    }
 
@@ -144,20 +144,28 @@ static void processIniFile(int argc, char *argv[])
       // suround with new line for easier searching
       iniFile = std::string("\n") + iniFile + std::string("\n");
 
-      if(g_validPort == false)
+      // Grab port number(s) from .ini file (but only if port numbers
+      // weren't specified via command line arguments).
+      if(g_portsSpecifiedViaCmdLine == false)
       {
-         std::string portFromIni = dString::SplitRight(iniFile, "\nport=");
-         portFromIni = dString::GetNumFromStr(portFromIni);
-         if(portFromIni.size() > 0)
+         const std::string INI_PORT_SEARCH_STR = "\nport=";
+         std::string iniFile_findPorts = iniFile;
+
+         while(dString::InStr(iniFile_findPorts, INI_PORT_SEARCH_STR) >= 0)
          {
-            unsigned int iniPort = atoi(portFromIni.c_str());
-            if(iniPort > 0 && iniPort <= 0xFFFF)
+            iniFile_findPorts = dString::SplitRight(iniFile_findPorts, INI_PORT_SEARCH_STR);
+
+            std::string portFromIni = dString::GetNumFromStr(iniFile_findPorts);
+            if(portFromIni.size() > 0)
             {
-               g_validPort = true;
-               g_port = iniPort;
+               unsigned int iniPort = atoi(portFromIni.c_str());
+               if(iniPort > 0 && iniPort <= 0xFFFF)
+               {
+                  g_ports.push_back(iniPort);
+               }
             }
          }
-      } // End if(validPort == false)
+      } // End if(g_portsSpecifiedViaCmdLine == false)
 
       std::string maxPacketSizeStrBegin =
             dString::SplitRight(iniFile, "\nmax_packet_size=");
@@ -206,10 +214,10 @@ static int startGuiApp()
    a.setQuitOnLastWindowClosed(false);
 
 #if (defined(_WIN32) || defined(__WIN32__))
-   plotGuiMain pgm(NULL, g_port, true);
+   plotGuiMain pgm(NULL, g_ports, true);
 #else
    // Linux doesn't seem to have a tray, so show the GUI with similar functions
-   plotGuiMain pgm(NULL, port, false);
+   plotGuiMain pgm(NULL, g_ports, false);
    pgm.show();
 #endif
 
@@ -228,9 +236,18 @@ int main(int argc, char *argv[])
    processCmdLineArgs(argc, argv);
    processIniFile(argc, argv);
 
-   if(g_validPort == true)
+   if(g_ports.size() > 0)
    {
-      int connectionToExistingAppInstance = connectToExistingAppInstance();
+      int connectionToExistingAppInstance = -1;
+
+      for(size_t i = 0; i < g_ports.size(); ++i)
+      {
+         connectionToExistingAppInstance = connectToExistingAppInstance(g_ports[i]);
+         if(connectionToExistingAppInstance >= 0)
+         {
+            break;
+         }
+      }
 
       if(connectionToExistingAppInstance >= 0)
       {
