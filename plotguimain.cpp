@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,8 +34,6 @@
 #define MAX_NUM_MSGS_IN_QUEUE (1000)
 
 
-//#define TEST_CURVES
-
 plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayIcon) :
    QMainWindow(parent),
    ui(new Ui::plotGuiMain),
@@ -61,52 +59,6 @@ plotGuiMain::plotGuiMain(QWidget *parent, unsigned short tcpPort, bool showTrayI
 
     QObject::connect(this, SIGNAL(restorePlotFilesInListSignal()),
                      this, SLOT(restorePlotFilesInListSlot()), Qt::QueuedConnection);
-
-#ifdef TEST_CURVES
-    QString plotName = "Test Plot";
-    m_plotGuis[plotName] = new MainWindow(this);
-    m_plotGuis[plotName]->setWindowTitle(plotName);
-    m_plotGuis[plotName]->show();
-
-
-    int mi_size = 1000;
-    dubVect md_x;
-    dubVect md_y;
-    dubVect md_z;
-    dubVect md_x1;
-    dubVect md_y1;
-
-    // init test samples.
-    md_x.resize(mi_size);
-    md_y.resize(mi_size);
-    md_z.resize(mi_size);
-    md_x1.resize(mi_size/2);
-    md_y1.resize(mi_size/2);
-    //md_z.resize(mi_size/2);
-
-    for(int i_index = 0; i_index < mi_size; ++i_index)
-    {
-        md_x[i_index] = 4.0 *cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y[i_index] = 2.0 * sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-
-    for(int i_index = 0; i_index < mi_size/2; ++i_index)
-    {
-        //md_x[i_index] = cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        //md_y[i_index] = sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        //md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        //md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        md_x1[i_index] = 2.0*cos((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;//i_index;
-        md_y1[i_index] = 2.0*sin((3.14159 * 2.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-        //md_z[i_index] = sin((3.14159 * 4.0 * (double)i_index)/(double)mi_size);//(double)i_index;//0.0;
-    }
-    m_plotGuis[plotName]->add1dCurve("Curve1", md_y);
-    m_plotGuis[plotName]->add1dCurve("Curve2", md_x);
-    m_plotGuis[plotName]->add1dCurve("Curve3", md_z);
-    //m_plotGuis[plotName]->add2dCurve("Curve1", md_x, md_y);
-    //m_plotGuis[plotName]->add2dCurve("Curve2", md_x1, md_y1);
-#endif
 
     if(tcpPort != 0)
     {
