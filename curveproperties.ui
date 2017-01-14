@@ -359,6 +359,9 @@
      <property name="text">
       <string>Window FFT Data</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
     <widget class="QComboBox" name="cmbChildMathOperators">
      <property name="geometry">
