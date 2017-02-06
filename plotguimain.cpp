@@ -352,7 +352,7 @@ void plotGuiMain::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
 
 void plotGuiMain::restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName)
 {
-   UnpackMultiPlotMsg* plotMsg = new UnpackMultiPlotMsg(msg, size);
+   UnpackMultiPlotMsg* plotMsg = new UnpackMultiPlotMsg(msg, size, plotCurveName.plot.toStdString());
    if(plotMsg->m_plotMsgs.size() > 0)
    {
       // Change all plot/curve names that were read from the unpacked message to the plot/curve names passed into this function.

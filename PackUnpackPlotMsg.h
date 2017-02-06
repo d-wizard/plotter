@@ -264,7 +264,7 @@ class UnpackMultiPlotMsg
 {
 public:
    UnpackMultiPlotMsg();
-   UnpackMultiPlotMsg(const char* msg, unsigned int size);
+   UnpackMultiPlotMsg(const char* msg, unsigned int size, std::string plotNameOverride);
    UnpackMultiPlotMsg(tIncomingMsg* inMsg);
    ~UnpackMultiPlotMsg();
 
@@ -275,7 +275,7 @@ public:
    tPlotterIpAddr m_msgSourceIpAddr;
 
 private:
-   void init(tIncomingMsg* inMsg);
+   void init(tIncomingMsg* inMsg, std::string plotNameOverride = "");
 };
 
 #endif

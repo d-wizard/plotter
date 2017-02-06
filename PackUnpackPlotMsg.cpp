@@ -479,13 +479,13 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg()
 {
 }
 
-UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size)
+UnpackMultiPlotMsg::UnpackMultiPlotMsg(const char* msg, unsigned int size, std::string plotNameOverride)
 {
    tIncomingMsg inMsg;
    inMsg.msgPtr = msg;
    inMsg.msgSize = size;
    inMsg.ipAddr = 0;
-   init(&inMsg);
+   init(&inMsg, plotNameOverride);
 }
 
 UnpackMultiPlotMsg::UnpackMultiPlotMsg(tIncomingMsg* inMsg)
@@ -494,7 +494,7 @@ UnpackMultiPlotMsg::UnpackMultiPlotMsg(tIncomingMsg* inMsg)
 }
 
 
-void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg)
+void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg, std::string plotNameOverride)
 {
    UINT_32 msgReadIndex = 0;
    ePlotAction plotAction = E_INVALID_PLOT_ACTION;
@@ -538,7 +538,8 @@ void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg)
                   }
                   else
                   {
-                     plotMsgGroup* group = getPlotMsgGroup(newPlotMsg->m_plotName);
+                     std::string groupPlotName = plotNameOverride != "" ? plotNameOverride : newPlotMsg->m_plotName;
+                     plotMsgGroup* group = getPlotMsgGroup(groupPlotName);
                      group->m_plotMsgs.push_back(newPlotMsg);
                   }
                }
@@ -552,7 +553,8 @@ void UnpackMultiPlotMsg::init(tIncomingMsg* inMsg)
          {
             // Single plot in plot message.
             UnpackPlotMsg* newPlotMsg = new UnpackPlotMsg(inMsg);
-            plotMsgGroup* group = getPlotMsgGroup(newPlotMsg->m_plotName);
+            std::string groupPlotName = plotNameOverride != "" ? plotNameOverride : newPlotMsg->m_plotName;
+            plotMsgGroup* group = getPlotMsgGroup(groupPlotName);
             group->m_plotMsgs.push_back(newPlotMsg);
          }
       } // end if(size == msgSize)
