@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -439,8 +439,15 @@ void ChildCurve::updateCurve( bool xParentChanged,
             double avgKeepAmount = 1.0 - m_yAxis.avgAmount;
             for(int i = 0; i < dataSize; ++i)
             {
-               prevAvg = m_ySrcData[i] = m_prevInfo[offset + i] =
-                     (m_yAxis.avgAmount * prevAvg) + (avgKeepAmount * m_ySrcData[i]);
+               if(isDoubleValid(m_ySrcData[i]))
+               {
+                  prevAvg = m_ySrcData[i] = m_prevInfo[offset + i] =
+                        (m_yAxis.avgAmount * prevAvg) + (avgKeepAmount * m_ySrcData[i]);
+               }
+               else
+               {
+                  m_ySrcData[i] = m_prevInfo[offset + i] = prevAvg;
+               }
             }
 
 

@@ -28,6 +28,8 @@
 #include <QVector>
 #include <QString>
 #include <QDateTime>
+#include <limits>       // std::numeric_limits
+
 
 #include "plotMsgPack.h"
 
@@ -421,6 +423,35 @@ typedef struct
    tMathOpList mathOpsXAxis;
    tMathOpList mathOpsYAxis;
 }tCurveMathProperties;
+
+
+
+//////////////////////////////////////////////
+/////////////// Type Helpers /////////////////
+//////////////////////////////////////////////
+inline bool isDoubleValid(double value)
+{
+   // According to the IEEE standard, NaN values have the odd property that
+   // comparisons involving them are always false. That is, for a float
+   // f, f != f will be true only if f is NaN
+   if (value != value)
+   {
+      return false;
+   }
+   else if (value > std::numeric_limits<double>::max())
+   {
+      return false;
+   }
+   else if (value < -std::numeric_limits<double>::max())
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
 
 //////////////////////////////////////////////
 ////////////// Type Operators ////////////////

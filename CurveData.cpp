@@ -35,29 +35,6 @@
 #define MAX_SAMPLE_PER_MAXMIN_SEGMENT (1000)
 
 
-inline bool isDoubleValid(double value)
-{
-   // According to the IEEE standard, NaN values have the odd property that
-   // comparisons involving them are always false. That is, for a float
-   // f, f != f will be true only if f is NaN
-   if (value != value)
-   {
-      return false;
-   }
-   else if (value > std::numeric_limits<double>::max())
-   {
-      return false;
-   }
-   else if (value < -std::numeric_limits<double>::max())
-   {
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
 CurveData::CurveData( QwtPlot* parentPlot,
                       const CurveAppearance &curveAppearance,
                       const UnpackPlotMsg *data):
