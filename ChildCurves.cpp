@@ -565,8 +565,15 @@ void ChildCurve::updateCurve( bool xParentChanged,
             {
                for(int i = 0; i < dataSize; ++i)
                {
-                  m_ySrcData[i] = m_prevInfo[offset + i] = prevVal + m_ySrcData[i];
-                  prevVal = m_prevInfo[offset + i];
+                  if(isDoubleValid(m_ySrcData[i]))
+                  {
+                     m_ySrcData[i] = m_prevInfo[offset + i] = prevVal + m_ySrcData[i];
+                     prevVal = m_prevInfo[offset + i];
+                  }
+                  else
+                  {
+                     m_ySrcData[i] = m_prevInfo[offset + i] = prevVal;
+                  }
                }
             }
 
