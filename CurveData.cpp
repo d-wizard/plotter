@@ -265,6 +265,23 @@ unsigned int CurveData::getNumPoints()
    return numPoints;
 }
 
+void CurveData::setNumPoints(unsigned int newNumPointsSize)
+{
+   numPoints = newNumPointsSize;
+   if(plotDim == E_PLOT_DIM_1D)
+   {
+      yOrigPoints.resize(numPoints);
+      fill1DxPoints();
+   }
+   else
+   {
+      xOrigPoints.resize(numPoints);
+      yOrigPoints.resize(numPoints);
+   }
+   performMathOnPoints();
+   setCurveSamples();
+}
+
 // Find the max and min in the vector, but only allow real numbers to be used
 // to determine the max and min (ingore values that are not real, i.e 'Not a Number'
 // and Positive Infinity or Negative Inifinty)
@@ -548,14 +565,15 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
    {
       int newPointsSize = newYPoints.size();
       bool resized = false;
-      if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
-      {
-         resized = true;
-         yOrigPoints.resize(sampleStartIndex + newPointsSize);
-      }
 
       if(scrollMode == false)
       {
+         // Check if the current size can handle the new samples.
+         if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
+         {
+            resized = true;
+            yOrigPoints.resize(sampleStartIndex + newPointsSize);
+         }
          memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
       }
       else
@@ -563,10 +581,12 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
          /////////////////////////////
          // Scroll Mode
          /////////////////////////////
-         if(resized)
+         if(yOrigPoints.size() < (size_t)newPointsSize)
          {
-            // Resizing the plot, just add the samples to the right.
-            memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+            // Current scroll mode curve size is less than the number of samples in this new curve data message.
+            // Resize the curve to fit all the new data.
+            resized = true;
+            yOrigPoints = newYPoints;
          }
          else
          {
@@ -610,20 +630,20 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
       bool resized = false;
 
-      if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
-      {
-         resized = true;
-         xOrigPoints.resize(sampleStartIndex + newPointsSize);
-      }
-
-      if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
-      {
-         resized = true;
-         yOrigPoints.resize(sampleStartIndex + newPointsSize);
-      }
-
       if(scrollMode == false)
       {
+         if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
+         {
+            resized = true;
+            xOrigPoints.resize(sampleStartIndex + newPointsSize);
+         }
+
+         if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
+         {
+            resized = true;
+            yOrigPoints.resize(sampleStartIndex + newPointsSize);
+         }
+
          memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
          memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
       }
@@ -632,11 +652,15 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
          /////////////////////////////
          // Scroll Mode
          /////////////////////////////
-         if(resized)
+         if(numPoints < newPointsSize)
          {
-            // Resizing the plot, just add the samples to the right.
-            memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
-            memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+            // Current scroll mode curve size is less than the number of samples in this new curve data message.
+            // Resize the curve to fit all the new data.
+            xOrigPoints.resize(newPointsSize);
+            yOrigPoints.resize(newPointsSize);
+            memcpy(&xOrigPoints[0], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
+            memcpy(&yOrigPoints[0], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+            resized = true;
          }
          else
          {

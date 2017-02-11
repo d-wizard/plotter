@@ -229,6 +229,7 @@ private:
     QAction m_holdZoomAction;
     QAction m_maxHoldZoomAction;
     QAction m_scrollModeAction;
+    QAction m_scrollModeChangePlotSizeAction;
     QAction m_resetZoomAction;
     QAction m_normalizeAction;
     QAction m_toggleLegendAction;
@@ -328,6 +329,7 @@ private slots:
     void holdZoom();
     void maxHoldZoom();
     void scrollMode();
+    void scrollModeChangePlotSize();
     void zoomMode();
     void resetZoom();
     void normalizeCurves();

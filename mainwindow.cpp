@@ -22,6 +22,7 @@
 #include <QSignalMapper>
 #include <QKeyEvent>
 #include <QClipboard>
+#include <QInputDialog>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -83,6 +84,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_holdZoomAction("Freeze", this),
    m_maxHoldZoomAction("Max Hold", this),
    m_scrollModeAction("Scroll Mode", this),
+   m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
    m_resetZoomAction("Reset Zoom", this),
    m_normalizeAction("Normalize Curves", this),
    m_toggleLegendAction("Legend", this),
@@ -147,6 +149,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollMode()));
+    connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
@@ -161,6 +164,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     ui->horizontalScrollBar->setRange(0,0);
     ui->verticalScrollBar->setVisible(false);
     ui->horizontalScrollBar->setVisible(false);
+
+    // This should only be visable when Scroll Mode is active. Since Scroll Mode
+    // is defaulted to be not active, default this to be not visable.
+    m_scrollModeChangePlotSizeAction.setVisible(false);
 
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
@@ -183,7 +190,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_rightClickMenu.addAction(&m_toggleSnrCalcAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
+
+    m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_scrollModeAction);
+    m_rightClickMenu.addAction(&m_scrollModeChangePlotSizeAction);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
@@ -931,11 +941,39 @@ void MainWindow::scrollMode()
    if(m_scrollMode)
    {
       m_scrollModeAction.setIcon(m_checkedIcon);
+      m_scrollModeChangePlotSizeAction.setVisible(true);
    }
    else
    {
       m_scrollModeAction.setIcon(QIcon());
+      m_scrollModeChangePlotSizeAction.setVisible(false);
    }
+}
+
+void MainWindow::scrollModeChangePlotSize()
+{
+   // Get current plot size (just get the plot size of the selected curve).
+   int startPlotSize = 0;
+   {
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      startPlotSize = m_qwtCurves[m_selectedCurveIndex]->getNumPoints();
+   }
+
+   bool ok;
+   QString dialogTitle = "Change Plot Size of " + getPlotName();
+   int newPlotSize = QInputDialog::getInt(this, dialogTitle, tr("New Plot Size"), startPlotSize, 1, 0x7FFFFFFF, 1, &ok);
+
+   if(ok && newPlotSize > 0)
+   {
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      size_t numCurves = m_qwtCurves.size();
+      for(size_t i = 0; i < numCurves; ++i)
+      {
+         m_qwtCurves[i]->setNumPoints(newPlotSize);
+      }
+      replotMainPlot();
+   }
+
 }
 
 void MainWindow::resetZoom()
