@@ -969,7 +969,7 @@ void MainWindow::scrollModeChangePlotSize()
       size_t numCurves = m_qwtCurves.size();
       for(size_t i = 0; i < numCurves; ++i)
       {
-         m_qwtCurves[i]->setNumPoints(newPlotSize);
+         m_qwtCurves[i]->setNumPoints(newPlotSize, true);
       }
       replotMainPlot();
    }

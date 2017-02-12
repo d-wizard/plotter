@@ -265,19 +265,45 @@ unsigned int CurveData::getNumPoints()
    return numPoints;
 }
 
-void CurveData::setNumPoints(unsigned int newNumPointsSize)
+void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
 {
-   numPoints = newNumPointsSize;
-   if(plotDim == E_PLOT_DIM_1D)
+   if(scrollMode)
    {
-      yOrigPoints.resize(numPoints);
-      fill1DxPoints();
+      bool addingPoints = numPoints < newNumPointsSize;
+      unsigned int delta = addingPoints ? newNumPointsSize - numPoints : numPoints - newNumPointsSize;
+
+      numPoints = newNumPointsSize;
+      if(addingPoints)
+      {
+         // Increasing curve size, add zero's to beginning.
+         yOrigPoints.insert(yOrigPoints.begin(), delta, 0);
+         if(plotDim == E_PLOT_DIM_2D)
+            xOrigPoints.insert(xOrigPoints.begin(), delta, 0);
+      }
+      else
+      {
+         // Decreasing curve size, remove samples from beginning.
+         yOrigPoints.erase(yOrigPoints.begin(), yOrigPoints.begin()+delta);
+         if(plotDim == E_PLOT_DIM_2D)
+            xOrigPoints.erase(yOrigPoints.begin(), xOrigPoints.begin()+delta);
+      }
    }
    else
    {
-      xOrigPoints.resize(numPoints);
-      yOrigPoints.resize(numPoints);
+      numPoints = newNumPointsSize;
+      if(plotDim == E_PLOT_DIM_1D)
+      {
+         yOrigPoints.resize(numPoints);
+      }
+      else
+      {
+         xOrigPoints.resize(numPoints);
+         yOrigPoints.resize(numPoints);
+      }
    }
+
+   if(plotDim == E_PLOT_DIM_1D)
+      fill1DxPoints();
    performMathOnPoints();
    setCurveSamples();
 }

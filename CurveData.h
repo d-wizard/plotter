@@ -69,7 +69,7 @@ public:
    ePlotDim getPlotDim();
    ePlotType getPlotType(){ return plotType;}
    unsigned int getNumPoints();
-   void setNumPoints(unsigned int newNumPointsSize); // This function is only intended to be used in scroll mode.
+   void setNumPoints(unsigned int newNumPointsSize, bool scrollMode);
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
    QString getCurveTitle();
