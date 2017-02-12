@@ -1,4 +1,4 @@
-/* Copyright 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -632,28 +632,62 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
       hzPerBin);
 }
 
+QString plotSnrCalc::doubleToStr(double num)
+{
+   char result[10];
+   bool isNeg = num < 0;
+   double absVal = isNeg ? -num : num;
+
+   if(isDoubleValid(num) == false)
+   {
+      sprintf(result, "   NaN ");
+   }
+   else if(absVal >= 1000)
+   {
+      sprintf(result, " %d ", (int)absVal);
+   }
+   else if(absVal >= 100)
+   {
+      sprintf(result, " %3.1lf", absVal);
+   }
+   else if(absVal >= 10)
+   {
+      sprintf(result, " %2.2lf", absVal);
+   }
+   else if(absVal >= 1)
+   {
+      sprintf(result, " %1.3lf", absVal);
+   }
+   else
+   {
+      sprintf(result, " %1.3lf", absVal);
+   }
+
+   if(isNeg)
+      result[0] = '-';
+   return QString(result);
+}
+
 QString plotSnrCalc::numToStrDb(double num, QString units)
 {
-   int sigFigs = 4;
-   return QString::number(num, 'g', sigFigs) + " " + units;
+   return doubleToStr(num) + " " + units;
 }
 
 QString plotSnrCalc::numToHz(double num)
 {
-   int sigFigs = 4;
    if(num < 1000.0)
    {
-      return QString::number(num, 'g', sigFigs) + " Hz";
+      return doubleToStr(num) + "  Hz";
    }
    else if(num < 1000000.0)
    {
-      return QString::number(num / 1000.0, 'g', sigFigs) + " kHz";
+      return doubleToStr(num / 1000.0) + " kHz";
    }
    else if(num < 1000000000.0)
    {
-      return QString::number(num / 1000000.0, 'g', sigFigs) + " MHz";
+      return doubleToStr(num / 1000000.0) + " MHz";
    }
-   return QString::number(num / 1000000000.0, 'g', sigFigs) + " GHz";
+   return doubleToStr(num / 1000000000.0) + " GHz";
 }
 
 void plotSnrCalc::setLabel()
@@ -672,13 +706,13 @@ void plotSnrCalc::setLabel()
          numToStrDb(signalPower, "dB") +
          " / " +
          numToHz(signalBandwidth) +
-         " | N: " +
+         "  |  N: " +
          numToStrDb(noisePower, "dB") +
          " / " +
          numToHz(noiseBandwidth) +
          " / " +
          numToStrDb(noiseBwPerHz, "dB/Hz") +
-         " | SNR: " +
+         "  |  SNR: " +
          numToStrDb(signalPower - noisePower, "dB") +
          " / " +
          numToStrDb(signalPower - noiseBwPerHz, "dB/Hz");

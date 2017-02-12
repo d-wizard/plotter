@@ -380,6 +380,11 @@
       </item>
       <item>
        <widget class="QLabel" name="snrLabel">
+        <property name="font">
+         <font>
+          <family>MS Sans Serif</family>
+         </font>
+        </property>
         <property name="text">
          <string/>
         </property>
