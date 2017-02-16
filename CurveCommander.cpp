@@ -456,6 +456,11 @@ void CurveCommander::showCurvePropertiesGui(QString plotName, QString curveName)
    {
       m_curvePropGui = new curveProperties(this, plotName, curveName);
    }
+   else
+   {
+      // Change all plot/curve GUI elements to point to this plot/curve.
+      m_curvePropGui->updateGuiPlotCurveInfo(plotName, curveName);
+   }
    m_curvePropGui->show();
    m_curvePropGui->raise();
 }
