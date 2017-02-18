@@ -1274,10 +1274,10 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
-   fillInPropTab();
+   fillInPropTab(true);
 }
 
-void curveProperties::fillInPropTab(bool activeTabChangedToPropertiesTab)
+void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
 {
    tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
    CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
@@ -1306,10 +1306,10 @@ void curveProperties::fillInPropTab(bool activeTabChangedToPropertiesTab)
       // Fill in Last Msg Ip Addr field.
       ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->getLastMsgIpAddr().m_ipV4Addr));
 
-      // Only update the writable values when swithing to the Properties tab.
+      // Only update the writable values when the user manually manipulated the Curve Properties GUI.
       // We don't want to instantly overwrite a user change to a writable value
       // every time the curve changes.
-      if(activeTabChangedToPropertiesTab)
+      if(userChangedPropertiesGuiSettings)
       {
          // These are writable values.
          ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));

@@ -157,7 +157,7 @@ private:
 
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 
-   void fillInPropTab(bool activeTabChangedToPropertiesTab = false);
+   void fillInPropTab(bool userChangedPropertiesGuiSettings = false);
    void propTabApply();
 
    void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
