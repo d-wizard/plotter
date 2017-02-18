@@ -765,7 +765,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       case TAB_PROPERTIES:
       {
          showApplyButton = true;
-         fillInPropTab();
+         fillInPropTab(true);
       }
       break;
 
@@ -1277,7 +1277,7 @@ void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
    fillInPropTab();
 }
 
-void curveProperties::fillInPropTab()
+void curveProperties::fillInPropTab(bool activeTabChangedToPropertiesTab)
 {
    tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
    CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
@@ -1289,9 +1289,6 @@ void curveProperties::fillInPropTab()
       ui->txtPropNumSamp->setText(QString::number(parentCurve->getNumPoints()));
       ui->txtPropDim->setText(parentCurve->getPlotDim() == E_PLOT_DIM_1D ? "1D" : "2D");
       ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
-      ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
-      ui->chkPropHide->setChecked(parentCurve->getHidden());
-      ui->chkPropVisable->setChecked(parentCurve->isDisplayed());
 
       maxMinXY curveDataMaxMin = parentCurve->getMaxMinXYOfData();
       ui->txtPropXMin->setText(QString::number(curveDataMaxMin.minX));
@@ -1308,6 +1305,17 @@ void curveProperties::fillInPropTab()
 
       // Fill in Last Msg Ip Addr field.
       ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->getLastMsgIpAddr().m_ipV4Addr));
+
+      // Only update the writable values when swithing to the Properties tab.
+      // We don't want to instantly overwrite a user change to a writable value
+      // every time the curve changes.
+      if(activeTabChangedToPropertiesTab)
+      {
+         // These are writable values.
+         ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
+         ui->chkPropHide->setChecked(parentCurve->getHidden());
+         ui->chkPropVisable->setChecked(parentCurve->isDisplayed());
+      }
    }
    else
    {
