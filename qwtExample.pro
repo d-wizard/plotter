@@ -73,7 +73,8 @@ HEADERS  += mainwindow.h \
     localPlotCreate.h \
     plotBar.h \
     plotSnrCalc.h \
-    ipBlocker.h
+    ipBlocker.h \
+    plotCurveComboBox.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

@@ -34,6 +34,10 @@
 #include "plotMsgPack.h"
 
 const QString PLOT_CURVE_SEP = "->";
+const QString GUI_ALL_VALUES = "*";
+const QString X_AXIS_APPEND = ".xAxis";
+const QString Y_AXIS_APPEND = ".yAxis";
+
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 

@@ -26,6 +26,7 @@
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
 #include "saveRestoreCurve.h"
+#include "plotCurveComboBox.h"
 
 namespace Ui {
 class curveProperties;
@@ -42,31 +43,31 @@ public:
    }ePreferredAxis;
 
    tCmbBoxAndValue(){}
-   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn):
+   tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn):
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(true),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
    {}
 
-   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, bool displayAxesSeparate):
+   tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAxesSeparate):
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(displayAxesSeparate),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
    {}
 
-   tCmbBoxAndValue(QComboBox* cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
+   tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(true),
       preferredAxis(preferredAxisIn)
    {}
 
-   QComboBox*     cmbBoxPtr;
-   QString        cmbBoxVal;
-   bool           displayAxesSeparately;
-   ePreferredAxis preferredAxis;
+   tPltCrvCmbBoxPtr cmbBoxPtr;
+   QString          cmbBoxVal;
+   bool             displayAxesSeparately;
+   ePreferredAxis   preferredAxis;
 };
 
 class CurveCommander;
@@ -146,10 +147,7 @@ private:
    void setCombosToPrevValues();
    void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName);
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
-   bool trySetComboItemIndex(QComboBox* cmbBox, QString text);
-   int getMatchingComboItemIndex(QComboBox* cmbBox, QString text);
-
-   tPlotCurveAxis getSelectedCurveInfo(QComboBox* cmbBox);
+   bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
    void setMathSampleRate(CurveData *curve);
    void displayUserMathOp();
@@ -190,6 +188,18 @@ private:
    int m_selectedMathOpRight;
 
    tMathOpList m_mathOps;
+
+   // Plot / Curve Combo boxes
+   tPltCrvCmbBoxPtr m_cmbXAxisSrc;
+   tPltCrvCmbBoxPtr m_cmbYAxisSrc;
+   tPltCrvCmbBoxPtr m_cmbSrcCurve_math;
+   tPltCrvCmbBoxPtr m_cmbCurveToSave;
+   tPltCrvCmbBoxPtr m_cmbPropPlotCurveName;
+   tPltCrvCmbBoxPtr m_cmbDestPlotName;
+   tPltCrvCmbBoxPtr m_cmbOpenCurvePlotName;
+   tPltCrvCmbBoxPtr m_cmbPlotToSave;
+   tPltCrvCmbBoxPtr m_cmbIpBlockPlotNames;
+
 
    QVector<tCmbBoxAndValue> m_plotCurveCombos;
    QVector<tCmbBoxAndValue> m_plotNameCombos;

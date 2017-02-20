@@ -32,9 +32,6 @@
 #include "persistentParameters.h"
 #include "localPlotCreate.h"
 
-const QString X_AXIS_APPEND = ".xAxis";
-const QString Y_AXIS_APPEND = ".yAxis";
-
 const int TAB_CREATE_CHILD_CURVE = 0;
 const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
@@ -130,20 +127,31 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    ui->availableOps->setCurrentRow(initialAvailableMathOpSelectionIndex);
    ui->lblMapOpValueLabel->setText(mathOpsValueLabel[initialAvailableMathOpSelectionIndex]);
 
+   m_cmbXAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbXAxisSrc         ));
+   m_cmbYAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbYAxisSrc         ));
+   m_cmbSrcCurve_math     = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbSrcCurve_math    ));
+   m_cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
+   m_cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
+   m_cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
+   m_cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
+   m_cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
+   m_cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
+
+
    // Initialize the list of all the combo boxes that display PlotName->CurveName
    m_plotCurveCombos.clear();
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbSrcCurve_math));
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbCurveToSave));
-   m_plotCurveCombos.append(tCmbBoxAndValue(ui->cmbPropPlotCurveName, false));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbSrcCurve_math));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbCurveToSave));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbPropPlotCurveName, false));
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
-   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbDestPlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbOpenCurvePlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbPlotToSave));
-   m_plotNameCombos.append(tCmbBoxAndValue(ui->cmbIpBlockPlotNames));
+   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbDestPlotName));
+   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbOpenCurvePlotName));
+   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbPlotToSave));
+   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbIpBlockPlotNames));
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -187,7 +195,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       // Add to dest plot name combo box
       for(int i = 0; i < m_plotNameCombos.size(); ++i)
       {
-         m_plotNameCombos[i].cmbBoxPtr->addItem(curPlotName);
+         m_plotNameCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
       }
 
       tCurveDataInfo* curves = &(allCurves[curPlotName].curves);
@@ -199,12 +207,11 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
             curveNames.push_back(curveName); // Fill in list of all curve names for the given plot.
          }
 
-         QString plotCurveName = curPlotName + PLOT_CURVE_SEP + curveName;
          if( curveData->getPlotDim() == E_PLOT_DIM_1D)
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
-               m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName);
+               m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
             }
          }
          else
@@ -213,12 +220,12 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
             {
                if(m_plotCurveCombos[i].displayAxesSeparately)
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + X_AXIS_APPEND);
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName + Y_AXIS_APPEND);
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_Y);
                }
                else
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(plotCurveName);
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
                }
             }
          }
@@ -386,32 +393,9 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
 
 }
 
-bool curveProperties::trySetComboItemIndex(QComboBox* cmbBox, QString text)
+bool curveProperties::trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text)
 {
-   int cmbIndex = getMatchingComboItemIndex(cmbBox, text);
-   if(cmbIndex >= 0)
-   {
-      cmbBox->setCurrentIndex(cmbIndex);
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
-int curveProperties::getMatchingComboItemIndex(QComboBox* cmbBox, QString text)
-{
-   int retVal = -1;
-   for(int i = 0; i < cmbBox->count(); ++i)
-   {
-      if(cmbBox->itemText(i) == text)
-      {
-         retVal = i;
-         break;
-      }
-   }
-   return retVal;
+   return cmbBox->trySetComboItemIndex(text);
 }
 
 void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
@@ -458,14 +442,16 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       break;
 
    }
+
+   m_cmbXAxisSrc->setVisible(xVis);
+   m_cmbYAxisSrc->setVisible(yVis);
+
    ui->lblXAxisSrc->setVisible(xVis);
-   ui->cmbXAxisSrc->setVisible(xVis);
    ui->spnXSrcStart->setVisible(xVis && slice);
    ui->spnXSrcStop->setVisible(xVis && slice);
    ui->cmdXUseZoomForSlice->setVisible(xVis && slice);
 
    ui->lblYAxisSrc->setVisible(yVis);
-   ui->cmbYAxisSrc->setVisible(yVis);
    ui->spnYSrcStart->setVisible(yVis && slice);
    ui->spnYSrcStop->setVisible(yVis && slice);
    ui->cmdYUseZoomForSlice->setVisible(yVis && slice);
@@ -484,7 +470,7 @@ void curveProperties::on_cmdApply_clicked()
    int tab = ui->tabWidget->currentIndex();
    if(tab == TAB_CREATE_CHILD_CURVE)
    {
-      QString newChildPlotName = ui->cmbDestPlotName->currentText();
+      QString newChildPlotName = m_cmbDestPlotName->currentText();
       QString newChildCurveName = ui->txtDestCurveName->text();
 
       if(newChildPlotName != "" && newChildCurveName != "")
@@ -496,7 +482,7 @@ void curveProperties::on_cmdApply_clicked()
             if( plotTypeHas2DInput(plotType) == false )
             {
                tParentCurveInfo axisParent;
-               axisParent.dataSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
+               axisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
                if(ui->chkSrcSlice->checkState() == Qt::Checked)
                {
                   axisParent.startIndex = ui->spnXSrcStart->value();
@@ -519,10 +505,10 @@ void curveProperties::on_cmdApply_clicked()
             else
             {
                tParentCurveInfo xAxisParent;
-               xAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
+               xAxisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
 
                tParentCurveInfo yAxisParent;
-               yAxisParent.dataSrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+               yAxisParent.dataSrc = m_cmbYAxisSrc->getPlotCurveAxis();
 
 
                if(ui->chkSrcSlice->checkState() == Qt::Checked)
@@ -573,7 +559,7 @@ void curveProperties::on_cmdApply_clicked()
    }
    else if(tab == TAB_CREATE_MATH)
    {
-      tPlotCurveAxis curve = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+      tPlotCurveAxis curve = m_cmbSrcCurve_math->getPlotCurveAxis();
       CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
       if(parentCurve != NULL)
       {
@@ -657,38 +643,6 @@ void curveProperties::on_cmdApply_clicked()
    }
 }
 
-
-
-tPlotCurveAxis curveProperties::getSelectedCurveInfo(QComboBox *cmbBox)
-{
-   std::string cmbText = cmbBox->currentText().toStdString();
-
-   tPlotCurveAxis retVal;
-   int axisAppendLen = (int)X_AXIS_APPEND.size();
-
-   // Handle plot name ending in .xAxis or .yAxis or neither
-   if( dString::Right(cmbText, axisAppendLen) == X_AXIS_APPEND.toStdString())
-   {
-      retVal.axis = E_X_AXIS;
-      cmbText = dString::Left(cmbText, cmbText.size() - axisAppendLen);
-   }
-   else if( dString::Right(cmbText, axisAppendLen) == Y_AXIS_APPEND.toStdString())
-   {
-      retVal.axis = E_Y_AXIS;
-      cmbText = dString::Left(cmbText, cmbText.size() - axisAppendLen);
-   }
-   else
-   {
-      retVal.axis = E_Y_AXIS;
-   }
-
-   retVal.plotName = QString::fromStdString(dString::SplitLeft(cmbText, PLOT_CURVE_SEP.toStdString()));
-   retVal.curveName = QString::fromStdString(dString::SplitRight(cmbText, PLOT_CURVE_SEP.toStdString()));
-
-   return retVal;
-}
-
-
 void curveProperties::on_cmdClose_clicked()
 {
    m_curveCmdr->curvePropertiesGuiClose();
@@ -730,7 +684,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
       case TAB_CREATE_MATH:
       {
-         tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+         tPlotCurveAxis curveInfo = m_cmbSrcCurve_math->getPlotCurveAxis();
          CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
 
          setMathSampleRate(curve);
@@ -777,7 +731,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
-   tPlotCurveAxis curveInfo = getSelectedCurveInfo(ui->cmbSrcCurve_math);
+   tPlotCurveAxis curveInfo = m_cmbSrcCurve_math->getPlotCurveAxis();
    CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
 
    setMathSampleRate(curve);
@@ -1021,8 +975,8 @@ void curveProperties::fillRestoreFilters()
 
    ui->cmbRestorePlotNameFilter->clear();
    ui->cmbRestoreCurveNameFilter->clear();
-   ui->cmbRestorePlotNameFilter->addItem("*");
-   ui->cmbRestoreCurveNameFilter->addItem("*");
+   ui->cmbRestorePlotNameFilter->addItem(GUI_ALL_VALUES);
+   ui->cmbRestoreCurveNameFilter->addItem(GUI_ALL_VALUES);
 
    for(int i = 0; i < m_restoreFilterPlotName.size(); ++i)
    {
@@ -1049,7 +1003,7 @@ void curveProperties::on_cmbRestoreCurveNameFilter_currentIndexChanged(int index
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdXUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = getSelectedCurveInfo(ui->cmbXAxisSrc);
+   tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
    if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
    {
@@ -1090,7 +1044,7 @@ void curveProperties::on_cmdXUseZoomForSlice_clicked()
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdYUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = getSelectedCurveInfo(ui->cmbYAxisSrc);
+   tPlotCurveAxis curve = m_cmbYAxisSrc->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
    if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
    {
@@ -1129,7 +1083,7 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
 
 void curveProperties::on_cmdSaveCurveToFile_clicked()
 {
-   tPlotCurveAxis toSave = getSelectedCurveInfo(ui->cmbCurveToSave);
+   tPlotCurveAxis toSave = m_cmbCurveToSave->getPlotCurveAxis();
    CurveData* toSaveCurveData = m_curveCmdr->getCurveData(toSave.plotName, toSave.curveName);
    MainWindow* plotGui = m_curveCmdr->getMainPlot(toSave.plotName);
 
@@ -1191,7 +1145,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
 void curveProperties::on_cmdSavePlotToFile_clicked()
 {
    tCurveCommanderInfo allPlots = m_curveCmdr->getCurveCommanderInfo();
-   QString plotName = ui->cmbPlotToSave->currentText();
+   QString plotName = m_cmbPlotToSave->currentText();
 
    if(allPlots.find(plotName) != allPlots.end())
    {
@@ -1263,7 +1217,7 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
 
    setOpenSavePath(fileName);
 
-   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, ui->cmbOpenCurvePlotName->currentText());
+   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText());
 
 }
 
@@ -1279,7 +1233,7 @@ void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 
 void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
 {
-   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   tPlotCurveAxis plotCurveInfo = m_cmbPropPlotCurveName->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
@@ -1337,7 +1291,7 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
 
 void curveProperties::propTabApply()
 {
-   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   tPlotCurveAxis plotCurveInfo = m_cmbPropPlotCurveName->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
@@ -1361,19 +1315,19 @@ void curveProperties::propTabApply()
 
 void curveProperties::on_cmdUnlinkParent_clicked()
 {
-   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   tPlotCurveAxis plotCurveInfo = m_cmbPropPlotCurveName->getPlotCurveAxis();
    m_curveCmdr->unlinkChildFromParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
    fillInPropTab(); // Update Propties Tab with new information.
 }
 
 void curveProperties::on_cmdRemoveCurve_clicked()
 {
-   tPlotCurveAxis plotCurveInfo = getSelectedCurveInfo(ui->cmbPropPlotCurveName);
+   tPlotCurveAxis plotCurveInfo = m_cmbPropPlotCurveName->getPlotCurveAxis();
    // Ask the user if they are sure they want to remove the plot.
    QMessageBox::StandardButton reply;
    reply = QMessageBox::question( this,
                                   "Remove Plot",
-                                  "Are you sure you want to permanently remove this curve: " + ui->cmbPropPlotCurveName->currentText(),
+                                  "Are you sure you want to permanently remove this curve: " + m_cmbPropPlotCurveName->currentText(),
                                   QMessageBox::Yes|QMessageBox::No );
    if (reply == QMessageBox::Yes)
    {
@@ -1387,8 +1341,8 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
    plotName = "";
    curveName = "";
 
-   tPlotCurveAxis xSrc = getSelectedCurveInfo(ui->cmbXAxisSrc);
-   tPlotCurveAxis ySrc = getSelectedCurveInfo(ui->cmbYAxisSrc);
+   tPlotCurveAxis xSrc = m_cmbXAxisSrc->getPlotCurveAxis();
+   tPlotCurveAxis ySrc = m_cmbYAxisSrc->getPlotCurveAxis();
 
    // Check for no plots.
    if(ySrc.plotName == "")
@@ -1498,7 +1452,7 @@ void curveProperties::storeUserChildPlotNames(ePlotType plotType)
    getSuggestedChildPlotCurveName(plotType, sugPlotName, sugCurveName);
 
    // Only save the plot name if it isn't already a plot name or it wasn't the suggested plot name.
-   QString curPlotNameText = ui->cmbDestPlotName->currentText();
+   QString curPlotNameText = m_cmbDestPlotName->currentText();
    m_childCurveNewPlotNameUser =
       (m_curveCmdr->validPlot(curPlotNameText) || curPlotNameText == sugPlotName) ?
       "" : curPlotNameText;
@@ -1517,11 +1471,11 @@ void curveProperties::setUserChildPlotNames()
 
    if(m_childCurveNewPlotNameUser != "")
    {
-      ui->cmbDestPlotName->lineEdit()->setText(m_childCurveNewPlotNameUser);
+      m_cmbDestPlotName->setText(m_childCurveNewPlotNameUser);
    }
    else
    {
-      ui->cmbDestPlotName->lineEdit()->setText(sugPlotName);
+      m_cmbDestPlotName->setText(sugPlotName);
    }
    if(m_childCurveNewCurveNameUser != "")
    {
@@ -1613,7 +1567,7 @@ void curveProperties::fillInIpBlockTab()
       else
       {
          // Empty list means block all. Use * to indicate that all plots are blocked.
-         ui->ipBlockPlotNames->addItem(ipAddrStr + PLOT_CURVE_SEP + "*");
+         ui->ipBlockPlotNames->addItem(ipAddrStr + PLOT_CURVE_SEP + GUI_ALL_VALUES);
       }
    }
 
@@ -1630,7 +1584,7 @@ void curveProperties::on_cmdIpBlockAdd_clicked()
    }
    else
    {
-      m_ipBlocker->addToBlockList(tPlotterIpAddr::convert(ui->cmbIpAddrs->currentText()), ui->cmbIpBlockPlotNames->currentText());
+      m_ipBlocker->addToBlockList(tPlotterIpAddr::convert(ui->cmbIpAddrs->currentText()), m_cmbIpBlockPlotNames->currentText());
    }
    fillInIpBlockTab();
 }
@@ -1645,7 +1599,7 @@ void curveProperties::on_cmdIpBlockRemove_clicked()
       QString ipAddr = dString::SplitLeft(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
       QString plotName = dString::SplitRight(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
 
-      if(plotName == "*")
+      if(plotName == GUI_ALL_VALUES)
       {
          m_ipBlocker->removeFromBlockList(tPlotterIpAddr::convert(ipAddr));
       }
