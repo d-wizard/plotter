@@ -36,6 +36,7 @@ public:
       E_COMBOBOX_PLOT_NAME_ONLY,
       E_COMBOBOX_CURVE_AXIS_X,
       E_COMBOBOX_CURVE_AXIS_Y,
+      E_COMBOBOX_CURVE_AXIS_ALL,
       E_COMBOBOX_CURVE_ENTIRE_CURVE,
       E_COMBOBOX_CURVE_ALL_CURVES
    }eCmbBoxCurveType;
@@ -86,6 +87,9 @@ public:
       case E_COMBOBOX_CURVE_AXIS_Y:
          newCmbBoxString = plotName + PLOT_CURVE_SEP + curveName + Y_AXIS_APPEND;
          break;
+      case E_COMBOBOX_CURVE_AXIS_ALL:
+         newCmbBoxString = plotName + PLOT_CURVE_SEP + curveName + '.' + GUI_ALL_VALUES;
+         break;
       case E_COMBOBOX_CURVE_ENTIRE_CURVE:
          newCmbBoxString = plotName + PLOT_CURVE_SEP + curveName;
          break;
@@ -103,13 +107,12 @@ public:
    {
       QMutexLocker lock(&cmbBoxChangeMutex);
 
-      QString plotName = cmbBoxPtr->currentText();
-      int index = getMatchingComboItemIndex(plotName);
-      if(index >= 0)
+      const tCmbBoxPlotCurveElement* elem = getCurElement();
+      if(elem != NULL)
       {
-         return cmbBoxActualValues[index].plotCurveName.plot;
+         return elem->plotCurveName.plot;
       }
-      return plotName;
+      return cmbBoxPtr->currentText();
 
    }
 
@@ -119,10 +122,10 @@ public:
 
       // User will never be asked to manually enter a plot / curve string. So
       // the current text value of the combo box should alway match an existing entry.
-      int index = getMatchingComboItemIndex(cmbBoxPtr->currentText());
-      if(index >= 0)
+      const tCmbBoxPlotCurveElement* elem = getCurElement();
+      if(elem != NULL)
       {
-         return cmbBoxActualValues[index].plotCurveName;
+         return elem->plotCurveName;
       }
 
       tPlotCurveName retVal = {"", ""};
@@ -131,29 +134,21 @@ public:
 
    tPlotCurveAxis getPlotCurveAxis()
    {
-      bool dummy;
-      return getPlotCurveAxis(dummy);
-   }
-
-   tPlotCurveAxis getPlotCurveAxis(bool& isAllCurves)
-   {
       QMutexLocker lock(&cmbBoxChangeMutex);
 
       tPlotCurveAxis retVal = {"", "", E_Y_AXIS};
 
       // User will never be asked to manually enter a plot / curve / axis string. So
       // the current text value of the combo box should alway match an existing entry.
-      int index = getMatchingComboItemIndex(cmbBoxPtr->currentText());
-      if(index >= 0)
+      const tCmbBoxPlotCurveElement* elem = getCurElement();
+      if(elem != NULL)
       {
-         tCmbBoxPlotCurveElement matchingElement = cmbBoxActualValues[index];
-
-         retVal.plotName  = matchingElement.plotCurveName.plot;
-         retVal.curveName = matchingElement.plotCurveName.curve;
-         retVal.axis      = matchingElement.cmbBoxType == E_COMBOBOX_CURVE_AXIS_X ?
+         retVal.plotName  = elem->plotCurveName.plot;
+         retVal.curveName = elem->plotCurveName.curve;
+         retVal.axis      = elem->cmbBoxType == E_COMBOBOX_CURVE_AXIS_X ?
                             E_X_AXIS : E_Y_AXIS; // default to Y axis.
-         isAllCurves = matchingElement.cmbBoxType == E_COMBOBOX_CURVE_ALL_CURVES;
       }
+
       return retVal;
    }
 
@@ -203,6 +198,22 @@ private:
          }
       }
       return retVal;
+   }
+
+   const tCmbBoxPlotCurveElement* getCurElement()
+   {
+      QMutexLocker lock(&cmbBoxChangeMutex);
+
+      int index = cmbBoxPtr->currentIndex();
+      if(index < 0 || index >= cmbBoxActualValues.size())
+         index = getMatchingComboItemIndex(cmbBoxPtr->currentText());
+
+      if(index >= 0)
+      {
+         return &cmbBoxActualValues[index];
+      }
+      return NULL;
+
    }
 
 };
