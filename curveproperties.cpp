@@ -1599,7 +1599,8 @@ void curveProperties::on_cmdIpBlockRemove_clicked()
       QString ipAddr = dString::SplitLeft(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
       QString plotName = dString::SplitRight(ipBlockPlotNameStr.toStdString(), PLOT_CURVE_SEP.toStdString()).c_str();
 
-      if(plotName == GUI_ALL_VALUES)
+      // Technically, a plot name might be the same as GUI_ALL_VALUES. Check for that case.
+      if(plotName == GUI_ALL_VALUES && m_curveCmdr->validPlot(plotName) == false)
       {
          m_ipBlocker->removeFromBlockList(tPlotterIpAddr::convert(ipAddr));
       }
