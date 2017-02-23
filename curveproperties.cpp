@@ -749,7 +749,10 @@ void curveProperties::fillInMathTab()
    CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
    QVector<QString> allCurveName; // Will be used if no curve matches the user selection in the combobox.
 
-   ui->grpMultCurve->setVisible(curve == NULL || type == tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
+   bool multCurveVisable = type == tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL ||
+                           type == tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES;
+
+   ui->grpMultCurve->setVisible(multCurveVisable);
 
    if(curve == NULL)
    {
