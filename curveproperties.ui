@@ -402,7 +402,7 @@
      <property name="geometry">
       <rect>
        <x>80</x>
-       <y>60</y>
+       <y>100</y>
        <width>113</width>
        <height>20</height>
       </rect>
@@ -412,7 +412,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>60</y>
+       <y>100</y>
        <width>61</width>
        <height>21</height>
       </rect>
@@ -426,7 +426,7 @@
       <rect>
        <x>0</x>
        <y>10</y>
-       <width>71</width>
+       <width>61</width>
        <height>21</height>
       </rect>
      </property>
@@ -440,9 +440,9 @@
     <widget class="QComboBox" name="cmbSrcCurve_math">
      <property name="geometry">
       <rect>
-       <x>80</x>
+       <x>70</x>
        <y>10</y>
-       <width>451</width>
+       <width>461</width>
        <height>21</height>
       </rect>
      </property>
@@ -451,7 +451,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>90</y>
+       <y>130</y>
        <width>181</width>
        <height>171</height>
       </rect>
@@ -461,7 +461,7 @@
      <property name="geometry">
       <rect>
        <x>350</x>
-       <y>90</y>
+       <y>130</y>
        <width>181</width>
        <height>171</height>
       </rect>
@@ -471,7 +471,7 @@
      <property name="geometry">
       <rect>
        <x>210</x>
-       <y>110</y>
+       <y>150</y>
        <width>131</width>
        <height>20</height>
       </rect>
@@ -481,7 +481,7 @@
      <property name="geometry">
       <rect>
        <x>240</x>
-       <y>140</y>
+       <y>180</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -494,7 +494,7 @@
      <property name="geometry">
       <rect>
        <x>540</x>
-       <y>90</y>
+       <y>130</y>
        <width>41</width>
        <height>23</height>
       </rect>
@@ -507,7 +507,7 @@
      <property name="geometry">
       <rect>
        <x>540</x>
-       <y>120</y>
+       <y>160</y>
        <width>41</width>
        <height>23</height>
       </rect>
@@ -520,7 +520,7 @@
      <property name="geometry">
       <rect>
        <x>540</x>
-       <y>230</y>
+       <y>270</y>
        <width>41</width>
        <height>23</height>
       </rect>
@@ -533,7 +533,7 @@
      <property name="geometry">
       <rect>
        <x>210</x>
-       <y>85</y>
+       <y>130</y>
        <width>131</width>
        <height>20</height>
       </rect>
@@ -541,6 +541,61 @@
      <property name="text">
       <string/>
      </property>
+    </widget>
+    <widget class="QGroupBox" name="grpMultCurve">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>511</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Mult-Curve Selection Options</string>
+     </property>
+     <widget class="QRadioButton" name="radMultCurveTop">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>20</y>
+        <width>82</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Add to Top</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radMultCurveBottom">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>20</y>
+        <width>91</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Add to Bottom</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="chkMultCurveOverwrite">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>20</y>
+        <width>121</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Overwrite All Curves</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tabRestoreCurve">

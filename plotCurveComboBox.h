@@ -38,7 +38,8 @@ public:
       E_COMBOBOX_CURVE_AXIS_Y,
       E_COMBOBOX_CURVE_AXIS_ALL,
       E_COMBOBOX_CURVE_ENTIRE_CURVE,
-      E_COMBOBOX_CURVE_ALL_CURVES
+      E_COMBOBOX_CURVE_ALL_CURVES,
+      E_COMBOBOX_CURVE_INVALID
    }eCmbBoxCurveType;
 
    // Only valid contructor.
@@ -78,6 +79,7 @@ public:
       QString newCmbBoxString;
       switch(cmbBoxType)
       {
+      default:
       case E_COMBOBOX_PLOT_NAME_ONLY:
          newCmbBoxString = plotName;
          break;
@@ -101,6 +103,21 @@ public:
       QMutexLocker lock(&cmbBoxChangeMutex);
       cmbBoxActualValues.push_back(newElement);
       cmbBoxPtr->addItem(newCmbBoxString);
+   }
+
+   eCmbBoxCurveType getElementType()
+   {
+      eCmbBoxCurveType retVal = E_COMBOBOX_CURVE_INVALID;
+
+      QMutexLocker lock(&cmbBoxChangeMutex);
+
+      const tCmbBoxPlotCurveElement* elem = getCurElement();
+      if(elem != NULL)
+      {
+         retVal = elem->cmbBoxType;
+      }
+      return retVal;
+
    }
 
    QString getPlot()

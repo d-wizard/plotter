@@ -47,6 +47,8 @@ public:
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(true),
+      displayAllCurves(false),
+      displayAllAxes(false),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
    {}
 
@@ -54,6 +56,8 @@ public:
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(displayAxesSeparate),
+      displayAllCurves(false),
+      displayAllAxes(false),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
    {}
 
@@ -61,12 +65,25 @@ public:
       cmbBoxPtr(cmbBoxPtrIn),
       cmbBoxVal(""),
       displayAxesSeparately(true),
+      displayAllCurves(false),
+      displayAllAxes(false),
       preferredAxis(preferredAxisIn)
+   {}
+
+   tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAllCurvesIn, bool displayAllAxesIn):
+      cmbBoxPtr(cmbBoxPtrIn),
+      cmbBoxVal(""),
+      displayAxesSeparately(true),
+      displayAllCurves(displayAllCurvesIn),
+      displayAllAxes(displayAllAxesIn),
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
    {}
 
    tPltCrvCmbBoxPtr cmbBoxPtr;
    QString          cmbBoxVal;
    bool             displayAxesSeparately;
+   bool             displayAllCurves;
+   bool             displayAllAxes;
    ePreferredAxis   preferredAxis;
 };
 
@@ -141,6 +158,10 @@ private slots:
 
    void on_cmdIpBlockRemoveAll_clicked();
 
+   void on_radMultCurveTop_clicked();
+
+   void on_radMultCurveBottom_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -149,9 +170,13 @@ private:
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
+   void fillInMathTab();
+   void mathTabApply();
    void setMathSampleRate(CurveData *curve);
    void displayUserMathOp();
-   void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve);
+   void setUserMathFromSrc(tPlotCurveAxis& curveInfo, CurveData *curve, tPlotCurveComboBox::eCmbBoxCurveType, QVector<QString>& curveNames);
+
+   QVector<QString> getAllCurveNamesInPlot(QString plotName);
 
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 
@@ -188,6 +213,7 @@ private:
    int m_selectedMathOpRight;
 
    tMathOpList m_mathOps;
+   int m_numMathOpsReadFromSrc;
 
    // Plot / Curve Combo boxes
    tPltCrvCmbBoxPtr m_cmbXAxisSrc;

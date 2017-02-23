@@ -112,6 +112,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_curveCmdr(curveCmdr),
    m_selectedMathOpLeft(0),
    m_selectedMathOpRight(0),
+   m_numMathOpsReadFromSrc(0),
    m_childCurveNewPlotNameUser(""),
    m_childCurveNewCurveNameUser(""),
    m_prevChildCurvePlotTypeIndex(-1)
@@ -142,7 +143,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_plotCurveCombos.clear();
    m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
    m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbSrcCurve_math));
+   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbSrcCurve_math, true, true));
    m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbCurveToSave));
    m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbPropPlotCurveName, false));
 
@@ -198,6 +199,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          m_plotNameCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
       }
 
+      // Add the "All Curves" curve name to the drop down box.
+      for(int i = 0; i < m_plotCurveCombos.size(); ++i)
+      {
+         if(m_plotCurveCombos[i].displayAllCurves)
+         {
+            m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
+         }
+      }
+
       tCurveDataInfo* curves = &(allCurves[curPlotName].curves);
       foreach( QString curveName, curves->keys() )
       {
@@ -218,6 +228,12 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
+               // Add the "All Axes" plot/curve name to the drop down box.
+               if(m_plotCurveCombos[i].displayAllAxes)
+               {
+                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
+               }
+
                if(m_plotCurveCombos[i].displayAxesSeparately)
                {
                   m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
@@ -559,17 +575,7 @@ void curveProperties::on_cmdApply_clicked()
    }
    else if(tab == TAB_CREATE_MATH)
    {
-      tPlotCurveAxis curve = m_cmbSrcCurve_math->getPlotCurveAxis();
-      CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
-      if(parentCurve != NULL)
-      {
-         double sampleRate = atof(ui->txtSampleRate->text().toStdString().c_str());
-         MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(curve.plotName);
-         if(parentPlotGui != NULL)
-         {
-            parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps);
-         }
-      }
+      mathTabApply();
    }
    else if(tab == TAB_RESTORE_MSG)
    {
@@ -684,13 +690,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
       case TAB_CREATE_MATH:
       {
-         tPlotCurveAxis curveInfo = m_cmbSrcCurve_math->getPlotCurveAxis();
-         CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
-
-         setMathSampleRate(curve);
-         setUserMathFromSrc(curveInfo, curve);
-         displayUserMathOp();
-
+         fillInMathTab();
          showApplyButton = true;
       }
       break;
@@ -729,22 +729,207 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
 }
 
-void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
+
+QVector<QString> curveProperties::getAllCurveNamesInPlot(QString plotName)
 {
+   QVector<QString> retVal;
+   tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
+   tCurveDataInfo* curves = &(allCurves[plotName].curves);
+   foreach( QString curveName, curves->keys() )
+   {
+      retVal.push_back(curveName);
+   }
+   return retVal;
+}
+
+void curveProperties::fillInMathTab()
+{
+   tPlotCurveComboBox::eCmbBoxCurveType type = m_cmbSrcCurve_math->getElementType();
    tPlotCurveAxis curveInfo = m_cmbSrcCurve_math->getPlotCurveAxis();
    CurveData* curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveInfo.curveName);
+   QVector<QString> allCurveName; // Will be used if no curve matches the user selection in the combobox.
 
-   setMathSampleRate(curve);
-   setUserMathFromSrc(curveInfo, curve);
+   ui->grpMultCurve->setVisible(curve == NULL || type == tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
+
+   if(curve == NULL)
+   {
+      // Need to fill in sample rate, use the sample rate of the first curve found.
+      allCurveName = getAllCurveNamesInPlot(curveInfo.plotName);
+      if(allCurveName.size() > 0)
+      {
+         CurveData* firstCurveInList = m_curveCmdr->getCurveData(curveInfo.plotName, allCurveName[0]);
+         setMathSampleRate(firstCurveInList);
+      }
+   }
+   else
+   {
+      setMathSampleRate(curve);
+   }
+
+   setUserMathFromSrc(curveInfo, curve, type, allCurveName);
    displayUserMathOp();
 }
 
-void curveProperties::setUserMathFromSrc(tPlotCurveAxis &curveInfo, CurveData* curve)
+void curveProperties::mathTabApply()
 {
-   if(curve != NULL)
+   tPlotCurveComboBox::eCmbBoxCurveType type = m_cmbSrcCurve_math->getElementType();
+   tPlotCurveAxis curve = m_cmbSrcCurve_math->getPlotCurveAxis();
+
+   // Initialize to default, single plot / curve / axis behavior.
+   bool applyToOnlyOneCurveAxis = true;
+   bool applyToAllCurves = false;
+   bool overwriteAllCurOps = true;
+   bool replaceFromTop = ui->radMultCurveTop->isChecked();
+
+   switch(type)
    {
-      m_mathOps = curve->getMathOps(curveInfo.axis);
+   default:
+      break;
+   case tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL:
+      applyToOnlyOneCurveAxis = false;
+      overwriteAllCurOps = ui->chkMultCurveOverwrite->isChecked();
+      break;
+   case tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES:
+      applyToOnlyOneCurveAxis = false;
+      applyToAllCurves = true;
+      overwriteAllCurOps = ui->chkMultCurveOverwrite->isChecked();
+      break;
    }
+
+   double sampleRate = atof(ui->txtSampleRate->text().toStdString().c_str());
+
+   MainWindow* parentPlotGui = m_curveCmdr->getMainPlot(curve.plotName);
+   if(parentPlotGui != NULL)
+   {
+      if(applyToOnlyOneCurveAxis)
+         parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps);
+      else if(applyToAllCurves)
+         parentPlotGui->setCurveProperties_allCurves(sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
+      else
+         parentPlotGui->setCurveProperties_allAxes(curve.curveName, sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
+   }
+
+}
+
+void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
+{
+   fillInMathTab();
+}
+
+void curveProperties::setUserMathFromSrc(tPlotCurveAxis &curveInfo, CurveData* curve, tPlotCurveComboBox::eCmbBoxCurveType type, QVector<QString>& curveNames)
+{
+   if(curve != NULL && type != tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL)
+   {
+      // Standard, single plot / curve / axis mode.
+      m_mathOps = curve->getMathOps(curveInfo.axis);
+      m_numMathOpsReadFromSrc = m_mathOps.size();
+   }
+   else
+   {
+      // Display math operations that are shared across multiple curves / axes.
+      tMathOpList mathOpList;
+      QVector<tMathOpList> allMathOpLists;
+
+      switch(type)
+      {
+         case tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES:
+         {
+            // Fill in the list will all the curves / axes.
+            for(int i = 0; i < curveNames.size(); ++i)
+            {
+               curve = m_curveCmdr->getCurveData(curveInfo.plotName, curveNames[i]);
+
+               if(curve != NULL)
+               {
+                  if(curve->getPlotDim() == E_PLOT_DIM_1D)
+                  {
+                     allMathOpLists.push_back(curve->getMathOps(E_Y_AXIS));
+                  }
+                  else
+                  {
+                     allMathOpLists.push_back(curve->getMathOps(E_X_AXIS));
+                     allMathOpLists.push_back(curve->getMathOps(E_Y_AXIS));
+                  }
+               }
+            }
+         }
+         break;
+         case tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL:
+            // Fill in the list will all the axes for the given curve.
+            if(curve != NULL)
+            {
+               allMathOpLists.push_back(curve->getMathOps(E_X_AXIS));
+               allMathOpLists.push_back(curve->getMathOps(E_Y_AXIS));
+            }
+         break;
+         default:
+         break;
+      }
+
+      // Compare all the math operations in the list to find the common ones.
+      // Start at either the top or bottom of the lists and stop when one of the lists
+      // differs from the rest.
+      if(allMathOpLists.size() > 0)
+      {
+         mathOpList = allMathOpLists[0];
+         if(ui->radMultCurveTop->isChecked())
+         {
+            // Start from top. Find all common math operations at the top
+            // of each list.
+            for(int i = 1; i < allMathOpLists.size(); ++i)
+            {
+               tMathOpList matchingMathOps;
+               tMathOpList::iterator curAllListEntry = allMathOpLists[i].begin();
+               tMathOpList::iterator finalMathListEntry = mathOpList.begin();
+               while(curAllListEntry != allMathOpLists[i].end() &&
+                     finalMathListEntry != mathOpList.end())
+               {
+                  if(*curAllListEntry == *finalMathListEntry)
+                  {
+                     matchingMathOps.push_back(*curAllListEntry);
+                     curAllListEntry++;
+                     finalMathListEntry++;
+                  }
+                  else
+                  {
+                     break;
+                  }
+               }
+
+               mathOpList = matchingMathOps;
+            }
+         }
+         else
+         {
+            // Start from bottom. Find all common math operations at the bottom
+            // of each list.
+            for(int i = 1; i < allMathOpLists.size(); ++i)
+            {
+               tMathOpList matchingMathOps;
+               tMathOpList::reverse_iterator curAllListEntry = allMathOpLists[i].rbegin();
+               tMathOpList::reverse_iterator finalMathListEntry = mathOpList.rbegin();
+               while(curAllListEntry != allMathOpLists[i].rend() &&
+                     finalMathListEntry != mathOpList.rend())
+               {
+                  if(*curAllListEntry == *finalMathListEntry)
+                  {
+                     matchingMathOps.push_front(*curAllListEntry);
+                     curAllListEntry++;
+                     finalMathListEntry++;
+                  }
+                  else
+                  {
+                     break;
+                  }
+               }
+
+               mathOpList = matchingMathOps;
+            }
+         }
+         m_mathOps = mathOpList;
+         m_numMathOpsReadFromSrc = m_mathOps.size();
+      } // End if(allMathOpLists.size() > 0)
+   } // End else (if(curve != NULL))
 }
 
 void curveProperties::displayUserMathOp()
@@ -1621,4 +1806,16 @@ void curveProperties::on_cmdIpBlockRemoveAll_clicked()
 {
     m_ipBlocker->clearBlockList();
     fillInIpBlockTab();
+}
+
+void curveProperties::on_radMultCurveTop_clicked()
+{
+   ui->radMultCurveBottom->setChecked(!ui->radMultCurveTop->isChecked());
+   fillInMathTab();
+}
+
+void curveProperties::on_radMultCurveBottom_clicked()
+{
+   ui->radMultCurveTop->setChecked(!ui->radMultCurveBottom->isChecked());
+   fillInMathTab();
 }

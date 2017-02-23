@@ -149,6 +149,8 @@ public:
     void setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified);
 
     void setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps);
+    void setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
+    void setCurveProperties_allAxes(QString curveName, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
 
     void setCurveHidden(QString curveName, bool hidden);
 
@@ -315,6 +317,10 @@ private:
 
     void setCurveStyleMenu();
     void setCurveStyleMenuIcons();
+
+    bool setCurveProperties_modify(CurveData *curveData, eAxis axis, tMathOpList& mathOps, bool replaceFromTop, int numOpsToReplace);
+    void setCurveProperties_fromList(QList<CurveData*> curves, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);

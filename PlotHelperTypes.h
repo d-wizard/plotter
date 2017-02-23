@@ -314,7 +314,7 @@ inline bool needsValue_eMathOp(eMathOp in)
    return false;
 }
 
-typedef struct
+typedef struct mathOperator
 {
    eMathOp op;
    double num;
@@ -322,6 +322,14 @@ typedef struct
    // To be used for math ops that can generate a number when the math operation
    // is specified that will be used each time the math operation is applied to a sample.
    double helperNum;
+
+   bool operator==(const struct mathOperator& rhs)
+   {
+       return (op == rhs.op) &&
+              (num == rhs.num) &&
+              (helperNum == rhs.helperNum);
+   }
+
 }tOperation;
 
 typedef std::list<tOperation> tMathOpList;

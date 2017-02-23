@@ -659,6 +659,113 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
    }
 }
 
+// Replaces some of the existing operations (either from the top or bottom of the existing list)
+// with the math operations passed.
+bool MainWindow::setCurveProperties_modify(CurveData* curveData, eAxis axis, tMathOpList &mathOps, bool replaceFromTop, int numOpsToReplace)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   tMathOpList origMathOps = curveData->getMathOps(axis);
+   tMathOpList finalMathOps;
+
+   if(numOpsToReplace > (int)origMathOps.size())
+      numOpsToReplace = origMathOps.size();
+
+   tMathOpList::iterator origBegin = origMathOps.begin();
+   tMathOpList::iterator origEnd   = origMathOps.end();
+   if(replaceFromTop)
+   {
+      std::advance(origBegin, numOpsToReplace);
+      finalMathOps = mathOps;
+      finalMathOps.insert(finalMathOps.end(), origBegin, origEnd);
+   }
+   else
+   {
+      std::advance(origEnd, -numOpsToReplace);
+      finalMathOps.insert(finalMathOps.begin(), origBegin, origEnd);
+      finalMathOps.insert(finalMathOps.end(), mathOps.begin(), mathOps.end());
+   }
+
+   return curveData->setMathOps(finalMathOps, axis);
+}
+
+// Either overwrite all math operations with the math operations passed in or
+// replace some of the existing operations (either from the top or bottom of the existing list)
+// with the math operations passed. Apply these changes to all the curves in the list.
+void MainWindow::setCurveProperties_fromList(QList<CurveData*> curves, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   bool anyCurveChanged = false;
+
+   for(int curveIndex = 0; curveIndex < curves.size(); ++curveIndex)
+   {
+      bool curveChanged = false;
+
+      curveChanged |= curves[curveIndex]->setSampleRate(sampleRate, true);
+
+      if(m_qwtCurves[curveIndex]->getPlotDim() == E_PLOT_DIM_1D)
+      {
+         // 1D
+         if(overwrite)
+         {
+            curveChanged |= curves[curveIndex]->setMathOps(mathOps, E_Y_AXIS);
+         }
+         else
+         {
+            curveChanged |= setCurveProperties_modify(curves[curveIndex], E_Y_AXIS, mathOps, replaceFromTop, numOpsToReplace);
+         }
+      }
+      else
+      {
+         // 2D
+         if(overwrite)
+         {
+            curveChanged |= curves[curveIndex]->setMathOps(mathOps, E_X_AXIS);
+            curveChanged |= curves[curveIndex]->setMathOps(mathOps, E_Y_AXIS);
+         }
+         else
+         {
+            curveChanged |= setCurveProperties_modify(curves[curveIndex], E_X_AXIS, mathOps, replaceFromTop, numOpsToReplace);
+            curveChanged |= setCurveProperties_modify(curves[curveIndex], E_Y_AXIS, mathOps, replaceFromTop, numOpsToReplace);
+         }
+      }
+
+      if(curveChanged)
+      {
+         int modifiedCurveIndex = getCurveIndex(curves[curveIndex]->getCurveTitle());
+         if(modifiedCurveIndex >= 0)
+         {
+            handleCurveDataChange(modifiedCurveIndex);
+         }
+      }
+      anyCurveChanged |= curveChanged;
+   }
+
+   if(anyCurveChanged)
+   {
+      m_snrCalcBars->sampleRateChanged();
+   }
+}
+
+void MainWindow::setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace)
+{
+   // Applying to all curves, use the existing list of all the curves.
+   setCurveProperties_fromList(m_qwtCurves, sampleRate, mathOps, overwrite, replaceFromTop, numOpsToReplace);
+}
+
+void MainWindow::setCurveProperties_allAxes(QString curveName, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace)
+{
+   int index = getCurveIndex(curveName);
+   if(index >= 0)
+   {
+      // Make a new list that contains just the one curve that we want to modify.
+      QList<CurveData*> curveList;
+      curveList.push_back(m_qwtCurves[index]);
+      setCurveProperties_fromList(curveList, sampleRate, mathOps, overwrite, replaceFromTop, numOpsToReplace);
+   }
+}
+
 
 void MainWindow::setCurveHidden(QString curveName, bool hidden)
 {
