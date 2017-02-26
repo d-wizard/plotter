@@ -198,9 +198,10 @@ static void processIniFile(int argc, char *argv[])
 static void setPersistentParamPath()
 {
 #ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
-   QString appDataPath = getEnvVar("APPDATA");
+   std::string appDataPath = getEnvVar("APPDATA").toStdString() +
+         fso::dirSep() + "plotter";
 
-   persistentParam_setPath(appDataPath.toStdString());
+   persistentParam_setPath(appDataPath);
 #else
    persistentParam_setPath(argv[0]);
 #endif

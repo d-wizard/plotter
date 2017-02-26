@@ -1,4 +1,4 @@
-/* Copyright 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -24,12 +24,13 @@
  */
 #include <iostream>
 #include <iomanip>
+#include <QDir>
 #include "persistentParameters.h"
 #include "FileSystemOperations.h"
 #include "dString.h"
 #include "pthread.h"
 
-static const std::string PERSISTENT_APPEND = "_persistentParam.ini";
+static const std::string PERSISTENT_FILE_NAME = "persistentParam.ini";
 static const std::string DELIM = "=";
 
 
@@ -51,15 +52,28 @@ void persistentParam_setPath(std::string path)
       else
       {
          std::string pathNameNoExt = dString::SplitBackLeft(path, ".");
-         iniPath = pathNameNoExt + PERSISTENT_APPEND;
+         iniPath = pathNameNoExt + "_" + PERSISTENT_FILE_NAME;
       }
    }
    else
    {
       std::string dir = path;
+      if(fso::DirExists(dir) == false)
+      {
+         fso::createDir(dir);
+      }
       if(fso::DirExists(dir))
       {
-         iniPath = dir + fso::dirSep() + PERSISTENT_APPEND;
+         iniPath = dir + fso::dirSep() + PERSISTENT_FILE_NAME;
+
+         // Copy from old location
+         std::string oldLocation = dString::SplitBackLeft(dir, fso::dirSep()) +
+               fso::dirSep() + "_" + PERSISTENT_FILE_NAME;
+         if(fso::FileExists(oldLocation))
+         {
+            QDir fileMover;
+            fileMover.rename(oldLocation.c_str(), iniPath.c_str());
+         }
       }
    }
    if(iniPath != "" && fso::FileExists(iniPath) == false)
