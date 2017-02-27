@@ -260,6 +260,7 @@ typedef struct
    int stopIndex;
    double avgAmount;
    bool windowFFT;
+   bool scaleFftWindow;
    eMathBetweenCurves_operators mathBetweenCurvesOperator;
 }tParentCurveInfo;
 

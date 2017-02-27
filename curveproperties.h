@@ -162,6 +162,8 @@ private slots:
 
    void on_radMultCurveBottom_clicked();
 
+   void on_chkWindow_clicked(bool checked);
+
 private:
    void closeEvent(QCloseEvent* event);
 

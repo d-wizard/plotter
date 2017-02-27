@@ -291,7 +291,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(m_prevInfo.size() != dataSize)
             {
                m_prevInfo.resize(dataSize);
-               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+               genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
             realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
          }
@@ -316,7 +316,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(m_prevInfo.size() != dataSize)
             {
                m_prevInfo.resize(dataSize);
-               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+               genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
             complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
          }
@@ -466,7 +466,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(m_prevInfo.size() != dataSize)
             {
                m_prevInfo.resize(dataSize);
-               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+               genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
             realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
          }
@@ -498,7 +498,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(m_prevInfo.size() != dataSize)
             {
                m_prevInfo.resize(dataSize);
-               genBlackmanWindowCoef(&m_prevInfo[0], dataSize);
+               genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
             complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
          }

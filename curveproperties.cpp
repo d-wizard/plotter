@@ -476,6 +476,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 
    ui->chkWindow->setVisible(windowChkVis);
+   ui->chkScaleFftWindow->setVisible(windowChkVis);
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
    setUserChildPlotNames();
@@ -511,6 +512,7 @@ void curveProperties::on_cmdApply_clicked()
                }
 
                axisParent.windowFFT = ui->chkWindow->isChecked();
+               axisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
 
                m_curveCmdr->createChildCurve( newChildPlotName,
@@ -544,11 +546,13 @@ void curveProperties::on_cmdApply_clicked()
 
                // Read values from GUI.
                xAxisParent.windowFFT = ui->chkWindow->isChecked();
+               xAxisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                xAxisParent.mathBetweenCurvesOperator =
                   (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
 
                // Y Axis values need to match X Axis value.
                yAxisParent.windowFFT = xAxisParent.windowFFT;
+               yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
                yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
 
                m_curveCmdr->createChildCurve( newChildPlotName,
@@ -1821,4 +1825,9 @@ void curveProperties::on_radMultCurveBottom_clicked()
 {
    ui->radMultCurveTop->setChecked(!ui->radMultCurveBottom->isChecked());
    fillInMathTab();
+}
+
+void curveProperties::on_chkWindow_clicked(bool checked)
+{
+   ui->chkScaleFftWindow->setEnabled(checked);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015, 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -213,11 +213,44 @@ void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& m
     }
 }
 
-void genBlackmanWindowCoef(double* outSamp, unsigned int numSamp)
+void genWindowCoef(double* outSamp, unsigned int numSamp, bool scale)
 {
+   double linearScaleFactor = 1.0;
+#if 1
+   // Blackman-Harris Window.
+   double denom = numSamp-1;
+   double twoPi  =  6.2831853071795864769252867665590057683943387987502116419;
+   double fourPi = 12.5663706143591729538505735331180115367886775975004232839;
+   double sixPi  = 18.8495559215387594307758602996770173051830163962506349258;
+
+   double cos1 = twoPi  / denom;
+   double cos2 = fourPi / denom;
+   double cos3 = sixPi  / denom;
+
+   for(unsigned int i = 0; i < numSamp; ++i)
+   {
+      double sampIndex = i;
+      outSamp[i] =   0.35875
+                   - 0.48829 * cos(cos1*sampIndex)
+                   + 0.14128 * cos(cos2*sampIndex)
+                   - 0.01168 * cos(cos3*sampIndex);
+   }
+   linearScaleFactor = 1.969124795; // Measured value. TODO: Calculate this value based on window coef.
+#else
+   // Standard Blackman Window.
    for(unsigned int i = 0; i < numSamp; ++i)
    {
       outSamp[i] = ( 0.42 - 0.5 * cos (2.0*M_PI*(double)i/(double)(numSamp-1))
          + 0.08 * cos (4.0*M_PI*(double)i/(double)(numSamp-1)) );
+   }
+   linearScaleFactor = 1.812030468; // Measured value. TODO: Calculate this value based on window coef.
+#endif
+
+   if(scale)
+   {
+      for(unsigned int i = 0; i < numSamp; ++i)
+      {
+         outSamp[i] *= linearScaleFactor;
+      }
    }
 }

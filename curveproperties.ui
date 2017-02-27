@@ -393,6 +393,19 @@
       </property>
      </item>
     </widget>
+    <widget class="QCheckBox" name="chkScaleFftWindow">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>200</y>
+       <width>171</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Compensate for Window Loss</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">
