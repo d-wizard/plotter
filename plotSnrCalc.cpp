@@ -370,14 +370,20 @@ void plotSnrCalc::calcPower(
    {
       for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
       {
-         powerSumLinear += pow(10.0, yPoints[i] / 10.0);
+         if(isDoubleValid(yPoints[i]))
+         {
+            powerSumLinear += pow(10.0, yPoints[i] / 10.0);
+         }
       }
    }
    else
    {
       for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
       {
-         powerSumLinear += yPoints[i];
+         if(isDoubleValid(yPoints[i]))
+         {
+            powerSumLinear += yPoints[i];
+         }
       }
    }
 
