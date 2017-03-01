@@ -1,4 +1,4 @@
-/* Copyright 2013, 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2016 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
-#include <semaphore.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #if (defined(_WIN32) || defined(__WIN32__))
    #define TCP_SERVER_THREADS_WIN_BUILD
