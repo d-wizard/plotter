@@ -326,7 +326,7 @@ void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min
       // Find first point that is a real number.
       for(unsigned int i = maxMinStartIndex; i < vectSize; ++i)
       {
-         if(isfinite(inPoints[i])) // Only allow real numbers.
+         if(isDoubleValid(inPoints[i])) // Only allow real numbers.
          {
             max = inPoints[i];
             min = inPoints[i];
@@ -338,7 +338,7 @@ void CurveData::findRealMaxMin(const dubVect& inPoints, double& max, double& min
       // Loop through the input value to find the max and min.
       for(unsigned int i = maxMinStartIndex; i < vectSize; ++i)
       {
-         if(isfinite(inPoints[i])) // Only allow real numbers.
+         if(isDoubleValid(inPoints[i])) // Only allow real numbers.
          {
             if(min > inPoints[i])
                min = inPoints[i];

@@ -28,8 +28,8 @@
 #include <QVector>
 #include <QString>
 #include <QDateTime>
-#include <limits>       // std::numeric_limits
-
+#include <limits>  // std::numeric_limits
+#include <cmath>   // std::isfinite
 
 #include "plotMsgPack.h"
 
@@ -442,6 +442,10 @@ typedef struct
 //////////////////////////////////////////////
 /////////////// Type Helpers /////////////////
 //////////////////////////////////////////////
+#if 1
+#define isDoubleValid std::isfinite
+#else
+// Alternate version. Keeping it around just incase std::isfinite isn't exactly the same.
 inline bool isDoubleValid(double value)
 {
    // According to the IEEE standard, NaN values have the odd property that
@@ -464,6 +468,7 @@ inline bool isDoubleValid(double value)
       return true;
    }
 }
+#endif
 
 
 //////////////////////////////////////////////

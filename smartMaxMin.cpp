@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -229,7 +229,7 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    // Find first point that is a real number.
    for(unsigned int i = startIndex; i < stopIndex; ++i)
    {
-      if(isfinite(srcPoints[i])) // Only allow real numbers.
+      if(isDoubleValid(srcPoints[i])) // Only allow real numbers.
       {
          seg.maxValue = srcPoints[i];
          seg.minValue = srcPoints[i];
@@ -244,7 +244,7 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    // Loop through the input value to find the max and min.
    for(unsigned int i = startIndex; i < stopIndex; ++i)
    {
-      if(isfinite(srcPoints[i])) // Only allow real numbers.
+      if(isDoubleValid(srcPoints[i])) // Only allow real numbers.
       {
          if(seg.minValue > srcPoints[i])
          {
