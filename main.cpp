@@ -119,6 +119,8 @@ void sendRestorePlotPathsToActiveInstance(int connectionToExistingAppInstance)
 
 static void processIniFile(int argc, char *argv[])
 {
+   (void)argc; // Tell the compiler not to warn that this variable is unused.
+
    // Try to find .ini file in Current Working Directory.
    std::string iniName(fso::GetFileNameNoExt(argv[0]));
    iniName.append(".ini");

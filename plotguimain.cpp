@@ -404,15 +404,6 @@ void plotGuiMain::showPropertiesGui()
    m_curveCommander.showCurvePropertiesGui();
 }
 
-void plotGuiMain::plotWindowClose(QString plotName)
-{
-}
-
-
-void plotGuiMain::curveUpdated(QString plotName, QString curveName)
-{
-}
-
 void plotGuiMain::on_cmdClose_clicked()
 {
     QApplication::quit();

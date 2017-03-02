@@ -73,7 +73,6 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
    {
       bool newCurve = !validCurve(plotName, curveName);
       m_allCurves[plotName].curves[curveName] = curveData;
-      m_plotGuiMain->curveUpdated(plotName, curveName);
 
       if(m_curvePropGui != NULL)
       {
@@ -346,7 +345,6 @@ void CurveCommander::update2dChildCurve(QString plotName, QString curveName, uns
 void CurveCommander::plotWindowCloseSlot(QString plotName)
 {
     plotRemoved(plotName);
-    m_plotGuiMain->plotWindowClose(plotName);
 }
 
 void CurveCommander::showHidePlotGui(QString plotName)

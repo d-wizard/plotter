@@ -143,7 +143,7 @@ static std::string getCHeaderDataType(eSaveRestorePlotCurveType type, ePlotDataT
    return typeStr;
 }
 
-static std::string getCHeaderTypedefStr(QString plotName, CurveData* curve, std::string dataTypeStr)
+static std::string getCHeaderTypedefStr(QString plotName, std::string dataTypeStr)
 {
    std::string typeNameStr = getPlotNameCHeaderTypeName(plotName);
    return "#ifndef " + typeNameStr + C_HEADER_LINE_DELIM +
@@ -288,7 +288,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
       curve->getLastMsgDataType(E_Y_AXIS),
       dataType_isInt);
 
-   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve, dataType_str) << C_HEADER_LINE_DELIM;
+   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), dataType_str) << C_HEADER_LINE_DELIM;
 
    if(curve->getPlotDim() != E_PLOT_DIM_1D)
    {

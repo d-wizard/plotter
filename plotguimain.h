@@ -55,10 +55,7 @@ public:
 
     void startPlotMsgProcess(tIncomingMsg* inMsg);
 
-    void plotWindowClose(QString plotName);
     void closeAllPlotsFromLib();
-
-    void curveUpdated(QString plotName, QString curveName);
 
     void readPlotMsg(UnpackMultiPlotMsg *plotMsg);
     void restorePlotMsg(const char *msg, unsigned int size, tPlotCurveName plotCurveName);

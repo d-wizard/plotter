@@ -675,6 +675,8 @@ void curveProperties::setMathSampleRate(CurveData* curve)
 
 void curveProperties::on_tabWidget_currentChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    int tab = ui->tabWidget->currentIndex();
 
    storeUserChildPlotNames((ePlotType)tab);
@@ -820,6 +822,8 @@ void curveProperties::mathTabApply()
 
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    fillInMathTab();
 }
 
@@ -1183,11 +1187,15 @@ void curveProperties::fillRestoreFilters()
 
 void curveProperties::on_cmbRestorePlotNameFilter_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    fillRestoreTabListBox();
 }
 
 void curveProperties::on_cmbRestoreCurveNameFilter_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    fillRestoreTabListBox();
 }
 
@@ -1420,6 +1428,8 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    fillInPropTab(true);
 }
 
@@ -1682,11 +1692,15 @@ void curveProperties::setUserChildPlotNames()
 
 void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    setUserChildPlotNames();
 }
 
 void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 {
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
    setUserChildPlotNames();
 }
 

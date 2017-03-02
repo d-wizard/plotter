@@ -273,7 +273,6 @@ void plotSnrCalc::calcSnrSlow()
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();
       const double* xPoints = m_parentCurve->getXPoints();
-      QColor color = m_parentCurve->getColor();
 
       double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
 
@@ -316,7 +315,6 @@ void plotSnrCalc::calcSnrFast()
    {
       unsigned int numPoints = m_parentCurve->getNumPoints();
       const double* xPoints = m_parentCurve->getXPoints();
-      QColor color = m_parentCurve->getColor();
 
       double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
 

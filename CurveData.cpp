@@ -654,19 +654,16 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
    if(plotDim == E_PLOT_DIM_2D)
    {
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
-      bool resized = false;
 
       if(scrollMode == false)
       {
          if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
-            resized = true;
             xOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
 
          if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
-            resized = true;
             yOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
 
@@ -686,7 +683,6 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
             yOrigPoints.resize(newPointsSize);
             memcpy(&xOrigPoints[0], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
             memcpy(&yOrigPoints[0], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
-            resized = true;
          }
          else
          {

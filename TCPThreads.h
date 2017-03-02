@@ -38,6 +38,12 @@
       #endif
       #define _WIN32_WINNT 0x501
    #endif
+
+   // winsock2.h with QT 5.8, mingw530_32 throws a compiler warning about 'windows.h' being included before 'winsock2.h'
+   // Undef _WINSOCKAPI_ as a workaround. TODO find a proper solution.
+   #ifdef _WINSOCKAPI_
+   #undef _WINSOCKAPI_
+   #endif
    #include <winsock2.h>
    #include <windows.h>
    #include <ws2tcpip.h>

@@ -1589,6 +1589,8 @@ void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
 
 void MainWindow::displayPointsCopyToClipboard(int dummy)
 {
+   (void)dummy; // Tell the compiler to not warn about this dummy variable. The dummy variable is needed to use the MAPPER_ACTION_TO_SLOT macro.
+
    std::string clipboardStr = "";
    std::string delim = "\t"; // Use tab as the delimiter to work best with Excel.
 
