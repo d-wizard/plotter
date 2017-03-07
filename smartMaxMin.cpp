@@ -175,6 +175,27 @@ void smartMaxMin::getMaxMin(double &retMax, double &retMin, bool& retReal)
    retReal = m_curMaxMinHasRealPoints;
 }
 
+void smartMaxMin::handleShortenedNumPoints()
+{
+   unsigned int srcVectSize = m_srcVect->size();
+   tSegList::iterator iter = m_segList.begin();
+   while(iter != m_segList.end())
+   {
+      if(iter->startIndex >= srcVectSize)
+      {
+         m_segList.erase(iter++);
+      }
+      else
+      {
+         if( (iter->startIndex + iter->numPoints) >= srcVectSize )
+         {
+            calcMaxMinOfSeg(iter->startIndex, srcVectSize - iter->startIndex, *iter);
+         }
+         iter++;
+      }
+   }
+}
+
 void smartMaxMin::calcTotalMaxMin()
 {
    tSegList::iterator iter = m_segList.begin();

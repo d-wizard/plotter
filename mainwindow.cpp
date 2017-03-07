@@ -1074,11 +1074,11 @@ void MainWindow::scrollModeChangePlotSize()
    {
       QMutexLocker lock(&m_qwtCurvesMutex);
       size_t numCurves = m_qwtCurves.size();
-      for(size_t i = 0; i < numCurves; ++i)
+      for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
       {
-         m_qwtCurves[i]->setNumPoints(newPlotSize, true);
+         m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
+         handleCurveDataChange(curveIndex);
       }
-      replotMainPlot();
    }
 
 }

@@ -267,9 +267,9 @@ unsigned int CurveData::getNumPoints()
 
 void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
 {
+   bool addingPoints = numPoints < newNumPointsSize;
    if(scrollMode)
    {
-      bool addingPoints = numPoints < newNumPointsSize;
       unsigned int delta = addingPoints ? newNumPointsSize - numPoints : numPoints - newNumPointsSize;
 
       numPoints = newNumPointsSize;
@@ -300,6 +300,22 @@ void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
          xOrigPoints.resize(numPoints);
          yOrigPoints.resize(numPoints);
       }
+   }
+
+   // Make sure all vectors are the same size.
+   if(xPoints.size() != xOrigPoints.size())
+      xPoints.resize(xOrigPoints.size());
+   if(yPoints.size() != yOrigPoints.size())
+      yPoints.resize(yOrigPoints.size());
+
+   // If we are shortening the plot size, let the smartMaxMin functionality know.
+   if(!addingPoints)
+   {
+      if(plotDim != E_PLOT_DIM_1D)
+      {
+         smartMaxMinXPoints.handleShortenedNumPoints();
+      }
+      smartMaxMinYPoints.handleShortenedNumPoints();
    }
 
    if(plotDim == E_PLOT_DIM_1D)
