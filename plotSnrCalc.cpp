@@ -380,7 +380,7 @@ void plotSnrCalc::calcPower(
       {
          if(isDoubleValid(yPoints[i]))
          {
-            powerSumLinear += yPoints[i];
+            powerSumLinear += (yPoints[i] * yPoints[i]);
          }
       }
    }
