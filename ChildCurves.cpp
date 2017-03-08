@@ -22,9 +22,6 @@
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
 
-const QString COMPLEX_FFT_REAL_APPEND = ".real";
-const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
-
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,

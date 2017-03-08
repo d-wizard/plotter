@@ -37,6 +37,8 @@ const QString PLOT_CURVE_SEP = "->";
 const QString GUI_ALL_VALUES = "*";
 const QString X_AXIS_APPEND = ".xAxis";
 const QString Y_AXIS_APPEND = ".yAxis";
+const QString COMPLEX_FFT_REAL_APPEND = ".real";
+const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
 
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))

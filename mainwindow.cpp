@@ -603,7 +603,7 @@ void MainWindow::readPlotMsgSlot()
 
             // Make sure the SNR Calc bars are updated. If a new curve is plotted that is a
             // valid SNR curve, make sure the SNR Calc action is made visable.
-            bool validSnrCurve = m_snrCalcBars->curveUpdated(m_qwtCurves[curveIndex]);
+            bool validSnrCurve = m_snrCalcBars->curveUpdated(m_qwtCurves[curveIndex], m_qwtCurves);
             if(validSnrCurve && m_toggleSnrCalcAction.isVisible() == false)
             {
                m_toggleSnrCalcAction.setVisible(true);
@@ -1953,7 +1953,7 @@ void MainWindow::setSelectedCurveIndex(int index)
         int oldSelectCursor = m_selectedCurveIndex;
         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
-        m_snrCalcBars->setCurve(m_qwtCurves[index]);
+        m_snrCalcBars->setCurve(m_qwtCurves[index], m_qwtCurves);
         m_selectedCurveIndex = index;
         if(m_normalizeCurves)
         {

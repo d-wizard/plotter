@@ -27,6 +27,8 @@ plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
    m_parentPlot(parentPlot),
    m_snrLabel(snrLabel),
    m_parentCurve(NULL),
+   m_parentCurve_complex(NULL),
+   m_multipleParentCurves(false),
    m_curveSampleRate(0.0),
    m_isVisable(false),
    m_activeBarIndex(-1),
@@ -162,20 +164,38 @@ void plotSnrCalc::moveToFront()
    }
 }
 
-void plotSnrCalc::setCurve(CurveData* curve)
+void plotSnrCalc::setCurve(CurveData* curve, QList<CurveData *>& allCurves)
 {
-   if(curve != m_parentCurve)
+   if(curve != m_parentCurve || (m_multipleParentCurves && m_parentCurve_complex == NULL))
    {
       m_parentCurve = curve;
       m_curveSampleRate = m_parentCurve->getSampleRate();
+
+      if(curve->getPlotType() == E_PLOT_TYPE_COMPLEX_FFT)
+      {
+         m_multipleParentCurves = true;
+         m_parentCurve_complex = getComplexParentCurve(allCurves);
+      }
+      else
+      {
+         m_multipleParentCurves = false;
+         m_parentCurve_complex = NULL;
+      }
+
       autoSetBars();
       calcSnrSlow();
    }
 }
 
-bool plotSnrCalc::curveUpdated(CurveData* curve)
+bool plotSnrCalc::curveUpdated(CurveData* curve, QList<CurveData*>& allCurves)
 {
    bool curveIsAValidFftForSnrCalc = false;
+
+   if(m_multipleParentCurves && m_parentCurve_complex == NULL)
+   {
+      m_parentCurve_complex = getComplexParentCurve(allCurves);
+   }
+
    if(m_isVisable && curve == m_parentCurve && m_parentCurve != NULL)
    {
       calcSnrSlow();
@@ -185,6 +205,7 @@ bool plotSnrCalc::curveUpdated(CurveData* curve)
       switch(curve->getPlotType())
       {
          case E_PLOT_TYPE_REAL_FFT:
+         case E_PLOT_TYPE_COMPLEX_FFT:
          case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
             curveIsAValidFftForSnrCalc = true;
@@ -195,6 +216,50 @@ bool plotSnrCalc::curveUpdated(CurveData* curve)
       }
    }
    return curveIsAValidFftForSnrCalc;
+}
+
+
+CurveData* plotSnrCalc::getComplexParentCurve(QList<CurveData*>& allCurves)
+{
+   CurveData* retVal = NULL;
+
+   // Complex FFTs have 2 curves, need to find the other curve for the FFT.
+   QString curveName = m_parentCurve->getCurveTitle();
+   int curveNameLen = curveName.length();
+
+   int reAppLen = COMPLEX_FFT_REAL_APPEND.length();
+   int imAppLen = COMPLEX_FFT_IMAG_APPEND.length();
+
+   QString otherCurveName = "";
+
+   // Generate other curve name. If the curve name ends with the real append string
+   // make it end with the imag append string, if it ends with the imag append string
+   // make it end with the real append string.
+   if( curveNameLen >= reAppLen &&
+       curveName.right(reAppLen) == COMPLEX_FFT_REAL_APPEND)
+   {
+      otherCurveName = curveName.left(curveNameLen - reAppLen) + COMPLEX_FFT_IMAG_APPEND;
+   }
+   else if( curveNameLen >= imAppLen &&
+       curveName.right(imAppLen) == COMPLEX_FFT_IMAG_APPEND)
+   {
+      otherCurveName = curveName.left(curveNameLen - imAppLen) + COMPLEX_FFT_REAL_APPEND;
+   }
+
+   // Find the curve with the matching curve name.
+   if(otherCurveName != "")
+   {
+      for(int i = 0; i < allCurves.size(); ++i)
+      {
+         if(allCurves[i]->getCurveTitle() == otherCurveName)
+         {
+            retVal = allCurves[i];
+            break;
+         }
+      }
+   }
+
+   return retVal;
 }
 
 void plotSnrCalc::sampleRateChanged()
@@ -360,6 +425,7 @@ void plotSnrCalc::calcPower(
    ePlotType plotType,
    const double* xPoints,
    const double *yPoints,
+   const double *yPoints_complex,
    double hzPerBin )
 {
    double powerSumLinear = 0;
@@ -374,13 +440,23 @@ void plotSnrCalc::calcPower(
          }
       }
    }
-   else
+   else if(plotType == E_PLOT_TYPE_REAL_FFT)
    {
       for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
       {
          if(isDoubleValid(yPoints[i]))
          {
             powerSumLinear += (yPoints[i] * yPoints[i]);
+         }
+      }
+   }
+   else if(plotType == E_PLOT_TYPE_COMPLEX_FFT && yPoints_complex != NULL)
+   {
+      for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)
+      {
+         if(isDoubleValid(yPoints[i]) && isDoubleValid(yPoints_complex[i]))
+         {
+            powerSumLinear += (yPoints[i] * yPoints[i] + yPoints_complex[i] * yPoints_complex[i]);
          }
       }
    }
@@ -529,6 +605,7 @@ bool plotSnrCalc::calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurve
    ePlotType plotType = m_parentCurve->getPlotType();
    const double* xPoints = m_parentCurve->getXPoints();
    const double* yPoints = m_parentCurve->getYPoints();
+   const double* yPoints_complex = m_parentCurve_complex == NULL ? NULL : m_parentCurve_complex->getYPoints();
    double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
 
    bool binsAdded = false;
@@ -584,6 +661,7 @@ bool plotSnrCalc::calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurve
          plotType,
          xPoints,
          yPoints,
+         yPoints_complex,
          hzPerBin);
    }
 
@@ -625,6 +703,7 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
    ePlotType plotType = m_parentCurve->getPlotType();
    const double* xPoints = m_parentCurve->getXPoints();
    const double* yPoints = m_parentCurve->getYPoints();
+   const double* yPoints_complex = m_parentCurve_complex == NULL ? NULL : m_parentCurve_complex->getYPoints();
    double hzPerBin = (xPoints[numPoints-1] - xPoints[0]) / (double)(numPoints-1);
 
    fftChunk->indexes = newIndexes;
@@ -633,6 +712,7 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
       plotType,
       xPoints,
       yPoints,
+      yPoints_complex,
       hzPerBin);
 }
 

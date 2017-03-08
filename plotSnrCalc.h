@@ -48,9 +48,9 @@ public:
 
    void moveToFront();
 
-   void setCurve(CurveData* curve);
+   void setCurve(CurveData* curve, QList<CurveData*>& allCurves);
 
-   bool curveUpdated(CurveData* curve);
+   bool curveUpdated(CurveData* curve, QList<CurveData*>& allCurves);
 
    void sampleRateChanged();
 private:
@@ -88,6 +88,8 @@ private:
    plotSnrCalc(plotSnrCalc const&);
    void operator=(plotSnrCalc const&);
 
+   CurveData* getComplexParentCurve(QList<CurveData*>& allCurves);
+
    void autoSetBars();
 
    void calcSnr();
@@ -98,6 +100,7 @@ private:
          ePlotType plotType,
          const double *xPoints,
          const double *yPoints,
+         const double *yPoints_complex,
          double hzPerBin );
 
    bool findDcBinIndex(unsigned int numPoints, const double* xPoints);
@@ -120,6 +123,8 @@ private:
    QwtPlot* m_parentPlot;
    QLabel* m_snrLabel;
    CurveData* m_parentCurve;
+   CurveData* m_parentCurve_complex;
+   bool m_multipleParentCurves;
    double m_curveSampleRate;
    bool m_isVisable;
 
