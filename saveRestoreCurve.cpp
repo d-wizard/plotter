@@ -61,13 +61,15 @@ static std::string convertToValidCName(std::string inStr)
    return retVal;
 }
 
-static std::string getPlotNameCHeaderTypeName(QString plotName)
+static std::string getPlotNameCHeaderTypeName(QString plotName, QString curveName)
 {
-   std::string retVal = convertToValidCName(plotName.toStdString());
-   if(retVal == "")
-      retVal = "PLOT_NAME";
-   retVal += "_T";
-   return retVal;
+   std::string cPlotName = convertToValidCName(plotName.toStdString());
+   std::string cCurveName = convertToValidCName(curveName.toStdString());
+   if(cPlotName == "")
+      cPlotName = "PLOT_NAME";
+   if(cCurveName == "")
+      cCurveName = "CURVE_NAME";
+   return cPlotName + "_" + cCurveName + "_T";
 }
 
 static std::string getPlotNameCHeaderVariableName(QString curveName)
@@ -143,9 +145,9 @@ static std::string getCHeaderDataType(eSaveRestorePlotCurveType type, ePlotDataT
    return typeStr;
 }
 
-static std::string getCHeaderTypedefStr(QString plotName, std::string dataTypeStr)
+static std::string getCHeaderTypedefStr(QString plotName, QString curveName, std::string dataTypeStr)
 {
-   std::string typeNameStr = getPlotNameCHeaderTypeName(plotName);
+   std::string typeNameStr = getPlotNameCHeaderTypeName(plotName, curveName);
    return "#ifndef " + typeNameStr + C_HEADER_LINE_DELIM +
           "#define " + typeNameStr + " " + dataTypeStr + C_HEADER_LINE_DELIM +
           "#endif" + C_HEADER_LINE_DELIM;
@@ -288,13 +290,13 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
       curve->getLastMsgDataType(E_Y_AXIS),
       dataType_isInt);
 
-   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), dataType_str) << C_HEADER_LINE_DELIM;
+   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve->getCurveTitle(), dataType_str) << C_HEADER_LINE_DELIM;
 
    if(curve->getPlotDim() != E_PLOT_DIM_1D)
    {
       const double* xPoints = curve->getXPoints();
       const double* yPoints = curve->getYPoints();
-      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName()) << " " <<
+      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName(), curve->getCurveTitle()) << " " <<
                  getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
                  "[" << curve->getNumPoints() << "][2] = {" << C_HEADER_LINE_DELIM;
 
@@ -335,7 +337,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
    else
    {
       const double* yPoints = curve->getYPoints();
-      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName()) << " " <<
+      outFile << getPlotNameCHeaderTypeName(plotGui->getPlotName(), curve->getCurveTitle()) << " " <<
                  getPlotNameCHeaderVariableName(curve->getCurveTitle()) <<
                  "[" << curve->getNumPoints() << "] = {" << C_HEADER_LINE_DELIM;
 
