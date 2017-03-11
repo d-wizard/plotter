@@ -61,7 +61,9 @@ class SaveCurve
 {
 public:
    SaveCurve(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
+   void getPackedData(PackedCurveData& packedDataReturn);
 
+   PackedCurveData packedCurveHead;
    PackedCurveData packedCurveData;
 private:
 
@@ -100,7 +102,9 @@ class SavePlot
 {
 public:
    SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
+   void getPackedData(PackedCurveData& packedDataReturn);
 
+   PackedCurveData packedCurveHead;
    PackedCurveData packedCurveData;
 private:
 

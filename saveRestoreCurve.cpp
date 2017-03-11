@@ -175,6 +175,12 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
    }
 }
 
+void SaveCurve::getPackedData(PackedCurveData& packedDataReturn)
+{
+   packedDataReturn.resize(0);
+   packedDataReturn.insert(packedDataReturn.end(), packedCurveHead.begin(), packedCurveHead.end());
+   packedDataReturn.insert(packedDataReturn.end(), packedCurveData.begin(), packedCurveData.end());
+}
 
 void SaveCurve::SaveRaw(CurveData* curve)
 {
@@ -276,6 +282,7 @@ void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string del
 
 void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type)
 {
+   std::stringstream headerFile;
    std::stringstream outFile;
    static const int MAX_SAMP_PER_LINE = 10;
    int sampPerLineCount = 0;
@@ -290,7 +297,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
       curve->getLastMsgDataType(E_Y_AXIS),
       dataType_isInt);
 
-   outFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve->getCurveTitle(), dataType_str) << C_HEADER_LINE_DELIM;
+   headerFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve->getCurveTitle(), dataType_str) << C_HEADER_LINE_DELIM;
 
    if(curve->getPlotDim() != E_PLOT_DIM_1D)
    {
@@ -374,6 +381,9 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
       outFile << "};" << C_HEADER_LINE_DELIM << C_HEADER_LINE_DELIM;
    }
 
+
+   packedCurveHead.resize(headerFile.str().size());
+   memcpy(&packedCurveHead[0], headerFile.str().c_str(), headerFile.str().size());
 
    packedCurveData.resize(outFile.str().size());
    memcpy(&packedCurveData[0], outFile.str().c_str(), outFile.str().size());
@@ -515,6 +525,13 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
    }
 }
 
+void SavePlot::getPackedData(PackedCurveData& packedDataReturn)
+{
+   packedDataReturn.resize(0);
+   packedDataReturn.insert(packedDataReturn.end(), packedCurveHead.begin(), packedCurveHead.end());
+   packedDataReturn.insert(packedDataReturn.end(), packedCurveData.begin(), packedCurveData.end());
+}
+
 void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo)
 {
    QVector<PackedCurveData> curveRawFiles;
@@ -608,6 +625,7 @@ void SavePlot::SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, e
    for(int i = 0; i < plotInfo.size(); ++i)
    {
       SaveCurve curveFile(plotGui, plotInfo[i], type);
+      packedCurveHead.insert(packedCurveHead.end(), curveFile.packedCurveHead.begin(), curveFile.packedCurveHead.end());
       packedCurveData.insert(packedCurveData.end(), curveFile.packedCurveData.begin(), curveFile.packedCurveData.end());
    }
 }

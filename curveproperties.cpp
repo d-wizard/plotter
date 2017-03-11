@@ -1335,7 +1335,9 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       if(saveType != E_SAVE_RESTORE_INVALID)
       {
          SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
-         fso::WriteFile(fileName.toStdString(), &packedCurve.packedCurveData[0], packedCurve.packedCurveData.size());
+         PackedCurveData dataToWriteToFile;
+         packedCurve.getPackedData(dataToWriteToFile);
+         fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
       }
    }
 
@@ -1404,7 +1406,9 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       if(saveType != E_SAVE_RESTORE_INVALID)
       {
          SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
-         fso::WriteFile(fileName.toStdString(), &savePlot.packedCurveData[0], savePlot.packedCurveData.size());
+         PackedCurveData dataToWriteToFile;
+         savePlot.getPackedData(dataToWriteToFile);
+         fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
       }
    }
 }

@@ -1684,14 +1684,16 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                   }
                }
                SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
+               PackedCurveData clipboardDataString;
+               savePlot.getPackedData(clipboardDataString);
 
                // Null Terminate.
-               size_t origSize = savePlot.packedCurveData.size();
-               savePlot.packedCurveData.resize(origSize + 1);
-               savePlot.packedCurveData[origSize] = '\0';
+               size_t origSize = clipboardDataString.size();
+               clipboardDataString.resize(origSize + 1);
+               clipboardDataString[origSize] = '\0';
 
                QClipboard* pClipboard = QApplication::clipboard();
-               pClipboard->setText(&savePlot.packedCurveData[0]);
+               pClipboard->setText(&clipboardDataString[0]);
 
             }
             else
