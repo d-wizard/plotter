@@ -1,4 +1,4 @@
-/* Copyright 2015 Dan Williams. All Rights Reserved.
+/* Copyright 2015, 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iomanip>
 #include <QTime>
+#include <QElapsedTimer>
 #include "FileSystemOperations.h"
 
 static inline void logLine(std::string logFileName, std::string srcFileName, std::string funcName, int lineNum, std::string extra)
@@ -36,6 +37,21 @@ static inline void logLine(std::string logFileName, std::string srcFileName, std
    fso::AppendFile(logFileName, str.str());
 }
 
+static inline void logLineLoad(std::string logFileName, std::string srcFileName, std::string funcName, int lineNum, std::string extra, qint64 load)
+{
+   QTime timeObj = QTime::currentTime();
+   std::stringstream str;
+   str << "[" << std::setw( 2 ) << std::setfill( '0' ) << timeObj.hour() << ":"
+       << std::setw( 2 ) << std::setfill( '0' ) << timeObj.minute() << ":"
+       << std::setw( 2 ) << std::setfill( '0' ) << timeObj.second() << "."
+       << std::setw( 3 ) << std::setfill( '0' ) << timeObj.msec() << "] "
+       << srcFileName << ":" << funcName << ":" << lineNum << " " << extra << ": " << load << " ns" << std::endl;
+   fso::AppendFile(logFileName, str.str());
+}
+
 #define LOG_LINE(extraPrint) logLine("LogLine.log", __FILE__, __func__, __LINE__, extraPrint);
+
+#define LOG_LINE_LOAD_START static QElapsedTimer llTimer; llTimer.start();
+#define LOG_LINE_LOAD_STOP(extraPrint) logLineLoad("LogLine.log", __FILE__, __func__, __LINE__, extraPrint, llTimer.nsecsElapsed());
 
 #endif // LOGTOFILE_H
