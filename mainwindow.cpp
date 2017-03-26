@@ -883,10 +883,6 @@ void MainWindow::updatePlotWithNewCurveData(bool onlyCurveDataChanged)
    // is caused by updating the GUI when we know the plot is just going to change anyway.
    if(m_plotMsgQueue.size() == 0)
    {
-      maxMinXY maxMin = calcMaxMin();
-
-      m_plotZoom->SetPlotDimensions(maxMin, false);
-
       replotMainPlot(false);
 
       // Make sure the cursors matches the updated point.

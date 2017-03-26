@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -523,9 +523,11 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
       // Call function in parent... The parent might have some stuff to do before replot is called.
       m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions);
 
-      m_qwtPlot->replot();
+      if(changeCausedByUserGuiInput)
+      {
+         m_qwtPlot->replot();
+      }
    }
-
 }
 
 
