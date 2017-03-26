@@ -82,6 +82,7 @@ public:
    void setNormalizeFactor(maxMinXY desiredScale);
    void resetNormalizeFactor();
    void setCurveSamples();
+   void setCurveDataGuiPoints();
 
    void ResetCurveSamples(const UnpackPlotMsg* data);
    void UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode);
@@ -127,6 +128,8 @@ private:
    void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
 
    void storeLastMsgStats(const UnpackPlotMsg* data);
+
+   maxMinXY getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len);
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;

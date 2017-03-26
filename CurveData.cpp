@@ -22,6 +22,9 @@
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
 
+//#define REDUCE_GUI_SAMPLES
+
+
 ///////////////////////////////////////////
 // Debug Switches
 ///////////////////////////////////////////
@@ -487,6 +490,110 @@ void CurveData::resetNormalizeFactor()
    yNormalized = false;
 }
 
+
+maxMinXY CurveData::getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len)
+{
+   maxMinXY retVal;
+   retVal.minY = in[start];
+   retVal.maxY = in[start];
+   retVal.minX = start;
+   retVal.maxX = start;
+
+   for(unsigned int i = start+1; i < (start+len); ++i)
+   {
+      if(in[i] > retVal.maxY)
+      {
+         retVal.maxX = i;
+         retVal.maxY = in[i];
+      }
+      if(in[i] < retVal.minY)
+      {
+         retVal.minX = i;
+         retVal.minY = in[i];
+      }
+   }
+
+   return retVal;
+}
+
+void CurveData::setCurveDataGuiPoints()
+{
+#ifdef REDUCE_GUI_SAMPLES
+   dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
+   dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
+
+   unsigned int sampPerPixel = 0;
+
+   int windowWidthPixels = m_parentPlot->canvas()->width();
+   if(windowWidthPixels > 0)
+   {
+      QwtScaleDiv plotWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      sampPerPixel = (plotWidthDim.upperBound() - plotWidthDim.lowerBound()) / windowWidthPixels; // Round Down
+   }
+
+   if( (plotDim != E_PLOT_DIM_1D) ||
+       (sampPerPixel <= 4) ||
+       (numPoints < (sampPerPixel+2)) )
+   {
+      curve->setSamples( &(*xPointsForGui)[0],
+                         &(*yPointsForGui)[0],
+                         numPoints);
+   }
+   else
+   {
+      dubVect guiXPoint;
+      dubVect guiYPoint;
+
+      guiXPoint.resize(xPointsForGui->size());
+      guiYPoint.resize(yPointsForGui->size());
+
+      unsigned int sampCount = 0;
+
+      guiXPoint[sampCount] = (*xPointsForGui)[0];
+      guiYPoint[sampCount] = (*yPointsForGui)[0];
+      sampCount++;
+
+      for(unsigned int i = 1; i < (numPoints-1); i += sampPerPixel)
+      {
+         unsigned int sampToProcess = std::min(sampPerPixel, (numPoints-1) - i);
+         maxMinXY maxMin = getMinMaxInRange((*yPointsForGui), i, sampToProcess);
+         if(maxMin.minX < maxMin.maxX)
+         {
+            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
+            guiYPoint[sampCount] = maxMin.minY;
+            sampCount++;
+            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            guiYPoint[sampCount] = maxMin.maxY;
+            sampCount++;
+         }
+         else if(maxMin.minX > maxMin.maxX)
+         {
+            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            guiYPoint[sampCount] = maxMin.maxY;
+            sampCount++;
+            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
+            guiYPoint[sampCount] = maxMin.minY;
+            sampCount++;
+         }
+         else
+         {
+            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            guiYPoint[sampCount] = maxMin.maxY;
+            sampCount++;
+         }
+      }
+
+      guiXPoint[sampCount] = (*xPointsForGui)[numPoints-1];
+      guiYPoint[sampCount] = (*yPointsForGui)[numPoints-1];
+      sampCount++;
+
+      curve->setSamples( &guiXPoint[0],
+                         &guiYPoint[0],
+                         sampCount);
+   }
+#endif
+}
+
 void CurveData::setCurveSamples()
 {
    // To save on processing, calculate final max/min.
@@ -532,6 +639,7 @@ void CurveData::setCurveSamples()
       finalMaxMin.maxY = (normFactor.yAxis.m * finalMaxMin.maxY) + normFactor.yAxis.b;
    }
    
+#ifndef REDUCE_GUI_SAMPLES
    if(xNormalized && yNormalized)
    {
       curve->setSamples( &normX[0],
@@ -556,6 +664,9 @@ void CurveData::setCurveSamples()
                          &yPoints[0],
                          numPoints);
    }
+#else
+   setCurveDataGuiPoints();
+#endif
 
    maxMin_finalSamples = finalMaxMin;
 }

@@ -521,7 +521,7 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
       }
 
       // Call function in parent... The parent might have some stuff to do before replot is called.
-      m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions);
+      m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions, changeCausedByUserGuiInput);
 
       if(changeCausedByUserGuiInput)
       {

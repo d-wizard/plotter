@@ -174,7 +174,7 @@ public:
 
     void setLegendState(bool showLegend);
 
-    void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions);
+    void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool changeCausedByUserGuiInput);
 
     QString getPlotName(){return m_plotName;}
 private:

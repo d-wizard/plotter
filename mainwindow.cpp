@@ -2377,8 +2377,17 @@ void MainWindow::activityIndicatorTimerSlot()
 
 // This function is to be called by the PlotZoom object whenever it is about to change the zoom.
 // This allows us to perform some operations whenever the zoom or plot dimensions change.
-void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions)
+void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool changeCausedByUserGuiInput)
 {
+   { // Create scope to bound QMutexLocker
+      QMutexLocker lock(&m_qwtCurvesMutex);
+
+      for(int i = 0; i < m_qwtCurves.size(); ++i)
+      {
+          m_qwtCurves[i]->setCurveDataGuiPoints();
+      }
+   }
+
    if(m_snrCalcBars != NULL)
    {
       m_snrCalcBars->updateZoomDim(zoomDimensions);
