@@ -22,7 +22,7 @@
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
 
-//#define REDUCE_GUI_SAMPLES
+#define REDUCE_GUI_SAMPLES
 
 
 ///////////////////////////////////////////
@@ -522,22 +522,90 @@ void CurveData::setCurveDataGuiPoints()
    dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
    dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
 
-   unsigned int sampPerPixel = 0;
-
-   int windowWidthPixels = m_parentPlot->canvas()->width();
-   if(windowWidthPixels > 0)
+   if(numPoints <= 0)
    {
-      QwtScaleDiv plotWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
-      sampPerPixel = (plotWidthDim.upperBound() - plotWidthDim.lowerBound()) / windowWidthPixels; // Round Down
+      return;
    }
 
-   if( (plotDim != E_PLOT_DIM_1D) ||
-       (sampPerPixel <= 4) ||
-       (numPoints < (sampPerPixel+2)) )
+   // For now, I don't know how to reduce 2D plots, so just plot all samples in that case.
+   // 1D sample reduce only works if there is more than 1 sample, so just plot all samples if there is only 1 sample.
+   if(plotDim != E_PLOT_DIM_1D || numPoints == 1)
    {
       curve->setSamples( &(*xPointsForGui)[0],
                          &(*yPointsForGui)[0],
                          numPoints);
+      return;
+   }
+
+   // Assume E_PLOT_DIM_1D from here on out.
+   // REDUCE_GUI_SAMPLES only works if the X axis samples are monotonically increasing at a constant rate.
+
+   unsigned int sampPerPixel = 0;
+
+   int xStartIndex = 0;
+   int xEndIndex = numPoints;
+
+   int windowWidthPixels = m_parentPlot->canvas()->width();
+   if(windowWidthPixels > 0)
+   {
+      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      double zoomMin = plotZoomWidthDim.lowerBound();
+      double zoomMax = plotZoomWidthDim.upperBound();
+      double zoomWidth = zoomMax - zoomMin;
+      double initialXPoint = (*xPointsForGui)[0];
+      double finalXPoint = (*xPointsForGui)[numPoints-1];
+      double distBetweenSamples = (finalXPoint - initialXPoint) / (double)(numPoints-1);
+
+      double sampPerPixel_float = zoomWidth / ((double)windowWidthPixels * distBetweenSamples);
+
+      // TODO: should not make any assumptions about indexes. Should right a function to find / verify indexes are correct.
+      double xStartIndex_float = (zoomMin - initialXPoint) / distBetweenSamples;
+      double xEndIndex_float   = (zoomMax - initialXPoint) / distBetweenSamples;
+
+      if(sampPerPixel_float > 0)
+      {
+         xStartIndex_float -= (2*sampPerPixel_float);
+         xEndIndex_float += (2*sampPerPixel_float);
+      }
+      else
+      {
+         xStartIndex_float -= 2;
+         xEndIndex_float += 2;
+      }
+
+      if(xStartIndex_float < 0)
+         xStartIndex_float = 0;
+      if(xStartIndex_float >= (double)numPoints)
+         xStartIndex_float = numPoints-1;
+
+      if(xEndIndex_float < 0)
+         xEndIndex_float = 0;
+      if(xEndIndex_float > (double)numPoints)
+         xEndIndex_float = numPoints;
+
+      xStartIndex = (int)std::floor(xStartIndex_float);
+      xEndIndex   = (int)std::ceil(xEndIndex_float);
+      if(xEndIndex <= xStartIndex)
+         return;
+
+      if( (sampPerPixel_float * 4.0) > (double)numPoints)
+      {
+         sampPerPixel = (double)numPoints / 4.0;
+      }
+      else
+      {
+         sampPerPixel = sampPerPixel_float; // Convert from float to int (round down).
+      }
+   }
+
+
+
+   if( (sampPerPixel <= 3) ||
+       (numPoints < (sampPerPixel+2)) )
+   {
+      curve->setSamples( &(*xPointsForGui)[xStartIndex],
+                         &(*yPointsForGui)[xStartIndex],
+                         xEndIndex-xStartIndex);
    }
    else
    {
@@ -549,13 +617,13 @@ void CurveData::setCurveDataGuiPoints()
 
       unsigned int sampCount = 0;
 
-      guiXPoint[sampCount] = (*xPointsForGui)[0];
-      guiYPoint[sampCount] = (*yPointsForGui)[0];
+      guiXPoint[sampCount] = (*xPointsForGui)[xStartIndex];
+      guiYPoint[sampCount] = (*yPointsForGui)[xStartIndex];
       sampCount++;
 
-      for(unsigned int i = 1; i < (numPoints-1); i += sampPerPixel)
+      for(int i = (xStartIndex+1); i < (xEndIndex-1); i += sampPerPixel)
       {
-         unsigned int sampToProcess = std::min(sampPerPixel, (numPoints-1) - i);
+         unsigned int sampToProcess = std::min((int)sampPerPixel, (xEndIndex-1) - i);
          maxMinXY maxMin = getMinMaxInRange((*yPointsForGui), i, sampToProcess);
          if(maxMin.minX < maxMin.maxX)
          {
@@ -583,8 +651,8 @@ void CurveData::setCurveDataGuiPoints()
          }
       }
 
-      guiXPoint[sampCount] = (*xPointsForGui)[numPoints-1];
-      guiYPoint[sampCount] = (*yPointsForGui)[numPoints-1];
+      guiXPoint[sampCount] = (*xPointsForGui)[xEndIndex-1];
+      guiYPoint[sampCount] = (*yPointsForGui)[xEndIndex-1];
       sampCount++;
 
       curve->setSamples( &guiXPoint[0],

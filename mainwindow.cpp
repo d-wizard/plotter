@@ -613,16 +613,24 @@ void MainWindow::readPlotMsgSlot()
          // Done with new plot messages.
          delete multiPlotMsg;
 
-         // If the SNR Calc Bars are visable, make sure they are displayed in front of any new curves.
-         if(newCurveAdded && m_snrCalcBars->isVisable())
+         if(newCurveAdded)
          {
             QMutexLocker lock(&m_qwtCurvesMutex);
-            m_snrCalcBars->moveToFront();
-            m_qwtPlot->replot();
+            if(m_snrCalcBars->isVisable())
+            {
+               // If the SNR Calc Bars are visable, make sure they are displayed in front of any new curves.
+               m_snrCalcBars->moveToFront();
+            }
+
+            // The GUI parameters (e.g. canvas size) do not get fully initialized right away when the curve is
+            // first created. Update the points sent to the GUI to ensure the correct GUI parameters are taken
+            // in to account.
+            updateAllCurveGuiPointsReplot();
          }
 
       }
    }
+
 }
 
 void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool userSpecified)
@@ -1940,6 +1948,10 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
     case QAbstractSlider::SliderPageStepSub:
         m_plotZoom->ModSliderPos(E_X_AXIS, -ZOOM_SCROLL_CHANGE_BIG);
         break;
+    case QAbstractSlider::SliderMove:
+       updateAllCurveGuiPointsReplot();
+    break;
+
     }
 }
 
@@ -2107,6 +2119,8 @@ void MainWindow::resizeEvent(QResizeEvent* /*event*/)
     m_canvasHeight_pixels = canvasSize.height() - (2*PLOT_CANVAS_OFFSET);
 
     m_canvasXOverYRatio = (double)m_canvasWidth_pixels / (double)m_canvasHeight_pixels;
+
+    updateAllCurveGuiPointsReplot();
 }
 
 
@@ -2379,14 +2393,7 @@ void MainWindow::activityIndicatorTimerSlot()
 // This allows us to perform some operations whenever the zoom or plot dimensions change.
 void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool changeCausedByUserGuiInput)
 {
-   { // Create scope to bound QMutexLocker
-      QMutexLocker lock(&m_qwtCurvesMutex);
-
-      for(int i = 0; i < m_qwtCurves.size(); ++i)
-      {
-          m_qwtCurves[i]->setCurveDataGuiPoints();
-      }
-   }
+   updateAllCurveGuiPoints();
 
    if(m_snrCalcBars != NULL)
    {
@@ -2395,3 +2402,19 @@ void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxM
    }
 }
 
+
+void MainWindow::updateAllCurveGuiPoints()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+       m_qwtCurves[i]->setCurveDataGuiPoints();
+   }
+}
+
+void MainWindow::updateAllCurveGuiPointsReplot()
+{
+   updateAllCurveGuiPoints();
+   m_qwtPlot->replot();
+}

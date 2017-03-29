@@ -321,6 +321,9 @@ private:
     bool setCurveProperties_modify(CurveData *curveData, eAxis axis, tMathOpList& mathOps, bool replaceFromTop, int numOpsToReplace);
     void setCurveProperties_fromList(QList<CurveData*> curves, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
 
+    void updateAllCurveGuiPoints();
+    void updateAllCurveGuiPointsReplot();
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
