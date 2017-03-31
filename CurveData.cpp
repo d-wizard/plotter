@@ -516,9 +516,146 @@ maxMinXY CurveData::getMinMaxInRange(const dubVect& in, unsigned int start, unsi
    return retVal;
 }
 
+// xStartIndex is a return value, inclusive.
+// xEndIndex is a return value, exclusive.
+// sampPerPixel is a return value.
+// The member variable numPoints must be 2 or greater.
+void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel)
+{
+   xStartIndex = 0;
+   xEndIndex = numPoints;
+
+   int windowWidthPixels = m_parentPlot->canvas()->width();
+   if(windowWidthPixels > 0)
+   {
+      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      double zoomMin = plotZoomWidthDim.lowerBound();
+      double zoomMax = plotZoomWidthDim.upperBound();
+      double zoomWidth = zoomMax - zoomMin;
+      double initialXPoint = (*xPointsForGui)[0];
+      double finalXPoint = (*xPointsForGui)[numPoints-1];
+      double distBetweenSamples = (finalXPoint - initialXPoint) / (double)(numPoints-1);
+
+      double sampPerPixel_float = zoomWidth / ((double)windowWidthPixels * distBetweenSamples);
+
+      // Make an educated guess as to where the start / stop indexes are that map to the zoom start / stop.
+      // These values can reduce the load when determine the true start / stop indexes.
+      double xStartIndex_guess = (zoomMin - initialXPoint) / distBetweenSamples;
+      double xEndIndex_guess   = (zoomMax - initialXPoint) / distBetweenSamples;
+
+      // Find the actual points that map to the zoom start / stop (use educated guess as a starting point).
+      double xStartIndex_float = findFirstSampleGreaterThan(xPointsForGui, xStartIndex_guess, zoomMin) - 1;
+      double xEndIndex_float = findFirstSampleGreaterThan(xPointsForGui, xEndIndex_guess, zoomMax);
+
+      // Add some margin so we plot a little before / after the zoom coordinates.
+      double margin = sampPerPixel_float > 0 ? 2.0*sampPerPixel_float: 2.0;
+      xStartIndex_float -= margin;
+      xEndIndex_float   += margin;
+
+      // Bound float based index when converting to integer (just in case the floating point version is bad... avoid overflow)
+      if(xStartIndex_float < 0)
+         xStartIndex = 0;
+      else if(xStartIndex_float >= (double)numPoints)
+         xStartIndex = numPoints-1;
+      else
+         xStartIndex = xStartIndex_float; // could call std::floor, but cast to int rounds down anyway.
+
+      if(xEndIndex_float < 0)
+         xEndIndex = 0;
+      else if(xEndIndex_float >= (double)numPoints)
+         xEndIndex = numPoints;
+      else
+         xEndIndex   = (int)std::ceil(xEndIndex_float);
+
+      if(xEndIndex <= xStartIndex)
+      {
+         // Calculated indexes are not valid, reset all values to default and let the calling function deal with it.
+         sampPerPixel = 0;
+         xStartIndex = 0;
+         xEndIndex = numPoints;
+         return;
+      }
+
+      double sampPerPixel_scaleCheck = 4.0;
+      if( (sampPerPixel_float * sampPerPixel_scaleCheck) > (double)numPoints)
+      {
+         // If 4 pixels worth of samples is greater than all the samples we are plotting,
+         // set samples per pixels to 1/4 of the number of samples.
+         // The idea is since we will only be sending a few samples to the GUI (since the
+         // sample per pixel is so low), we may as well slightly increase the number
+         // of samples per pixel to avoid low resolution issues.
+         sampPerPixel = (double)numPoints / sampPerPixel_scaleCheck;
+      }
+      else
+      {
+         sampPerPixel = sampPerPixel_float; // Convert from float to int (round down).
+      }
+   }
+}
+
+int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue)
+{
+   if((*xPointsForGui)[0] > compareValue)
+      return 0;
+   if((*xPointsForGui)[numPoints - 1] < compareValue)
+      return numPoints;
+
+   int retVal = -1;
+   double compareWidth = 1;
+
+   while(retVal < 0)
+   {
+      double startIndex_float = startSearchIndex - compareWidth;
+      double endIndex_float = startSearchIndex + compareWidth;
+
+      // Convert from floating point to int (bound to ensure we don't overflow when converting from floating point).
+      int startIndex;
+      if(startIndex_float < 0)
+         startIndex = 0;
+      else if(startIndex_float >= (double)numPoints)
+         startIndex = numPoints - 1;
+      else
+         startIndex = (int)startIndex_float; // could call std::floor, but cast to int rounds down anyway.
+
+      // Convert from floating point to int (bound to ensure we don't overflow when converting from floating point).
+      int endIndex;
+      if(endIndex_float < 0)
+         endIndex = 0;
+      else if(endIndex_float >= (double)numPoints)
+         endIndex = numPoints;
+      else
+         endIndex = (int)std::ceil(endIndex_float);
+
+      bool startIsLessOrEqual = (*xPointsForGui)[startIndex] <= compareValue;
+      bool endIsGreater = (*xPointsForGui)[endIndex-1] > compareValue;
+      if(startIsLessOrEqual && endIsGreater)
+      {
+         for(int i = startIndex; i < endIndex && retVal < 0; ++i)
+         {
+            if((*xPointsForGui)[i] > compareValue)
+            {
+               retVal = i;
+            }
+         }
+      }
+      else
+      {
+         if(!startIsLessOrEqual)
+         {
+            startSearchIndex = startIndex_float - compareWidth;
+         }
+         else
+         {
+            startSearchIndex = endIndex_float + compareWidth;
+         }
+         compareWidth *= 2;
+      }
+   }
+   return retVal;
+}
+
 void CurveData::setCurveDataGuiPoints()
 {
-#ifdef REDUCE_GUI_SAMPLES
    dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
    dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
 
@@ -538,67 +675,15 @@ void CurveData::setCurveDataGuiPoints()
    }
 
    // Assume E_PLOT_DIM_1D from here on out.
-   // REDUCE_GUI_SAMPLES only works if the X axis samples are monotonically increasing at a constant rate.
+   // This method only works if the X axis samples are monotonically increasing at a constant rate,
+   // which will be true for E_PLOT_DIM_1D.
 
    unsigned int sampPerPixel = 0;
-
    int xStartIndex = 0;
    int xEndIndex = numPoints;
 
-   int windowWidthPixels = m_parentPlot->canvas()->width();
-   if(windowWidthPixels > 0)
-   {
-      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
-      double zoomMin = plotZoomWidthDim.lowerBound();
-      double zoomMax = plotZoomWidthDim.upperBound();
-      double zoomWidth = zoomMax - zoomMin;
-      double initialXPoint = (*xPointsForGui)[0];
-      double finalXPoint = (*xPointsForGui)[numPoints-1];
-      double distBetweenSamples = (finalXPoint - initialXPoint) / (double)(numPoints-1);
-
-      double sampPerPixel_float = zoomWidth / ((double)windowWidthPixels * distBetweenSamples);
-
-      // TODO: should not make any assumptions about indexes. Should right a function to find / verify indexes are correct.
-      double xStartIndex_float = (zoomMin - initialXPoint) / distBetweenSamples;
-      double xEndIndex_float   = (zoomMax - initialXPoint) / distBetweenSamples;
-
-      if(sampPerPixel_float > 0)
-      {
-         xStartIndex_float -= (2*sampPerPixel_float);
-         xEndIndex_float += (2*sampPerPixel_float);
-      }
-      else
-      {
-         xStartIndex_float -= 2;
-         xEndIndex_float += 2;
-      }
-
-      if(xStartIndex_float < 0)
-         xStartIndex_float = 0;
-      if(xStartIndex_float >= (double)numPoints)
-         xStartIndex_float = numPoints-1;
-
-      if(xEndIndex_float < 0)
-         xEndIndex_float = 0;
-      if(xEndIndex_float > (double)numPoints)
-         xEndIndex_float = numPoints;
-
-      xStartIndex = (int)std::floor(xStartIndex_float);
-      xEndIndex   = (int)std::ceil(xEndIndex_float);
-      if(xEndIndex <= xStartIndex)
-         return;
-
-      if( (sampPerPixel_float * 4.0) > (double)numPoints)
-      {
-         sampPerPixel = (double)numPoints / 4.0;
-      }
-      else
-      {
-         sampPerPixel = sampPerPixel_float; // Convert from float to int (round down).
-      }
-   }
-
-
+   // Calculate xStartIndex, xEndIndex, sampPerPixel values.
+   getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel);
 
    if( (sampPerPixel <= 3) ||
        (numPoints < (sampPerPixel+2)) )
@@ -659,7 +744,6 @@ void CurveData::setCurveDataGuiPoints()
                          &guiYPoint[0],
                          sampCount);
    }
-#endif
 }
 
 void CurveData::setCurveSamples()
@@ -706,35 +790,8 @@ void CurveData::setCurveSamples()
       finalMaxMin.minY = (normFactor.yAxis.m * finalMaxMin.minY) + normFactor.yAxis.b;
       finalMaxMin.maxY = (normFactor.yAxis.m * finalMaxMin.maxY) + normFactor.yAxis.b;
    }
-   
-#ifndef REDUCE_GUI_SAMPLES
-   if(xNormalized && yNormalized)
-   {
-      curve->setSamples( &normX[0],
-                         &normY[0],
-                         numPoints);
-   }
-   else if(xNormalized)
-   {
-      curve->setSamples( &normX[0],
-                         &yPoints[0],
-                         numPoints);
-   }
-   else if(yNormalized)
-   {
-      curve->setSamples( &xPoints[0],
-                         &normY[0],
-                         numPoints);
-   }
-   else
-   {
-      curve->setSamples( &xPoints[0],
-                         &yPoints[0],
-                         numPoints);
-   }
-#else
+
    setCurveDataGuiPoints();
-#endif
 
    maxMin_finalSamples = finalMaxMin;
 }

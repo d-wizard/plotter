@@ -130,6 +130,8 @@ private:
    void storeLastMsgStats(const UnpackPlotMsg* data);
 
    maxMinXY getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len);
+   void getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel);
+   int findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue);
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
