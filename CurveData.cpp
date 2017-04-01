@@ -640,6 +640,7 @@ int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSe
       }
       else
       {
+         // TODO: should just set next startIndex_float and endIndex_float indexes here, to ensure we don't recheck indexes we have already checked.
          if(!startIsLessOrEqual)
          {
             startSearchIndex = startIndex_float - compareWidth;
@@ -654,7 +655,7 @@ int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSe
    return retVal;
 }
 
-void CurveData::setCurveDataGuiPoints()
+void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
 {
    dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
    dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
@@ -668,9 +669,12 @@ void CurveData::setCurveDataGuiPoints()
    // 1D sample reduce only works if there is more than 1 sample, so just plot all samples if there is only 1 sample.
    if(plotDim != E_PLOT_DIM_1D || numPoints == 1)
    {
-      curve->setSamples( &(*xPointsForGui)[0],
-                         &(*yPointsForGui)[0],
-                         numPoints);
+      if(onlyNeedToUpdate1D == false)
+      {
+         curve->setSamples( &(*xPointsForGui)[0],
+                            &(*yPointsForGui)[0],
+                            numPoints);
+      }
       return;
    }
 
@@ -697,6 +701,7 @@ void CurveData::setCurveDataGuiPoints()
       dubVect guiXPoint;
       dubVect guiYPoint;
 
+      // TODO should be able to predict how large this needs to be, rather than just setting it to the max.
       guiXPoint.resize(xPointsForGui->size());
       guiYPoint.resize(yPointsForGui->size());
 
@@ -791,7 +796,7 @@ void CurveData::setCurveSamples()
       finalMaxMin.maxY = (normFactor.yAxis.m * finalMaxMin.maxY) + normFactor.yAxis.b;
    }
 
-   setCurveDataGuiPoints();
+   setCurveDataGuiPoints(false); // Need to set GUI points regardless of 1D vs 2D.
 
    maxMin_finalSamples = finalMaxMin;
 }

@@ -2391,9 +2391,14 @@ void MainWindow::activityIndicatorTimerSlot()
 
 // This function is to be called by the PlotZoom object whenever it is about to change the zoom.
 // This allows us to perform some operations whenever the zoom or plot dimensions change.
-void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool changeCausedByUserGuiInput)
+void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool xAxisZoomChanged, bool changeCausedByUserGuiInput)
 {
-   updateAllCurveGuiPoints();
+   if(xAxisZoomChanged)
+   {
+      // When a plot is a 1D plot, we reduce the samples send to the GUI based on the X Axis zoom dimensions.
+      // Thus, we only need to update the samples sent to the GUI when the X Axis zoom has changed.
+      updateAllCurveGuiPoints();
+   }
 
    if(m_snrCalcBars != NULL)
    {
@@ -2409,7 +2414,8 @@ void MainWindow::updateAllCurveGuiPoints()
 
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
-       m_qwtCurves[i]->setCurveDataGuiPoints();
+      // Only need to do this for 1D curves, 2D curves will always send all their points to the GUI.
+      m_qwtCurves[i]->setCurveDataGuiPoints(true);
    }
 }
 

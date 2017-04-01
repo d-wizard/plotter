@@ -473,6 +473,8 @@ maxMinXY PlotZoom::getCurPlotDim()
 
 void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom)
 {
+   maxMinXY origZoomDim = m_zoomDimensions;
+
    // Nothing in the save zoom vector, initialize it with current zoom value.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
@@ -521,7 +523,8 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
       }
 
       // Call function in parent... The parent might have some stuff to do before replot is called.
-      m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions, changeCausedByUserGuiInput);
+      bool xAxisZoomChanged = m_zoomDimensions.minX != origZoomDim.minX || m_zoomDimensions.maxX != origZoomDim.maxX;
+      m_mainWindow->plotZoomDimChanged(m_plotDimensions, m_zoomDimensions, xAxisZoomChanged, changeCausedByUserGuiInput);
 
       if(changeCausedByUserGuiInput)
       {

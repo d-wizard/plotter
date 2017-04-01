@@ -82,7 +82,7 @@ public:
    void setNormalizeFactor(maxMinXY desiredScale);
    void resetNormalizeFactor();
    void setCurveSamples();
-   void setCurveDataGuiPoints();
+   void setCurveDataGuiPoints(bool onlyNeedToUpdate1D);
 
    void ResetCurveSamples(const UnpackPlotMsg* data);
    void UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode);
