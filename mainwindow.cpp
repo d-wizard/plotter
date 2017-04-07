@@ -803,7 +803,8 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
    {
       case E_CREATE_1D_PLOT:
       case E_CREATE_2D_PLOT:
-         resetCurve = true; // Reset curves on "Create" plot messages.
+         if(m_scrollMode == false) // Scroll mode overrides default Create Plot behavior.
+            resetCurve = true; // Reset curves on "Create" plot messages.
       break;
       default:
          // Keep variables at their initialized values.
