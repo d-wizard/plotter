@@ -2309,6 +2309,28 @@ void MainWindow::removeCurve(const QString& curveName)
    int curveIndex = getCurveIndex(curveName);
    if(curveIndex >= 0)
    {
+      // Check if we are removing the selected curve.
+      if(curveIndex == m_selectedCurveIndex)
+      {
+         // The selected curve is the curve we are about to remove. Try to change the
+         // selected curve to different curve that will be valid after this curve is removed.
+         int newSelectedCurveIndex = 0;
+         if(curveIndex > 0)
+         {
+            // The curve to remove isn't the first curve in the list. Just change the selected
+            // to the previous curve in the list.
+            newSelectedCurveIndex = curveIndex - 1;
+         }
+         else if(m_qwtCurves.size() > 1)
+         {
+            // The curve to remove is the first curve in the list. Just change the selected
+            // to what will be the first curve in the list after this curve is removed.
+            newSelectedCurveIndex = 1;
+         }
+         setSelectedCurveIndex(newSelectedCurveIndex);
+      }
+
+      // Remove the curve.
       delete m_qwtCurves[curveIndex];
       m_qwtCurves.removeAt(curveIndex);
    }
