@@ -571,6 +571,7 @@ void MainWindow::readPlotMsgSlot()
       if(multiPlotMsg != NULL)
       {
          bool newCurveAdded = false;
+         bool firstCurve = m_qwtCurves.size() == 0;
          for(UnpackPlotMsgPtrList::iterator iter = multiPlotMsg->m_plotMsgs.begin(); iter != multiPlotMsg->m_plotMsgs.end(); ++iter)
          {
             UnpackPlotMsg* plotMsg = (*iter);
@@ -607,6 +608,14 @@ void MainWindow::readPlotMsgSlot()
             if(validSnrCurve && m_toggleSnrCalcAction.isVisible() == false)
             {
                m_toggleSnrCalcAction.setVisible(true);
+            }
+
+            // If this is a new FFT plot / curve, initialize to Max Hold Zoom mode. This is because
+            // the max / min of the Y axis can jitter around in FFT plots (especially the min of
+            // the Y axis).
+            if(validSnrCurve && newCurveAdded && firstCurve && !m_plotZoom->m_maxHoldZoom)
+            {
+               maxHoldZoom();
             }
          }
 
