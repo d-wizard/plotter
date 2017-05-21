@@ -324,6 +324,8 @@ private:
     void updateAllCurveGuiPoints();
     void updateAllCurveGuiPointsReplot();
 
+    void restorePersistentPlotParams();
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);

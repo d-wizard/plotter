@@ -32,6 +32,7 @@
 #include "plotguimain.h"
 #include "dString.h"
 #include "saveRestoreCurve.h"
+#include "persistentPlotParameters.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -50,6 +51,10 @@ connect(&mapperAction.m_mapper, SIGNAL(mapped(int)), SLOT(callback(int)) );
 #define ACTIVITY_INDICATOR_PERIODS_TO_TIMEOUT (3)
 QString activityIndicatorStr = QChar(0xCF, 0x25); // Black Circle Character.
 
+// Create map for storing peristent plot parameters. This will be used to restore certain plot window
+// parameters in the situation where a plot window is closed and then a new plot window with the same
+// plot name is created.
+static tPersistentPlotParamMap g_persistentPlotParams;
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent) :
    QMainWindow(parent),
@@ -246,6 +251,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_toggleSnrCalcAction.setVisible(false);
     m_snrCalcBars = new plotSnrCalc(m_qwtPlot, ui->snrLabel);
 
+    restorePersistentPlotParams();
 }
 
 MainWindow::~MainWindow()
@@ -1586,6 +1592,9 @@ void MainWindow::displayPointsChangeType(int type) // This is a SLOT
     m_displayType = (eDisplayPointType)type;
     setDisplayRightClickIcons();
     updatePointDisplay();
+
+    // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
+    persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_displayType.set(m_displayType);
 }
 
 void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
@@ -1607,6 +1616,9 @@ void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
 
     setDisplayRightClickIcons();
     updatePointDisplay();
+
+    // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
+    persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_displayPrecision.set(m_displayPrecision);
 }
 
 void MainWindow::displayPointsCopyToClipboard(int dummy)
@@ -2463,3 +2475,28 @@ void MainWindow::updateAllCurveGuiPointsReplot()
    updateAllCurveGuiPoints();
    m_qwtPlot->replot();
 }
+
+// If this is not the first time a plot window has been created with this plot name, check if
+// there are any persistent parameters that should be restored.
+void MainWindow::restorePersistentPlotParams()
+{
+   if(persistentPlotParam_areThereAnyParams(g_persistentPlotParams, m_plotName))
+   {
+      persistentPlotParameters* ppp = persistentPlotParam_get(g_persistentPlotParams, m_plotName);
+
+      // Attempt to restore 'm_displayType'
+      if(ppp->m_displayType.isValid())
+      {
+         m_displayType = ppp->m_displayType.get();
+         setDisplayRightClickIcons(); // Set the display type that has the check icon next to it.
+      }
+
+      // Attempt to restore 'm_displayPrecision'
+      if(ppp->m_displayPrecision.isValid())
+      {
+         m_displayPrecision = ppp->m_displayPrecision.get();
+      }
+
+   }
+}
+
