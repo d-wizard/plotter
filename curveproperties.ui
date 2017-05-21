@@ -405,6 +405,9 @@
      <property name="text">
       <string>Compensate for Window Loss</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
