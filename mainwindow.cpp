@@ -1091,7 +1091,14 @@ void MainWindow::scrollModeChangePlotSize()
 
 void MainWindow::resetZoom()
 {
-   autoZoom();
+   if(m_plotZoom->m_maxHoldZoom)
+   {
+      maxHoldZoom();
+   }
+   else
+   {
+      autoZoom();
+   }
 }
 
 void MainWindow::normalizeCurves()
