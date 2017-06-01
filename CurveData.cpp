@@ -22,9 +22,6 @@
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
 
-#define REDUCE_GUI_SAMPLES
-
-
 ///////////////////////////////////////////
 // Debug Switches
 ///////////////////////////////////////////
@@ -667,7 +664,8 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
 
    // For now, I don't know how to reduce 2D plots, so just plot all samples in that case.
    // 1D sample reduce only works if there is more than 1 sample, so just plot all samples if there is only 1 sample.
-   if(plotDim != E_PLOT_DIM_1D || numPoints == 1)
+   // Also, 1D sample reduce can cause confusion when using the Dots Curve Style, don't use the 1D reduce for Dots.
+   if(plotDim != E_PLOT_DIM_1D || numPoints == 1 || appearance.style == QwtPlotCurve::Dots)
    {
       if(onlyNeedToUpdate1D == false)
       {
@@ -678,6 +676,7 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
       return;
    }
 
+   // All situations where we wouldn't want to use the 1D sample reduction code have been checked for (see the previous if statement).
    // Assume E_PLOT_DIM_1D from here on out.
    // This method only works if the X axis samples are monotonically increasing at a constant rate,
    // which will be true for E_PLOT_DIM_1D.
@@ -1228,6 +1227,11 @@ void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
 
    curve->setPen(appearance.color, width);
    curve->setStyle(appearance.style);
+
+   // The samples sent to the QWT plot API can change based on curve appearance.
+   // Since the curve appearance is changing, resend the samples.
+   setCurveDataGuiPoints(false);
+
    m_parentPlot->replot();
 }
 
