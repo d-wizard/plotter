@@ -597,7 +597,7 @@ int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSe
 {
    if((*xPointsForGui)[0] > compareValue)
       return 0;
-   if((*xPointsForGui)[numPoints - 1] < compareValue)
+   if((*xPointsForGui)[numPoints - 1] <= compareValue)
       return numPoints;
 
    int retVal = -1;
