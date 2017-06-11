@@ -70,7 +70,7 @@ static std::string getUniqueTempFileName(std::string tempPath, const std::string
 {
    std::string startFileName = tempPath + fso::dirSep() + fileName;
 
-   if (fso::FileExists(startFileName) == false && dirEmptyOrDoesntExist(startFileName) == false)
+   if(fso::FileExists(startFileName) == false && dirEmptyOrDoesntExist(startFileName) == true)
    {
       return startFileName;
    }
@@ -83,7 +83,7 @@ static std::string getUniqueTempFileName(std::string tempPath, const std::string
       {
          snprintf(numAscii, sizeof(numAscii), "%d", number++);
          checkFileName = startFileName + std::string(numAscii);
-      } while (fso::FileExists(checkFileName) || dirEmptyOrDoesntExist(checkFileName));
+      } while (fso::FileExists(checkFileName) || !dirEmptyOrDoesntExist(checkFileName));
 
       return checkFileName;
    }
