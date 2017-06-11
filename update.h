@@ -23,5 +23,6 @@
 
 std::string updatePlotter(std::string pathToThisBinary);
 
+void cleanupAfterUpdate();
 
 #endif // UPDATE_H

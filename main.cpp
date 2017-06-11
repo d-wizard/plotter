@@ -28,6 +28,7 @@
 #include "persistentParameters.h"
 #include "sendTCPPacket.h"
 #include "plotMsgPack.h"
+#include "update.h"
 
 // Local Variables.
 static bool g_portsSpecifiedViaCmdLine = false;
@@ -264,6 +265,8 @@ int main(int argc, char *argv[])
       }
 
       setPersistentParamPath();
+
+      cleanupAfterUpdate();
 
       return startGuiApp();
    }

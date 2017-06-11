@@ -21,17 +21,56 @@
 #include <string.h>
 #include <QString>
 #include <QProcess>
+#include <QFile>
+#include <QDir>
+#include <QThread>
 #include "FileSystemOperations.h"
 #include "dString.h"
+#include "persistentParameters.h"
+
+#ifdef Q_OS_WIN
+#include <windows.h> // Sleep
+#endif
 
 //#define COPY_UPDATER_TO_TEMP_DIR
 
-#ifdef COPY_UPDATER_TO_TEMP_DIR
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
+#ifdef Q_OS_WIN32
+   const char* UPDATE_FILES[] = {"update.exe", "libcrypto-1_1.dll", "updateSources.txt"};
+#else
+   const char* UPDATE_FILES[] = {"update", "updateSources.txt"};
+#endif
+#define UPDATE_FILES_UPDATE_EXE_INDEX (0)
+
+#define PERSISTENT_PARAM_TEMP_PATH_KEY "UpdateTempDirectory"
+
+
+static bool dirEmptyOrDoesntExist(std::string t_dir)
+{
+   bool empty = true;
+   if(fso::DirExists(t_dir))
+   {
+      fso::tDirContents t_dirContents;
+      fso::GetDirContents(t_dirContents, t_dir, false);
+      if(t_dirContents.size() > 0)
+      {
+         empty = false;
+      }
+   }
+   else if(fso::FileExists(t_dir))
+   {
+      empty = false;
+   }
+   return empty;
+}
+
+#ifdef COPY_UPDATER_TO_TEMP_DIR // #ifdef out local functions that are not needed
 static std::string getUniqueTempFileName(std::string tempPath, const std::string& fileName)
 {
    std::string startFileName = tempPath + fso::dirSep() + fileName;
 
-   if (fso::FileExists(startFileName) == false && fso::DirExists(startFileName) == false)
+   if (fso::FileExists(startFileName) == false && dirEmptyOrDoesntExist(startFileName) == false)
    {
       return startFileName;
    }
@@ -44,7 +83,7 @@ static std::string getUniqueTempFileName(std::string tempPath, const std::string
       {
          snprintf(numAscii, sizeof(numAscii), "%d", number++);
          checkFileName = startFileName + std::string(numAscii);
-      } while (fso::FileExists(checkFileName) || fso::DirExists(checkFileName));
+      } while (fso::FileExists(checkFileName) || dirEmptyOrDoesntExist(checkFileName));
 
       return checkFileName;
    }
@@ -83,16 +122,10 @@ static bool copyFile(std::string srcPath, std::string destPath)
 
 std::string updatePlotter(std::string pathToThisBinary)
 {
-   std::string updateBinaryFileName = "update";
-   #ifdef Q_OS_WIN32
-   updateBinaryFileName = "update.exe";
-   #endif
-
-   std::string updateBinaryDllFileName = "libcrypto-1_1.dll";
+   std::string updateBinaryFileName = UPDATE_FILES[UPDATE_FILES_UPDATE_EXE_INDEX];
 
    pathToThisBinary = fso::dirSepToOS(pathToThisBinary);
    std::string pathToUpdateBinary = fso::GetDir(pathToThisBinary) + fso::dirSep() + updateBinaryFileName;
-   std::string pathToUpdateDll    = fso::GetDir(pathToThisBinary) + fso::dirSep() + updateBinaryDllFileName;
 
    std::string finalUpdateBinaryPath;
    std::string updateCmd = "";
@@ -104,18 +137,25 @@ std::string updatePlotter(std::string pathToThisBinary)
       tempDir = getEnvVar("TEMP");
       #endif
 
+      // Get the temp folder and create it if it doesn't exist.
       std::string tempUpdateDir = getUniqueTempFileName(tempDir, "plotterUpdate");
-      fso::createDir(tempUpdateDir);
+      if(fso::DirExists(tempUpdateDir) == false)
+      {
+         fso::createDir(tempUpdateDir);
+      }
 
       if(fso::DirExists(tempUpdateDir))
       {
-         std::string tempUpdateBinaryPath = tempUpdateDir + fso::dirSep() + updateBinaryFileName;
-         copyFile(pathToUpdateBinary, tempUpdateBinaryPath);
-         copyFile(pathToUpdateDll, tempUpdateDir + fso::dirSep() + updateBinaryDllFileName);
+         // Copy all the update files.
+         for(size_t i = 0; i < ARRAY_SIZE(UPDATE_FILES); ++i)
+         {
+            copyFile(fso::GetDir(pathToThisBinary) + fso::dirSep() + UPDATE_FILES[i],
+                     tempUpdateDir + fso::dirSep() + UPDATE_FILES[i]);
+         }
 
-         finalUpdateBinaryPath = tempUpdateBinaryPath;
-         // Add quotes around tempUpdateBinaryPath and pathToThisBinary
-         updateCmd = "\"" + tempUpdateBinaryPath + "\" -p \"" + pathToThisBinary + "\"";
+         finalUpdateBinaryPath = tempUpdateDir + fso::dirSep() + updateBinaryFileName;
+
+         persistentParam_setParam_str(PERSISTENT_PARAM_TEMP_PATH_KEY, tempUpdateDir);
       }
 #else
       finalUpdateBinaryPath = pathToUpdateBinary;
@@ -125,4 +165,56 @@ std::string updatePlotter(std::string pathToThisBinary)
       updateCmd = "\"" + finalUpdateBinaryPath + "\" -p \"" + pathToThisBinary + "\"";
    }
    return updateCmd;
+}
+
+void cleanupAfterUpdate()
+{
+   std::string tempUpdateDir = "";
+
+   // Check if there is a temp update dir to remove. Read the value from the Persistent Parameters file.
+   if( persistentParam_getParam_str(PERSISTENT_PARAM_TEMP_PATH_KEY, tempUpdateDir) &&
+       tempUpdateDir != "" &&
+       fso::DirExists(tempUpdateDir))
+   {
+      bool allFilesRemoved = true; // Init to true, only go false if we fail to delete an existing update file.
+      int removeTryCount = 0;
+      bool canExitWhile = false;
+
+      do
+      {
+         // Attempt to remove any Update Files from the temp update dir.
+         for(size_t i = 0; i < ARRAY_SIZE(UPDATE_FILES); ++i)
+         {
+            std::string fileToDelete = tempUpdateDir + fso::dirSep() + UPDATE_FILES[i];
+            if(fso::FileExists(fileToDelete))
+            {
+               allFilesRemoved = QFile::remove(fileToDelete.c_str()) && allFilesRemoved;
+            }
+         }
+
+         // Attempt to remove the temp update dir.
+         if(allFilesRemoved && dirEmptyOrDoesntExist(tempUpdateDir))
+         {
+            QDir dir(tempUpdateDir.c_str());
+            dir.rmdir(dir.absolutePath());
+            if(fso::DirExists(tempUpdateDir) == false)
+            {
+               persistentParam_setParam_str(PERSISTENT_PARAM_TEMP_PATH_KEY, "");
+            }
+         }
+
+         canExitWhile = (allFilesRemoved == true) || (++removeTryCount < 5);
+         if(!canExitWhile)
+         {
+#ifdef Q_OS_WIN
+            Sleep(1000);
+#else
+            struct timespec ts = {1,0};
+            nanosleep(&ts, NULL);
+#endif
+         }
+
+      }while(!canExitWhile);
+   }
+
 }
