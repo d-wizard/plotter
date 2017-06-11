@@ -25,6 +25,7 @@
 
 #include "plotguimain.h"
 #include "ui_plotguimain.h"
+#include "update.h"
 
 #include "createfftplot.h"
 #include "fftHelper.h"
@@ -170,22 +171,11 @@ void plotGuiMain::restorePlotFilesInListSlot()
 void plotGuiMain::updateBinarySlot()
 {
    std::string pathToThisBinary = QCoreApplication::applicationFilePath().toStdString();
-
-   std::string updateBinaryFileName = "update";
-#ifdef Q_OS_WIN32
-   updateBinaryFileName = "update.exe";
-#endif
-
-   pathToThisBinary = fso::dirSepToOS(pathToThisBinary);
-   std::string pathToUpdateBinary = fso::GetDir(pathToThisBinary) + fso::dirSep() + updateBinaryFileName;
-
-   if(fso::FileExists(pathToUpdateBinary))
+   std::string updateCmdToRun = updatePlotter(pathToThisBinary);
+   if(updateCmdToRun != "")
    {
-      // Add quotes around pathToUpdateBinary and pathToThisBinary
-      std::string updateCmd = "\"" + pathToUpdateBinary + "\" -p \"" + pathToThisBinary + "\"";
-
       QProcess process(this);
-      process.startDetached(updateCmd.c_str());
+      process.startDetached(updateCmdToRun.c_str());
       QApplication::quit();
    }
    else
@@ -195,7 +185,6 @@ void plotGuiMain::updateBinarySlot()
       Msgbox.setText("Failed to find update executable.");
       Msgbox.exec();
    }
-
 }
 
 void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
