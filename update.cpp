@@ -32,7 +32,7 @@
 #include <windows.h> // Sleep
 #endif
 
-//#define COPY_UPDATER_TO_TEMP_DIR
+#define COPY_UPDATER_TO_TEMP_DIR
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
