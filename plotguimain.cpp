@@ -148,6 +148,7 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
 void plotGuiMain::closeAllPlotsSlot()
 {
    m_curveCommander.destroyAllPlots();
+   m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
 }
 
 void plotGuiMain::restorePlotFilesInListSlot()
