@@ -37,7 +37,7 @@
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
 #ifdef Q_OS_WIN32
-   const char* UPDATE_FILES[] = {"update.exe", "libcrypto-1_1.dll", "updateSources.txt"};
+   const char* UPDATE_FILES[] = {"update.exe", "libcrypto-1_1.dll", "msvcr120.dll", "updateSources.txt"};
 #else
    const char* UPDATE_FILES[] = {"update", "updateSources.txt"};
 #endif
