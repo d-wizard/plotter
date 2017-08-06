@@ -430,6 +430,13 @@ void plotSnrCalc::calcPower(
 {
    double powerSumLinear = 0;
 
+   if(fftChunk->indexes.stopIndex < fftChunk->indexes.startIndex)
+   {
+      fftChunk->powerLinear = 0.0;
+      fftChunk->bandwidth = 0.0;
+      return;
+   }
+
    if(plotType == E_PLOT_TYPE_DB_POWER_FFT_REAL || plotType == E_PLOT_TYPE_DB_POWER_FFT_COMPLEX)
    {
       for(int i = fftChunk->indexes.startIndex; i <= fftChunk->indexes.stopIndex; ++i)

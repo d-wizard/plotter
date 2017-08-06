@@ -71,7 +71,11 @@ private:
           return (startIndex != rhs.startIndex) ||
                  (stopIndex != rhs.stopIndex);
       }
-      curveDataIndexes(): startIndex(-1), stopIndex(-1){}
+
+      // Since both start and stop indexes are inclusive, set the default stop index
+      // to a lower value than the default start index. This way the default values
+      // don't look like there are any valid samples.
+      curveDataIndexes(): startIndex(0), stopIndex(-1){}
    }tCurveDataIndexes;
 
    typedef struct fftBinChunk
