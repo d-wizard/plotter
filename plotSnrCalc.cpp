@@ -426,16 +426,31 @@ void plotSnrCalc::calcPower(
    const double* xPoints,
    const double *yPoints,
    const double *yPoints_complex,
+   int numPoints,
    double hzPerBin )
 {
    double powerSumLinear = 0;
 
-   if(fftChunk->indexes.stopIndex < fftChunk->indexes.startIndex)
+   bool startIndexIsLow  = fftChunk->indexes.startIndex < 0;
+   bool startIndexIsHigh = fftChunk->indexes.startIndex >= numPoints;
+   bool stopIndexIsLow   = fftChunk->indexes.stopIndex  < 0;
+   bool stopIndexIsHigh  = fftChunk->indexes.stopIndex  >= numPoints;
+
+   // If both indexes are out of range on the same side (i.e. both are low or both are high),
+   // then return early. Also, return early if start index is ahead of stop index.
+   if( (startIndexIsLow && stopIndexIsLow) || (startIndexIsHigh && stopIndexIsHigh) || (fftChunk->indexes.startIndex > fftChunk->indexes.stopIndex) )
    {
       fftChunk->powerLinear = 0.0;
       fftChunk->bandwidth = 0.0;
       return;
    }
+
+   // If we got passed the early return above, then at least one of the start / stop indexes must be correct.
+   // If the other index is incorrect, repair it.
+   if(startIndexIsLow)
+      fftChunk->indexes.startIndex = 0;
+   if(stopIndexIsHigh)
+      fftChunk->indexes.stopIndex = numPoints-1;
 
    if(plotType == E_PLOT_TYPE_DB_POWER_FFT_REAL || plotType == E_PLOT_TYPE_DB_POWER_FFT_COMPLEX)
    {
@@ -546,6 +561,7 @@ int plotSnrCalc::findIndex(double barPoint, int numPoints, const double* xPoints
    int startSearchBin = midSearchBin - binStart;
    if(highSide == true)
    {
+      retVal = -1; // Default to invalid bin in case the break is never hit.
       for(int i = (startSearchBin + numBinsToCheck - 1); i >= startSearchBin; --i)
       {
          int index = i + m_dcBinIndex;
@@ -567,6 +583,7 @@ int plotSnrCalc::findIndex(double barPoint, int numPoints, const double* xPoints
    }
    else
    {
+      retVal = numPoints; // Default to invalid bin in case the break is never hit.
       for(int i = startSearchBin; i < (startSearchBin + numBinsToCheck); ++i)
       {
          int index = i + m_dcBinIndex;
@@ -658,17 +675,13 @@ bool plotSnrCalc::calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurve
 
    if(indexesAreDifferent)
    {
-      if(retFftBinChunk->indexes.startIndex < 0)
-         retFftBinChunk->indexes.startIndex = 0;
-      if(retFftBinChunk->indexes.stopIndex >= (int)numPoints)
-         retFftBinChunk->indexes.stopIndex = numPoints - 1;
-
       calcPower(
          retFftBinChunk,
          plotType,
          xPoints,
          yPoints,
          yPoints_complex,
+         numPoints,
          hzPerBin);
    }
 
@@ -679,9 +692,15 @@ void plotSnrCalc::updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes
 {
    if(fftChunk->indexes != newIndexes)
    {
+      // If start / stop indexes are out of order, no calculations are needed.
+      if(newIndexes.startIndex > newIndexes.stopIndex)
+      {
+         fftChunk->bandwidth = 0;
+         fftChunk->powerLinear = 0;
+      }
       // If only one index changed, we can just calculate the delta.
-      if( fftChunk->indexes.startIndex == newIndexes.startIndex ||
-          fftChunk->indexes.stopIndex == newIndexes.stopIndex )
+      else if( fftChunk->indexes.startIndex == newIndexes.startIndex ||
+               fftChunk->indexes.stopIndex == newIndexes.stopIndex )
       {
          tFftBinChunk delta;
          bool binsAdded = calcBinDelta(fftChunk->indexes, newIndexes, &delta);
@@ -720,6 +739,7 @@ void plotSnrCalc::calcFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes& 
       xPoints,
       yPoints,
       yPoints_complex,
+      numPoints,
       hzPerBin);
 }
 

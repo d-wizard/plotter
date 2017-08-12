@@ -105,6 +105,7 @@ private:
          const double *xPoints,
          const double *yPoints,
          const double *yPoints_complex,
+         int numPoints,
          double hzPerBin );
 
    bool findDcBinIndex(unsigned int numPoints, const double* xPoints);
