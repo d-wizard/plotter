@@ -104,7 +104,7 @@ public:
         double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
 
         // Initialize for 2D plot
-        int startIndex = 1;
+        int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
         int endIndex = m_parentCurve->getNumPoints();
 
         if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
@@ -126,7 +126,7 @@ public:
         {
             xDelta = fabs(xPoints[i] - xPos)*inverseWidth;
             yDelta = fabs(yPoints[i] - yPos)*inverseHeight;
-            // Don't do sqrt if its already known that it won't be smaller than curPointDist
+            // Don't do sqrt if its already known that it won't be smaller than minDist
             if(xDelta < minDist && yDelta < minDist)
             {
                 double curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
