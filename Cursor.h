@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -109,7 +109,7 @@ public:
 
         if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
         {
-            int roundDownMinDist = (int)(minDist * width) + 1;
+            int roundDownMinDist = (int)(minDist * width * m_parentCurve->getLinearXAxisCorrection().m) + 1;
             startIndex = minPointIndex - roundDownMinDist;
             endIndex = minPointIndex + roundDownMinDist;
             if(startIndex < 0)
