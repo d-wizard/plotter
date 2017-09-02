@@ -1706,6 +1706,33 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                 m_plotZoom->changeZoomFromSavedZooms(1);
             }
+            else if(KeyEvent->key() == Qt::Key_S && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Toggle Scroll Mode
+               scrollMode();
+            }
+            else if(KeyEvent->key() == Qt::Key_X && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set to scroll mode and open dialog to set the scroll mode plot size.
+               if(!m_scrollMode)
+                  scrollMode();
+               scrollModeChangePlotSize();
+            }
+            else if(KeyEvent->key() == Qt::Key_A && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set to Auto Zoom
+               autoZoom();
+            }
+            else if(KeyEvent->key() == Qt::Key_F && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set to Freeze Zoom
+               holdZoom();
+            }
+            else if(KeyEvent->key() == Qt::Key_M && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set to Max Hold Zoom
+               maxHoldZoom();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
