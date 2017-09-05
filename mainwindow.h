@@ -326,6 +326,8 @@ private:
 
     void restorePersistentPlotParams();
 
+    void scrollModeSetPlotSize(int newPlotSize);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -339,7 +341,7 @@ private slots:
     void autoZoom();
     void holdZoom();
     void maxHoldZoom();
-    void scrollMode();
+    void scrollModeToggle();
     void scrollModeChangePlotSize();
     void zoomMode();
     void resetZoom();

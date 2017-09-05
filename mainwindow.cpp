@@ -153,7 +153,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom()));
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
-    connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollMode()));
+    connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
@@ -1063,7 +1063,7 @@ void MainWindow::maxHoldZoom()
    m_plotZoom->m_holdZoom = false;
 }
 
-void MainWindow::scrollMode()
+void MainWindow::scrollModeToggle()
 {
    m_scrollMode = !m_scrollMode; // Toggle
    if(m_scrollMode)
@@ -1093,15 +1093,20 @@ void MainWindow::scrollModeChangePlotSize()
 
    if(ok && newPlotSize > 0)
    {
-      QMutexLocker lock(&m_qwtCurvesMutex);
-      size_t numCurves = m_qwtCurves.size();
-      for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
-      {
-         m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
-         handleCurveDataChange(curveIndex);
-      }
+      scrollModeSetPlotSize(newPlotSize);
    }
 
+}
+
+void MainWindow::scrollModeSetPlotSize(int newPlotSize)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   size_t numCurves = m_qwtCurves.size();
+   for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
+   {
+      m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
+      handleCurveDataChange(curveIndex);
+   }
 }
 
 void MainWindow::resetZoom()
@@ -1709,14 +1714,22 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_S && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                // Toggle Scroll Mode
-               scrollMode();
+               scrollModeToggle();
             }
             else if(KeyEvent->key() == Qt::Key_X && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                // Set to scroll mode and open dialog to set the scroll mode plot size.
                if(!m_scrollMode)
-                  scrollMode();
+                  scrollModeToggle();
                scrollModeChangePlotSize();
+            }
+            else if(KeyEvent->key() == Qt::Key_1 && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set the scroll mode plot size to 10x the plot size specified by the plot messages.
+               QMutexLocker lock(&m_qwtCurvesMutex);
+               if(!m_scrollMode) // Set to scroll mode
+                  scrollModeToggle();
+               scrollModeSetPlotSize(10*m_qwtCurves[m_selectedCurveIndex]->getMaxNumPointsFromPlotMsg());
             }
             else if(KeyEvent->key() == Qt::Key_A && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
