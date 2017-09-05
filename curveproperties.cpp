@@ -26,6 +26,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <fstream>
+#include <iomanip>
 #include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
@@ -1455,6 +1456,11 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
       ui->txtPropXMax->setText(QString::number(curveDataMaxMin.maxX));
       ui->txtPropYMin->setText(QString::number(curveDataMaxMin.minY));
       ui->txtPropYMax->setText(QString::number(curveDataMaxMin.maxY));
+
+      // Set the calculated sample rate (this number might jump around a bit, make sure number of decimal points doesn't change).
+      std::stringstream calcSampRateStr;
+      calcSampRateStr << std::setprecision(3) << std::fixed << parentCurve->getCalculatedSampleRateFromPlotMsgs();
+      ui->txtCalcSampleRate->setText(calcSampRateStr.str().c_str());
 
       ui->propParentCurves->clear();
       QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);

@@ -43,7 +43,8 @@ SOURCES += main.cpp\
     plotBar.cpp \
     plotSnrCalc.cpp \
     ipBlocker.cpp \
-    update.cpp
+    update.cpp \
+    sampleRateCalculator.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -77,7 +78,8 @@ HEADERS  += mainwindow.h \
     ipBlocker.h \
     plotCurveComboBox.h \
     persistentPlotParameters.h \
-    update.h
+    update.h \
+    sampleRateCalculator.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

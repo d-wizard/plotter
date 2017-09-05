@@ -1285,4 +1285,5 @@ void CurveData::storeLastMsgStats(const UnpackPlotMsg* data)
 void CurveData::handleNewSampleMsg(unsigned int sampleStartIndex, unsigned int numSamples)
 {
    maxNumPointsFromPlotMsg = std::max(maxNumPointsFromPlotMsg, sampleStartIndex + numSamples);
+   sampleRateCalculator.newSamples(numSamples);
 }

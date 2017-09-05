@@ -32,6 +32,7 @@
 #include "PackUnpackPlotMsg.h"
 
 #include "smartMaxMin.h"
+#include "sampleRateCalculator.h"
 
 class CurveAppearance
 {
@@ -111,6 +112,7 @@ public:
    QSignalMapper* mapper;
 
    unsigned int getMaxNumPointsFromPlotMsg(){return maxNumPointsFromPlotMsg;}
+   double getCalculatedSampleRateFromPlotMsgs(){return sampleRateCalculator.getSampleRate();}
 
 private:
    CurveData();
@@ -184,6 +186,7 @@ private:
    ePlotDataTypes lastMsgYAxisType;
 
    unsigned int maxNumPointsFromPlotMsg;
+   sampleRateCalc sampleRateCalculator;
 
 };
 

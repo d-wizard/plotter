@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>591</width>
+     <width>593</width>
      <height>341</height>
     </rect>
    </property>
@@ -1076,89 +1076,12 @@
       </property>
      </widget>
     </widget>
-    <widget class="QGroupBox" name="groupBox_5">
-     <property name="geometry">
-      <rect>
-       <x>390</x>
-       <y>60</y>
-       <width>191</width>
-       <height>81</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Curve Properties</string>
-     </property>
-     <widget class="QLineEdit" name="txtPropNumSamp">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>80</x>
-        <y>20</y>
-        <width>101</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit{color: black;}</string>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="txtPropDim">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>80</x>
-        <y>50</y>
-        <width>101</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit{color: black;}</string>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_8">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>71</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Num Samples</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_9">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>50</y>
-        <width>61</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Dimensions</string>
-      </property>
-     </widget>
-    </widget>
     <widget class="QGroupBox" name="groupBox_6">
      <property name="geometry">
       <rect>
-       <x>380</x>
-       <y>150</y>
-       <width>101</width>
+       <x>410</x>
+       <y>240</y>
+       <width>81</width>
        <height>71</height>
       </rect>
      </property>
@@ -1168,24 +1091,11 @@
      <widget class="QSpinBox" name="spnPropCurvePos">
       <property name="geometry">
        <rect>
-        <x>50</x>
-        <y>30</y>
-        <width>42</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_10">
-      <property name="geometry">
-       <rect>
         <x>10</x>
         <y>30</y>
-        <width>46</width>
-        <height>21</height>
+        <width>51</width>
+        <height>22</height>
        </rect>
-      </property>
-      <property name="text">
-       <string>Order</string>
       </property>
      </widget>
     </widget>
@@ -1215,9 +1125,9 @@
     <widget class="QGroupBox" name="groupBox_8">
      <property name="geometry">
       <rect>
-       <x>490</x>
-       <y>150</y>
-       <width>91</width>
+       <x>330</x>
+       <y>240</y>
+       <width>71</width>
        <height>71</height>
       </rect>
      </property>
@@ -1255,13 +1165,13 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>230</y>
-       <width>321</width>
+       <y>150</y>
+       <width>571</width>
        <height>81</height>
       </rect>
      </property>
      <property name="title">
-      <string>Curve Data Min / Max</string>
+      <string>Curve Properties</string>
      </property>
      <widget class="QLineEdit" name="txtPropYMax">
       <property name="enabled">
@@ -1269,9 +1179,9 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>320</x>
         <y>50</y>
-        <width>91</width>
+        <width>81</width>
         <height>20</height>
        </rect>
       </property>
@@ -1288,9 +1198,9 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>65</x>
+        <x>200</x>
         <y>50</y>
-        <width>91</width>
+        <width>81</width>
         <height>20</height>
        </rect>
       </property>
@@ -1304,27 +1214,27 @@
      <widget class="QLabel" name="label_14">
       <property name="geometry">
        <rect>
-        <x>165</x>
+        <x>290</x>
         <y>50</y>
         <width>61</width>
         <height>16</height>
        </rect>
       </property>
       <property name="text">
-       <string>Y Axis Max</string>
+       <string>Y Max</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_12">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>170</x>
         <y>20</y>
         <width>71</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>X Axis Min</string>
+       <string>X Min</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="txtPropYMin">
@@ -1333,9 +1243,9 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>320</x>
         <y>20</y>
-        <width>91</width>
+        <width>81</width>
         <height>20</height>
        </rect>
       </property>
@@ -1352,9 +1262,9 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>65</x>
+        <x>200</x>
         <y>20</y>
-        <width>91</width>
+        <width>81</width>
         <height>20</height>
        </rect>
       </property>
@@ -1368,6 +1278,70 @@
      <widget class="QLabel" name="label_11">
       <property name="geometry">
        <rect>
+        <x>170</x>
+        <y>50</y>
+        <width>61</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>X Max</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_13">
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>20</y>
+        <width>51</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Y Min</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtPropNumSamp">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>20</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtPropDim">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>50</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
         <x>10</x>
         <y>50</y>
         <width>61</width>
@@ -1375,20 +1349,84 @@
        </rect>
       </property>
       <property name="text">
-       <string>X Axis Max</string>
+       <string>Dimensions</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_13">
+     <widget class="QLabel" name="label_8">
       <property name="geometry">
        <rect>
-        <x>165</x>
+        <x>10</x>
         <y>20</y>
-        <width>51</width>
+        <width>71</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>Y Axis Min</string>
+       <string>Num Samples</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtLastIp">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>472</x>
+        <y>50</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_15">
+      <property name="geometry">
+       <rect>
+        <x>409</x>
+        <y>50</y>
+        <width>91</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Last Msg IP</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txtCalcSampleRate">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>472</x>
+        <y>20</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit{color: black;}</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_17">
+      <property name="geometry">
+       <rect>
+        <x>409</x>
+        <y>20</y>
+        <width>91</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Sample Rate</string>
       </property>
      </widget>
     </widget>
@@ -1396,8 +1434,8 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>150</y>
-       <width>361</width>
+       <y>240</y>
+       <width>311</width>
        <height>71</height>
       </rect>
      </property>
@@ -1409,7 +1447,7 @@
        <rect>
         <x>10</x>
         <y>20</y>
-        <width>281</width>
+        <width>231</width>
         <height>41</height>
        </rect>
       </property>
@@ -1417,7 +1455,7 @@
      <widget class="QPushButton" name="cmdUnlinkParent">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>250</x>
         <y>20</y>
         <width>51</width>
         <height>41</height>
@@ -1433,7 +1471,7 @@ Parent</string>
      <property name="geometry">
       <rect>
        <x>500</x>
-       <y>290</y>
+       <y>280</y>
        <width>75</width>
        <height>23</height>
       </rect>
@@ -1441,51 +1479,6 @@ Parent</string>
      <property name="text">
       <string>Remove</string>
      </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_12">
-     <property name="geometry">
-      <rect>
-       <x>340</x>
-       <y>230</y>
-       <width>241</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Message Source Info</string>
-     </property>
-     <widget class="QLabel" name="label_15">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>91</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Last Msg IP Addr</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="txtLastIp">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>102</x>
-        <y>20</y>
-        <width>131</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit{color: black;}</string>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
     </widget>
    </widget>
   </widget>
