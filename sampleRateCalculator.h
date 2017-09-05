@@ -66,7 +66,7 @@ private:
 
    void removeOldSampleMsgsFromList(double timeThreshold);
 
-   void determineSampleRate();
+   void determineSampleRate(double timeOfSecondToLastMsg);
 
 };
 

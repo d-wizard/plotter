@@ -58,8 +58,9 @@ void sampleRateCalc::newSamples(long numSamp)
    pair.time = nowDouble;
 
    QMutexLocker lock(&m_mutex);
+   double lastMsgTime = getTimeOfLastMsg();
    m_sampleMsgList.push_back(pair);
-   determineSampleRate();
+   determineSampleRate(lastMsgTime);
 }
 
 double sampleRateCalc::getTimeOfLastMsg()
@@ -112,14 +113,21 @@ void sampleRateCalc::removeOldSampleMsgsFromList(double timeThreshold)
    }
 }
 
-void sampleRateCalc::determineSampleRate()
+void sampleRateCalc::determineSampleRate(double timeOfSecondToLastMsg)
 {
    QMutexLocker lock(&m_mutex);
    if(m_sampleMsgList.size() > 1)
    {
       double lastMsgTime = getTimeOfLastMsg();
 
-      removeOldSampleMsgsFromList(lastMsgTime - m_averageTimeBetweenSampleMessages * 100);
+      if( (lastMsgTime - timeOfSecondToLastMsg) > (m_averageTimeBetweenSampleMessages * 4) )
+      {
+         removeOldSampleMsgsFromList(lastMsgTime);
+      }
+      else
+      {
+         removeOldSampleMsgsFromList(lastMsgTime - m_averageTimeBetweenSampleMessages * 100);
+      }
 
       if(m_sampleMsgList.size() > 1)
       {
