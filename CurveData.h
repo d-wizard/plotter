@@ -110,6 +110,8 @@ public:
    QAction* curveAction;
    QSignalMapper* mapper;
 
+   unsigned int getMaxNumPointsFromPlotMsg(){return maxNumPointsFromPlotMsg;}
+
 private:
    CurveData();
    void init();
@@ -132,6 +134,8 @@ private:
    maxMinXY getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len);
    void getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel);
    int findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue);
+
+   void handleNewSampleMsg(unsigned int sampleStartIndex, unsigned int numSamples);
 
    QwtPlot* m_parentPlot;
    dubVect xOrigPoints;
@@ -179,6 +183,7 @@ private:
    ePlotDataTypes lastMsgXAxisType;
    ePlotDataTypes lastMsgYAxisType;
 
+   unsigned int maxNumPointsFromPlotMsg;
 
 };
 

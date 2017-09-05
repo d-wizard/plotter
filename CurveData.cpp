@@ -49,7 +49,8 @@ CurveData::CurveData( QwtPlot* parentPlot,
    curve(new QwtPlotCurve(data->m_curveName.c_str())),
    lastMsgIpAddr(0),
    lastMsgXAxisType(E_INVALID_DATA_TYPE),
-   lastMsgYAxisType(E_INVALID_DATA_TYPE)
+   lastMsgYAxisType(E_INVALID_DATA_TYPE),
+   maxNumPointsFromPlotMsg(0)
 {
    init();
    if(plotDim != E_PLOT_DIM_1D)
@@ -62,6 +63,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
    }
 
    numPoints = yOrigPoints.size();
+   handleNewSampleMsg(0, numPoints);
 
    if(plotDim == E_PLOT_DIM_1D)
    {
@@ -820,6 +822,9 @@ void CurveData::ResetCurveSamples(const UnpackPlotMsg* data)
       if(yOrigPoints.size() > numPoints)
          yOrigPoints.resize(numPoints);
    }
+
+   handleNewSampleMsg(0, numPoints);
+
    performMathOnPoints();
    setCurveSamples();
    storeLastMsgStats(data);
@@ -846,6 +851,9 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
    if(plotDim == E_PLOT_DIM_1D)
    {
       int newPointsSize = newYPoints.size();
+
+      handleNewSampleMsg(sampleStartIndex, newPointsSize);
+
       bool resized = false;
 
       if(scrollMode == false)
@@ -910,6 +918,8 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
    if(plotDim == E_PLOT_DIM_2D)
    {
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
+
+      handleNewSampleMsg(sampleStartIndex, newPointsSize);
 
       if(scrollMode == false)
       {
@@ -1271,3 +1281,8 @@ void CurveData::storeLastMsgStats(const UnpackPlotMsg* data)
    lastMsgYAxisType = data->m_yAxisDataType;
 }
 
+// This function will be called whenever a new sample message has been received.
+void CurveData::handleNewSampleMsg(unsigned int sampleStartIndex, unsigned int numSamples)
+{
+   maxNumPointsFromPlotMsg = std::max(maxNumPointsFromPlotMsg, sampleStartIndex + numSamples);
+}
