@@ -44,7 +44,9 @@ SOURCES += main.cpp\
     plotSnrCalc.cpp \
     ipBlocker.cpp \
     update.cpp \
-    sampleRateCalculator.cpp
+    sampleRateCalculator.cpp \
+    createplotfromdata.cpp \
+    AutoDelimiter.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -79,13 +81,17 @@ HEADERS  += mainwindow.h \
     plotCurveComboBox.h \
     persistentPlotParameters.h \
     update.h \
-    sampleRateCalculator.h
+    sampleRateCalculator.h \
+    createplotfromdata.h \
+    AutoDelimiter.h \
+    hist.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
     curveproperties.ui \
     plotcurvenamedialog.ui \
-    overwriterenamedialog.ui
+    overwriterenamedialog.ui \
+    createplotfromdata.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$PTHREADDIR

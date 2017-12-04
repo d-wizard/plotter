@@ -1855,3 +1855,8 @@ void curveProperties::on_chkWindow_clicked(bool checked)
 {
    ui->chkScaleFftWindow->setEnabled(checked);
 }
+
+void curveProperties::on_cmdCreateFromData_clicked()
+{
+   m_curveCmdr->showCreatePlotFromDataGui("", NULL);
+}

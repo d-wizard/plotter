@@ -19,23 +19,28 @@
 #include "CurveCommander.h"
 #include "plotguimain.h"
 #include "curveproperties.h"
+#include "createplotfromdata.h"
 #include "ChildCurves.h"
 
 #define MAX_NUM_STORED_CURVES (1000)
 
 CurveCommander::CurveCommander(plotGuiMain *parent):
    m_plotGuiMain(parent),
-   m_curvePropGui(NULL)
+   m_curvePropGui(NULL),
+   m_createPlotFromDataGui(NULL)
 {
    QObject::connect(this, SIGNAL(plotWindowCloseSignal(QString)),
                     this, SLOT(plotWindowCloseSlot(QString)), Qt::QueuedConnection);
    QObject::connect(this, SIGNAL(curvePropertiesGuiCloseSignal()),
                     this, SLOT(curvePropertiesGuiCloseSlot()), Qt::QueuedConnection);
+   QObject::connect(this, SIGNAL(createPlotFromDataGuiCloseSignal()),
+                    this, SLOT(createPlotFromDataGuiCloseSlot()), Qt::QueuedConnection);
 }
 
 CurveCommander::~CurveCommander()
 {
    curvePropertiesGuiCloseSlot(); // Close Curve Properties GUI (if it exists)
+   createPlotFromDataGuiCloseSlot(); // Close Create Plot From Data GUI (if it exists)
    destroyAllPlots();
 
    for(std::list<ChildCurve*>::iterator iter = m_childCurves.begin(); iter != m_childCurves.end(); ++iter)
@@ -85,6 +90,10 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
             m_curvePropGui->existingPlotsChanged();
          }
       }
+      if(m_createPlotFromDataGui != NULL)
+      {
+         m_createPlotFromDataGui->updateGuiPlotCurveInfo();
+      }
 
       // New curves can't have children, so only check for children if this isn't a new curve.
       if(newCurve == false && numPoints > 0)
@@ -121,6 +130,10 @@ void CurveCommander::curvePropertyChanged()
    {
       m_curvePropGui->updateGuiPlotCurveInfo();
    }
+   if(m_createPlotFromDataGui != NULL)
+   {
+      m_createPlotFromDataGui->updateGuiPlotCurveInfo();
+   }
 }
 
 void CurveCommander::plotRemoved(QString plotName)
@@ -141,6 +154,10 @@ void CurveCommander::plotRemoved(QString plotName)
       if(m_curvePropGui != NULL)
       {
          m_curvePropGui->updateGuiPlotCurveInfo();
+      }
+      if(m_createPlotFromDataGui != NULL)
+      {
+         m_createPlotFromDataGui->updateGuiPlotCurveInfo();
       }
    }
 }
@@ -473,6 +490,29 @@ void CurveCommander::curvePropertiesGuiCloseSlot()
    }
 }
 
+void CurveCommander::showCreatePlotFromDataGui(QString plotName, const char* dataToPlot)
+{
+   if(m_createPlotFromDataGui == NULL)
+   {
+      m_createPlotFromDataGui = new createPlotFromData(this, plotName, dataToPlot);
+   }
+   else
+   {
+      m_createPlotFromDataGui->handleNewData(dataToPlot);
+   }
+   m_createPlotFromDataGui->show();
+   m_createPlotFromDataGui->raise();
+}
+
+void CurveCommander::createPlotFromDataGuiCloseSlot()
+{
+   if(m_createPlotFromDataGui != NULL)
+   {
+      delete m_createPlotFromDataGui;
+      m_createPlotFromDataGui = NULL;
+   }
+}
+
 void CurveCommander::storePlotMsg(const char* msgPtr, unsigned int msgSize, QString& plotName, QString& curveName)
 {
    tStoredMsg newMsg;
@@ -562,6 +602,10 @@ void CurveCommander::removeCurve(const QString& plotName, const QString& curveNa
          if(m_curvePropGui != NULL)
          {
             m_curvePropGui->updateGuiPlotCurveInfo();
+         }
+         if(m_createPlotFromDataGui != NULL)
+         {
+            m_createPlotFromDataGui->updateGuiPlotCurveInfo();
          }
       }
 

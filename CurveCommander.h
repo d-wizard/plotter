@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -46,6 +46,7 @@ typedef struct{PlotMsgIdType parentMsgID; UnpackPlotMsg* childMsg;}tChildAndPare
 
 class plotGuiMain;
 class curveProperties;
+class createPlotFromData;
 class ChildCurve;
 
 class CurveCommander : public QWidget
@@ -78,6 +79,7 @@ public:
 
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
     void curvePropertiesGuiClose(){emit curvePropertiesGuiCloseSignal();}
+    void createPlotFromDataGuiClose(){emit createPlotFromDataGuiCloseSignal();}
 
     void showHidePlotGui(QString plotName);
 
@@ -85,6 +87,7 @@ public:
     void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis); // 2D
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
+    void showCreatePlotFromDataGui(QString plotName, const char* dataToPlot);
 
     void storePlotMsg(const char *msgPtr, unsigned int msgSize, QString& plotName, QString& curveName);
     void getStoredPlotMsgs(QVector<tStoredMsg> &storedMsgs);
@@ -129,6 +132,8 @@ private:
 
     curveProperties* m_curvePropGui;
 
+    createPlotFromData* m_createPlotFromDataGui;
+
     std::list<ChildCurve*> m_childCurves;
 
     std::list<tStoredMsg> m_storedMsgs;
@@ -144,10 +149,12 @@ private:
 public slots:
     void plotWindowCloseSlot(QString plotName);
     void curvePropertiesGuiCloseSlot();
+    void createPlotFromDataGuiCloseSlot();
 
 signals:
     void plotWindowCloseSignal(QString plotName);
     void curvePropertiesGuiCloseSignal();
+    void createPlotFromDataGuiCloseSignal();
 };
 
 

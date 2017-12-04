@@ -27,7 +27,7 @@
    </property>
    <widget class="QWidget" name="tabCreateChild">
     <attribute name="title">
-     <string>Create Child Curve</string>
+     <string>Create Child</string>
     </attribute>
     <widget class="QComboBox" name="cmbPlotType">
      <property name="geometry">
@@ -412,7 +412,7 @@
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">
-     <string>Curve Math</string>
+     <string>Math</string>
     </attribute>
     <widget class="QLineEdit" name="txtSampleRate">
      <property name="geometry">
@@ -616,7 +616,7 @@
    </widget>
    <widget class="QWidget" name="tabRestoreCurve">
     <attribute name="title">
-     <string>Restore Curve Data</string>
+     <string>Restore Data</string>
     </attribute>
     <widget class="QListWidget" name="storedMsgs">
      <property name="geometry">
@@ -693,7 +693,7 @@
    </widget>
    <widget class="QWidget" name="tabOpenSave">
     <attribute name="title">
-     <string>Open / Save Curve</string>
+     <string>Open / Save</string>
     </attribute>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="geometry">
@@ -844,6 +844,19 @@
        <string>Save</string>
       </property>
      </widget>
+    </widget>
+    <widget class="QPushButton" name="cmdCreateFromData">
+     <property name="geometry">
+      <rect>
+       <x>14</x>
+       <y>230</y>
+       <width>551</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Create New Curve From Data</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tabIpBlock">

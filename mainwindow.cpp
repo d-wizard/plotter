@@ -1770,6 +1770,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                pClipboard->setText(&clipboardDataString[0]);
 
             }
+            else if(KeyEvent->key() == Qt::Key_V && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               QClipboard* pClipboard = QApplication::clipboard();
+               QString clipText = pClipboard->text();
+               if(clipText != "")
+               {
+                  m_curveCommander->showCreatePlotFromDataGui(getPlotName(), clipText.toStdString().c_str());
+               }
+            }
             else
             {
                 // Key stroke wasn't anything more specific. Pass to some functions to see if

@@ -164,6 +164,8 @@ private slots:
 
    void on_chkWindow_clicked(bool checked);
 
+   void on_cmdCreateFromData_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
