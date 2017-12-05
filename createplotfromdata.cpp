@@ -22,18 +22,31 @@
 #include "createplotfromdata.h"
 #include "ui_createplotfromdata.h"
 #include "AutoDelimiter.h"
+#include "persistentParameters.h"
 #include "dString.h"
+
+static const std::string HEX_TYPE_PERSIST_PARAM_NAME = "createPlotFromDataHexType";
 
 createPlotFromData::createPlotFromData(CurveCommander *curveCmdr, QString plotName, const char *data, QWidget *parent) :
    QDialog(parent),
    ui(new Ui::createPlotFromData),
    m_curveCmdr(curveCmdr),
-   m_inData(""),
-   m_base(10)
+   m_inData("")
 {
    ui->setupUi(this);
 
    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint)); // Get rid of the help button.
+
+   // Restore Hex Type from persistent parameters
+   double hexTypeIndexDouble = -1;
+   if(persistentParam_getParam_f64(HEX_TYPE_PERSIST_PARAM_NAME, hexTypeIndexDouble))
+   {
+      int hexTypeIndex = hexTypeIndexDouble;
+      if(hexTypeIndex >= 0 && hexTypeIndex < ui->cmbHexType->count())
+      {
+         ui->cmbHexType->setCurrentIndex(hexTypeIndex);
+      }
+   }
 
    ui->cmbPlotName->lineEdit()->setText(plotName);
 
@@ -44,6 +57,11 @@ createPlotFromData::createPlotFromData(CurveCommander *curveCmdr, QString plotNa
 createPlotFromData::~createPlotFromData()
 {
    delete ui;
+}
+
+bool createPlotFromData::isGuiHex()
+{
+   return ui->cmbBase->currentIndex() != 0;
 }
 
 void createPlotFromData::updateGuiPlotCurveInfo()
@@ -139,11 +157,8 @@ void createPlotFromData::handleNewData(const char *data, bool newDataIsFromGui)
    }
    else
    {
-      isHex = ui->cmbBase->currentIndex() != 0;
+      isHex = isGuiHex();
    }
-
-   m_base = isHex ? 16 : 10;
-
 
    if( (m_userSpecifiedDelim == false) && ui->chkAutoDelim->isChecked())
    {
@@ -171,7 +186,7 @@ void createPlotFromData::parseInputData()
 {
    m_dataVectFloat.clear();
 
-   bool isHex = ui->cmbBase->currentIndex() != 0;
+   bool isHex = isGuiHex();
    if(m_delim == "" || m_inData == "")
    {
       return;
@@ -213,7 +228,7 @@ void createPlotFromData::parseInputData()
       {
          if(dataSplit[i_index] != "")
          {
-            unsigned long long newEntryFromHex = strtoull(dataSplit[i_index].toStdString().c_str(), NULL, m_base);
+            unsigned long long newEntryFromHex = strtoull(dataSplit[i_index].toStdString().c_str(), NULL, 16);
             switch(hexType)
             {
                case E_HEX_TYPE_UINT:
@@ -370,12 +385,17 @@ void createPlotFromData::on_cmbBase_currentIndexChanged(int index)
    {
       m_userSpecifiedBase = true;
 
-      bool isHex = ui->cmbBase->currentIndex() != 0;
-      m_base = isHex ? 16 : 10;
+      bool isHex = isGuiHex();
 
       // Some GUI elements only need to be visiable if input is hex.
       ui->lblHexType->setVisible(isHex);
       ui->cmbHexType->setVisible(isHex);
 
    }
+}
+
+void createPlotFromData::on_cmbHexType_currentIndexChanged(int index)
+{
+   double indexToWrite = index;
+   persistentParam_setParam_f64(HEX_TYPE_PERSIST_PARAM_NAME, indexToWrite);
 }

@@ -59,6 +59,8 @@ private slots:
 
    void on_cmbBase_currentIndexChanged(int index);
 
+   void on_cmbHexType_currentIndexChanged(int index);
+
 private:
    typedef enum
    {
@@ -80,15 +82,13 @@ private:
    QVector<long long> m_dataVectInt;
    dubVect m_dataVectFloat;
 
-   int m_base;
-
    bool m_changingDelim;
    bool m_userSpecifiedDelim;
 
    bool m_changingBase;
    bool m_userSpecifiedBase;
 
-
+   bool isGuiHex();
 
    void closeEvent(QCloseEvent* event);
 
