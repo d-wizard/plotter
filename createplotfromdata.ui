@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>563</width>
-    <height>248</height>
+    <height>254</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -98,7 +98,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <item>
     <property name="text">
@@ -114,9 +114,9 @@
   <widget class="QLabel" name="lblHexType">
    <property name="geometry">
     <rect>
-     <x>200</x>
+     <x>140</x>
      <y>170</y>
-     <width>61</width>
+     <width>51</width>
      <height>21</height>
     </rect>
    </property>
@@ -127,7 +127,7 @@
   <widget class="QComboBox" name="cmbHexType">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>190</x>
      <y>170</y>
      <width>101</width>
      <height>22</height>
@@ -257,7 +257,7 @@
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>210</y>
+     <y>220</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -270,7 +270,7 @@
    <property name="geometry">
     <rect>
      <x>290</x>
-     <y>210</y>
+     <y>220</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -297,6 +297,19 @@
     <rect>
      <x>10</x>
      <y>70</y>
+     <width>541</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>200</y>
      <width>541</width>
      <height>16</height>
     </rect>

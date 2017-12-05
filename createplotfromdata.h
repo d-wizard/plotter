@@ -61,6 +61,10 @@ private slots:
 
    void on_cmbHexType_currentIndexChanged(int index);
 
+   void on_chkAutoDelim_clicked();
+
+   void on_chkLineEndAsDelim_clicked();
+
 private:
    typedef enum
    {

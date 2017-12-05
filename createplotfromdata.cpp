@@ -189,6 +189,7 @@ void createPlotFromData::parseInputData()
    bool isHex = isGuiHex();
    if(m_delim == "" || m_inData == "")
    {
+      ui->txtNumPoints->setText(QString::number(m_dataVectFloat.size()));
       return;
    }
 
@@ -376,6 +377,7 @@ void createPlotFromData::on_txtDelimiter_textEdited(const QString &arg1)
    {
       m_userSpecifiedDelim = true;
       m_delim = ui->txtDelimiter->text();
+      handleNewData(NULL, true);
    }
 }
 
@@ -384,13 +386,7 @@ void createPlotFromData::on_cmbBase_currentIndexChanged(int index)
    if(m_changingBase == false)
    {
       m_userSpecifiedBase = true;
-
-      bool isHex = isGuiHex();
-
-      // Some GUI elements only need to be visiable if input is hex.
-      ui->lblHexType->setVisible(isHex);
-      ui->cmbHexType->setVisible(isHex);
-
+      handleNewData(NULL, true);
    }
 }
 
@@ -398,4 +394,17 @@ void createPlotFromData::on_cmbHexType_currentIndexChanged(int index)
 {
    double indexToWrite = index;
    persistentParam_setParam_f64(HEX_TYPE_PERSIST_PARAM_NAME, indexToWrite);
+   handleNewData(NULL, true);
+}
+
+void createPlotFromData::on_chkAutoDelim_clicked()
+{
+   if(ui->chkAutoDelim->isChecked())
+      m_userSpecifiedDelim = false;
+   handleNewData(NULL, true);
+}
+
+void createPlotFromData::on_chkLineEndAsDelim_clicked()
+{
+   handleNewData(NULL, true);
 }
