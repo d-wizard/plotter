@@ -31,8 +31,16 @@ createPlotFromData::createPlotFromData(CurveCommander *curveCmdr, QString plotNa
    QDialog(parent),
    ui(new Ui::createPlotFromData),
    m_curveCmdr(curveCmdr),
-   m_inData("")
+   m_inData(""),
+   m_delim(""),
+   m_changingDelim(false),
+   m_userSpecifiedDelim(false),
+   m_changingBase(false),
+   m_userSpecifiedBase(false)
 {
+   m_dataVectInt.clear();
+   m_dataVectFloat.clear();
+
    ui->setupUi(this);
 
    setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint)); // Get rid of the help button.
