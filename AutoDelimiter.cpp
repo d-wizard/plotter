@@ -71,20 +71,24 @@ std::string getDelimiter(const std::string& t_dataToParse, bool isHex)
    int i_numChr = t_dataToParse.length();
    int i;
    int numBytesInDelimiter = 0;
-   const int* validCharTable = isHex ? VALID_HEX_CHAR: VALID_DEC_CHAR;
+   //const int* validCharTable = isHex ? VALID_HEX_CHAR: VALID_DEC_CHAR;
 
    for(i = 0; i < i_numChr; ++i)
    {
       c_curChar = pc_data[i];
-      /*if( ( (c_curChar >= '0') && (c_curChar <= '9') ) ||
+
+      // Check for characters that should never be part of the delimiter.
+      if( ( (c_curChar >= '0') && (c_curChar <= '9') ) ||
           ( (c_curChar >= 'a') && (c_curChar <= 'z') ) ||
-          ( (c_curChar >= 'A') && (c_curChar <= 'Z') ) )*/
-      if( validCharTable[(unsigned)c_curChar] ||
-          (isHex && (c_curChar == 'X' || c_curChar == 'x')) )
+          ( (c_curChar >= 'A') && (c_curChar <= 'Z') ) ||
+          ( (c_curChar == '.') ) )
+      /* Not sure why, but the if above seems to run quite a bit faster then the if below. I think the if below is better...
+         if( validCharTable[(unsigned)c_curChar] ||
+          (isHex && (c_curChar == 'X' || c_curChar == 'x')) )*/
       {
          if(numBytesInDelimiter)
          {
-            if(numBytesInDelimiter > 1 && c_prevChar == '-')
+            if(numBytesInDelimiter > 1 && (c_prevChar == '-' || c_prevChar == '+') )
             {
                t_curDelimit = dString::Left(t_curDelimit, numBytesInDelimiter - 1);
             }
@@ -125,26 +129,47 @@ std::string getDelimiter(const std::string& t_dataToParse, bool isHex)
 
 std::string removeNonDelimiterChars(const std::string& t_dataToParse, const std::string& t_delimit, bool isHex)
 {
-   std::string retVal = t_dataToParse;
-   int i_numDeletedChar = 0;
-   
+   char* pc_retVal = new char[t_dataToParse.size()+1]; // The return string can't be larger than the input string (make sure to allow for null terminator).
+   int i_numValidChars = 0;
+
    const char* pc_data = t_dataToParse.c_str();
    int i_numChr = t_dataToParse.length();
-   unsigned char c_curChar = '\0';
-   const int* validCharTable = isHex ? VALID_HEX_CHAR: VALID_DEC_CHAR;
-   
+
+   const char* pc_delim = t_delimit.c_str();
    int i_numDelimChr = t_delimit.length();
-   
+
+   const int* validCharTable = isHex ? VALID_HEX_CHAR: VALID_DEC_CHAR;
+
    for(int i = 0; i < i_numChr; ++i)
    {
-      c_curChar = pc_data[i];
-      if( !validCharTable[c_curChar] &&
-          dString::Mid(t_dataToParse, i, i_numDelimChr) != t_delimit )
+      bool checkForDelim = (i + i_numDelimChr) <= i_numChr;
+      bool isDelim = false;
+
+      unsigned char c_curChar = pc_data[i];
+
+      if(checkForDelim)
       {
-         retVal = dString::Left(retVal, i-i_numDeletedChar).append(dString::Mid(retVal, i-i_numDeletedChar+1));
-         ++i_numDeletedChar;
+         isDelim = memcmp(&pc_data[i], pc_delim, i_numDelimChr) == 0;
+      }
+
+      if(isDelim)
+      {
+         memcpy(pc_retVal+i_numValidChars, pc_delim, i_numDelimChr);
+         i_numValidChars += i_numDelimChr;
+         i += (i_numDelimChr-1); // The for loop will increment by one, so only need to update i by i_numDelimChr minus 1.
+      }
+      else if(validCharTable[c_curChar])
+      {
+         pc_retVal[i_numValidChars] = c_curChar;
+         ++i_numValidChars;
       }
    }
+
+   pc_retVal[i_numValidChars] = '\0';
+
+   std::string retVal = pc_retVal;
+   delete [] pc_retVal;
+
    return retVal;
 }
 
