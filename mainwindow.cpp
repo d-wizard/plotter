@@ -997,8 +997,11 @@ void MainWindow::deltaCursorMode()
     m_zoomAction.setIcon(QIcon());
     m_cursorAction.setIcon(QIcon());
 
-    if(prevMode != E_ZOOM)
+    // If we are exiting out of zoom mode we don't want to disrupt an existing
+    // delta (i.e. when both delta samples have been selected).
+    if(prevMode != E_ZOOM || m_qwtSelectedSampleDelta->isAttached == false)
     {
+        // Move the main selected sample to the delta sample.
         m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
         m_qwtSelectedSampleDelta->showCursor(
             QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint),
