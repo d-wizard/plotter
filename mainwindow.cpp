@@ -658,6 +658,7 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
       if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
       {
          handleCurveDataChange(curveIndex);
+         m_snrCalcBars->sampleRateChanged();
       }
    }
 }
