@@ -658,7 +658,6 @@ void MainWindow::setCurveSampleRate(QString curveName, double sampleRate, bool u
       if(m_qwtCurves[curveIndex]->setSampleRate(sampleRate, userSpecified))
       {
          handleCurveDataChange(curveIndex);
-         m_snrCalcBars->sampleRateChanged();
       }
    }
 }
@@ -678,7 +677,6 @@ void MainWindow::setCurveProperties(QString curveName, eAxis axis, double sample
       if(curveChanged)
       {
          handleCurveDataChange(curveIndex);
-         m_snrCalcBars->sampleRateChanged();
       }
    }
 }
@@ -719,8 +717,6 @@ bool MainWindow::setCurveProperties_modify(CurveData* curveData, eAxis axis, tMa
 void MainWindow::setCurveProperties_fromList(QList<CurveData*> curves, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
-
-   bool anyCurveChanged = false;
 
    for(int curveIndex = 0; curveIndex < curves.size(); ++curveIndex)
    {
@@ -763,13 +759,8 @@ void MainWindow::setCurveProperties_fromList(QList<CurveData*> curves, double sa
             handleCurveDataChange(modifiedCurveIndex);
          }
       }
-      anyCurveChanged |= curveChanged;
    }
 
-   if(anyCurveChanged)
-   {
-      m_snrCalcBars->sampleRateChanged();
-   }
 }
 
 void MainWindow::setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace)
@@ -2107,6 +2098,7 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
     {
        m_snrCalcBars->updateZoomDim(m_plotZoom->getCurZoom());
        m_snrCalcBars->updatePlotDim(m_plotZoom->getCurPlotDim());
+       m_snrCalcBars->updateSampleRate();
     }
 
     m_qwtPlot->replot();

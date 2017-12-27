@@ -169,7 +169,8 @@ void plotSnrCalc::setCurve(CurveData* curve, QList<CurveData *>& allCurves)
    if(curve != m_parentCurve || (m_multipleParentCurves && m_parentCurve_complex == NULL))
    {
       m_parentCurve = curve;
-      m_curveSampleRate = m_parentCurve->getSampleRate();
+      double parentSampRate = m_parentCurve->getSampleRate();
+      m_curveSampleRate = parentSampRate > 0.0 ? parentSampRate : (double)m_parentCurve->getNumPoints();
 
       if(curve->getPlotType() == E_PLOT_TYPE_COMPLEX_FFT)
       {
@@ -262,27 +263,36 @@ CurveData* plotSnrCalc::getComplexParentCurve(QList<CurveData*>& allCurves)
    return retVal;
 }
 
-void plotSnrCalc::sampleRateChanged()
+void plotSnrCalc::updateSampleRate()
 {
-   if(m_isVisable && m_parentCurve != NULL)
+   if(m_parentCurve != NULL)
    {
       double newSampRate = m_parentCurve->getSampleRate();
-      if(m_curveSampleRate != newSampRate)
+      double oldSampRate = m_curveSampleRate;
+
+      if(newSampRate <= 0.0)
+         newSampRate = (double)m_parentCurve->getNumPoints();
+
+      if(oldSampRate != newSampRate)
       {
-         if(m_curveSampleRate <= 0.0)
+         m_curveSampleRate = newSampRate;
+
+         if(m_barsAreItialized)
          {
-            m_curveSampleRate = (double)m_parentCurve->getNumPoints();
+            // Scale the SNR bar positions so that they stay in the same relative position after the sample rate change.
+            for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+            {
+               QPointF newBarPos;
+               newBarPos.setX(m_allBars[i]->getBarPos() * newSampRate / oldSampRate);
+               m_allBars[i]->moveBar(newBarPos);
+            }
          }
 
-         for(size_t i = 0; i < ARRAY_SIZE(m_allBars); ++i)
+         if(m_isVisable)
          {
-            QPointF newBarPos;
-            newBarPos.setX(m_allBars[i]->getBarPos() * newSampRate / m_curveSampleRate);
-            m_allBars[i]->moveBar(newBarPos);
+            calcSnrSlow();
+            setLabel();
          }
-         m_curveSampleRate = newSampRate;
-         calcSnrSlow();
-         setLabel();
       }
    }
 }

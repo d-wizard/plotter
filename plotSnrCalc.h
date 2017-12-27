@@ -52,7 +52,7 @@ public:
 
    bool curveUpdated(CurveData* curve, QList<CurveData*>& allCurves);
 
-   void sampleRateChanged();
+   void updateSampleRate();
 private:
 
    typedef struct curveDataIndexes
