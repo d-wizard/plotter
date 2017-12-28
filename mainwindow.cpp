@@ -1038,13 +1038,10 @@ void MainWindow::autoZoom()
 void MainWindow::holdZoom()
 {
    m_plotZoom->m_maxHoldZoom = false;
-   if(m_plotZoom->m_holdZoom == false)
-   {
-      m_plotZoom->m_holdZoom = true;
-      m_autoZoomAction.setIcon(QIcon());
-      m_holdZoomAction.setIcon(m_checkedIcon);
-      m_maxHoldZoomAction.setIcon(QIcon());
-   }
+   m_plotZoom->m_holdZoom = true;
+   m_autoZoomAction.setIcon(QIcon());
+   m_holdZoomAction.setIcon(m_checkedIcon);
+   m_maxHoldZoomAction.setIcon(QIcon());
 }
 
 void MainWindow::maxHoldZoom()
