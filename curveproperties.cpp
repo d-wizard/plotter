@@ -165,6 +165,17 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Set Suggested Plot / Curve Names.
    setUserChildPlotNames();
 
+   // Attempt to restore the Child Curve Plot Type from persistent memory.
+   double restoreChildCurvePlotTypeIndex = -1; // Init to invalid index.
+   bool restoreSuccess = persistentParam_getParam_f64(PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE, restoreChildCurvePlotTypeIndex);
+   if(restoreSuccess)
+   {
+      int restoreChildCurvePlotTypeIndex_int = restoreChildCurvePlotTypeIndex; // Double float to int.
+      if(restoreChildCurvePlotTypeIndex_int >= 0 && restoreChildCurvePlotTypeIndex_int < ui->cmbPlotType->count())
+      {
+         ui->cmbPlotType->setCurrentIndex(restoreChildCurvePlotTypeIndex_int);
+      }
+   }
 }
 
 curveProperties::~curveProperties()
@@ -577,6 +588,10 @@ void curveProperties::on_cmdApply_clicked()
       // Child curve has been created. Clear user input of plot / curve name.
       m_childCurveNewPlotNameUser = "";
       m_childCurveNewCurveNameUser = "";
+
+      // Save the plot type of the child curve that is being created in persistent memory. This way the next time the Properties window is
+      // opened it will initialize to the same child plot type.
+      persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE, ui->cmbPlotType->currentIndex());
    }
    else if(tab == TAB_CREATE_MATH)
    {

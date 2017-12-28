@@ -1,4 +1,4 @@
-/* Copyright 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,6 +34,7 @@ static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR = "curveSavePrevD
 
 static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION = "plotSavePrevSaveSelection";
 static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION = "curveSavePrevSaveSelection";
+static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotType";
 
 void persistentParam_setPath(std::string path);
 
