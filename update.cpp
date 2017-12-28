@@ -176,12 +176,14 @@ void cleanupAfterUpdate()
        tempUpdateDir != "" &&
        fso::DirExists(tempUpdateDir))
    {
-      bool allFilesRemoved = true; // Init to true, only go false if we fail to delete an existing update file.
       int removeTryCount = 0;
       bool canExitWhile = false;
 
       do
       {
+         bool allFilesRemoved = true; // Init to true, only go false if we fail to delete an existing update file.
+         bool updateDirRemoved = false;
+
          // Attempt to remove any Update Files from the temp update dir.
          for(size_t i = 0; i < ARRAY_SIZE(UPDATE_FILES); ++i)
          {
@@ -195,15 +197,24 @@ void cleanupAfterUpdate()
          // Attempt to remove the temp update dir.
          if(allFilesRemoved && dirEmptyOrDoesntExist(tempUpdateDir))
          {
-            QDir dir(tempUpdateDir.c_str());
-            dir.rmdir(dir.absolutePath());
-            if(fso::DirExists(tempUpdateDir) == false)
+            // Remove temp update dir if it exists.
+            updateDirRemoved = !fso::DirExists(tempUpdateDir);
+            if(updateDirRemoved == false)
+            {
+               QDir dir(tempUpdateDir.c_str());
+               dir.rmdir(dir.absolutePath());
+               updateDirRemoved = !fso::DirExists(tempUpdateDir);
+            }
+
+            // If the temp update dir was removed, clear the directory from persistent memory. This will make sure
+            // we avoid attempting to delete it again in the future.
+            if(updateDirRemoved)
             {
                persistentParam_setParam_str(PERSISTENT_PARAM_TEMP_PATH_KEY, "");
             }
          }
 
-         canExitWhile = (allFilesRemoved == true) || (++removeTryCount < 5);
+         canExitWhile = (allFilesRemoved && updateDirRemoved) || (++removeTryCount < 5);
          if(!canExitWhile)
          {
 #ifdef Q_OS_WIN
