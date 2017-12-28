@@ -858,6 +858,8 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
 
       m_qwtCurves.push_back(new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg));
 
+      m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
+
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
       m_curveCommander->doFinalChildCurveInit(getPlotName(), name);
    }
@@ -1102,6 +1104,18 @@ void MainWindow::scrollModeSetPlotSize(int newPlotSize)
       m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
       handleCurveDataChange(curveIndex);
    }
+}
+
+bool MainWindow::areAllCurves1D()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   size_t numCurves = m_qwtCurves.size();
+   for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
+   {
+      if(m_qwtCurves[curveIndex]->getPlotDim() != E_PLOT_DIM_1D)
+         return false;
+   }
+   return true;
 }
 
 void MainWindow::resetZoom()
@@ -2406,6 +2420,8 @@ void MainWindow::removeCurve(const QString& curveName)
       // Remove the curve.
       delete m_qwtCurves[curveIndex];
       m_qwtCurves.removeAt(curveIndex);
+
+      m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
    }
    updateCurveOrder();
 }

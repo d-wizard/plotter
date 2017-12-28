@@ -22,6 +22,7 @@
 PlotZoom::PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll):
    m_holdZoom(false),
    m_maxHoldZoom(false),
+   m_plotIs1D(false),
    m_mainWindow(mainWindow),
    m_qwtPlot(qwtPlot),
    m_vertScroll(vertScroll),
@@ -135,6 +136,19 @@ void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUse
       {
          modZoomDim.minY = m_zoomDimensions.minY;
       }
+
+      if(!zoomChanged && m_plotIs1D)
+      {
+         // If zoomChanged is false, then modZoomDim has been set to m_zoomDimensions.
+         // If the plot that we are dealing with only contains 1D curves, we should still update
+         // the zoom when the X Axis zoom dimensions are larger than the plot dimensions.
+         // The actual bounding of the zoom dimensions will be done in the SetZoom function.
+         if(modZoomDim.minX < m_plotDimensions.minX || modZoomDim.maxX > m_plotDimensions.maxX)
+         {
+            zoomChanged = true;
+         }
+      }
+
       if(zoomChanged)
       {
          SetZoom(modZoomDim, changeCausedByUserGuiInput, false);
@@ -147,7 +161,7 @@ void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUse
    }
    else
    {
-      // We are not zoomed in, check if old zoom is within new plot dimensions
+      // We are zoomed in, check if old zoom is within new plot dimensions
       bool minXValid = false;
       bool maxXValid = false;
       bool minYValid = false;
@@ -330,6 +344,18 @@ void PlotZoom::BoundZoom(maxMinXY& zoom)
     }
 }
 
+void PlotZoom::BoundZoomXaxis(maxMinXY& zoom)
+{
+   if(zoom.minX < m_plotDimensions.minX)
+   {
+       zoom.minX = m_plotDimensions.minX;
+   }
+   if(zoom.maxX > m_plotDimensions.maxX)
+   {
+       zoom.maxX = m_plotDimensions.maxX;
+   }
+}
+
 void PlotZoom::BoundScroll(QScrollBar* scroll, int& newPos)
 {
     if(newPos < scroll->minimum())
@@ -499,6 +525,10 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
    if(m_maxHoldZoom == false && m_holdZoom == false)
    {
       BoundZoom(zoomDimensions);
+   }
+   else if(m_plotIs1D == true && m_holdZoom == false)
+   {
+      BoundZoomXaxis(zoomDimensions); // For 1D plots do not apply max hold to the X axis.
    }
 
    double zoomWidth = zoomDimensions.maxX - zoomDimensions.minX;

@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -54,6 +54,7 @@ public:
    void ModSliderPos(eAxis axis, double changeWindowPercent);
 
    void BoundZoom(maxMinXY& zoom);
+   void BoundZoomXaxis(maxMinXY& zoom);
    void BoundScroll(QScrollBar* scroll, int& newPos);
 
    void Zoom(double zoomFactor);
@@ -73,6 +74,8 @@ public:
 
    bool m_holdZoom;
    bool m_maxHoldZoom;
+
+   bool m_plotIs1D; // This will affect how we deal with Max Hold.
 
 private:
    MainWindow* m_mainWindow;

@@ -328,6 +328,8 @@ private:
 
     void scrollModeSetPlotSize(int newPlotSize);
 
+    bool areAllCurves1D();
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
