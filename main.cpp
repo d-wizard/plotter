@@ -29,6 +29,7 @@
 #include "sendTCPPacket.h"
 #include "plotMsgPack.h"
 #include "update.h"
+#include "pthread.h"
 
 // Local Variables.
 static bool g_portsSpecifiedViaCmdLine = false;
@@ -234,6 +235,51 @@ static int stopGuiApp()
    return -1;
 }
 
+void* sendRestorePathThread(void*)
+{
+   if(g_ports.size() > 0 && g_cmdLineRestorePlotFilePaths.size() > 0)
+   {
+      bool exitLoop = false;
+      int tryCount = 0;
+      unsigned short portToUse = g_ports[0];
+
+      while(exitLoop == false)
+      {
+         // Need to wait for the Main GUI object to start and create the TCP server that is needed to process the plot to restore.
+#ifdef Q_OS_WIN
+         Sleep(100);
+#else
+         struct timespec ts = {0,100*1000*1000};
+         nanosleep(&ts, NULL);
+#endif
+
+         // Attempt to connect to the server.
+         int connectionToThisAppInstance = connectToExistingAppInstance(portToUse);
+         if(connectionToThisAppInstance >= 0)
+         {
+            sendRestorePlotPathsToActiveInstance(connectionToThisAppInstance);
+            sendTCPPacket_close(connectionToThisAppInstance); // Close the connection that was just made.
+            exitLoop = true;
+         }
+         exitLoop = exitLoop || (++tryCount > 100); // If unsuccessful, try 100 times before exiting the loop.
+      }
+   }
+   return NULL;
+}
+
+void restorePathsFromCmdLineInThisInstance()
+{
+   if(g_ports.size() > 0 && g_cmdLineRestorePlotFilePaths.size() > 0)
+   {
+      static pthread_t restorePathsMsgThread; // Make static just incase... this function should only ever be called once anyway.
+      static pthread_attr_t pta;              // Make static just incase... this function should only ever be called once anyway.
+
+      pthread_attr_init(&pta);
+      pthread_attr_setdetachstate(&pta, PTHREAD_CREATE_DETACHED); // This thread will never be joined, so make it a detached thread.
+      pthread_create(&restorePathsMsgThread, &pta, sendRestorePathThread, NULL);
+   }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -267,6 +313,8 @@ int main(int argc, char *argv[])
       setPersistentParamPath();
 
       cleanupAfterUpdate();
+
+      restorePathsFromCmdLineInThisInstance(); // If cmd line has plot files to resore, create a thread to restore them once the main gui is created.
 
       return startGuiApp();
    }
