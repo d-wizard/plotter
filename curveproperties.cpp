@@ -165,17 +165,9 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Set Suggested Plot / Curve Names.
    setUserChildPlotNames();
 
-   // Attempt to restore the Child Curve Plot Type from persistent memory.
-   double restoreChildCurvePlotTypeIndex = -1; // Init to invalid index.
-   bool restoreSuccess = persistentParam_getParam_f64(PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE, restoreChildCurvePlotTypeIndex);
-   if(restoreSuccess)
-   {
-      int restoreChildCurvePlotTypeIndex_int = restoreChildCurvePlotTypeIndex; // Double float to int.
-      if(restoreChildCurvePlotTypeIndex_int >= 0 && restoreChildCurvePlotTypeIndex_int < ui->cmbPlotType->count())
-      {
-         ui->cmbPlotType->setCurrentIndex(restoreChildCurvePlotTypeIndex_int);
-      }
-   }
+   // Attempt to restore the Child Curve combo box values from persistent memory.
+   initCmbBoxValueFromPersistParam(ui->cmbPlotType, PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE);
+   initCmbBoxValueFromPersistParam(ui->cmbChildMathOperators, PERSIST_PARAM_CHILD_CURVE_MATH_TYPE);
 }
 
 curveProperties::~curveProperties()
@@ -592,6 +584,12 @@ void curveProperties::on_cmdApply_clicked()
       // Save the plot type of the child curve that is being created in persistent memory. This way the next time the Properties window is
       // opened it will initialize to the same child plot type.
       persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE, ui->cmbPlotType->currentIndex());
+      if(ui->cmbPlotType->currentIndex() == E_PLOT_TYPE_MATH_BETWEEN_CURVES)
+      {
+         // Save the math type used to persistent memory.
+         persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_MATH_TYPE, ui->cmbChildMathOperators->currentIndex());
+      }
+
    }
    else if(tab == TAB_CREATE_MATH)
    {
@@ -1874,4 +1872,20 @@ void curveProperties::on_chkWindow_clicked(bool checked)
 void curveProperties::on_cmdCreateFromData_clicked()
 {
    m_curveCmdr->showCreatePlotFromDataGui("", NULL);
+}
+
+
+void curveProperties::initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, const std::string persistParamName)
+{
+   // Attempt to restore the combo box value from persistent memory.
+   double index_f64 = -1; // Init to invalid index.
+   bool restoreSuccess = persistentParam_getParam_f64(persistParamName, index_f64);
+   if(restoreSuccess)
+   {
+      int index_int = index_f64; // Double float to int.
+      if(index_int >= 0 && index_int < cmbBoxPtr->count())
+      {
+         cmbBoxPtr->setCurrentIndex(index_int);
+      }
+   }
 }

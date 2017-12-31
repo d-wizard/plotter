@@ -35,6 +35,7 @@ static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR = "curveSavePrevD
 static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION = "plotSavePrevSaveSelection";
 static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION = "curveSavePrevSaveSelection";
 static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotType";
+static const std::string PERSIST_PARAM_CHILD_CURVE_MATH_TYPE = "childCurveMathType";
 
 void persistentParam_setPath(std::string path);
 

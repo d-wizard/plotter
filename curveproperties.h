@@ -208,6 +208,7 @@ private:
    ipBlocker* m_ipBlocker;
    void fillInIpBlockTab();
 
+   void initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, const std::string persistParamName);
 
    Ui::curveProperties *ui;
 
