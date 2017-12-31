@@ -830,6 +830,8 @@ void curveProperties::mathTabApply()
          parentPlotGui->setCurveProperties_allCurves(sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
       else
          parentPlotGui->setCurveProperties_allAxes(curve.curveName, sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
+
+      fillInMathTab();
    }
 
 }
