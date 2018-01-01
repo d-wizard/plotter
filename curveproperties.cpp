@@ -177,6 +177,12 @@ curveProperties::~curveProperties()
 
 void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName)
 {
+   bool userSpecifiedPlotCurveName = plotName != "" && curveName != "";
+
+   QString firstPlotName = "";  //  Plot Name of the first plot/curve in the combo box.
+   QString firstCurveName = ""; // Curve Name of the first plot/curve in the combo box.
+   bool firstPlotCurveNameCmbBoxFound = false;
+
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
    // Save current values of the GUI elements. Clear the combo box members.
@@ -193,7 +199,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       m_plotNameCombos[i].cmbBoxPtr->clear();
    }
 
-   QList<QString> curveNames;
+   QList<QString> curveNames; // All the curve names in the default plot (either the plot specified by plotName or firstPlotName)
 
    foreach( QString curPlotName, allCurves.keys() )
    {
@@ -216,9 +222,23 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       foreach( QString curveName, curves->keys() )
       {
          CurveData* curveData = (*curves)[curveName];
+
+         // Store the first plot/curve name in the combo box.
+         if(firstPlotCurveNameCmbBoxFound == false)
+         {
+            firstPlotName = curPlotName;
+            firstCurveName = curveName;
+            firstPlotCurveNameCmbBoxFound = firstPlotName != "" && firstCurveName != "";
+         }
+
          if(curPlotName == plotName && curveData->isDisplayed())
          {
             curveNames.push_back(curveName); // Fill in list of all curve names for the given plot.
+         }
+         else if(userSpecifiedPlotCurveName == false && firstPlotCurveNameCmbBoxFound == true && curPlotName == firstPlotName)
+         {
+            // plotName was not explicitly specified. Store off all curve names in the first plot in the combo box.
+            curveNames.push_back(curveName);
          }
 
          if( curveData->getPlotDim() == E_PLOT_DIM_1D)
@@ -252,23 +272,34 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       }
    }
 
-   if(plotName != "" && curveName != "")
+   // Set the Plot/Curve combo boxes.
+   QString defaultRealCurveName;
+   QString defaultImagCurveName;
+   if(userSpecifiedPlotCurveName)
    {
       // User brought this GUI up from a plot window. Set the selected value of all the plot/curve
       // combo boxes to the plot/curve name of the selected curve in the plot window.
-
-      QString defaultRealCurveName;
-      QString defaultImagCurveName;
       findRealImagCurveNames(curveNames, curveName, defaultRealCurveName, defaultImagCurveName);
-
-      setCombosToPlotCurve(plotName, curveName, defaultRealCurveName, defaultImagCurveName);
+      setCombosToPlotCurve(plotName, curveName, defaultRealCurveName, defaultImagCurveName, false);
    }
    else
    {
       // This function is being called because some curve has changed (created/deleted/updated).
       // Attempt to set the selected value of the plot/curve combos back to the value
       // it was before the change.
-      setCombosToPrevValues();
+      if(firstPlotCurveNameCmbBoxFound)
+      {
+         // We are setting the combo boxes for plot/curve's to (more or less) default values. First appempt to
+         // set the plot/curve name back to the values they were previously set to. If that fails attempt to
+         // set the real/imag specific combo boxes to match the curve names.
+         findRealImagCurveNames(curveNames, firstCurveName, defaultRealCurveName, defaultImagCurveName);
+         setCombosToPlotCurve(firstPlotName, firstCurveName, defaultRealCurveName, defaultImagCurveName, true);
+      }
+      else
+      {
+         // I don't think we should ever get here... but just incase...
+         setCombosToPrevValues();
+      }
    }
 
    if(ui->tabWidget->currentIndex() == TAB_PROPERTIES)
@@ -364,7 +395,7 @@ void curveProperties::setCombosToPrevValues()
    }
 }
 
-void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName)
+void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst)
 {
    QString plotCurveName1D_real = plotName + PLOT_CURVE_SEP + realCurveName;
    QString plotCurveName1D_imag = plotName + PLOT_CURVE_SEP + imagCurveName;
@@ -377,7 +408,12 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    {
       bool updateComboSuccess = false;
 
-      if(m_plotCurveCombos[i].preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
+      if(tryToRestoreFirst)
+      {
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+      }
+
+      if(updateComboSuccess == false && m_plotCurveCombos[i].preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
       {
          if( m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_X &&
              trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D_real) )
@@ -408,7 +444,15 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    // Set Plot Name Combos
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
-      trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, plotName);
+      bool updateComboSuccess = false;
+      if(tryToRestoreFirst)
+      {
+         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
+      }
+      if(updateComboSuccess == false)
+      {
+         trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, plotName);
+      }
    }
 
 }

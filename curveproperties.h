@@ -170,7 +170,7 @@ private:
    void closeEvent(QCloseEvent* event);
 
    void setCombosToPrevValues();
-   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName);
+   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst);
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
