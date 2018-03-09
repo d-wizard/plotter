@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -276,7 +276,10 @@ typedef enum
    E_POWER,
    E_LOG,
    E_MOD,
-   E_ABS
+   E_ABS,
+   E_ROUND,
+   E_ROUND_UP,
+   E_ROUND_DOWN
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -291,6 +294,9 @@ inline bool valid_eMathOp(eMathOp in)
    case E_LOG:
    case E_MOD:
    case E_ABS:
+   case E_ROUND:
+   case E_ROUND_UP:
+   case E_ROUND_DOWN:
       return true;
       break;
    }
@@ -308,6 +314,9 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_POWER:
    case E_LOG:
    case E_MOD:
+   case E_ROUND:
+   case E_ROUND_UP:
+   case E_ROUND_DOWN:
       return true;
       break;
    case E_ABS:

@@ -63,7 +63,11 @@ const QString mathOpsStr[] = {
 "POWER",
 "LOG()",
 "MOD()",
-"ABS()"};
+"ABS()",
+"ROUND()",
+"ROUNDUP()",
+"ROUNDDOWN()"
+};
 
 const QString mathOpsSymbol[] = {
 "+",
@@ -74,7 +78,11 @@ const QString mathOpsSymbol[] = {
 "^",
 "log",
 "mod",
-"abs"};
+"abs",
+"round",
+"round up",
+"round down"
+};
 
 
 const QString mathOpsValueLabel[] = {
@@ -85,8 +93,12 @@ const QString mathOpsValueLabel[] = {
 "Bits to Shift Down by",
 "Raise to Power Value",
 "Base of log",
-"Modulus Denominator"
-""};
+"Modulus Denominator",
+"", // ABS has no value, so set the text to nothing.
+"Decimal Point to Round",
+"Decimal Point to Round Up",
+"Decimal Point to Round Down"
+};
 
 const QString plotTypeNames[] = {
    "1D",
@@ -1046,6 +1058,8 @@ void curveProperties::on_opsOnCurve_currentRowChanged(int currentRow)
 void curveProperties::on_cmdOpRight_clicked()
 {
    double number = 0.0;
+   bool invalidNumberFromStr = false;
+
    if(ui->txtNumber->text().toLower() == "pi")
    {
       number = CURVE_PROP_PI;
@@ -1062,11 +1076,11 @@ void curveProperties::on_cmdOpRight_clicked()
    {
       if(dString::strTo(ui->txtNumber->text().toStdString(), number) == false)
       {
-         number = 0.0;
+         invalidNumberFromStr = true;
       }
    }
 
-   if(number != 0.0 || needsValue_eMathOp((eMathOp)m_selectedMathOpLeft) == false)
+   if(invalidNumberFromStr == false || needsValue_eMathOp((eMathOp)m_selectedMathOpLeft) == false)
    {
       tOperation newOp;
 

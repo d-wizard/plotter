@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1201,6 +1201,45 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                break;
                case E_ABS:
                   (*dataIter) = fabs((*dataIter));
+               break;
+               case E_ROUND:
+                  if(mathIter->num == 0)
+                  {
+                     // Most of the time this will be just a round to whole integer number, in that case use the fast math.
+                     (*dataIter) = round((*dataIter));
+                  }
+                  else
+                  {
+                     // Rounding to not an integer, use the slower math.
+                     double decimal = pow(10, mathIter->num);
+                     (*dataIter) = round((*dataIter) * decimal) / decimal;
+                  }
+               break;
+               case E_ROUND_UP:
+                  if(mathIter->num == 0)
+                  {
+                     // Most of the time this will be just a round to whole integer number, in that case use the fast math.
+                     (*dataIter) = ceil((*dataIter));
+                  }
+                  else
+                  {
+                     // Rounding to not an integer, use the slower math.
+                     double decimal = pow(10, mathIter->num);
+                     (*dataIter) = ceil((*dataIter) * decimal) / decimal;
+                  }
+               break;
+               case E_ROUND_DOWN:
+                  if(mathIter->num == 0)
+                  {
+                     // Most of the time this will be just a round to whole integer number, in that case use the fast math.
+                     (*dataIter) = floor((*dataIter));
+                  }
+                  else
+                  {
+                     // Rounding to not an integer, use the slower math.
+                     double decimal = pow(10, mathIter->num);
+                     (*dataIter) = floor((*dataIter) * decimal) / decimal;
+                  }
                break;
             }
          }
