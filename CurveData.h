@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -113,6 +113,9 @@ public:
 
    unsigned int getMaxNumPointsFromPlotMsg(){return maxNumPointsFromPlotMsg;}
    double getCalculatedSampleRateFromPlotMsgs(){return sampleRateCalculator.getSampleRate();}
+
+   void setPointValue(unsigned int index, double value);
+   void setPointValue(unsigned int index, double xValue, double yValue);
 
 private:
    CurveData();

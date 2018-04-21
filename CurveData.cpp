@@ -1326,3 +1326,29 @@ void CurveData::handleNewSampleMsg(unsigned int sampleStartIndex, unsigned int n
    maxNumPointsFromPlotMsg = std::max(maxNumPointsFromPlotMsg, sampleStartIndex + numSamples);
    sampleRateCalculator.newSamples(numSamples);
 }
+
+void CurveData::setPointValue(unsigned int index, double value)
+{
+   setPointValue(index, value, value);
+}
+
+void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
+{
+   if(index < getNumPoints())
+   {
+      if(plotDim == E_PLOT_DIM_1D)
+      {
+         dubVect yPoints;
+         yPoints.push_back(yValue);
+         UpdateCurveSamples(yPoints, index, false);
+      }
+      else
+      {
+         dubVect xPoints;
+         dubVect yPoints;
+         xPoints.push_back(xValue);
+         yPoints.push_back(yValue);
+         UpdateCurveSamples(xPoints, yPoints, index, false);
+      }
+   }
+}

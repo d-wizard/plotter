@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +23,7 @@
 #include <QKeyEvent>
 #include <QClipboard>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -1783,6 +1784,22 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                if(clipText != "")
                {
                   m_curveCommander->showCreatePlotFromDataGui(getPlotName(), clipText.toStdString().c_str());
+               }
+            }
+            else if(KeyEvent->key() == Qt::Key_H && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Hide an individual sample point (i.e. replace it with Not A Number(nan))
+               QMutexLocker lock(&m_qwtCurvesMutex);
+               if(m_qwtSelectedSample != NULL && m_qwtSelectedSample->isAttached) // Only continue if the selected sample is being displayed
+               {
+                  QMessageBox::StandardButton reply;
+                  reply = QMessageBox::question(this, "Hide Selected Sample?", "Hiding the selected sample will set it to Not A Number (nan).",
+                                                QMessageBox::Yes | QMessageBox::No);
+                  if(reply == QMessageBox::Yes)
+                  {
+                     m_qwtCurves[m_selectedCurveIndex]->setPointValue(m_qwtSelectedSample->m_pointIndex, NAN);
+                     updatePlotWithNewCurveData(true);
+                  }
                }
             }
             else
