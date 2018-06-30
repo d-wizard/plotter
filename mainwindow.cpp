@@ -1753,6 +1753,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Set to Max Hold Zoom
                maxHoldZoom();
             }
+            else if(KeyEvent->key() == Qt::Key_R && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               resetZoom();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
