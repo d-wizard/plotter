@@ -122,7 +122,7 @@ void CurveData::init()
 
 void CurveData::initCurve()
 {
-   curve->setPen(appearance.color);
+   curve->setPen(appearance.color, appearance.width);
    curve->setStyle(appearance.style);
    setCurveSamples();
 }
@@ -1272,9 +1272,8 @@ bool CurveData::setHidden(bool isHidden)
 void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
 {
    appearance = curveAppearance;
-   qreal width = appearance.style == QwtPlotCurve::Dots ? 3.0 : 0.0;
 
-   curve->setPen(appearance.color, width);
+   curve->setPen(appearance.color, appearance.width);
    curve->setStyle(appearance.style);
 
    // The samples sent to the QWT plot API can change based on curve appearance.

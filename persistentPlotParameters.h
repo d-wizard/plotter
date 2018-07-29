@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -35,6 +35,7 @@
 
 #include <QMap>
 #include <QString>
+#include <qwt_plot_curve.h>
 #include "PlotHelperTypes.h"
 
 // Template class for storing an individual plot parameter.
@@ -58,6 +59,7 @@ public:
 
    persistentPlotParam<int> m_displayPrecision;
    persistentPlotParam<eDisplayPointType> m_displayType;
+   persistentPlotParam<QwtPlotCurve::CurveStyle> m_curveStyle;
 
 };
 

@@ -39,9 +39,14 @@ class CurveAppearance
 public:
    CurveAppearance(QColor initColor, QwtPlotCurve::CurveStyle initStyle):
       color(initColor),
-      style(initStyle){}
+      style(initStyle)
+   {
+      width = initStyle == QwtPlotCurve::Dots ? 3.0 : 0.0;
+   }
+
    QColor color;
    QwtPlotCurve::CurveStyle style;
+   qreal width;
 };
 
 class CurveData

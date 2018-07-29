@@ -877,12 +877,31 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
 
 void MainWindow::setNew2dPlotStyle(QString curveName)
 {
-   int curveIndex = getCurveIndex(curveName);
-   if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+   // If the user overwrote the Curve Style in previous plot windows, then there is no need to force the curve style.
+   // Just use the value from the previous plot window.
+   bool styleInPersistentParam = false;
+   if(persistentPlotParam_areThereAnyParams(g_persistentPlotParams, m_plotName))
    {
-      extern bool default2dPlotStyleIsLines;
-      m_qwtCurves[curveIndex]->setCurveAppearance(
-         CurveAppearance(m_qwtCurves[curveIndex]->getColor(), default2dPlotStyleIsLines ? QwtPlotCurve::Lines : QwtPlotCurve::Dots));
+      styleInPersistentParam = persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_curveStyle.isValid();
+   }
+
+   if(styleInPersistentParam == false)
+   {
+      int curveIndex = getCurveIndex(curveName);
+      if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+      {
+         extern bool default2dPlotStyleIsLines;
+         QwtPlotCurve::CurveStyle curveStyle = default2dPlotStyleIsLines ? QwtPlotCurve::Lines : QwtPlotCurve::Dots;
+
+         m_qwtCurves[curveIndex]->setCurveAppearance( CurveAppearance(m_qwtCurves[curveIndex]->getColor(), curveStyle) );
+
+         if(m_qwtCurves.size() == 1)
+         {
+            // This is the first plot, set the default for all subsequent plots to match this curve style
+            m_defaultCurveStyle = curveStyle;
+            setCurveStyleMenuIcons();
+         }
+      }
    }
 }
 
@@ -2394,6 +2413,9 @@ void MainWindow::changeCurveStyle(int inVal)
       {
          m_qwtCurves[curveIndex]->setCurveAppearance(CurveAppearance(m_qwtCurves[curveIndex]->getColor(), m_defaultCurveStyle));
       }
+
+      // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
+      persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_curveStyle.set(m_defaultCurveStyle);
    }
    setCurveStyleMenuIcons();
 }
@@ -2594,6 +2616,18 @@ void MainWindow::restorePersistentPlotParams()
          m_displayPrecision = ppp->m_displayPrecision.get();
       }
 
+      // Attempt to restore 'm_curveStyle'
+      if(ppp->m_curveStyle.isValid())
+      {
+         setCurveStyleForCurve(-1, ppp->m_curveStyle.get());
+      }
+
    }
 }
 
+void MainWindow::setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle curveStyle) // curveIndex of -1 will set all curves.
+{
+   curveIndex = curveIndex < 0 ? -1 : curveIndex; // If negative set to -1, otherwise leave the same.
+   int packedIndexAndStyle = ((curveIndex << 16) & 0xffff0000) | (curveStyle & 0xffff);
+   changeCurveStyle(packedIndexAndStyle);
+}

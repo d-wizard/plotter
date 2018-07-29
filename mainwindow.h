@@ -332,6 +332,8 @@ private:
 
     void setNew2dPlotStyle(QString curveName);
 
+    void setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle curveStyle); // curveIndex of -1 will set all curves.
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
