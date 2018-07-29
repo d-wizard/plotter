@@ -863,9 +863,27 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
 
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
       m_curveCommander->doFinalChildCurveInit(getPlotName(), name);
+
+      // The Style for 2D plots is may be different from the default value (i.e. Lines).
+      if(plotDim == E_PLOT_DIM_2D)
+      {
+         setNew2dPlotStyle(name);
+      }
    }
 
    initCursorIndex(curveIndex);
+}
+
+
+void MainWindow::setNew2dPlotStyle(QString curveName)
+{
+   int curveIndex = getCurveIndex(curveName);
+   if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+   {
+      extern bool default2dPlotStyleIsLines;
+      m_qwtCurves[curveIndex]->setCurveAppearance(
+         CurveAppearance(m_qwtCurves[curveIndex]->getColor(), default2dPlotStyleIsLines ? QwtPlotCurve::Lines : QwtPlotCurve::Dots));
+   }
 }
 
 void MainWindow::initCursorIndex(int curveIndex)

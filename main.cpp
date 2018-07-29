@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -38,7 +38,7 @@ static std::vector<std::string> g_cmdLineRestorePlotFilePaths;
 
 // Global Variables (might be extern'd)
 bool defaultCursorZoomModeIsZoom = false;
-
+bool default2dPlotStyleIsLines = false; // true = Lines, false = Dots
 
 
 // Local Functions
@@ -194,6 +194,12 @@ static void processIniFile(int argc, char *argv[])
       if(defaultMode == std::string("zoom"))
       {
          defaultCursorZoomModeIsZoom = true;
+      }
+
+      std::string useLinesStyleFor2d = dString::GetMiddle(&iniFile, "\nuse_lines_for_2d_plots=", "\n");
+      if(useLinesStyleFor2d == std::string("true"))
+      {
+         default2dPlotStyleIsLines = true; // true = Lines, false = Dots
       }
 
    } // End if(iniFile != "")
