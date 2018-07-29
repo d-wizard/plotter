@@ -864,7 +864,7 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       // This is a new curve. If this is a child curve, there may be some final initialization that still needs to be done.
       m_curveCommander->doFinalChildCurveInit(getPlotName(), name);
 
-      // The Style for 2D plots is may be different from the default value (i.e. Lines).
+      // The curve style for 2D plots may be different from the default value (i.e. Lines).
       if(plotDim == E_PLOT_DIM_2D)
       {
          setNew2dPlotStyle(name);
