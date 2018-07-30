@@ -25,14 +25,14 @@ QColor curveColors[] =
     QColor(0xFF8000),  // 3  
     QColor(0x00FF00),  // 4  
     QColor(0x8080FF),  // 5  
-    QColor(0xC0C0C0),  // 6  
-    QColor(0xFFC0FF),  // 7  
-    QColor(0xFFC040),  // 8  
-    QColor(0xC0FF00),  // 9  
-    QColor(0x00C080),  // 10 
-    QColor(0xC080FF),  // 11 
-    QColor(0x40C0FF),  // 12 
-    QColor(0xFF0000),  // 13 
+    QColor(0xFF0000),  // 6  
+    QColor(0xC0C0C0),  // 7  
+    QColor(0xC080FF),  // 8  
+    QColor(0xFFC040),  // 9  
+    QColor(0xC0FF00),  // 10 
+    QColor(0x00C080),  // 11 
+    QColor(0xFFC0FF),  // 12   
+    QColor(0x40C0FF),  // 13 
     QColor(0x8040C0),  // 14 
     QColor(0xC08040),  // 15 
     QColor(0x606060),  // 16 
