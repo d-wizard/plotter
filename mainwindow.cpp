@@ -1794,6 +1794,21 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                resetZoom();
             }
+            else if(KeyEvent->key() == Qt::Key_E && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !m_allowNewCurves)
+            {
+               // Enable new plot messages.
+               togglePlotUpdateAbility();
+            }
+            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && m_allowNewCurves)
+            {
+               // Disable new plot messages.
+               togglePlotUpdateAbility();
+            }
+            else if(KeyEvent->key() == Qt::Key_T && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Toggle new plot messages.
+               togglePlotUpdateAbility();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
