@@ -60,6 +60,7 @@ public:
    persistentPlotParam<int> m_displayPrecision;
    persistentPlotParam<eDisplayPointType> m_displayType;
    persistentPlotParam<QwtPlotCurve::CurveStyle> m_curveStyle;
+   persistentPlotParam<bool> m_legend;
 
 };
 

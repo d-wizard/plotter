@@ -977,6 +977,9 @@ void MainWindow::toggleLegend()
         m_qwtPlot->insertLegend(NULL);
         m_qwtPlot->updateLegend();
     }
+
+    // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
+    persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_legend.set(m_legendDisplayed);
 }
 
 
@@ -1809,6 +1812,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Toggle new plot messages.
                togglePlotUpdateAbility();
             }
+            else if(KeyEvent->key() == Qt::Key_L && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Toggle Legend Visablity.
+               toggleLegend();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
@@ -2635,6 +2643,12 @@ void MainWindow::restorePersistentPlotParams()
       if(ppp->m_curveStyle.isValid())
       {
          setCurveStyleForCurve(-1, ppp->m_curveStyle.get());
+      }
+
+      // Attempt to restore 'm_legend'
+      if(ppp->m_legend.isValid())
+      {
+         setLegendState(ppp->m_legend.get());
       }
 
    }
