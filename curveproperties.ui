@@ -1145,7 +1145,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Visability</string>
+      <string>Visibility</string>
      </property>
      <widget class="QCheckBox" name="chkPropVisable">
       <property name="geometry">
@@ -1157,7 +1157,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Visable</string>
+       <string>Visible</string>
       </property>
      </widget>
      <widget class="QCheckBox" name="chkPropHide">
