@@ -320,6 +320,12 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    }
 
    setUserChildPlotNames();
+
+   if(userSpecifiedPlotCurveName)
+   {
+      // Store off the IP Address of the last message from the plot / curve that was selected when this function was called.
+      m_lastUpdatedPlotIpAddr = m_curveCmdr->getCurveData(plotName, curveName)->getLastMsgIpAddr().m_ipV4Addr;
+   }
 }
 
 void curveProperties::findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName)
@@ -788,7 +794,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
       case TAB_IP_BLOCK:
       {
-         fillInIpBlockTab();
+         fillInIpBlockTab(true);
       }
       break;
 
@@ -1823,7 +1829,7 @@ void curveProperties::setOpenSavePath(QString path)
    }
 }
 
-void curveProperties::fillInIpBlockTab()
+void curveProperties::fillInIpBlockTab(bool useLastIpAddr)
 {
    // Fill In IP Address Combo Box
    QString origIpAddrText = ui->cmbIpAddrs->currentText();
@@ -1833,7 +1839,13 @@ void curveProperties::fillInIpBlockTab()
    {
       ui->cmbIpAddrs->addItem(tPlotterIpAddr::convert(ipAddrsIter->m_ipV4Addr));
    }
-   if(origIpAddrText != "")
+
+   if(useLastIpAddr == true && m_lastUpdatedPlotIpAddr.m_ipV4Addr != 0)
+   {
+      // Set the combo text to the IP Address of the last message sent for the plot was set when the properties GUI was opened.
+      ui->cmbIpAddrs->lineEdit()->setText(tPlotterIpAddr::convert(m_lastUpdatedPlotIpAddr.m_ipV4Addr));
+   }
+   else if(origIpAddrText != "")
    {
       // Restore combo box text.
       ui->cmbIpAddrs->lineEdit()->setText(origIpAddrText);

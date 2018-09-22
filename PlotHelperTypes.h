@@ -398,7 +398,7 @@ public:
       return newIpV4Val;
    }
 
-   tPlotterIpAddr(){}
+   tPlotterIpAddr():m_ipV4Addr(0){}
    tPlotterIpAddr(tIpV4 ipV4Addr): m_ipV4Addr(ipV4Addr) {}
    tPlotterIpAddr(QString ipV4Addr){m_ipV4Addr = convert(ipV4Addr);}
 
@@ -430,7 +430,7 @@ public:
    void setIpV4Addr(tIpV4& ipV4Addr){m_ipV4Addr = ipV4Addr;}
    void setIpV4Addr(QString& ipV4Addr){m_ipV4Addr = convert(ipV4Addr);}
 
-   unsigned long m_ipV4Addr;
+   tIpV4 m_ipV4Addr;
 };
 
 typedef struct
