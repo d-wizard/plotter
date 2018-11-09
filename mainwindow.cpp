@@ -1011,16 +1011,30 @@ void MainWindow::setLegendState(bool showLegend)
 
 void MainWindow::cursorMode()
 {
-    m_selectMode = E_CURSOR;
-    m_cursorAction.setIcon(m_checkedIcon);
-    m_zoomAction.setIcon(QIcon());
-    m_deltaCursorAction.setIcon(QIcon());
-    m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
-    m_qwtSelectedSampleDelta->hideCursor();
-    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
-    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
-    updatePointDisplay();
-    replotMainPlot(true, true);
+   eSelectMode origSelectMode = m_selectMode;
+
+   // Config for Cursor Mode.
+   m_selectMode = E_CURSOR;
+   m_cursorAction.setIcon(m_checkedIcon);
+   m_zoomAction.setIcon(QIcon());
+   m_deltaCursorAction.setIcon(QIcon());
+   m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
+   m_qwtSelectedSampleDelta->hideCursor();
+   m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+   m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+   updatePointDisplay();
+   replotMainPlot(true, true);
+
+   // If the user selects Cursor Mode when we are already in cursor mode, hide the cursor and
+   // clear out the point labels associated with the cursor. This behavior allows the user to
+   // hide the cursor and point labels from the plot (i.e. the way the plot appears before
+   // a cursor point is selected by the user).
+   if(origSelectMode == E_CURSOR)
+   {
+      if(m_qwtSelectedSample != NULL)
+         m_qwtSelectedSample->hideCursor();
+      clearPointLabels();
+   }
 }
 
 
