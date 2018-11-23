@@ -85,7 +85,7 @@ public:
    void attach();
    void detach();
 
-   void setNormalizeFactor(maxMinXY desiredScale);
+   void setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis);
    void resetNormalizeFactor();
    void setCurveSamples();
    void setCurveDataGuiPoints(bool onlyNeedToUpdate1D);

@@ -74,7 +74,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_plotZoom(NULL),
    m_checkedIcon(":/check.png"),
    m_zoomCursor(NULL),
-   m_normalizeCurves(false),
+   m_normalizeCurves_xAxis(false),
+   m_normalizeCurves_yAxis(false),
    m_legendDisplayed(false),
    m_calcSnrDisplayed(false),
    m_canvasWidth_pixels(1),
@@ -92,9 +93,13 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_scrollModeAction("Scroll Mode", this),
    m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
    m_resetZoomAction("Reset Zoom", this),
-   m_normalizeAction("Normalize Curves", this),
+   m_normalizeNoneAction("Disable", this),
+   m_normalizeYOnlyAction("Y Axis Only", this),
+   m_normalizeXOnlyAction("X Axis Only", this),
+   m_normalizeBothAction("Both Axes", this),
    m_toggleLegendAction("Legend", this),
    m_toggleSnrCalcAction("Calculate SNR", this),
+   m_normalizeMenu("Normalize Curves"),
    m_zoomSettingsMenu("Zoom Settings"),
    m_selectedCurvesMenu("Selected Curve"),
    m_visibleCurvesMenu("Visible Curves"),
@@ -156,7 +161,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
-    connect(&m_normalizeAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurves()));
+    connect(&m_normalizeNoneAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesNone()));
+    connect(&m_normalizeYOnlyAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesYOnly()));
+    connect(&m_normalizeXOnlyAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesXOnly()));
+    connect(&m_normalizeBothAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesBoth()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
@@ -184,7 +192,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_rightClickMenu.addAction(&m_deltaCursorAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_resetZoomAction);
-    m_rightClickMenu.addAction(&m_normalizeAction);
+    m_rightClickMenu.addMenu(&m_normalizeMenu);
     m_rightClickMenu.addAction(&m_toggleLegendAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_zoomSettingsMenu);
@@ -206,6 +214,13 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_curveProperties);
+
+    // Initialize the right click menu's normalize settings sub menu.
+    m_normalizeMenu.addAction(&m_normalizeNoneAction);
+    m_normalizeMenu.addAction(&m_normalizeYOnlyAction);
+    m_normalizeMenu.addAction(&m_normalizeXOnlyAction);
+    m_normalizeMenu.addAction(&m_normalizeBothAction);
+    m_normalizeNoneAction.setIcon(m_checkedIcon);
 
     // Initialize the right click menu's zoom settings sub menu.
     m_zoomSettingsMenu.addAction(&m_autoZoomAction);
@@ -1182,22 +1197,50 @@ void MainWindow::resetZoom()
    }
 }
 
-void MainWindow::normalizeCurves()
+void MainWindow::normalizeCurves(bool xAxis, bool yAxis)
 {
-    m_normalizeCurves = !m_normalizeCurves;
-    if(m_normalizeCurves)
-    {
-        m_normalizeAction.setIcon(m_checkedIcon);
-    }
-    else
-    {
-        m_normalizeAction.setIcon(QIcon());
-        m_plotZoom->SetPlotDimensions(m_maxMin, true);
-    }
-    replotMainPlot();
-    m_plotZoom->ResetZoom();
+   if(xAxis != m_normalizeCurves_xAxis || yAxis != m_normalizeCurves_yAxis)
+   {
+      // Changed.
+      m_normalizeCurves_xAxis = xAxis;
+      m_normalizeCurves_yAxis = yAxis;
+
+      replotMainPlot();
+      m_plotZoom->ResetZoom();
+   }
+
+   // Make sure Icon is set correctly.
+   m_normalizeNoneAction.setIcon(QIcon());
+   m_normalizeYOnlyAction.setIcon(QIcon());
+   m_normalizeXOnlyAction.setIcon(QIcon());
+   m_normalizeBothAction.setIcon(QIcon());
+
+   if(xAxis && yAxis)
+      m_normalizeBothAction.setIcon(m_checkedIcon);
+   else if(yAxis)
+      m_normalizeYOnlyAction.setIcon(m_checkedIcon);
+   else if(xAxis)
+      m_normalizeXOnlyAction.setIcon(m_checkedIcon);
+   else
+      m_normalizeNoneAction.setIcon(m_checkedIcon);
 }
 
+void MainWindow::normalizeCurvesNone()
+{
+   normalizeCurves(false, false);
+}
+void MainWindow::normalizeCurvesYOnly()
+{
+   normalizeCurves(false, true);
+}
+void MainWindow::normalizeCurvesXOnly()
+{
+   normalizeCurves(true, false);
+}
+void MainWindow::normalizeCurvesBoth()
+{
+   normalizeCurves(true, true);
+}
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
@@ -2134,80 +2177,98 @@ void MainWindow::on_horizontalScrollBar_actionTriggered(int action)
     }
 }
 
+maxMinXY MainWindow::getPlotDimWithNormalization()
+{
+   maxMinXY newPlotDim = m_maxMin;
+
+   if(m_selectedCurveIndex >= 0 && m_selectedCurveIndex < m_qwtCurves.size())
+   {
+      maxMinXY selectedCurveMaxMin = m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData();
+      if(m_normalizeCurves_xAxis)
+      {
+         newPlotDim.maxX  = selectedCurveMaxMin.maxX;
+         newPlotDim.minX  = selectedCurveMaxMin.minX;
+         newPlotDim.realX = selectedCurveMaxMin.realX;
+      }
+      if(m_normalizeCurves_yAxis)
+      {
+         newPlotDim.maxY  = selectedCurveMaxMin.maxY;
+         newPlotDim.minY  = selectedCurveMaxMin.minY;
+         newPlotDim.realY = selectedCurveMaxMin.realY;
+      }
+   }
+
+   return newPlotDim;
+}
+
 void MainWindow::setSelectedCurveIndex(int index)
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    if(index >= 0 && index < m_qwtCurves.size())
-    {
-        int oldSelectCursor = m_selectedCurveIndex;
-        m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
-        m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
-        m_snrCalcBars->setCurve(m_qwtCurves[index], m_qwtCurves);
-        m_selectedCurveIndex = index;
-        if(m_normalizeCurves)
-        {
-            if(oldSelectCursor >= 0 && oldSelectCursor < m_qwtCurves.size())
-            {
-                maxMinXY newZoom;
-                maxMinXY oldMaxMinXY = m_plotZoom->getCurZoom();
-                tLinearXYAxis newCursorScale = m_qwtCurves[m_selectedCurveIndex]->getNormFactor();
-                newZoom.maxX = (oldMaxMinXY.maxX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
-                newZoom.minX = (oldMaxMinXY.minX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
-                newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
-                newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
+   if(index >= 0 && index < m_qwtCurves.size())
+   {
+      int oldSelectCursor = m_selectedCurveIndex;
+      m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
+      m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
+      m_snrCalcBars->setCurve(m_qwtCurves[index], m_qwtCurves);
+      m_selectedCurveIndex = index;
+      if(m_normalizeCurves_xAxis || m_normalizeCurves_yAxis)
+      {
+         // Update zoom so that it will show the same portion of the plot with the new normalization factor.
+         if(oldSelectCursor >= 0 && oldSelectCursor < m_qwtCurves.size())
+         {
+            maxMinXY newZoom;
+            maxMinXY oldMaxMinXY = m_plotZoom->getCurZoom();
+            tLinearXYAxis newCursorScale = m_qwtCurves[m_selectedCurveIndex]->getNormFactor();
+            newZoom.maxX = (oldMaxMinXY.maxX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
+            newZoom.minX = (oldMaxMinXY.minX - newCursorScale.xAxis.b) / newCursorScale.xAxis.m;
+            newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
+            newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
 
-                m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), true);
-                m_plotZoom->SetZoom(newZoom);
-            }
-            else
-            {
-                m_plotZoom->ResetZoom();
-            }
-            replotMainPlot();
+            m_plotZoom->SetPlotDimensions(getPlotDimWithNormalization(), true);
+            m_plotZoom->SetZoom(newZoom);
+         }
+         else
+         {
+            m_plotZoom->ResetZoom();
+         }
+         replotMainPlot();
 
-        }
-    }
+      }
+   }
 }
 
 void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChanged)
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    for(int i = 0; i < m_qwtCurves.size(); ++i)
-    {
-        if(m_normalizeCurves)
-        {
-            m_qwtCurves[i]->setNormalizeFactor(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData());
-        }
-        else
-        {
-            m_qwtCurves[i]->resetNormalizeFactor();
-        }
-        m_qwtCurves[i]->setCurveSamples();
-    }
+   maxMinXY selectedCurveMaxMin = m_maxMin;
 
-    // If just the cursor point changed, there is no need to update plot dimesions.
-    if(cursorChanged == false)
-    {
-       if(m_normalizeCurves)
-       {
-           m_plotZoom->SetPlotDimensions(m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData(), changeCausedByUserGuiInput);
-       }
-       else
-       {
-           m_plotZoom->SetPlotDimensions(m_maxMin, changeCausedByUserGuiInput);
-       }
-    }
+   if(m_selectedCurveIndex >= 0 && m_selectedCurveIndex < m_qwtCurves.size())
+   {
+      selectedCurveMaxMin = m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData();
+   }
 
-    if(m_snrCalcBars != NULL)
-    {
-       m_snrCalcBars->updateZoomDim(m_plotZoom->getCurZoom());
-       m_snrCalcBars->updatePlotDim(m_plotZoom->getCurPlotDim());
-       m_snrCalcBars->updateSampleRate();
-    }
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->setNormalizeFactor(selectedCurveMaxMin, m_normalizeCurves_xAxis, m_normalizeCurves_yAxis);
+      m_qwtCurves[i]->setCurveSamples();
+   }
 
-    m_qwtPlot->replot();
+   // If just the cursor point changed, there is no need to update plot dimesions.
+   if(cursorChanged == false)
+   {
+      m_plotZoom->SetPlotDimensions(getPlotDimWithNormalization(), changeCausedByUserGuiInput);
+   }
+
+   if(m_snrCalcBars != NULL)
+   {
+      m_snrCalcBars->updateZoomDim(m_plotZoom->getCurZoom());
+      m_snrCalcBars->updatePlotDim(m_plotZoom->getCurPlotDim());
+      m_snrCalcBars->updateSampleRate();
+   }
+
+   m_qwtPlot->replot();
 }
 
 void MainWindow::ShowRightClickForPlot(const QPoint& pos) // this is a slot

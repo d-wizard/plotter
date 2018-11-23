@@ -207,7 +207,8 @@ private:
     QIcon m_checkedIcon;
     QCursor* m_zoomCursor;
 
-    bool m_normalizeCurves;
+    bool m_normalizeCurves_xAxis;
+    bool m_normalizeCurves_yAxis;
 
     bool m_legendDisplayed;
     bool m_calcSnrDisplayed;
@@ -233,10 +234,14 @@ private:
     QAction m_scrollModeAction;
     QAction m_scrollModeChangePlotSizeAction;
     QAction m_resetZoomAction;
-    QAction m_normalizeAction;
+    QAction m_normalizeNoneAction;
+    QAction m_normalizeYOnlyAction;
+    QAction m_normalizeXOnlyAction;
+    QAction m_normalizeBothAction;
     QAction m_toggleLegendAction;
     QAction m_toggleSnrCalcAction;
     QMenu m_rightClickMenu;
+    QMenu m_normalizeMenu;
     QMenu m_zoomSettingsMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
@@ -301,6 +306,8 @@ private:
     void modifySelectedCursor(int modDelta);
     void modifyCursorPos(int modDelta);
 
+    maxMinXY getPlotDimWithNormalization();
+
     void setSelectedCurveIndex(int index);
 
     void replotMainPlot(bool changeCausedByUserGuiInput = true, bool cursorChanged = false);
@@ -334,6 +341,8 @@ private:
 
     void setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle curveStyle); // curveIndex of -1 will set all curves.
 
+    void normalizeCurves(bool xAxis, bool yAxis);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -351,7 +360,10 @@ private slots:
     void scrollModeChangePlotSize();
     void zoomMode();
     void resetZoom();
-    void normalizeCurves();
+    void normalizeCurvesNone();
+    void normalizeCurvesYOnly();
+    void normalizeCurvesXOnly();
+    void normalizeCurvesBoth();
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);

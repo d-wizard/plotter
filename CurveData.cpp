@@ -449,9 +449,9 @@ void CurveData::findMaxMin()
    maxMin_beforeScale = newMaxMin;
 }
 
-void CurveData::setNormalizeFactor(maxMinXY desiredScale)
+void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis)
 {
-   if(desiredScale.maxX == maxMin_beforeScale.maxX && desiredScale.minX == maxMin_beforeScale.minX)
+   if(!normXAxis || (desiredScale.maxX == maxMin_beforeScale.maxX && desiredScale.minX == maxMin_beforeScale.minX))
    {
       normFactor.xAxis.m = 1.0;
       normFactor.xAxis.b = 0.0;
@@ -463,7 +463,7 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale)
       normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
       xNormalized = true;
    }
-   if(desiredScale.maxY == maxMin_beforeScale.maxY && desiredScale.minY == maxMin_beforeScale.minY)
+   if(!normYAxis || (desiredScale.maxY == maxMin_beforeScale.maxY && desiredScale.minY == maxMin_beforeScale.minY))
    {
       normFactor.yAxis.m = 1.0;
       normFactor.yAxis.b = 0.0;
