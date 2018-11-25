@@ -284,7 +284,8 @@ private:
 
     bool m_dragZoomModeActive;
     QMutex m_dragZoomModeMutex;
-    QPointF m_dragZoomModePoint;
+    QPointF m_dragZoomMode_startPoint;
+    QPointF m_dragZoomMode_newPoint;
 
     bool m_moveCalcSnrBarActive;
 
@@ -409,9 +410,11 @@ private slots:
 public slots:
     void updateCursorMenus();
     void readPlotMsgSlot();
+    void dragZoomMode_moveSlot();
 signals:
     void updateCursorMenusSignal();
     void readPlotMsgSignal();
+    void dragZoomMode_moveSignal();
 
 };
 

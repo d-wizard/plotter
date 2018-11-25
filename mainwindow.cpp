@@ -149,11 +149,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     ui->verticalScrollBar->setPalette(palette);
     ui->horizontalScrollBar->setPalette(palette);
 
-    connect(this, SIGNAL(readPlotMsgSignal()),
-            this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
-
-    connect(this, SIGNAL(updateCursorMenusSignal()),
-            this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
+    connect(this, SIGNAL(readPlotMsgSignal()), this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
+    connect(this, SIGNAL(updateCursorMenusSignal()), this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
+    connect(this, SIGNAL(dragZoomMode_moveSignal()), this, SLOT(dragZoomMode_moveSlot()), Qt::QueuedConnection);
 
     // Connect menu commands
     connect(&m_zoomAction, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
@@ -1469,7 +1467,7 @@ void MainWindow::pointSelected_dragZoomMode(const QPointF &pos)
    {
       m_dragZoomModeActive = true;
       setCursor(); // Set to the Drag Zoom Mode cursor.
-      m_dragZoomModePoint = pos;
+      m_dragZoomMode_startPoint = pos;
    }
 }
 
@@ -1486,9 +1484,21 @@ void MainWindow::pickerMoved_dragZoomMode(const QPointF &pos)
 
    if(m_dragZoomModeActive == true)
    {
+      // Store off the new position of Drag Mode Zoom and signal the GUI to process the zoom change.
+      m_dragZoomMode_newPoint = pos;
+      emit dragZoomMode_moveSignal(); // This function may be called multiple times, but only the most recent position will be processed.
+   }
+}
+
+void MainWindow::dragZoomMode_moveSlot()
+{
+   QMutexLocker lock(&m_dragZoomModeMutex);
+
+   if(m_dragZoomModeActive == true)
+   {
       // Change zoom such that the new point position shows the data point of the previous position.
-      double xDelta  = m_dragZoomModePoint.x() - pos.x();
-      double yDelta = m_dragZoomModePoint.y() - pos.y();
+      double xDelta  = m_dragZoomMode_startPoint.x() - m_dragZoomMode_newPoint.x();
+      double yDelta = m_dragZoomMode_startPoint.y() - m_dragZoomMode_newPoint.y();
       m_plotZoom->moveZoom(xDelta, yDelta, true);
    }
 }
