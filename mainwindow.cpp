@@ -67,7 +67,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_qwtCurvesMutex(QMutex::Recursive),
    m_qwtSelectedSample(NULL),
    m_qwtSelectedSampleDelta(NULL),
-   m_qwtPicker(NULL),
+   m_qwtMainPicker(NULL),
+   m_qwtDragZoomModePicker(NULL),
+   m_qwtDragZoomModePicker2(NULL),
    m_qwtGrid(NULL),
    m_selectMode(E_CURSOR),
    m_selectedCurveIndex(0),
@@ -121,7 +123,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_activityIndicator_plotIsActive(true),
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
-   m_snrCalcBars(NULL)
+   m_snrCalcBars(NULL),
+   m_dragZoomModeActive(false)
 {
     ui->setupUi(this);
     setWindowTitle(m_plotName);
@@ -298,10 +301,20 @@ MainWindow::~MainWindow()
         delete m_qwtGrid;
         m_qwtGrid = NULL;
     }
-    if(m_qwtPicker != NULL)
+    if(m_qwtMainPicker != NULL)
     {
-        delete m_qwtPicker;
-        m_qwtPicker = NULL;
+        delete m_qwtMainPicker;
+        m_qwtMainPicker = NULL;
+    }
+    if(m_qwtDragZoomModePicker != NULL)
+    {
+        delete m_qwtDragZoomModePicker;
+        m_qwtDragZoomModePicker = NULL;
+    }
+    if(m_qwtDragZoomModePicker2 != NULL)
+    {
+        delete m_qwtDragZoomModePicker2;
+        m_qwtDragZoomModePicker2 = NULL;
     }
     if(m_plotZoom != NULL)
     {
@@ -391,21 +404,38 @@ void MainWindow::resetPlot()
 
     ui->GraphLayout->addWidget(m_qwtPlot);
 
-    if(m_qwtPicker != NULL)
+    ///// Initialize the Main Picker. This is used for selecting points in Cursor Mode and zooming in Zoom Mode.
+    if(m_qwtMainPicker != NULL)
     {
-        delete m_qwtPicker;
+        delete m_qwtMainPicker;
     }
 
-    m_qwtPicker = new QwtPlotPicker(m_qwtPlot->canvas());
+    m_qwtMainPicker = new QwtPlotPicker(m_qwtPlot->canvas());
 
     // setStateMachine wants to be called with new and handles delete.
-    m_qwtPicker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerDragPointMachine());//
+    m_qwtMainPicker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerDragPointMachine());//
 
-    m_qwtPicker->setRubberBandPen( QColor( Qt::green ) );
-    m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
-    m_qwtPicker->setTrackerPen( QColor( Qt::white ) );
+    m_qwtMainPicker->setRubberBandPen( QColor( Qt::green ) );
+    m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
+    m_qwtMainPicker->setTrackerPen( QColor( Qt::white ) );
 
-    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+
+    ///// Initialize the Drag Zoom Mode Pickers. There are 2 pickers that do the same thing. The first keys off
+    ///// Ctrl + Mouse Left Click. The second keys Mouse Middle Click.
+    if(m_qwtDragZoomModePicker != NULL)
+    {
+        delete m_qwtDragZoomModePicker;
+    }
+    m_qwtDragZoomModePicker = new QwtPlotPicker(m_qwtPlot->canvas());
+    m_qwtDragZoomModePicker->setStateMachine(new QwtPickerDragRectMachine());
+    m_qwtDragZoomModePicker->setMousePattern(QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ControlModifier);
+    if(m_qwtDragZoomModePicker2 != NULL)
+    {
+        delete m_qwtDragZoomModePicker2;
+    }
+    m_qwtDragZoomModePicker2 = new QwtPlotPicker(m_qwtPlot->canvas());
+    m_qwtDragZoomModePicker2->setStateMachine(new QwtPickerDragRectMachine());
+    m_qwtDragZoomModePicker2->setMousePattern(QwtEventPattern::MouseSelect1, Qt::MiddleButton);
 
     // Hacky way to let the user specify whether the default mode is zoom
     // or cursor. defaultCursorZoomModeIsZoom is defined in main.cpp
@@ -421,14 +451,21 @@ void MainWindow::resetPlot()
        cursorMode();
     }
 
+    setCursor();
+
     m_qwtPlot->show();
     m_qwtGrid->show();
 
     // TODO: Do I need to disconnect the action
-    connect(m_qwtPicker, SIGNAL(appended(QPointF)),
-            this, SLOT(pointSelected(QPointF)));
-    connect(m_qwtPicker, SIGNAL(selected(QRectF)),
-            this, SLOT(rectSelected(QRectF)));
+    connect(m_qwtMainPicker, SIGNAL(appended(QPointF)), this, SLOT(pointSelected(QPointF)));
+    connect(m_qwtMainPicker, SIGNAL(selected(QRectF)),  this, SLOT(rectSelected(QRectF)));
+
+    connect(m_qwtDragZoomModePicker,  SIGNAL(appended(QPointF)), this, SLOT(pointSelected_dragZoomMode(QPointF)));
+    connect(m_qwtDragZoomModePicker,  SIGNAL(selected(QRectF)),  this, SLOT(rectSelected_dragZoomMode(QRectF)));
+    connect(m_qwtDragZoomModePicker,  SIGNAL(moved(QPointF)),    this, SLOT(pickerMoved_dragZoomMode(QPointF)));
+    connect(m_qwtDragZoomModePicker2, SIGNAL(appended(QPointF)), this, SLOT(pointSelected_dragZoomMode(QPointF)));
+    connect(m_qwtDragZoomModePicker2, SIGNAL(selected(QRectF)),  this, SLOT(rectSelected_dragZoomMode(QRectF)));
+    connect(m_qwtDragZoomModePicker2, SIGNAL(moved(QPointF)),    this, SLOT(pickerMoved_dragZoomMode(QPointF)));
 }
 
 void MainWindow::updateCursorMenus()
@@ -1033,10 +1070,10 @@ void MainWindow::cursorMode()
    m_cursorAction.setIcon(m_checkedIcon);
    m_zoomAction.setIcon(QIcon());
    m_deltaCursorAction.setIcon(QIcon());
-   m_qwtPicker->setStateMachine( new QwtPickerDragRectMachine() );
+   m_qwtMainPicker->setStateMachine( new QwtPickerDragRectMachine() );
    m_qwtSelectedSampleDelta->hideCursor();
-   m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
-   m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+   m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
+   setCursor();
    updatePointDisplay();
    replotMainPlot(true, true);
 
@@ -1072,10 +1109,10 @@ void MainWindow::deltaCursorMode()
             m_maxMin,
             m_canvasXOverYRatio);
 
-        m_qwtPicker->setRubberBand( QwtPicker::CrossRubberBand );
+        m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
     }
-    m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+    setCursor();
     updatePointDisplay();
     replotMainPlot(true, true);
 }
@@ -1087,8 +1124,8 @@ void MainWindow::zoomMode()
     m_zoomAction.setIcon(m_checkedIcon);
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
-    m_qwtPicker->setRubberBand( QwtPicker::RectRubberBand);
-    m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
+    m_qwtMainPicker->setRubberBand( QwtPicker::RectRubberBand);
+    setCursor();
 }
 
 void MainWindow::autoZoom()
@@ -1370,15 +1407,14 @@ void MainWindow::pointSelected(const QPointF &pos)
    {
       // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
       // movement while the left mouse button is held down.
-      connect(m_qwtPicker, SIGNAL(moved(QPointF)),
-              this, SLOT(pickerMoved(QPointF)));
+      connect(m_qwtMainPicker, SIGNAL(moved(QPointF)), this, SLOT(pickerMoved_calcSnr(QPointF)));
       // We are not selecting a cursor point, instead we are dragging a SNR Calc Bar. Nothing more to do.
       return;
    }
    else
    {
       // We are not dragging an SNR Calc Bar. Make sure the slot for tracking that is disconnected.
-      disconnect(m_qwtPicker, SIGNAL(moved(QPointF)), 0, 0);
+      disconnect(m_qwtMainPicker, SIGNAL(moved(QPointF)), 0, 0);
    }
 
    // Update the cursor with the selected point.
@@ -1396,23 +1432,55 @@ void MainWindow::pointSelected(const QPointF &pos)
 
 void MainWindow::rectSelected(const QRectF &pos)
 {
-    if(m_selectMode == E_ZOOM)
-    {
-        QRectF rectCopy = pos;
-        maxMinXY zoomDim;
+   if(m_selectMode == E_ZOOM)
+   {
+      QRectF rectCopy = pos;
+      maxMinXY zoomDim;
 
-        rectCopy.getCoords(&zoomDim.minX, &zoomDim.minY, &zoomDim.maxX, &zoomDim.maxY);
+      rectCopy.getCoords(&zoomDim.minX, &zoomDim.minY, &zoomDim.maxX, &zoomDim.maxY);
 
-        m_plotZoom->SetZoom(zoomDim);
+      m_plotZoom->SetZoom(zoomDim);
 
-    }
+   }
 
 }
 
-void MainWindow::pickerMoved(const QPointF &pos)
+void MainWindow::pickerMoved_calcSnr(const QPointF &pos)
 {
    m_snrCalcBars->moveBar(pos);
    m_qwtPlot->replot();
+}
+
+
+void MainWindow::pointSelected_dragZoomMode(const QPointF &pos)
+{
+   QMutexLocker lock(&m_dragZoomModeMutex);
+   if(m_dragZoomModeActive == false)
+   {
+      m_dragZoomModeActive = true;
+      setCursor(); // Set to the Drag Zoom Mode cursor.
+      m_dragZoomModePoint = pos;
+   }
+}
+
+void MainWindow::rectSelected_dragZoomMode(const QRectF &pos)
+{
+   QMutexLocker lock(&m_dragZoomModeMutex);
+   m_dragZoomModeActive = false;
+   setCursor(); // Set the cursor back to its default value.
+}
+
+void MainWindow::pickerMoved_dragZoomMode(const QPointF &pos)
+{
+   QMutexLocker lock(&m_dragZoomModeMutex);
+
+   if(m_dragZoomModeActive == true)
+   {
+      // Change zoom such that the new point position shows the data point of the previous position.
+      double xDelta  = m_dragZoomModePoint.x() - pos.x();
+      double yDelta = m_dragZoomModePoint.y() - pos.y();
+      m_plotZoom->moveZoom(xDelta, yDelta, true);
+   }
 }
 
 void MainWindow::on_verticalScrollBar_sliderMoved(int /*position*/)
@@ -2734,4 +2802,20 @@ void MainWindow::setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle 
    curveIndex = curveIndex < 0 ? -1 : curveIndex; // If negative set to -1, otherwise leave the same.
    int packedIndexAndStyle = ((curveIndex << 16) & 0xffff0000) | (curveStyle & 0xffff);
    changeCurveStyle(packedIndexAndStyle);
+}
+
+void MainWindow::setCursor()
+{
+   if(m_dragZoomModeActive)
+   {
+      m_qwtPlot->canvas()->setCursor(Qt::OpenHandCursor);
+   }
+   else if(m_selectMode == E_ZOOM)
+   {
+      m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
+   }
+   else
+   {
+      m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+   }
 }

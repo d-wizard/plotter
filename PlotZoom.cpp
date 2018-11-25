@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -563,6 +563,43 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
    }
 }
 
+// Move the zoom window, keeping the zoom width and height the same.
+void PlotZoom::moveZoom(double deltaX, double deltaY, bool changeCausedByUserGuiInput)
+{
+   maxMinXY newZoom = m_zoomDimensions;
+   newZoom.maxX += deltaX;
+   newZoom.minX += deltaX;
+   newZoom.maxY += deltaY;
+   newZoom.minY += deltaY;
+
+   // Make sure the zoom window doesn't move outside of the plot dimensions.
+   if(newZoom.maxX > m_plotDimensions.maxX)
+   {
+      double delta = newZoom.maxX - m_plotDimensions.maxX;
+      newZoom.maxX -= delta;
+      newZoom.minX -= delta;
+   }
+   if(newZoom.minX < m_plotDimensions.minX)
+   {
+      double delta = m_plotDimensions.minX - newZoom.minX;
+      newZoom.maxX += delta;
+      newZoom.minX += delta;
+   }
+   if(newZoom.maxY > m_plotDimensions.maxY)
+   {
+      double delta = newZoom.maxY - m_plotDimensions.maxY;
+      newZoom.maxY -= delta;
+      newZoom.minY -= delta;
+   }
+   if(newZoom.minY < m_plotDimensions.minY)
+   {
+      double delta = m_plotDimensions.minY - newZoom.minY;
+      newZoom.maxY += delta;
+      newZoom.minY += delta;
+   }
+
+   SetZoom(newZoom, changeCausedByUserGuiInput, false);
+}
 
 void PlotZoom::UpdateScrollBars()
 {

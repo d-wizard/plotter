@@ -191,7 +191,9 @@ private:
     QMutex m_qwtCurvesMutex;
     Cursor* m_qwtSelectedSample;
     Cursor* m_qwtSelectedSampleDelta;
-    QwtPlotPicker* m_qwtPicker;
+    QwtPlotPicker* m_qwtMainPicker;
+    QwtPlotPicker* m_qwtDragZoomModePicker;
+    QwtPlotPicker* m_qwtDragZoomModePicker2;
     QwtPlotGrid* m_qwtGrid;
 
     std::queue<plotMsgGroup*> m_plotMsgQueue;
@@ -280,6 +282,10 @@ private:
 
     plotSnrCalc* m_snrCalcBars;
 
+    bool m_dragZoomModeActive;
+    QMutex m_dragZoomModeMutex;
+    QPointF m_dragZoomModePoint;
+
 
     void resetPlot();
 
@@ -343,10 +349,16 @@ private:
 
     void normalizeCurves(bool xAxis, bool yAxis);
 
+    void setCursor();
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
-    void pickerMoved(const QPointF &pos);
+    void pickerMoved_calcSnr(const QPointF &pos);
+
+    void pointSelected_dragZoomMode(const QPointF &pos);
+    void rectSelected_dragZoomMode(const QRectF &pos);
+    void pickerMoved_dragZoomMode(const QPointF &pos);
 
     // Menu Commands
     void toggleLegend();
