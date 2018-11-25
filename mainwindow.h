@@ -286,6 +286,7 @@ private:
     QMutex m_dragZoomModeMutex;
     QPointF m_dragZoomModePoint;
 
+    bool m_moveCalcSnrBarActive;
 
     void resetPlot();
 

@@ -124,7 +124,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
    m_snrCalcBars(NULL),
-   m_dragZoomModeActive(false)
+   m_dragZoomModeActive(false),
+   m_moveCalcSnrBarActive(false)
 {
     ui->setupUi(this);
     setWindowTitle(m_plotName);
@@ -1407,7 +1408,10 @@ void MainWindow::pointSelected(const QPointF &pos)
    {
       // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
       // movement while the left mouse button is held down.
+      m_moveCalcSnrBarActive = true;
       connect(m_qwtMainPicker, SIGNAL(moved(QPointF)), this, SLOT(pickerMoved_calcSnr(QPointF)));
+      setCursor(); // Set the cursor for moving a Calc SNR Bar.
+
       // We are not selecting a cursor point, instead we are dragging a SNR Calc Bar. Nothing more to do.
       return;
    }
@@ -1443,6 +1447,12 @@ void MainWindow::rectSelected(const QRectF &pos)
 
    }
 
+   // This function is called when the user unclicks the left mouse button. Reset the state if a Calc SNR was being moved.
+   if(m_moveCalcSnrBarActive)
+   {
+      m_moveCalcSnrBarActive = false;
+      setCursor(); // Set the cursor back to normal.
+   }
 }
 
 void MainWindow::pickerMoved_calcSnr(const QPointF &pos)
@@ -2809,6 +2819,10 @@ void MainWindow::setCursor()
    if(m_dragZoomModeActive)
    {
       m_qwtPlot->canvas()->setCursor(Qt::OpenHandCursor);
+   }
+   else if(m_moveCalcSnrBarActive)
+   {
+      m_qwtPlot->canvas()->setCursor(Qt::SizeHorCursor);
    }
    else if(m_selectMode == E_ZOOM)
    {
