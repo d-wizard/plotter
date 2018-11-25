@@ -598,7 +598,10 @@ void PlotZoom::moveZoom(double deltaX, double deltaY, bool changeCausedByUserGui
       newZoom.minY += delta;
    }
 
-   SetZoom(newZoom, changeCausedByUserGuiInput, false);
+   if(newZoom != m_zoomDimensions)
+   {
+      SetZoom(newZoom, changeCausedByUserGuiInput, false);
+   }
 }
 
 void PlotZoom::UpdateScrollBars()
