@@ -501,13 +501,12 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
 {
    maxMinXY origZoomDim = m_zoomDimensions;
 
-   // Nothing in the save zoom vector, initialize it with current zoom value.
+   // Nothing in the save zoom vector, initialize it with the plot dimensions.
    if(saveZoom == true && m_zoomDimSave.size() == 0)
    {
       m_zoomDimSave.resize(1);
       m_zoomDimIndex = 0;
-      m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;//m_zoomDimensions;
-
+      m_zoomDimSave[m_zoomDimIndex] = m_plotDimensions;
    }
    
    if(changeCausedByUserGuiInput == false && m_holdZoom == true)
@@ -544,9 +543,19 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
 
       UpdateScrollBars();
 
-      // Remove any next zooms and set the current zoom.
+      // Remove any saved next zooms and store the current zoom and the new zoom.
       if(saveZoom == true)
       {
+         // Make sure the current zoom is saved to the front of the Saved Zoom vector.
+         // This way we can guarantee that the user can easily get back to this zoom.
+         if(m_zoomDimSave[m_zoomDimIndex] != origZoomDim)
+         {
+            ++m_zoomDimIndex;
+            m_zoomDimSave.resize(m_zoomDimIndex+1);
+            m_zoomDimSave[m_zoomDimIndex] = origZoomDim;
+         }
+
+         // Add the new zoom to the front of the vector.
          ++m_zoomDimIndex;
          m_zoomDimSave.resize(m_zoomDimIndex+1);
          m_zoomDimSave[m_zoomDimIndex] = m_zoomDimensions;
