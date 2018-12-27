@@ -208,28 +208,29 @@ void smartMaxMin::calcTotalMaxMin()
 
       while(iter != m_segList.end())
       {
-         if(!maxMinIsRealValue && iter->realPoints)
+         // Only update Max/Min if the new segment contains real numbers.
+         if(iter->realPoints)
          {
-            // Old segment did not contain real numbers. New segment has real numbers. So, use the new segment values.
-            newMax = iter->maxValue;
-            newMin = iter->minValue;
-            maxMinIsRealValue = true;
-         }
-         else
-         {
-            if(iter->maxValue > newMax)
+            if(!maxMinIsRealValue)
             {
+               // Old segment(s) did not contain real numbers. New segment has real numbers. So, use the new segment values.
                newMax = iter->maxValue;
-            }
-            if(iter->minValue < newMin)
-            {
                newMin = iter->minValue;
             }
-            if(iter->realPoints == true)
+            else
             {
-               maxMinIsRealValue = true;
+               if(iter->maxValue > newMax)
+               {
+                  newMax = iter->maxValue;
+               }
+               if(iter->minValue < newMin)
+               {
+                  newMin = iter->minValue;
+               }
             }
+            maxMinIsRealValue = true;
          }
+
          ++iter;
       }
 
