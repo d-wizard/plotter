@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -208,17 +208,27 @@ void smartMaxMin::calcTotalMaxMin()
 
       while(iter != m_segList.end())
       {
-         if(iter->maxValue > newMax)
+         if(!maxMinIsRealValue && iter->realPoints)
          {
+            // Old segment did not contain real numbers. New segment has real numbers. So, use the new segment values.
             newMax = iter->maxValue;
-         }
-         if(iter->minValue < newMin)
-         {
             newMin = iter->minValue;
-         }
-         if(iter->realPoints == true)
-         {
             maxMinIsRealValue = true;
+         }
+         else
+         {
+            if(iter->maxValue > newMax)
+            {
+               newMax = iter->maxValue;
+            }
+            if(iter->minValue < newMin)
+            {
+               newMin = iter->minValue;
+            }
+            if(iter->realPoints == true)
+            {
+               maxMinIsRealValue = true;
+            }
          }
          ++iter;
       }
@@ -297,24 +307,43 @@ void smartMaxMin::combineSegments()
 
       if(next != m_segList.end())
       {
+         // Check if the two segments together are small enough to combine.
          if( (cur->numPoints + next->numPoints) < m_minSegSize )
          {
-            // Combine the segments.
-            if(cur->maxValue < next->maxValue)
+            // First, update the Max/Min values and their indexes.
+            if(cur->realPoints && next->realPoints)
             {
+               // Both segments contain real values, simply find the min and max between the two segments.
+               if(cur->maxValue < next->maxValue)
+               {
+                  cur->maxValue = next->maxValue;
+                  cur->maxIndex = next->maxIndex;
+               }
+               if(cur->minValue > next->minValue)
+               {
+                  cur->minValue = next->minValue;
+                  cur->minIndex = next->minIndex;
+               }
+            }
+            else if(next->realPoints)
+            {
+               // cur is not real but next is, so just use next values
                cur->maxValue = next->maxValue;
                cur->maxIndex = next->maxIndex;
-            }
-            if(cur->minValue > next->minValue)
-            {
                cur->minValue = next->minValue;
                cur->minIndex = next->minIndex;
             }
+            // else cur is real and next isn't (thus keep cur the same) or both are not real (also keep cur the same)
+
+            // Next, update the variable that indicates if any of the points in the segment contain real values.
             if(cur->realPoints || next->realPoints)
             {
                cur->realPoints = true;
             }
+
+            // Finally, update the number of points in the new, combined segment.
             cur->numPoints += next->numPoints;
+
             m_segList.erase(next);
          }
          else
