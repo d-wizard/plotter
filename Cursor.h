@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014, 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2017 - 2018 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -87,7 +87,9 @@ public:
         // Initialize for 2D plot
         int minPointIndex = 0;
 
-        if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
+        ePlotDim parentPlotDim = m_parentCurve->getPlotDim();
+
+        if(parentPlotDim == E_PLOT_DIM_1D)
         {
             // Since 1D plot, assume the X position the user selected is close to the curve,
             // convert input position to actual X position.
@@ -107,7 +109,7 @@ public:
         int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
         int endIndex = m_parentCurve->getNumPoints();
 
-        if(m_parentCurve->getPlotDim() == E_PLOT_DIM_1D)
+        if(parentPlotDim == E_PLOT_DIM_1D)
         {
             int roundDownMinDist = (int)(minDist * width * m_parentCurve->getLinearXAxisCorrection().m) + 1;
             startIndex = minPointIndex - roundDownMinDist;
@@ -126,14 +128,32 @@ public:
         {
             xDelta = fabs(xPoints[i] - xPos)*inverseWidth;
             yDelta = fabs(yPoints[i] - yPos)*inverseHeight;
+
+            // For 2D plots, never select 'Not a Number' points (only need to do this for 2D because the extra 1D specific code
+            // above seems to work pretty well with invalid points).
+            if(parentPlotDim != E_PLOT_DIM_1D)
+            {
+               // Check if we still need to find a valid 'minDist' value. Only set 'minDist' if the x and y deltas are valid.
+               if(!isDoubleValid(minDist) && isDoubleValid(xDelta) && isDoubleValid(yDelta))
+               {
+                  minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+               }
+            }
+
             // Don't do sqrt if its already known that it won't be smaller than minDist
             if(xDelta < minDist && yDelta < minDist)
             {
-                double curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
-                if(curPointDist < minDist)
+                // For 2D plots, only update 'minDist' if the x/y deltas are valid.
+                bool invalid2dPoint = parentPlotDim != E_PLOT_DIM_1D && (!isDoubleValid(xDelta) || !isDoubleValid(yDelta));
+
+                if(!invalid2dPoint)
                 {
-                    minDist = curPointDist;
-                    minPointIndex = i;
+                   double curPointDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+                   if(curPointDist < minDist)
+                   {
+                       minDist = curPointDist;
+                       minPointIndex = i;
+                   }
                 }
             }
         }
