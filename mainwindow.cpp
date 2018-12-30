@@ -898,12 +898,18 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
 
       if(resetCurve == false && unpackPlotMsg->m_sampleStartIndex > 0)
       {
-         // New curve, but starting in the middle. Prepend vector with zeros.
-         if(plotDim != E_PLOT_DIM_1D)
+         // New curve, but starting in the middle.
+         if(plotDim == E_PLOT_DIM_1D)
          {
-            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
+            // For 1D, prepend vector with zeros.
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
          }
-         unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
+         else
+         {
+            // For 2D, prepend vector with 'Not a Number' values (i.e. values that won't show up on the plot).
+            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
+         }
       }
 
       CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
