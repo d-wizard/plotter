@@ -143,6 +143,7 @@ double Cursor::showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
          if(!isDoubleValid(minDist) && isDoubleValid(xDelta) && isDoubleValid(yDelta))
          {
             minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+            minPointIndex = i;
          }
       }
 
