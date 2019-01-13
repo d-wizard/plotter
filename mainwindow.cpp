@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -86,6 +86,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_allowNewCurves(true),
    m_scrollMode(false),
    m_needToUpdateGuiOnNextPlotUpdate(false),
+   m_cursorCanSelectAnyCurve(false),
    m_zoomAction("Zoom", this),
    m_cursorAction("Cursor", this),
    m_deltaCursorAction("Delta Cursor", this),
@@ -101,6 +102,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_normalizeBothAction("Both Axes", this),
    m_toggleLegendAction("Legend", this),
    m_toggleSnrCalcAction("Calculate SNR", this),
+   m_toggleCursorCanSelectAnyCurveAction("Any Curve Cursor", this),
    m_normalizeMenu("Normalize Curves"),
    m_zoomSettingsMenu("Zoom Settings"),
    m_selectedCurvesMenu("Selected Curve"),
@@ -125,7 +127,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_activityIndicator_inactiveCount(0),
    m_snrCalcBars(NULL),
    m_dragZoomModeActive(false),
-   m_moveCalcSnrBarActive(false)
+   m_moveCalcSnrBarActive(false),
+   m_debouncePointSelected(false)
 {
     ui->setupUi(this);
     setWindowTitle(m_plotName);
@@ -169,6 +172,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_normalizeBothAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesBoth()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
+    connect(&m_toggleCursorCanSelectAnyCurveAction, SIGNAL(triggered(bool)), this, SLOT(toggleCursorCanSelectAnyCurveAction()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
 
@@ -196,6 +200,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_rightClickMenu.addAction(&m_resetZoomAction);
     m_rightClickMenu.addMenu(&m_normalizeMenu);
     m_rightClickMenu.addAction(&m_toggleLegendAction);
+    m_rightClickMenu.addAction(&m_toggleCursorCanSelectAnyCurveAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_zoomSettingsMenu);
     m_rightClickMenu.addSeparator();
@@ -1284,6 +1289,22 @@ void MainWindow::normalizeCurvesBoth()
    normalizeCurves(true, true);
 }
 
+void MainWindow::toggleCursorCanSelectAnyCurveAction()
+{
+   m_cursorCanSelectAnyCurve = !m_cursorCanSelectAnyCurve;
+   if(m_cursorCanSelectAnyCurve)
+   {
+      m_toggleCursorCanSelectAnyCurveAction.setIcon(m_checkedIcon);
+   }
+   else
+   {
+      m_toggleCursorCanSelectAnyCurveAction.setIcon(QIcon());
+   }
+
+   // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
+   persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_cursorCanSelectAnyCurve.set(m_cursorCanSelectAnyCurve);
+}
+
 void MainWindow::visibleCursorMenuSelect(int index)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
@@ -1402,6 +1423,37 @@ maxMinXY MainWindow::calcMaxMin()
 
 
 
+int MainWindow::findIndexWithClosestPoint(const QPointF &pos)
+{
+   int selectCurveIndex = -1;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   if(m_qwtCurves.size() > 0)
+   {
+      Cursor tryCursor;
+      maxMinXY curZoom = m_plotZoom->getCurZoom();
+      selectCurveIndex = 0;
+
+      tryCursor.setCurve(m_qwtCurves[0]);
+      double deltaToCurvePoint = tryCursor.showCursor(pos, curZoom, m_canvasXOverYRatio);
+
+      for(int i = 1; i < m_qwtCurves.size(); ++i)
+      {
+          if(m_qwtCurves[i]->isDisplayed())
+          {
+             tryCursor.setCurve(m_qwtCurves[i]);
+             double tryDeltaToCurvePoint = tryCursor.showCursor(pos, curZoom, m_canvasXOverYRatio);
+             if(tryDeltaToCurvePoint < deltaToCurvePoint)
+             {
+                deltaToCurvePoint = tryDeltaToCurvePoint;
+                selectCurveIndex = i;
+             }
+          }
+      }
+   }
+   return selectCurveIndex;
+}
+
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
@@ -1428,11 +1480,47 @@ void MainWindow::pointSelected(const QPointF &pos)
    // Update the cursor with the selected point.
    if(m_selectMode == E_CURSOR || m_selectMode == E_DELTA_CURSOR)
    {
-      m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+      m_debouncePointSelected = !m_debouncePointSelected; // This function is called twice per user click. Only process on the first call.
 
-      updatePointDisplay();
-      replotMainPlot(true, true);
+      if(m_debouncePointSelected)
+      {
+         if(m_cursorCanSelectAnyCurve)
+         {
+            // Find the closest point amoung all the curves.
+            int selectCurveIndex = findIndexWithClosestPoint(pos);
 
+            if(selectCurveIndex >= 0)
+            {
+               // Update the curve point.
+               m_qwtSelectedSample->setCurve(m_qwtCurves[selectCurveIndex]);
+               m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+
+               // Update the selected curve index (but don't change the curve point, we already did that).
+               setSelectedCurveIndex(selectCurveIndex, false);
+
+               if(m_qwtSelectedSampleDelta->isAttached)
+               {
+                  // Need to adjust the Delta Sample Selected Point position to account for normalization.
+                  m_qwtSelectedSampleDelta->showCursor(true);
+               }
+
+               updatePointDisplay();
+               replotMainPlot(true, true);
+            }
+         }
+         else
+         {
+            // Normal select mode. Only select a point on the selected curve.
+            m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+
+            updatePointDisplay();
+            replotMainPlot(true, true);
+         }
+      }
+   }
+   else
+   {
+      m_debouncePointSelected = false;
    }
 
 }
@@ -1929,7 +2017,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                   scrollModeToggle();
                scrollModeSetPlotSize(10*m_qwtCurves[m_selectedCurveIndex]->getMaxNumPointsFromPlotMsg());
             }
-            else if(KeyEvent->key() == Qt::Key_A && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_U && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                // Set to Auto Zoom
                autoZoom();
@@ -1967,6 +2055,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                // Toggle Legend Visablity.
                toggleLegend();
+            }
+            else if(KeyEvent->key() == Qt::Key_A && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Toggle
+               toggleCursorCanSelectAnyCurveAction();
             }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
@@ -2295,15 +2388,20 @@ maxMinXY MainWindow::getPlotDimWithNormalization()
    return newPlotDim;
 }
 
-void MainWindow::setSelectedCurveIndex(int index)
+void MainWindow::setSelectedCurveIndex(int index, bool updateSelectedPoints)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
    if(index >= 0 && index < m_qwtCurves.size())
    {
       int oldSelectCursor = m_selectedCurveIndex;
-      m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
-      m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
+
+      if(updateSelectedPoints)
+      {
+         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
+         m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
+      }
+
       m_snrCalcBars->setCurve(m_qwtCurves[index], m_qwtCurves);
       m_selectedCurveIndex = index;
       if(m_normalizeCurves_xAxis || m_normalizeCurves_yAxis)
@@ -2818,6 +2916,16 @@ void MainWindow::restorePersistentPlotParams()
       if(ppp->m_legend.isValid())
       {
          setLegendState(ppp->m_legend.get());
+      }
+
+      // Attempt to restore 'm_cursorCanSelectAnyCurve'
+      if(ppp->m_cursorCanSelectAnyCurve.isValid())
+      {
+         bool restoreValue = ppp->m_cursorCanSelectAnyCurve.get();
+         if(restoreValue != m_cursorCanSelectAnyCurve)
+         {
+            toggleCursorCanSelectAnyCurveAction();
+         }
       }
 
    }

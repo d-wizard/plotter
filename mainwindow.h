@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -225,6 +225,8 @@ private:
 
     bool m_needToUpdateGuiOnNextPlotUpdate;
 
+    bool m_cursorCanSelectAnyCurve;
+
     QList<tMenuActionMapper> m_selectedCursorActions;
 
     QAction m_zoomAction;
@@ -242,6 +244,7 @@ private:
     QAction m_normalizeBothAction;
     QAction m_toggleLegendAction;
     QAction m_toggleSnrCalcAction;
+    QAction m_toggleCursorCanSelectAnyCurveAction;
     QMenu m_rightClickMenu;
     QMenu m_normalizeMenu;
     QMenu m_zoomSettingsMenu;
@@ -289,6 +292,8 @@ private:
 
     bool m_moveCalcSnrBarActive;
 
+    bool m_debouncePointSelected;
+
     void resetPlot();
 
     void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
@@ -316,7 +321,7 @@ private:
 
     maxMinXY getPlotDimWithNormalization();
 
-    void setSelectedCurveIndex(int index);
+    void setSelectedCurveIndex(int index, bool updateSelectedPoints = true);
 
     void replotMainPlot(bool changeCausedByUserGuiInput = true, bool cursorChanged = false);
 
@@ -353,6 +358,8 @@ private:
 
     void setCursor();
 
+    int findIndexWithClosestPoint(const QPointF &pos);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -378,6 +385,7 @@ private slots:
     void normalizeCurvesYOnly();
     void normalizeCurvesXOnly();
     void normalizeCurvesBoth();
+    void toggleCursorCanSelectAnyCurveAction();
 
     void visibleCursorMenuSelect(int index);
     void selectedCursorMenuSelect(int index);

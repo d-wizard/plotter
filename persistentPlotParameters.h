@@ -1,4 +1,4 @@
-/* Copyright 2017 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2017 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -61,6 +61,7 @@ public:
    persistentPlotParam<eDisplayPointType> m_displayType;
    persistentPlotParam<QwtPlotCurve::CurveStyle> m_curveStyle;
    persistentPlotParam<bool> m_legend;
+   persistentPlotParam<bool> m_cursorCanSelectAnyCurve;
 
 };
 

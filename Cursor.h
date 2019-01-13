@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014, 2017 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2017 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -31,19 +31,31 @@
 class Cursor
 {
 public:
-    Cursor(QwtPlot* plot, QwtSymbol::Style style):
-        m_xPoint(0),
-        m_yPoint(0),
-        m_parentCurve(NULL),
-        m_pointIndex(0),
-        isAttached(false),
-        outOfRange(false),
-        m_plot(plot),
-        m_curve(NULL),
-        m_style(style)
-    {
-        m_curve = new QwtPlotCurve("");
-    }
+   Cursor():
+       m_xPoint(0),
+       m_yPoint(0),
+       m_parentCurve(NULL),
+       m_pointIndex(0),
+       isAttached(false),
+       outOfRange(false),
+       m_plot(NULL),
+       m_curve(NULL)
+   {
+       m_curve = new QwtPlotCurve("");
+   }
+   Cursor(QwtPlot* plot, QwtSymbol::Style style):
+       m_xPoint(0),
+       m_yPoint(0),
+       m_parentCurve(NULL),
+       m_pointIndex(0),
+       isAttached(false),
+       outOfRange(false),
+       m_plot(plot),
+       m_curve(NULL),
+       m_style(style)
+   {
+       m_curve = new QwtPlotCurve("");
+   }
     ~Cursor()
     {
         if(m_curve != NULL)
@@ -69,13 +81,13 @@ public:
         return m_parentCurve;
     }
 
-    void showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
+    double showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
     {
         double xPos = pos.x();
         double yPos = pos.y();
 
-        const double* xPoints = m_parentCurve->getXPoints();
-        const double* yPoints = m_parentCurve->getYPoints();
+        const double* xPoints = m_parentCurve->isXNormalized() ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
+        const double* yPoints = m_parentCurve->isYNormalized() ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
 
         // The data will not be displayed on the plot 1:1, need to adjust
         // delta calculation to make the x and y delta ratio 1:1
@@ -160,15 +172,24 @@ public:
 
         m_pointIndex = minPointIndex;
 
+        if(m_plot != NULL)
+        {
+            showCursor();
+        }
 
-        showCursor();
+        return minDist;
     }
 
-    void showCursor()
+    void showCursor(bool accountForNormalization = false)
     {
         hideCursor();
         if(m_pointIndex < m_parentCurve->getNumPoints())
         {
+            // Make sure to check if cursor point needs to account for normalization.
+            const double* xPoints = m_parentCurve->isXNormalized() && accountForNormalization ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
+            const double* yPoints = m_parentCurve->isYNormalized() && accountForNormalization ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
+
+            // Store off the non-normalized seleted point.
             m_xPoint = m_parentCurve->getXPoints()[m_pointIndex];
             m_yPoint = m_parentCurve->getYPoints()[m_pointIndex];
 
@@ -178,7 +199,7 @@ public:
                                                QPen( Qt::black, 1),
                                                QSize(9, 9) ) );
 
-            m_curve->setSamples( &m_xPoint, &m_yPoint, 1);
+            m_curve->setSamples( &xPoints[m_pointIndex], &yPoints[m_pointIndex], 1);
 
             outOfRange = false;
 
