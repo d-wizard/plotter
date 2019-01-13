@@ -46,7 +46,8 @@ SOURCES += main.cpp\
     update.cpp \
     sampleRateCalculator.cpp \
     createplotfromdata.cpp \
-    AutoDelimiter.cpp
+    AutoDelimiter.cpp \
+    Cursor.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
