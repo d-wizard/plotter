@@ -1432,21 +1432,24 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos)
    {
       Cursor tryCursor;
       maxMinXY curZoom = m_plotZoom->getCurZoom();
-      selectCurveIndex = 0;
+      bool firstClosestPointFound = false;
 
-      tryCursor.setCurve(m_qwtCurves[0]);
-      double deltaToCurvePoint = tryCursor.showCursor(pos, curZoom, m_canvasXOverYRatio);
+      double deltaToCurvePoint = 0.0;
 
-      for(int i = 1; i < m_qwtCurves.size(); ++i)
+      for(int i = 0; i < m_qwtCurves.size(); ++i)
       {
           if(m_qwtCurves[i]->isDisplayed())
           {
+             // Determine how far we are from the closest point for this curve.
              tryCursor.setCurve(m_qwtCurves[i]);
              double tryDeltaToCurvePoint = tryCursor.showCursor(pos, curZoom, m_canvasXOverYRatio);
-             if(tryDeltaToCurvePoint < deltaToCurvePoint)
+
+             // Check if this point should be the new closest point across all curves.
+             if(firstClosestPointFound == false || tryDeltaToCurvePoint < deltaToCurvePoint)
              {
                 deltaToCurvePoint = tryDeltaToCurvePoint;
                 selectCurveIndex = i;
+                firstClosestPointFound = true;
              }
           }
       }
@@ -1482,6 +1485,8 @@ void MainWindow::pointSelected(const QPointF &pos)
    {
       m_debouncePointSelected = !m_debouncePointSelected; // This function is called twice per user click. Only process on the first call.
 
+      bool updateCursor = false;
+
       if(m_debouncePointSelected)
       {
          if(m_cursorCanSelectAnyCurve)
@@ -1491,32 +1496,25 @@ void MainWindow::pointSelected(const QPointF &pos)
 
             if(selectCurveIndex >= 0)
             {
-               // Update the curve point.
-               m_qwtSelectedSample->setCurve(m_qwtCurves[selectCurveIndex]);
-               m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
-
-               // Update the selected curve index (but don't change the curve point, we already did that).
-               setSelectedCurveIndex(selectCurveIndex, false);
-
-               if(m_qwtSelectedSampleDelta->isAttached)
-               {
-                  // Need to adjust the Delta Sample Selected Point position to account for normalization.
-                  m_qwtSelectedSampleDelta->showCursor(true);
-               }
-
-               updatePointDisplay();
-               replotMainPlot(true, true);
+               // Update the selected curve index.
+               setSelectedCurveIndex(selectCurveIndex);
+               updateCursor = true; // New cursor index is valid.
             }
          }
          else
          {
             // Normal select mode. Only select a point on the selected curve.
-            m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+            updateCursor = true; // Cursor index hasn't changed, so it must still be valid.
+         }
 
+         if(updateCursor)
+         {
+            m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
             updatePointDisplay();
             replotMainPlot(true, true);
          }
       }
+
    }
    else
    {
@@ -2388,7 +2386,7 @@ maxMinXY MainWindow::getPlotDimWithNormalization()
    return newPlotDim;
 }
 
-void MainWindow::setSelectedCurveIndex(int index, bool updateSelectedPoints)
+void MainWindow::setSelectedCurveIndex(int index)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -2396,9 +2394,12 @@ void MainWindow::setSelectedCurveIndex(int index, bool updateSelectedPoints)
    {
       int oldSelectCursor = m_selectedCurveIndex;
 
-      if(updateSelectedPoints)
+      m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
+
+      // If any curve selection is in use, the delta sample curve might not match the selected curve. In that case do not change the delta sample curve.
+      bool deltaCouldBeDifferentCurve = m_cursorCanSelectAnyCurve && m_qwtSelectedSampleDelta->isAttached;
+      if(!deltaCouldBeDifferentCurve)
       {
-         m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
          m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
       }
 
@@ -2458,6 +2459,12 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
       m_snrCalcBars->updateZoomDim(m_plotZoom->getCurZoom());
       m_snrCalcBars->updatePlotDim(m_plotZoom->getCurPlotDim());
       m_snrCalcBars->updateSampleRate();
+   }
+
+   if(m_qwtSelectedSampleDelta->isAttached && m_cursorCanSelectAnyCurve)
+   {
+      // Need to adjust the Delta Sample Selected Point position to account for normalization.
+      m_qwtSelectedSampleDelta->showCursor();
    }
 
    m_qwtPlot->replot();

@@ -175,14 +175,14 @@ double Cursor::showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
    return minDist;
 }
 
-void Cursor::showCursor(bool accountForNormalization)
+void Cursor::showCursor()
 {
    hideCursor();
    if(m_pointIndex < m_parentCurve->getNumPoints())
    {
       // Make sure to check if cursor point needs to account for normalization.
-      const double* xPoints = m_parentCurve->isXNormalized() && accountForNormalization ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
-      const double* yPoints = m_parentCurve->isYNormalized() && accountForNormalization ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
+      const double* xPoints = m_parentCurve->isXNormalized() ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
+      const double* yPoints = m_parentCurve->isYNormalized() ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
 
       // Store off the non-normalized seleted point.
       m_xPoint = m_parentCurve->getXPoints()[m_pointIndex];

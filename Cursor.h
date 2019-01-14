@@ -39,7 +39,7 @@ public:
 
    double showCursor(QPointF pos, maxMinXY maxMin, double displayRatio);
 
-   void showCursor(bool accountForNormalization = false);
+   void showCursor();
 
    void hideCursor();
 

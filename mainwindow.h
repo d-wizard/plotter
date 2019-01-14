@@ -321,7 +321,7 @@ private:
 
     maxMinXY getPlotDimWithNormalization();
 
-    void setSelectedCurveIndex(int index, bool updateSelectedPoints = true);
+    void setSelectedCurveIndex(int index);
 
     void replotMainPlot(bool changeCausedByUserGuiInput = true, bool cursorChanged = false);
 
