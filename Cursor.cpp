@@ -75,7 +75,7 @@ CurveData* Cursor::getCurve()
    return m_parentCurve;
 }
 
-double Cursor::showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
+double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double displayRatio)
 {
    double xPos = pos.x();
    double yPos = pos.y();
@@ -166,11 +166,6 @@ double Cursor::showCursor(QPointF pos, maxMinXY maxMin, double displayRatio)
    }
 
    m_pointIndex = minPointIndex;
-
-   if(m_plot != NULL)
-   {
-      showCursor();
-   }
 
    return minDist;
 }

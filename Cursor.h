@@ -37,7 +37,7 @@ public:
 
    CurveData* getCurve();
 
-   double showCursor(QPointF pos, maxMinXY maxMin, double displayRatio);
+   double determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double displayRatio);
 
    void showCursor();
 

@@ -1114,10 +1114,11 @@ void MainWindow::deltaCursorMode()
     {
         // Move the main selected sample to the delta sample.
         m_qwtSelectedSampleDelta->setCurve(m_qwtSelectedSample->getCurve());
-        m_qwtSelectedSampleDelta->showCursor(
+        m_qwtSelectedSampleDelta->determineClosestPointIndex(
             QPointF(m_qwtSelectedSample->m_xPoint,m_qwtSelectedSample->m_yPoint),
             m_maxMin,
             m_canvasXOverYRatio);
+        m_qwtSelectedSampleDelta->showCursor();
 
         m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
@@ -1442,7 +1443,7 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& sele
           {
              // Determine how far we are from the closest point for this curve.
              tryCursor.setCurve(m_qwtCurves[i]);
-             double tryDeltaToCurvePoint = tryCursor.showCursor(pos, curZoom, m_canvasXOverYRatio);
+             double tryDeltaToCurvePoint = tryCursor.determineClosestPointIndex(pos, curZoom, m_canvasXOverYRatio);
 
              // Check if this point should be the new closest point across all curves.
              if(firstClosestPointFound == false || tryDeltaToCurvePoint < deltaToCurvePoint)
@@ -1450,7 +1451,7 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& sele
                 deltaToCurvePoint = tryDeltaToCurvePoint;
                 selectCurveIndex = i;
                 firstClosestPointFound = true;
-                selectedCurvePointIndex = tryCursor.m_pointIndex;
+                selectedCurvePointIndex = tryCursor.m_pointIndex; // Return the index to the point on the closest curve.
              }
           }
       }
@@ -1486,40 +1487,36 @@ void MainWindow::pointSelected(const QPointF &pos)
    {
       m_debouncePointSelected = !m_debouncePointSelected; // This function is called twice per user click. Only process on the first call.
 
-      bool updateCursor = false;
-
       if(m_debouncePointSelected)
       {
+         QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+         bool validPointSelected = true;
+
          if(m_cursorCanSelectAnyCurve)
          {
             // Find the closest point amoung all the curves.
             unsigned int selectedCurvePointIndex = 0;
             int selectCurveIndex = findIndexWithClosestPoint(pos, selectedCurvePointIndex);
 
-            if(selectCurveIndex >= 0)
+            validPointSelected = selectCurveIndex >= 0; // If curve index is negative, something when wrong.
+
+            if(validPointSelected)
             {
                // Update the selected curve index.
                setSelectedCurveIndex(selectCurveIndex);
                m_qwtSelectedSample->m_pointIndex = selectedCurvePointIndex; // Set to the point index that was determined by findIndexWithClosestPoint
-               updateCursor = true; // New cursor index is valid.
             }
          }
          else
          {
             // Normal select mode. Only select a point on the selected curve.
-            updateCursor = true; // Cursor index hasn't changed, so it must still be valid.
+            m_qwtSelectedSample->determineClosestPointIndex(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
          }
 
-         if(updateCursor)
+         if(validPointSelected)
          {
-            if(m_cursorCanSelectAnyCurve)
-            {
-               m_qwtSelectedSample->showCursor(); // The cursor point index was already determined above. Just show update the cursor.
-            }
-            else
-            {
-               m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
-            }
+            m_qwtSelectedSample->showCursor(); // Update the Selected Sample cursor with the new point that was just selected by the user.
             updatePointDisplay();
             replotMainPlot(true, true);
          }
