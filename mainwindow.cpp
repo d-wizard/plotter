@@ -1423,7 +1423,7 @@ maxMinXY MainWindow::calcMaxMin()
 
 
 
-int MainWindow::findIndexWithClosestPoint(const QPointF &pos)
+int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& selectedCurvePointIndex)
 {
    int selectCurveIndex = -1;
    QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
@@ -1450,6 +1450,7 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos)
                 deltaToCurvePoint = tryDeltaToCurvePoint;
                 selectCurveIndex = i;
                 firstClosestPointFound = true;
+                selectedCurvePointIndex = tryCursor.m_pointIndex;
              }
           }
       }
@@ -1492,12 +1493,14 @@ void MainWindow::pointSelected(const QPointF &pos)
          if(m_cursorCanSelectAnyCurve)
          {
             // Find the closest point amoung all the curves.
-            int selectCurveIndex = findIndexWithClosestPoint(pos);
+            unsigned int selectedCurvePointIndex = 0;
+            int selectCurveIndex = findIndexWithClosestPoint(pos, selectedCurvePointIndex);
 
             if(selectCurveIndex >= 0)
             {
                // Update the selected curve index.
                setSelectedCurveIndex(selectCurveIndex);
+               m_qwtSelectedSample->m_pointIndex = selectedCurvePointIndex; // Set to the point index that was determined by findIndexWithClosestPoint
                updateCursor = true; // New cursor index is valid.
             }
          }
@@ -1509,7 +1512,14 @@ void MainWindow::pointSelected(const QPointF &pos)
 
          if(updateCursor)
          {
-            m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+            if(m_cursorCanSelectAnyCurve)
+            {
+               m_qwtSelectedSample->showCursor(); // The cursor point index was already determined above. Just show update the cursor.
+            }
+            else
+            {
+               m_qwtSelectedSample->showCursor(pos, m_plotZoom->getCurZoom(), m_canvasXOverYRatio);
+            }
             updatePointDisplay();
             replotMainPlot(true, true);
          }

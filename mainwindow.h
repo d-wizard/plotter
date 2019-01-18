@@ -358,7 +358,7 @@ private:
 
     void setCursor();
 
-    int findIndexWithClosestPoint(const QPointF &pos);
+    int findIndexWithClosestPoint(const QPointF &pos, unsigned int &selectedCurvePointIndex);
 
 private slots:
     void pointSelected(const QPointF &pos);
