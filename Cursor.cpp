@@ -77,6 +77,11 @@ CurveData* Cursor::getCurve()
 
 double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double displayRatio)
 {
+   ePlotDim parentCurveDim = m_parentCurve->getPlotDim();
+
+   // As long as the parent curve is 1D and not normalized, we can speed up the search with some simple math.
+   bool useFast1dSearch = parentCurveDim == E_PLOT_DIM_1D && !m_parentCurve->isXNormalized();
+
    double xPos = pos.x();
    double yPos = pos.y();
 
@@ -93,9 +98,8 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    // Initialize for 2D plot
    int minPointIndex = 0;
 
-   ePlotDim parentPlotDim = m_parentCurve->getPlotDim();
-
-   if(parentPlotDim == E_PLOT_DIM_1D)
+   // For 1D curves, we can start with a good guess as to which point will be the closest.
+   if(useFast1dSearch)
    {
       // Since 1D plot, assume the X position the user selected is close to the curve,
       // convert input position to actual X position.
@@ -115,7 +119,9 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
    int endIndex = m_parentCurve->getNumPoints();
 
-   if(parentPlotDim == E_PLOT_DIM_1D)
+
+   // For 1D curves, we can reduce the number of points to search over.
+   if(useFast1dSearch)
    {
       int roundDownMinDist = (int)(minDist * width * m_parentCurve->getLinearXAxisCorrection().m) + 1;
       startIndex = minPointIndex - roundDownMinDist;
@@ -137,7 +143,7 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
 
       // For 2D plots, never select 'Not a Number' points (only need to do this for 2D because the extra 1D specific code
       // above seems to work pretty well with invalid points).
-      if(parentPlotDim != E_PLOT_DIM_1D)
+      if(parentCurveDim != E_PLOT_DIM_1D)
       {
          // Check if we still need to find a valid 'minDist' value. Only set 'minDist' if the x and y deltas are valid.
          if(!isDoubleValid(minDist) && isDoubleValid(xDelta) && isDoubleValid(yDelta))
@@ -151,7 +157,7 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
       if(xDelta < minDist && yDelta < minDist)
       {
          // For 2D plots, only update 'minDist' if the x/y deltas are valid.
-         bool invalid2dPoint = parentPlotDim != E_PLOT_DIM_1D && (!isDoubleValid(xDelta) || !isDoubleValid(yDelta));
+         bool invalid2dPoint = parentCurveDim != E_PLOT_DIM_1D && (!isDoubleValid(xDelta) || !isDoubleValid(yDelta));
 
          if(!invalid2dPoint)
          {
