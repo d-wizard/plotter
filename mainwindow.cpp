@@ -2809,6 +2809,12 @@ void MainWindow::removeCurve(const QString& curveName)
       m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
    }
    updateCurveOrder();
+
+   // The selected curve may have changed, make sure the displayed cursor points get updated.
+   if(m_qwtCurves.size() > 0)
+   {
+      updateCursors();
+   }
 }
 
 unsigned int MainWindow::findNextUnusedColorIndex()
