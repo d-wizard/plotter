@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -121,6 +121,8 @@ private:
     void childPlots_addChildUpdateToList(tChildAndParentID childAndParentID);
     void childPlots_removeDuplicateChildData(UnpackMultiPlotMsg* multiPlotMsg);
     void childPlots_plot(PlotMsgIdType parentID);
+
+    void configForSpectrumAnalyzerView(QString plotName);
 
 #ifdef CHILD_MSG_GROUPING_DEBUG
     void childPlots_debugPrint();

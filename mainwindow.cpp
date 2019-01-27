@@ -59,6 +59,7 @@ static tPersistentPlotParamMap g_persistentPlotParams;
 
 MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent) :
    QMainWindow(parent),
+   m_spectrumAnalyzerViewSet(false),
    ui(new Ui::MainWindow),
    m_plotName(plotName),
    m_curveCommander(curveCmdr),
@@ -155,6 +156,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(this, SIGNAL(readPlotMsgSignal()), this, SLOT(readPlotMsgSlot()), Qt::QueuedConnection);
     connect(this, SIGNAL(updateCursorMenusSignal()), this, SLOT(updateCursorMenus()), Qt::QueuedConnection);
     connect(this, SIGNAL(dragZoomMode_moveSignal()), this, SLOT(dragZoomMode_moveSlot()), Qt::QueuedConnection);
+    connect(this, SIGNAL(externalResetZoomSignal()), this, SLOT(resetZoom()), Qt::QueuedConnection);
 
     // Connect menu commands
     connect(&m_zoomAction, SIGNAL(triggered(bool)), this, SLOT(zoomMode()));
@@ -2405,7 +2407,7 @@ void MainWindow::setSelectedCurveIndex(int index)
 
       // If any curve selection is in use, the delta sample curve might not match the selected curve. In that case do not change the delta sample curve.
       bool deltaCouldBeDifferentCurve = m_cursorCanSelectAnyCurve && m_qwtSelectedSampleDelta->isAttached;
-      if(!deltaCouldBeDifferentCurve)
+      if(!deltaCouldBeDifferentCurve || getCurveIndex(m_qwtSelectedSampleDelta->getCurve()) < 0) // Also change it if the curve is no longer valid.
       {
          m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
       }
@@ -2529,6 +2531,20 @@ int MainWindow::getCurveIndex(const QString& curveTitle)
         }
     }
     return -1;
+}
+
+int MainWindow::getCurveIndex(CurveData* ptr)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+       if(m_qwtCurves[i] == ptr)
+       {
+           return i;
+       }
+   }
+   return -1;
 }
 
 void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
@@ -2743,6 +2759,14 @@ void MainWindow::updateCurveOrder()
        visableCurves[i]->attach();
    }
 
+   // Make sure the selected point index is still valid.
+   int numCurves = m_qwtCurves.size();
+   if(m_selectedCurveIndex >= numCurves || m_selectedCurveIndex < 0)
+   {
+      int boundedSelectedCurveIndex = numCurves > 0 ? numCurves-1 : 0;
+      setSelectedCurveIndex(boundedSelectedCurveIndex);
+   }
+
    updatePointDisplay();
    m_snrCalcBars->moveToFront();
    replotMainPlot();
@@ -2755,33 +2779,32 @@ void MainWindow::removeCurve(const QString& curveName)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
-   int curveIndex = getCurveIndex(curveName);
-   if(curveIndex >= 0)
+   int curveIndexToRemove = getCurveIndex(curveName);
+   if(curveIndexToRemove >= 0)
    {
-      // Check if we are removing the selected curve.
-      if(curveIndex == m_selectedCurveIndex)
+      int newSelectedCurveIndex = -1; // Initialize to invalid value.
+      if(curveIndexToRemove < m_selectedCurveIndex)
       {
-         // The selected curve is the curve we are about to remove. Try to change the
-         // selected curve to different curve that will be valid after this curve is removed.
-         int newSelectedCurveIndex = 0;
-         if(curveIndex > 0)
-         {
-            // The curve to remove isn't the first curve in the list. Just change the selected
-            // to the previous curve in the list.
-            newSelectedCurveIndex = curveIndex - 1;
-         }
-         else if(m_qwtCurves.size() > 1)
-         {
-            // The curve to remove is the first curve in the list. Just change the selected
-            // to what will be the first curve in the list after this curve is removed.
-            newSelectedCurveIndex = 1;
-         }
-         setSelectedCurveIndex(newSelectedCurveIndex);
+         // Selected curve index will need to move to handle the removed curve.
+         newSelectedCurveIndex = m_selectedCurveIndex - 1;
+      }
+
+      if(curveIndexToRemove == m_selectedCurveIndex)
+      {
+         // Make sure the selected cursor gets reset to the cursor that will be moved
+         // to where the cursor that is about to be deleted was.
+         newSelectedCurveIndex = m_selectedCurveIndex;
       }
 
       // Remove the curve.
-      delete m_qwtCurves[curveIndex];
-      m_qwtCurves.removeAt(curveIndex);
+      delete m_qwtCurves[curveIndexToRemove];
+      m_qwtCurves.removeAt(curveIndexToRemove);
+
+      // Update Selelected Curve Index
+      if(newSelectedCurveIndex >= 0 && newSelectedCurveIndex < m_qwtCurves.size())
+      {
+         setSelectedCurveIndex(newSelectedCurveIndex);
+      }
 
       m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
    }
@@ -2881,6 +2904,31 @@ void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxM
    }
 }
 
+void MainWindow::setScrollMode(bool newState, int size)
+{
+   if(m_scrollMode != newState)
+   {
+      scrollModeToggle();
+   }
+   if(size > 0)
+   {
+      scrollModeSetPlotSize(size);
+   }
+}
+
+
+void MainWindow::externalZoomReset()
+{
+   emit externalResetZoomSignal();
+}
+
+void MainWindow::setSnrBarMode(bool newState)
+{
+   if(m_calcSnrDisplayed != newState)
+   {
+      calcSnrToggle();
+   }
+}
 
 void MainWindow::updateAllCurveGuiPoints()
 {

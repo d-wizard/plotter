@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -30,6 +30,7 @@
 #include "plotMsgPack.h"
 #include "update.h"
 #include "pthread.h"
+#include "spectrumAnalyzerModeTypes.h"
 
 // Local Variables.
 static bool g_portsSpecifiedViaCmdLine = false;
@@ -39,6 +40,8 @@ static std::vector<std::string> g_cmdLineRestorePlotFilePaths;
 // Global Variables (might be extern'd)
 bool defaultCursorZoomModeIsZoom = false;
 bool default2dPlotStyleIsLines = false; // true = Lines, false = Dots
+bool inSpectrumAnalyzerMode = false;
+tSpecAnModeParam spectrumAnalyzerParams;
 
 
 // Local Functions
@@ -119,6 +122,82 @@ void sendRestorePlotPathsToActiveInstance(int connectionToExistingAppInstance)
    sendTCPPacket_send(connectionToExistingAppInstance, &packedPlotMsg[0], packIndex);
 }
 
+static std::string getIniParam(std::string iniFile, std::string paramName, bool inQuotes = false)
+{
+   std::string retVal = dString::GetMiddle(&iniFile, "\n" + paramName + "=", "\n");
+   if(inQuotes)
+   {
+      retVal = dString::GetMiddle(&retVal, "\"", "\"");
+   }
+   return retVal;
+}
+
+static void setSpectrumAnalyzerModeFromIni(std::string iniFile)
+{
+   std::string specAnModeActive = getIniParam(iniFile, "spec_an_mode_active");
+   if(dString::Lower(specAnModeActive) == "true")
+   {
+      inSpectrumAnalyzerMode = true;
+   }
+
+   if(inSpectrumAnalyzerMode)
+   {
+      std::string temp;
+
+      // Set Default Values.
+      spectrumAnalyzerParams.srcRealCurveName = "";
+      spectrumAnalyzerParams.srcImagCurveName = "";
+
+      spectrumAnalyzerParams.srcFullScale = 1.0;
+      spectrumAnalyzerParams.srcNumSamples = 0;
+
+      spectrumAnalyzerParams.specAnPlotName = "Spectrum Analyzer";
+      spectrumAnalyzerParams.specAnCurveName = "FFT";
+
+      // Source Curve Names must be specified in the ini, so there is no need to do any validation before setting the values.
+      spectrumAnalyzerParams.srcRealCurveName = getIniParam(iniFile, "spec_an_src_real_curve_name", true).c_str();
+      spectrumAnalyzerParams.srcImagCurveName = getIniParam(iniFile, "spec_an_src_imag_curve_name", true).c_str();
+
+      // Source Full Scale Value (this value can be a non integer value)
+      temp = getIniParam(iniFile, "spec_an_src_full_scale");
+      if(temp != "")
+      {
+         bool success = dString::strTo(temp, spectrumAnalyzerParams.srcFullScale);
+         inSpectrumAnalyzerMode = inSpectrumAnalyzerMode && success;
+      }
+
+      // Source number of input samples for the FFT
+      temp = getIniParam(iniFile, "spec_an_src_num_samples");
+      if(temp != "")
+      {
+         bool success = dString::strTo(temp, spectrumAnalyzerParams.srcNumSamples);
+         inSpectrumAnalyzerMode = inSpectrumAnalyzerMode && success;
+      }
+
+      // Set the Desination Plot Name for the Spectrum Analyzer plot name.
+      temp = getIniParam(iniFile, "spec_an_plot_name", true);
+      if(temp != "")
+      {
+         spectrumAnalyzerParams.specAnPlotName = temp.c_str();
+      }
+
+      // Set the Desination Plot Name for the Spectrum Analyzer curve name.
+      temp = getIniParam(iniFile, "spec_an_curve_name", true);
+      if(temp != "")
+      {
+         spectrumAnalyzerParams.specAnCurveName = temp.c_str();
+      }
+
+      // If some paremeters are invalid, then we can't do Spectrum Analyzer Mode.
+      if( spectrumAnalyzerParams.srcRealCurveName == "" || spectrumAnalyzerParams.srcImagCurveName == "" ||
+          spectrumAnalyzerParams.srcNumSamples == 0 || spectrumAnalyzerParams.srcFullScale <= 0 )
+      {
+         inSpectrumAnalyzerMode = false;
+      }
+
+   }
+}
+
 static void processIniFile(int argc, char *argv[])
 {
    (void)argc; // Tell the compiler not to warn that this variable is unused.
@@ -147,6 +226,9 @@ static void processIniFile(int argc, char *argv[])
 
       // suround with new line for easier searching
       iniFile = std::string("\n") + iniFile + std::string("\n");
+
+      // Search for Spectrum Analyzer Mode setting right after the ini file has been modified for easier searching.
+      setSpectrumAnalyzerModeFromIni(iniFile);
 
       // Grab port number(s) from .ini file (but only if port numbers
       // weren't specified via command line arguments).

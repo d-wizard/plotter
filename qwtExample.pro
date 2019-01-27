@@ -85,7 +85,8 @@ HEADERS  += mainwindow.h \
     sampleRateCalculator.h \
     createplotfromdata.h \
     AutoDelimiter.h \
-    hist.h
+    hist.h \
+    spectrumAnalyzerModeTypes.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

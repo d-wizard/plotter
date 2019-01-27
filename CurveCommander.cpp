@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -21,6 +21,7 @@
 #include "curveproperties.h"
 #include "createplotfromdata.h"
 #include "ChildCurves.h"
+#include "spectrumAnalyzerModeTypes.h"
 
 #define MAX_NUM_STORED_CURVES (1000)
 
@@ -241,6 +242,9 @@ void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
          createPlot(plotName);
          m_allCurves[plotName].plotGui->readPlotMsg(group);
          showHidePlotGui(plotName);
+
+         // If we are in "Spectrum Analyzer Mode", this function will check if any Child Plots should be created / updated.
+         configForSpectrumAnalyzerView(plotName);
       }
       else
       {
@@ -934,3 +938,65 @@ void CurveCommander::childPlots_debugPrint()
 }
 #endif
 
+void CurveCommander::configForSpectrumAnalyzerView(QString plotName)
+{
+   extern bool inSpectrumAnalyzerMode; // This value is determined from the ini file.
+
+   if(inSpectrumAnalyzerMode)
+   {
+      extern tSpecAnModeParam spectrumAnalyzerParams; // This value is determined from the ini file.
+
+      // Check if the Plot should be used as the source when in Spectrum Analyzer Mode
+      if( validCurve(plotName, spectrumAnalyzerParams.srcRealCurveName) &&
+          validCurve(plotName, spectrumAnalyzerParams.srcImagCurveName) &&
+          m_allCurves[plotName].plotGui->m_spectrumAnalyzerViewSet == false)
+      {
+         m_allCurves[plotName].plotGui->m_spectrumAnalyzerViewSet = true; // Only need to set up Spectrum Analyzer Mode for the source curves once.
+
+         // Create the FFT child curve the will represent the Spectrum Analyzer view of the source plot.
+         tParentCurveInfo xParent;
+         tParentCurveInfo yParent;
+
+         xParent.dataSrc.axis = E_Y_AXIS;
+         xParent.dataSrc.plotName = plotName;
+         xParent.dataSrc.curveName = spectrumAnalyzerParams.srcRealCurveName;
+         xParent.scaleFftWindow = true;
+         xParent.startIndex = 0;
+         xParent.stopIndex = 0;
+         xParent.windowFFT = true;
+
+         yParent = xParent;
+         yParent.dataSrc.curveName = spectrumAnalyzerParams.srcImagCurveName;
+
+         m_allCurves[plotName].plotGui->setScrollMode(true, spectrumAnalyzerParams.srcNumSamples);
+
+         createChildCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName, E_PLOT_TYPE_DB_POWER_FFT_COMPLEX, xParent, yParent);
+
+      }
+      // Check if we need to make any adjustments to the Spectrum Analyzer FFT right after it has been created.
+      else if( plotName == spectrumAnalyzerParams.specAnPlotName &&
+               validCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName) &&
+               m_allCurves[spectrumAnalyzerParams.specAnPlotName].plotGui->m_spectrumAnalyzerViewSet == false)
+      {
+         MainWindow* plotGui = m_allCurves[spectrumAnalyzerParams.specAnPlotName].plotGui;
+         plotGui->m_spectrumAnalyzerViewSet = true; // Only need to set up Spectrum Analyzer Mode for the FFT curve once.
+
+         // Adjust the Spectrum Analyzer FFT to compensate for the source full scale value (make sure to not do a log of 0 or negative).
+         if(spectrumAnalyzerParams.srcFullScale > 0)
+         {
+            tMathOpList toDbFs;
+            tOperation subVal;
+            subVal.helperNum = 0;
+            subVal.num = -20*log10(spectrumAnalyzerParams.srcFullScale);
+            subVal.op = E_ADD;
+            toDbFs.push_front(subVal);
+
+            plotGui->setCurveProperties(spectrumAnalyzerParams.specAnCurveName, E_Y_AXIS, 0, toDbFs);
+         }
+
+         // Apply the final settings to the FFT plot to make sure it initializes to Spectrum Analyzer Mode
+         plotGui->setSnrBarMode(true); // Show the SNR bars.
+         plotGui->externalZoomReset(); // Reset Zoom to handle the math adjustment made above.
+      }
+   }
+}

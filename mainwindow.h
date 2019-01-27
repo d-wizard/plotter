@@ -177,6 +177,12 @@ public:
     void plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool xAxisZoomChanged, bool changeCausedByUserGuiInput);
 
     QString getPlotName(){return m_plotName;}
+
+    void setScrollMode(bool newState, int size = 0);
+    void externalZoomReset();
+    void setSnrBarMode(bool newState);
+
+    bool m_spectrumAnalyzerViewSet;
 private:
     Ui::MainWindow *ui;
 
@@ -360,6 +366,8 @@ private:
 
     int findIndexWithClosestPoint(const QPointF &pos, unsigned int &selectedCurvePointIndex);
 
+    int getCurveIndex(CurveData* ptr);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -423,6 +431,7 @@ signals:
     void updateCursorMenusSignal();
     void readPlotMsgSignal();
     void dragZoomMode_moveSignal();
+    void externalResetZoomSignal();
 
 };
 
