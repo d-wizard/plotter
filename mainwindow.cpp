@@ -276,6 +276,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_toggleSnrCalcAction.setVisible(false);
     m_snrCalcBars = new plotSnrCalc(m_qwtPlot, ui->snrLabel);
 
+    m_toggleCursorCanSelectAnyCurveAction.setVisible(false); // Set to Invisible until more than 1 curve is displayed
+
     restorePersistentPlotParams();
 }
 
@@ -1302,6 +1304,8 @@ void MainWindow::toggleCursorCanSelectAnyCurveAction()
    else
    {
       m_toggleCursorCanSelectAnyCurveAction.setIcon(QIcon());
+      setSelectedCurveIndex(m_selectedCurveIndex); // Make sure the delta point cursor moves back to the selected curve index.
+      updateCursors(); // Make sure the cursors are displayed at the correct location.
    }
 
    // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
@@ -2451,10 +2455,15 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
       selectedCurveMaxMin = m_qwtCurves[m_selectedCurveIndex]->getMaxMinXYOfData();
    }
 
+   int numDisplayedCurves = 0;
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
       m_qwtCurves[i]->setNormalizeFactor(selectedCurveMaxMin, m_normalizeCurves_xAxis, m_normalizeCurves_yAxis);
       m_qwtCurves[i]->setCurveSamples();
+      if(m_qwtCurves[i]->isDisplayed())
+      {
+         ++numDisplayedCurves;
+      }
    }
 
    // If just the cursor point changed, there is no need to update plot dimesions.
@@ -2474,6 +2483,16 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
    {
       // Need to adjust the Delta Sample Selected Point position to account for normalization.
       m_qwtSelectedSampleDelta->showCursor();
+   }
+
+   // The "Cursor Can Select Any Curve" action only needs to be selectable if there are more than 1 displayed curves.
+   bool cursorCanSelectAnyCurveVisible = numDisplayedCurves > 1;
+   m_toggleCursorCanSelectAnyCurveAction.setVisible(cursorCanSelectAnyCurveVisible);
+
+   if(!cursorCanSelectAnyCurveVisible && m_cursorCanSelectAnyCurve)
+   {
+      // Not enough curves to all for "Cursor Can Select Any Curve" mode, but we are in that mode. Toggle out of the mode.
+      toggleCursorCanSelectAnyCurveAction();
    }
 
    m_qwtPlot->replot();
