@@ -41,6 +41,7 @@
 #define DISPLAY_POINT_START "("
 #define DISPLAY_POINT_MID   ","
 #define DISPLAY_POINT_STOP  ")"
+static const QString CAPITAL_DELTA = QChar(0x94, 0x03);
 
 #define MAPPER_ACTION_TO_SLOT(menu, mapperAction, intVal, callback) \
 menu.addAction(&mapperAction.m_action); \
@@ -133,6 +134,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
 {
     ui->setupUi(this);
     setWindowTitle(m_plotName);
+
+    initDeltaLabels();
 
     srand((unsigned)time(0));
 
@@ -360,6 +363,16 @@ MainWindow::~MainWindow()
         delete plotMsg;
     }
     m_plotMsgQueueMutex.unlock();
+
+    // Delete Delta Labels
+    for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+    {
+       if(m_deltaLabels[i] != NULL)
+       {
+          delete m_deltaLabels[i];
+          m_deltaLabels[i] = NULL;;
+       }
+    }
 
 
  }
@@ -1668,6 +1681,7 @@ void MainWindow::clearPointLabels()
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
+    // Delete and remove labels associated with the curves.
     for(int i = 0; i < m_qwtCurves.size(); ++i)
     {
         if(m_qwtCurves[i]->pointLabel != NULL)
@@ -1676,6 +1690,17 @@ void MainWindow::clearPointLabels()
             delete m_qwtCurves[i]->pointLabel;
             m_qwtCurves[i]->pointLabel = NULL;
         }
+    }
+
+    // Delete and remove Delta Labels.
+    for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+    {
+       if(m_deltaLabels[i] != NULL)
+       {
+          ui->InfoLayout->removeWidget(m_deltaLabels[i]);
+          delete m_deltaLabels[i];
+          m_deltaLabels[i] = NULL;;
+       }
     }
 }
 
@@ -1717,9 +1742,7 @@ void MainWindow::displayPointLabels_clean()
 
             ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
 
-            m_qwtCurves[i]->pointLabel->setContextMenuPolicy(Qt::CustomContextMenu);
-            connect(m_qwtCurves[i]->pointLabel, SIGNAL(customContextMenuRequested(const QPoint&)),
-                this, SLOT(ShowRightClickForDisplayPoints(const QPoint&)));
+            connectPointLabelToRightClickMenu(m_qwtCurves[i]->pointLabel);
 
         }
     }
@@ -1755,88 +1778,125 @@ void MainWindow::displayPointLabels_update()
    }
 }
 
-void MainWindow::displayDeltaLabel_getLabelText(QString& lblTextResult)
+
+void MainWindow::initDeltaLabels()
+{
+   for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+   {
+      m_deltaLabels[i] = NULL;
+   }
+}
+
+void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta)
 {
    CurveData* curve = m_qwtSelectedSample->m_parentCurve;
-
    std::stringstream lblText;
+
+   // Get Anchored text.
+   lblText.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << m_qwtSelectedSampleDelta->m_xPoint << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSampleDelta->m_yPoint << DISPLAY_POINT_STOP << " : " << DISPLAY_POINT_START;
+   lblText << m_qwtSelectedSampleDelta->m_yPoint << DISPLAY_POINT_STOP;
+   anchored = QString(lblText.str().c_str());
+
+   // Get Current text.
+   lblText.str("");
+   lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << m_qwtSelectedSample->m_xPoint << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSample->m_yPoint << DISPLAY_POINT_STOP << " ";
+   lblText << m_qwtSelectedSample->m_yPoint << DISPLAY_POINT_STOP;
+   current = QString(lblText.str().c_str());
 
-   // Using the Delta character in QT is tricky. Write what we have thus far to the result,
-   // add the Delta character, then clear the stringstream that we have been using.
-   static const QString deltaChar = QChar(0x94, 0x03);
-   lblTextResult = QString(lblText.str().c_str()) + deltaChar;
+   // Get Delta text.
    lblText.str("");
-
-   lblText << " (";
+   lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
    lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << DISPLAY_POINT_STOP;
-
-   // Write the rest of the label
-   lblTextResult += QString(lblText.str().c_str());
+   delta = QString(lblText.str().c_str());
 }
 
 void MainWindow::displayDeltaLabel_clean()
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    clearPointLabels();
-    if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
-    {
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel = new QLabel("");
+   clearPointLabels(); // If previous Delta Labels exist, delte them.
+   if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
+   {
+      // Create the Delta Labels
+      for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+      {
+         m_deltaLabels[i] = new QLabel();
+      }
 
-        QString lblText;
-        displayDeltaLabel_getLabelText(lblText);
+      // Set the Delta Label text.
+      displayDeltaLabel_update();
+      m_deltaLabels[DELTA_LABEL_SEP1]->setText(":");
+      m_deltaLabels[DELTA_LABEL_SEP2]->setText(CAPITAL_DELTA);
 
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText);
-        QPalette palette = this->palette();
-        palette.setColor( QPalette::WindowText, m_qwtCurves[m_selectedCurveIndex]->getColor());
-        palette.setColor( QPalette::Text, m_qwtCurves[m_selectedCurveIndex]->getColor());
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setPalette(palette);
+      QColor anchoredColor = m_qwtSelectedSampleDelta->getCurve()->getColor();
+      QColor currentColor  = m_qwtSelectedSample->getCurve()->getColor();
 
-        ui->InfoLayout->addWidget(m_qwtCurves[m_selectedCurveIndex]->pointLabel);
+      QPalette anchoredPalette = this->palette();
+      anchoredPalette.setColor( QPalette::WindowText, anchoredColor);
+      anchoredPalette.setColor( QPalette::Text, anchoredColor);
 
-        m_qwtCurves[m_selectedCurveIndex]->pointLabel->setContextMenuPolicy(Qt::CustomContextMenu);
-        connect(m_qwtCurves[m_selectedCurveIndex]->pointLabel, SIGNAL(customContextMenuRequested(const QPoint&)),
-            this, SLOT(ShowRightClickForDisplayPoints(const QPoint&)));
-    }
+      QPalette currentPalette = this->palette();
+      currentPalette.setColor( QPalette::WindowText, currentColor);
+      currentPalette.setColor( QPalette::Text, currentColor);
+
+      m_deltaLabels[DELTA_LABEL_ANCHORED]->setPalette(anchoredPalette);
+      m_deltaLabels[DELTA_LABEL_CURRENT]->setPalette(currentPalette);
+
+      if(m_qwtSelectedSampleDelta->getCurve() == m_qwtSelectedSample->getCurve())
+      {
+         // Delta and Current Selected Curves match, set the rest of the labels to match the same color
+         m_deltaLabels[DELTA_LABEL_DELTA]->setPalette(currentPalette);
+         m_deltaLabels[DELTA_LABEL_SEP1]->setPalette(currentPalette);
+         m_deltaLabels[DELTA_LABEL_SEP2]->setPalette(currentPalette);
+      }
+      else
+      {
+         // Delta and Current Selected Curves are different, set the rest of the labels colors to white.
+         QPalette nullPalette = this->palette();
+         nullPalette.setColor( QPalette::WindowText, Qt::white);
+         nullPalette.setColor( QPalette::Text, Qt::white);
+
+         m_deltaLabels[DELTA_LABEL_DELTA]->setPalette(nullPalette);
+         m_deltaLabels[DELTA_LABEL_SEP1]->setPalette(nullPalette);
+         m_deltaLabels[DELTA_LABEL_SEP2]->setPalette(nullPalette);
+      }
+
+      // Attach the Delta Labels
+      for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+      {
+         ui->InfoLayout->addWidget(m_deltaLabels[i]);
+         connectPointLabelToRightClickMenu(m_deltaLabels[i]);
+      }
+   }
 
 }
 
 void MainWindow::displayDeltaLabel_update()
 {
-   bool successfulUpdate = true;
    QMutexLocker lock(&m_qwtCurvesMutex);
-   
-   if(m_qwtCurves[m_selectedCurveIndex]->isDisplayed())
-   {
-      if(m_qwtCurves[m_selectedCurveIndex]->pointLabel != NULL)
-      {
-         QString lblText;
-         displayDeltaLabel_getLabelText(lblText);
-         
-         m_qwtCurves[m_selectedCurveIndex]->pointLabel->setText(lblText);
-      }
-      else
-      {
-         successfulUpdate = false;
-      }
-   }
-   if(successfulUpdate == false)
-   {
-      lock.unlock(); // Clean will want to lock the mutex.
-      displayDeltaLabel_clean();
-   }
+
+   QString anchored, current, delta;
+   displayDeltaLabel_getLabelText(anchored, current, delta);
+
+   m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
+   m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
+   m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+}
+
+void MainWindow::connectPointLabelToRightClickMenu(QLabel* label)
+{
+   label->setContextMenuPolicy(Qt::CustomContextMenu);
+   connect(label, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowRightClickForDisplayPoints(const QPoint&)));
 }
 
 void MainWindow::updatePointDisplay(bool onlyCurveDataChanged)
@@ -1936,7 +1996,10 @@ void MainWindow::displayPointsCopyToClipboard(int dummy)
       if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
       {
          // Delta
-         std::string label(m_qwtCurves[m_selectedCurveIndex]->pointLabel->text().toStdString());
+         QString anchored, current, delta;
+         displayDeltaLabel_getLabelText(anchored, current, delta);
+
+         std::string label = (anchored + current + delta).toStdString(); // Combine all 3 strings into 1 so the following while loop can get all the individal values.
          while(dString::InStr(label, DISPLAY_POINT_START) >= 0)
          {
             // Get text between "(" and ")"
@@ -2505,19 +2568,39 @@ void MainWindow::ShowRightClickForPlot(const QPoint& pos) // this is a slot
 
 void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    // Kinda ugly, but this is the simplist way I found to display the right click menu
-    // when right clicking in the display area. Basically, for loop through all the curves
-    // until a valid point label is found. Then use that point label for the right click menu and exit.
-    for(int i = 0; i < m_qwtCurves.size(); ++i)
-    {
-        if(m_qwtCurves[i]->pointLabel != NULL)
-        {
-            m_displayPointsMenu.exec(m_qwtCurves[i]->pointLabel->mapToGlobal(pos));
+   bool menuHasBeenDisplayed = false;
+
+   QPoint labelPos;
+
+   // Kinda ugly, but this is the simplist way I found to display the right click menu
+   // when right clicking in the display area. Basically, for loop through all the curves
+   // until a valid point label is found. Then use that point label for the right click menu and exit.
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      if(m_qwtCurves[i]->pointLabel != NULL)
+      {
+         labelPos = m_qwtCurves[i]->pointLabel->pos();
+         m_displayPointsMenu.exec(m_qwtCurves[i]->pointLabel->mapToGlobal(pos));
+         menuHasBeenDisplayed = true;
+         break;
+      }
+   }
+
+   // Try to display the menu via the Delta Labels
+   if(menuHasBeenDisplayed == false)
+   {
+      for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+      {
+         if(m_deltaLabels[i] != NULL)
+         {
+            m_displayPointsMenu.exec(m_deltaLabels[i]->mapToGlobal(pos));
+            menuHasBeenDisplayed = true;
             break;
-        }
-    }
+         }
+      }
+   }
 }
 
 void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)

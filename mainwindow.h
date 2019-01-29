@@ -184,6 +184,17 @@ public:
 
     bool m_spectrumAnalyzerViewSet;
 private:
+    // Define indexes for the array of delta cursor labels.
+    enum
+    {
+       DELTA_LABEL_ANCHORED,
+       DELTA_LABEL_SEP1,
+       DELTA_LABEL_CURRENT,
+       DELTA_LABEL_SEP2,
+       DELTA_LABEL_DELTA,
+       DELTA_LABEL_NUM_LABELS
+    }eDeltaLabelsTypes;
+
     Ui::MainWindow *ui;
 
     QString m_plotName;
@@ -300,6 +311,8 @@ private:
 
     bool m_debouncePointSelected;
 
+    QLabel* m_deltaLabels[DELTA_LABEL_NUM_LABELS];
+
     void resetPlot();
 
     void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
@@ -310,13 +323,15 @@ private:
 
     maxMinXY calcMaxMin();
 
+    void initDeltaLabels();
     void clearPointLabels();
     void displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex);
     void displayPointLabels_clean();
     void displayPointLabels_update();
-    void displayDeltaLabel_getLabelText(QString& lblTextResult);
+    void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
     void displayDeltaLabel_clean();
     void displayDeltaLabel_update();
+    void connectPointLabelToRightClickMenu(QLabel* label);
     void updatePointDisplay(bool onlyCurveDataChanged = false);
     void setDisplayRightClickIcons();
 
