@@ -1704,6 +1704,13 @@ void MainWindow::clearPointLabels()
     }
 }
 
+QPalette MainWindow::labelColorToPalette(QColor color)
+{
+   QPalette palette = this->palette();
+   palette.setColor(QPalette::WindowText, color);
+   palette.setColor(QPalette::Text, color);
+   return palette;
+}
 
 void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex)
 {
@@ -1721,31 +1728,27 @@ void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, Cur
 
 void MainWindow::displayPointLabels_clean()
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    clearPointLabels();
-    for(int i = 0; i < m_qwtCurves.size(); ++i)
-    {
-        if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
-        {
-            m_qwtCurves[i]->pointLabel = new QLabel("");
+   clearPointLabels();
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
+      {
+         m_qwtCurves[i]->pointLabel = new QLabel("");
 
-            std::stringstream lblText;
-            displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
-            
-            m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
+         std::stringstream lblText;
+         displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
 
-            QPalette palette = this->palette();
-            palette.setColor( QPalette::WindowText, m_qwtCurves[i]->getColor());
-            palette.setColor( QPalette::Text, m_qwtCurves[i]->getColor());
-            m_qwtCurves[i]->pointLabel->setPalette(palette);
+         m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
+         m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
 
-            ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
+         ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
 
-            connectPointLabelToRightClickMenu(m_qwtCurves[i]->pointLabel);
+         connectPointLabelToRightClickMenu(m_qwtCurves[i]->pointLabel);
 
-        }
-    }
+      }
+   }
 }
 
 void MainWindow::displayPointLabels_update()
@@ -1838,38 +1841,20 @@ void MainWindow::displayDeltaLabel_clean()
       m_deltaLabels[DELTA_LABEL_SEP1]->setText(":");
       m_deltaLabels[DELTA_LABEL_SEP2]->setText(CAPITAL_DELTA);
 
-      QColor anchoredColor = m_qwtSelectedSampleDelta->getCurve()->getColor();
-      QColor currentColor  = m_qwtSelectedSample->getCurve()->getColor();
-
-      QPalette anchoredPalette = this->palette();
-      anchoredPalette.setColor( QPalette::WindowText, anchoredColor);
-      anchoredPalette.setColor( QPalette::Text, anchoredColor);
-
-      QPalette currentPalette = this->palette();
-      currentPalette.setColor( QPalette::WindowText, currentColor);
-      currentPalette.setColor( QPalette::Text, currentColor);
+      QPalette anchoredPalette = labelColorToPalette(m_qwtSelectedSampleDelta->getCurve()->getColor());
+      QPalette currentPalette  = labelColorToPalette(m_qwtSelectedSample->getCurve()->getColor());
+      QPalette nullPalette     = labelColorToPalette(Qt::white);
 
       m_deltaLabels[DELTA_LABEL_ANCHORED]->setPalette(anchoredPalette);
-      m_deltaLabels[DELTA_LABEL_CURRENT]->setPalette(currentPalette);
+      m_deltaLabels[DELTA_LABEL_CURRENT ]->setPalette(currentPalette);
 
-      if(m_qwtSelectedSampleDelta->getCurve() == m_qwtSelectedSample->getCurve())
-      {
-         // Delta and Current Selected Curves match, set the rest of the labels to match the same color
-         m_deltaLabels[DELTA_LABEL_DELTA]->setPalette(currentPalette);
-         m_deltaLabels[DELTA_LABEL_SEP1]->setPalette(currentPalette);
-         m_deltaLabels[DELTA_LABEL_SEP2]->setPalette(currentPalette);
-      }
-      else
-      {
-         // Delta and Current Selected Curves are different, set the rest of the labels colors to white.
-         QPalette nullPalette = this->palette();
-         nullPalette.setColor( QPalette::WindowText, Qt::white);
-         nullPalette.setColor( QPalette::Text, Qt::white);
-
-         m_deltaLabels[DELTA_LABEL_DELTA]->setPalette(nullPalette);
-         m_deltaLabels[DELTA_LABEL_SEP1]->setPalette(nullPalette);
-         m_deltaLabels[DELTA_LABEL_SEP2]->setPalette(nullPalette);
-      }
+      // If Delta and Current Selected Curves match, set the rest of the labels to match the same color.
+      // Otherwise set them to white.
+      bool sameCurve = m_qwtSelectedSampleDelta->getCurve() == m_qwtSelectedSample->getCurve();
+      QPalette* otherDeltaLabelPalette = sameCurve ? &currentPalette : &nullPalette;
+      m_deltaLabels[DELTA_LABEL_DELTA]->setPalette(*otherDeltaLabelPalette);
+      m_deltaLabels[DELTA_LABEL_SEP1 ]->setPalette(*otherDeltaLabelPalette);
+      m_deltaLabels[DELTA_LABEL_SEP2 ]->setPalette(*otherDeltaLabelPalette);
 
       // Attach the Delta Labels
       for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
@@ -1888,9 +1873,18 @@ void MainWindow::displayDeltaLabel_update()
    QString anchored, current, delta;
    displayDeltaLabel_getLabelText(anchored, current, delta);
 
-   m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
-   m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
-   m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+   bool deltaLabelsAreValid = true;
+   for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
+   {
+      deltaLabelsAreValid = deltaLabelsAreValid && (m_deltaLabels[i] != NULL);
+   }
+
+   if(deltaLabelsAreValid)
+   {
+      m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
+      m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
+      m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+   }
 }
 
 void MainWindow::connectPointLabelToRightClickMenu(QLabel* label)
