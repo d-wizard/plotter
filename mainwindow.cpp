@@ -2562,39 +2562,56 @@ void MainWindow::ShowRightClickForPlot(const QPoint& pos) // this is a slot
 
 void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
 {
+   // Grab off the current postion of the cursor in the entire window. This will be used to determine
+   // which label was right clicked on.
+   int cursorPosX = this->mapFromGlobal(QCursor::pos()).x();
+
    QMutexLocker lock(&m_qwtCurvesMutex);
 
-   bool menuHasBeenDisplayed = false;
+   QList<QLabel*> labelsToTry; // List of the currently displayed labels.
 
-   QPoint labelPos;
-
-   // Kinda ugly, but this is the simplist way I found to display the right click menu
-   // when right clicking in the display area. Basically, for loop through all the curves
-   // until a valid point label is found. Then use that point label for the right click menu and exit.
+   // Fill in the list with valid Normal Display Point Labels
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
       if(m_qwtCurves[i]->pointLabel != NULL)
       {
-         labelPos = m_qwtCurves[i]->pointLabel->pos();
-         m_displayPointsMenu.exec(m_qwtCurves[i]->pointLabel->mapToGlobal(pos));
-         menuHasBeenDisplayed = true;
-         break;
+         labelsToTry.push_back(m_qwtCurves[i]->pointLabel);
       }
    }
 
-   // Try to display the menu via the Delta Labels
-   if(menuHasBeenDisplayed == false)
+   // If no Normal Display Point Labels are being displayed, we must be in Delta Cursor Mode.
+   // Fill in the list with valid Delta Display Point Labels
+   if(labelsToTry.size() == 0)
    {
       for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
       {
-         if(m_deltaLabels[i] != NULL)
+         if( m_deltaLabels[i] != NULL)
          {
-            m_displayPointsMenu.exec(m_deltaLabels[i]->mapToGlobal(pos));
-            menuHasBeenDisplayed = true;
-            break;
+            labelsToTry.push_back(m_deltaLabels[i]);
          }
       }
    }
+
+   if(labelsToTry.size() > 0)
+   {
+      QLabel* matchingLabel = labelsToTry[0]; // Set to a known, valid label.
+
+      // Determine the best label to generate the right click menu from.
+      for(int i = 1; i < labelsToTry.size(); ++i)
+      {
+         // Check if this is a better match.
+         int thisLabelStartPosX = labelsToTry[i]->pos().x();
+         int thisLabelStopPosX = thisLabelStartPosX + labelsToTry[i]->width();
+         if(cursorPosX >= thisLabelStartPosX && cursorPosX <= thisLabelStopPosX)
+         {
+            matchingLabel = labelsToTry[i];
+         }
+      }
+
+      // Display the right click menu.
+      m_displayPointsMenu.exec(matchingLabel->mapToGlobal(pos));
+   }
+
 }
 
 void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
