@@ -1,0 +1,66 @@
+--------------------------------------------------------------------
+| Simple Hotkeys
+--------------------------------------------------------------------
+   -----------------------------------------------------------------
+   | Zoom Settings
+   -----------------------------------------------------------------
+   ctrl + r | Reset Zoom
+   ctrl + u | Set to Auto Zoom
+   ctrl + f | Set to Freeze Zoom
+   ctrl + m | Set to Max Zoom
+   ctrl + z | Restore previous zoom window
+   ctrl + y | Restore reverted zoom window
+
+   -----------------------------------------------------------------
+   | Scroll Mode Settings
+   -----------------------------------------------------------------
+   ctrl + s | Toggle Scroll Mode
+   ctrl + x | Set to Scroll Mode and open dialog to set the scroll 
+              mode plot size
+   ctrl + 1 | Set to Scroll Mode and set the plot size to 10x of its
+              current value
+
+   -----------------------------------------------------------------
+   | Enable / Disable New Curves Settings
+   -----------------------------------------------------------------
+   ctrl + e | Enable New Curves
+   ctrl + d | Disable New Curves
+   ctrl + t | Toggle Enable / Disable New Curves
+
+   -----------------------------------------------------------------
+   | Any Curve Cursor Mode Settings
+   -----------------------------------------------------------------
+   ctrl + a | Toggle Any Curve Cursor mode
+
+   -----------------------------------------------------------------
+   | Create / Save Curves
+   -----------------------------------------------------------------
+   ctrl + c | Copies all displayed plot data to the clipboard 
+              (can be pasted into Excel)
+   ctrl + v | Create a new curve from the data in the clipboard
+
+
+--------------------------------------------------------------------
+| Arrow Keys
+--------------------------------------------------------------------
+   !! Behavior depends on selected mode (Zoom, Cursor, Delta Cursor)
+   -----------------------------------------------------------------
+   up   / down  | Zoom                  | Move the zoom window
+                | Cursor / Delta Cursor | Change Selected Curve
+   -----------------------------------------------------------------
+   left / right | Zoom                  | Move the zoom window
+                | Cursor / Delta Cursor | Change Selected Point
+
+
+--------------------------------------------------------------------
+| Mouse Scroll Wheel
+--------------------------------------------------------------------
+   ctrl + scroll wheel         | Zoom in / out
+   ctrl + shift + scroll wheel | Zoom in / out (only on X axis)
+
+
+--------------------------------------------------------------------
+| Move Zoom
+--------------------------------------------------------------------
+   ctrl + left mouse button | Move the zoom window
+   middle mouse button      | Move the zoom window
