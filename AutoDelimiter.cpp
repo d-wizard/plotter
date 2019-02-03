@@ -1,4 +1,4 @@
-/* Copyright 2017 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2017 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -62,6 +62,7 @@ static const int VALID_HEX_CHAR[256] = {
 
 std::string getDelimiter(const std::string& t_dataToParse, bool isHex)
 {
+   (void)isHex; // Ignore unused warning.
    StringHistogram mt_delimitHist;
    StringHistogram mt_delimitHistOneChar;
    const char* pc_data = t_dataToParse.c_str();

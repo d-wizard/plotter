@@ -1591,6 +1591,7 @@ void MainWindow::pointSelected_dragZoomMode(const QPointF &pos)
 
 void MainWindow::rectSelected_dragZoomMode(const QRectF &pos)
 {
+   (void)pos; // Ignore unused warning.
    QMutexLocker lock(&m_dragZoomModeMutex);
    m_dragZoomModeActive = false;
    setCursor(); // Set the cursor back to its default value.
@@ -3009,6 +3010,7 @@ void MainWindow::activityIndicatorTimerSlot()
 // This allows us to perform some operations whenever the zoom or plot dimensions change.
 void MainWindow::plotZoomDimChanged(const tMaxMinXY& plotDimensions, const tMaxMinXY& zoomDimensions, bool xAxisZoomChanged, bool changeCausedByUserGuiInput)
 {
+   (void)changeCausedByUserGuiInput; // Ignore unused warning.
    if(xAxisZoomChanged)
    {
       // When a plot is a 1D plot, we reduce the samples send to the GUI based on the X Axis zoom dimensions.
