@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -371,16 +371,19 @@ void createPlotFromData::on_txtDataToPlot_editingFinished()
 
 void createPlotFromData::on_txtDataToPlot_textChanged(const QString &arg1)
 {
+   (void)arg1; // Ignore unused warning.
    handleNewData(NULL, true);
 }
 
 void createPlotFromData::on_txtDataToPlot_textEdited(const QString &arg1)
 {
+   (void)arg1; // Ignore unused warning.
    handleNewData(NULL, true);
 }
 
 void createPlotFromData::on_txtDelimiter_textEdited(const QString &arg1)
 {
+   (void)arg1; // Ignore unused warning.
    if(m_changingDelim == false)
    {
       m_userSpecifiedDelim = true;
@@ -391,6 +394,7 @@ void createPlotFromData::on_txtDelimiter_textEdited(const QString &arg1)
 
 void createPlotFromData::on_cmbBase_currentIndexChanged(int index)
 {
+   (void)index; // Ignore unused warning.
    if(m_changingBase == false)
    {
       m_userSpecifiedBase = true;
