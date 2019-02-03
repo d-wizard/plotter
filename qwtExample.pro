@@ -3,16 +3,19 @@
 # Project created by QtCreator 2013-06-21T22:30:17
 #
 #-------------------------------------------------
-revDateStampTarget.target = Makefile
+
+# Run pre-build python script to generate revDateStamp.h
+revDateStampTarget.target = ./revDateStamp.h
 revDateStampTarget.depends = FORCE
-revDateStampTarget.commands = python ./revDateStamp.py
+win32: revDateStampTarget.commands = cd $$PWD & python ./revDateStamp.py # Windows version
+else:  revDateStampTarget.commands = cd $$PWD;  python ./revDateStamp.py  # Unix version
+PRE_TARGETDEPS += ./revDateStamp.h
 QMAKE_EXTRA_TARGETS += revDateStampTarget
 
 RC_FILE = mainwindow.rc
 QWTDIR = ../qwt-6.1
-PTHREADDIR = ../pthread32
 FFTWDIR = ../fftw-3.3.3-dll32
-include ( ../qwt-6.1/qwt.prf )
+include ( $${QWTDIR}/qwt.prf )
 
 QT       += core gui
 
@@ -96,10 +99,10 @@ FORMS    += mainwindow.ui \
     createplotfromdata.ui
 
 INCLUDEPATH += $$QWTDIR/src
-INCLUDEPATH += $$PTHREADDIR
 INCLUDEPATH += $$FFTWDIR
-LIBS        += -L$$QWTDIR/lib -lqwt
-LIBS += -L$$PTHREADDIR -lpthreadGC2
+
+qwtAddLibrary($${QWTDIR}/lib, qwt)
+
 LIBS += -lws2_32
 LIBS += -L$$FFTWDIR -lfftw3-3
 
