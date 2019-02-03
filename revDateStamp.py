@@ -1,4 +1,4 @@
-# Copyright 2015 Dan Williams. All Rights Reserved.
+# Copyright 2015, 2019 Dan Williams. All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -24,7 +24,9 @@ SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"'
 
 REV_DELIM = 'Revision: '
 
-FILE_NAME = 'revDateStamp.h'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+FILE_PATH = SCRIPT_DIR + os.sep + 'revDateStamp.h'
 
 def readWholeFile(path):
    fileId = open(path, 'r')
@@ -38,6 +40,9 @@ def writeWholeFile(path, fileText):
    fileId.close()
 
 def getSvnVersion():
+   cwd = os.getcwd()
+   os.chdir(SCRIPT_DIR)
+
    retVal = 0
    svnVersionCmd = SVN_PATH + ' info'
 
@@ -50,6 +55,8 @@ def getSvnVersion():
       if line.find(REV_DELIM) >= 0:
          retVal = int(line.split(REV_DELIM)[1])
          break
+
+   os.chdir(cwd)
    return retVal
        
 svnRev = getSvnVersion()
@@ -60,5 +67,5 @@ revDateInfo = 'Rev: ' + str(svnRev) + " - Date: " + dateStamp
 
 fileText = '#define REV_DATE_STAMP "' + revDateInfo + '"'
 
-if fileText != readWholeFile(FILE_NAME):
-   writeWholeFile(FILE_NAME, fileText)
+if fileText != readWholeFile(FILE_PATH):
+   writeWholeFile(FILE_PATH, fileText)
