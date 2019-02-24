@@ -1561,6 +1561,9 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
          ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
          ui->chkPropHide->setChecked(parentCurve->getHidden());
          ui->chkPropVisable->setChecked(parentCurve->getVisible());
+
+         // If hidden is checked, don't bother the user with the state of visible.
+         ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
       }
    }
    else
@@ -1956,4 +1959,10 @@ void curveProperties::initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, cons
          cmbBoxPtr->setCurrentIndex(index_int);
       }
    }
+}
+
+void curveProperties::on_chkPropHide_clicked()
+{
+   // If hidden is checked, don't bother the user with the state of visible.
+   ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
 }
