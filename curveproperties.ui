@@ -1251,6 +1251,9 @@
         <height>17</height>
        </rect>
       </property>
+      <property name="toolTip">
+       <string/>
+      </property>
       <property name="text">
        <string>Visible</string>
       </property>
@@ -1263,6 +1266,9 @@
         <width>61</width>
         <height>17</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;nobr&gt;If Hidden, this curve will not show up anywhere in the Plot&lt;/nobr&gt; Window (including in the right click menus). If all curves for a given Plot Window are hidden, the Plot Window will not be displayed.</string>
       </property>
       <property name="text">
        <string>Hidden</string>
