@@ -85,9 +85,6 @@ public:
    tLinearXYAxis getNormFactor();
    bool isDisplayed();
 
-   void attach();
-   void detach();
-
    void setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis);
    void resetNormalizeFactor();
    void setCurveSamples();
@@ -107,8 +104,13 @@ public:
 
    tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
 
+   bool getVisible(){return visible;}
    bool getHidden(){return hidden;}
+
+   bool setVisible(bool isVisible);
    bool setHidden(bool isHidden);
+   bool setVisibleHidden(bool isVisible, bool isHidden);
+
 
    void setCurveAppearance(CurveAppearance curveAppearance);
 
@@ -163,7 +165,9 @@ private:
    CurveAppearance appearance;
    QwtPlotCurve* curve;
    unsigned int numPoints;
-   bool displayed; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
+   bool attached; // Used to keep track of whether the curve is currently attached to the parent plot or not.
+
+   bool visible; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
 
    // Indicates whether the curve is avaiable to be displayed.
    // If true, it is probably some other curve's parent.

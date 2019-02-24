@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -72,7 +72,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
 
    performMathOnPoints();
    initCurve();
-   attach();
+   setVisible(true); // Display the curve on the parent plot.
    storeLastMsgStats(data);
 }
 
@@ -107,7 +107,8 @@ void CurveData::init()
    pointLabel = NULL;
    curveAction = NULL;
    mapper = NULL;
-   displayed = false;
+   attached = false;
+   visible = false;
    hidden = false;
 
    samplePeriod = 0.0;
@@ -385,25 +386,7 @@ QString CurveData::getCurveTitle()
 
 bool CurveData::isDisplayed()
 {
-   return displayed == true && hidden == false;
-}
-
-void CurveData::attach()
-{
-   if(displayed == false)
-   {
-      curve->attach(m_parentPlot);
-      displayed = true;
-   }
-}
-
-void CurveData::detach()
-{
-   if(displayed == true)
-   {
-      curve->detach();
-      displayed = false;
-   }
+   return attached;
 }
 
 void CurveData::findMaxMin()
@@ -1249,21 +1232,41 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
 }
 
 
+bool CurveData::setVisible(bool isVisible)
+{
+   return setVisibleHidden(isVisible, hidden);
+}
+
 bool CurveData::setHidden(bool isHidden)
 {
-   bool changed = false;
-   if(isHidden != hidden)
+   return setVisibleHidden(visible, isHidden);
+}
+
+bool CurveData::setVisibleHidden(bool isVisible, bool isHidden)
+{
+   bool changed = isVisible != visible || isHidden != hidden;
+   if(changed)
    {
-      if(isHidden && displayed)
+      if(isVisible == true && isHidden == false)
       {
-         curve->detach();
-         changed = true;
+         // Display the curve on the parent plot.
+         if(attached == false)
+         {
+            curve->attach(m_parentPlot);
+            attached = true;
+         }
       }
-      else if(!isHidden && displayed)
+      else
       {
-         curve->attach(m_parentPlot);
-         changed = true;
+         // Do not display the curve on the parent plot.
+         if(attached == true)
+         {
+            curve->detach();
+            attached = false;
+         }
       }
+
+      visible = isVisible;
       hidden = isHidden;
    }
    return changed;

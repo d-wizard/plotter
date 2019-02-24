@@ -1560,7 +1560,7 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
          // These are writable values.
          ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
          ui->chkPropHide->setChecked(parentCurve->getHidden());
-         ui->chkPropVisable->setChecked(parentCurve->isDisplayed());
+         ui->chkPropVisable->setChecked(parentCurve->getVisible());
       }
    }
    else
@@ -1588,14 +1588,8 @@ void curveProperties::propTabApply()
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
    {
-      // If curve visability has changed, update.
-      if(parentCurve->isDisplayed() != ui->chkPropVisable->isChecked())
-      {
-         parentPlot->toggleCurveVisability(plotCurveInfo.curveName);
-      }
-
-      // Set Curve Hidden Status.
-      parentPlot->setCurveHidden(plotCurveInfo.curveName, ui->chkPropHide->isChecked());
+      // Set Curve Visible / Hidden State.
+      parentPlot->setCurveVisibleHidden(plotCurveInfo.curveName, ui->chkPropVisable->isChecked(), ui->chkPropHide->isChecked());
 
       // Check for change of Curve Display Index
       if(parentPlot->getCurveIndex(plotCurveInfo.curveName) != ui->spnPropCurvePos->value())
@@ -1603,6 +1597,7 @@ void curveProperties::propTabApply()
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
       }
    }
+   fillInPropTab(true);
 }
 
 void curveProperties::on_cmdUnlinkParent_clicked()

@@ -856,14 +856,14 @@ void MainWindow::setCurveProperties_allAxes(QString curveName, double sampleRate
 }
 
 
-void MainWindow::setCurveHidden(QString curveName, bool hidden)
+void MainWindow::setCurveVisibleHidden(QString curveName, bool visible, bool hidden)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
     int curveIndex = getCurveIndex(curveName);
     if(curveIndex >= 0)
     {
-       bool curveChanged = m_qwtCurves[curveIndex]->setHidden(hidden);
+       bool curveChanged = m_qwtCurves[curveIndex]->setVisibleHidden(visible, hidden);
 
        if(curveChanged)
        {
@@ -1327,19 +1327,13 @@ void MainWindow::toggleCursorCanSelectAnyCurveAction()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    // Toggle the curve that was clicked.
-    if(m_qwtCurves[index]->isDisplayed())
-    {
-        m_qwtCurves[index]->detach();
-    }
-    else
-    {
-        m_qwtCurves[index]->attach();
-    }
-    updateCurveOrder();
-    m_curveCommander->curvePropertyChanged();
+   // Toggle the curve that was clicked.
+   m_qwtCurves[index]->setVisible(!m_qwtCurves[index]->isDisplayed());
+
+   updateCurveOrder();
+   m_curveCommander->curvePropertyChanged();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -2862,15 +2856,15 @@ void MainWindow::updateCurveOrder()
    QList<CurveData*> visableCurves;
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
-       if(m_qwtCurves[i]->isDisplayed() == true)
-       {
-           visableCurves.push_back(m_qwtCurves[i]);
-           m_qwtCurves[i]->detach();
-       }
+      if(m_qwtCurves[i]->isDisplayed() == true)
+      {
+         visableCurves.push_back(m_qwtCurves[i]);
+         m_qwtCurves[i]->setVisible(false); // Detach curve from this plot window.
+      }
    }
    for(int i = 0; i < visableCurves.size(); ++i)
    {
-       visableCurves[i]->attach();
+      visableCurves[i]->setVisible(true); // Re-attach curve to this plot window.
    }
 
    // Make sure the selected point index is still valid.

@@ -152,7 +152,7 @@ public:
     void setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
     void setCurveProperties_allAxes(QString curveName, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
 
-    void setCurveHidden(QString curveName, bool hidden);
+    void setCurveVisibleHidden(QString curveName, bool visible, bool hidden);
 
     // Return current zoom dimemsions if pointer is value, otherwise return zero values
     maxMinXY getZoomDimensions(){ maxMinXY zeroRetVal = {0,0,0,0,true,true}; return m_plotZoom ? m_plotZoom->getCurZoom() : zeroRetVal; }
