@@ -34,6 +34,8 @@
 #include "smartMaxMin.h"
 #include "sampleRateCalculator.h"
 
+#include "fftSpectrumAnalyzerFunctions.h"
+
 class CurveAppearance
 {
 public:
@@ -127,6 +129,10 @@ public:
    void setPointValue(unsigned int index, double value);
    void setPointValue(unsigned int index, double xValue, double yValue);
 
+   void specAn_reset();
+   void specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType);
+   void specAn_setAvgSize(int newAvgSize);
+   
 private:
    CurveData();
    void init();
@@ -203,6 +209,8 @@ private:
    unsigned int maxNumPointsFromPlotMsg;
    sampleRateCalc sampleRateCalculator;
 
+   fftSpecAnFunc::eFftSpecAnTraceType fftSpecAnTraceType;
+   fftSpecAnFunc fftSpecAnY;
 };
 
 #endif

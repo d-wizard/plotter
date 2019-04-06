@@ -220,6 +220,7 @@ private:
 
     int m_selectedCurveIndex;
 
+    bool m_userHasSpecifiedZoomType;
     PlotZoom* m_plotZoom;
     maxMinXY m_maxMin;
 
@@ -231,6 +232,7 @@ private:
 
     bool m_legendDisplayed;
     bool m_calcSnrDisplayed;
+    bool m_specAnFuncDisplayed;
 
     int m_canvasWidth_pixels;
     int m_canvasHeight_pixels;
@@ -261,6 +263,7 @@ private:
     QAction m_normalizeBothAction;
     QAction m_toggleLegendAction;
     QAction m_toggleSnrCalcAction;
+    QAction m_toggleSpecAnAction;
     QAction m_toggleCursorCanSelectAnyCurveAction;
     QMenu m_rightClickMenu;
     QMenu m_normalizeMenu;
@@ -323,6 +326,10 @@ private:
 
     maxMinXY calcMaxMin();
 
+    void autoZoom();
+    void holdZoom();
+    void maxHoldZoom();
+
     void initDeltaLabels();
     void clearPointLabels();
     QPalette labelColorToPalette(QColor color);
@@ -384,6 +391,9 @@ private:
 
     int getCurveIndex(CurveData* ptr);
 
+    void specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType);
+    void setSpecAnGuiVisible(bool visible);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -396,11 +406,12 @@ private slots:
     // Menu Commands
     void toggleLegend();
     void calcSnrToggle();
+    void specAnFuncToggle();
     void cursorMode();
     void deltaCursorMode();
-    void autoZoom();
-    void holdZoom();
-    void maxHoldZoom();
+    void autoZoom_guiSlot();
+    void holdZoom_guiSlot();
+    void maxHoldZoom_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
     void zoomMode();
@@ -438,7 +449,13 @@ private slots:
 
     void activityIndicatorTimerSlot();
 
-// Functions that could be called from a thread, but modify ui
+    // Spectrum Analyzer Like GUI Element functions.
+    void on_radClearWrite_clicked();
+    void on_radMaxHold_clicked();
+    void on_radAverage_clicked();
+    void on_spnSpecAnAvgAmount_valueChanged(int arg1);
+    void on_cmdPeakSearch_clicked();
+
 public slots:
     void updateCursorMenus();
     void readPlotMsgSlot();

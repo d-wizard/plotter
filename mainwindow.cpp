@@ -75,6 +75,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_qwtGrid(NULL),
    m_selectMode(E_CURSOR),
    m_selectedCurveIndex(0),
+   m_userHasSpecifiedZoomType(false),
    m_plotZoom(NULL),
    m_checkedIcon(":/check.png"),
    m_zoomCursor(NULL),
@@ -82,6 +83,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_normalizeCurves_yAxis(false),
    m_legendDisplayed(false),
    m_calcSnrDisplayed(false),
+   m_specAnFuncDisplayed(false),
    m_canvasWidth_pixels(1),
    m_canvasHeight_pixels(1),
    m_canvasXOverYRatio(1.0),
@@ -104,6 +106,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_normalizeBothAction("Both Axes", this),
    m_toggleLegendAction("Legend", this),
    m_toggleSnrCalcAction("Calculate SNR", this),
+   m_toggleSpecAnAction("FFT Functions", this),
    m_toggleCursorCanSelectAnyCurveAction("Any Curve Cursor", this),
    m_normalizeMenu("Normalize Curves"),
    m_zoomSettingsMenu("Zoom Settings"),
@@ -166,9 +169,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_cursorAction, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
     connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
-    connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom()));
-    connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
-    connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
+    connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom_guiSlot()));
+    connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom_guiSlot()));
+    connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_normalizeNoneAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesNone()));
@@ -177,6 +180,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_normalizeBothAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesBoth()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
+    connect(&m_toggleSpecAnAction, SIGNAL(triggered(bool)), this, SLOT(specAnFuncToggle()));
     connect(&m_toggleCursorCanSelectAnyCurveAction, SIGNAL(triggered(bool)), this, SLOT(toggleCursorCanSelectAnyCurveAction()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
@@ -214,6 +218,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_toggleSnrCalcAction);
+    m_rightClickMenu.addAction(&m_toggleSpecAnAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
 
@@ -277,11 +282,14 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     // Disable SNR Calc Action by default. It will be activated (i.e. made visable) if there is a curve
     // that is an FFT curve.
     m_toggleSnrCalcAction.setVisible(false);
+    m_toggleSpecAnAction.setVisible(false);
     m_snrCalcBars = new plotSnrCalc(m_qwtPlot, ui->snrLabel);
 
     m_toggleCursorCanSelectAnyCurveAction.setVisible(false); // Set to Invisible until more than 1 curve is displayed
 
     restorePersistentPlotParams();
+
+    setSpecAnGuiVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -688,12 +696,18 @@ void MainWindow::readPlotMsgSlot()
             if(validSnrCurve && m_toggleSnrCalcAction.isVisible() == false)
             {
                m_toggleSnrCalcAction.setVisible(true);
+
+               // Don't allow Specturm Analyzer Functions for Complex FFTs (they can have negative values, which don't make sense in that case)
+               if(m_qwtCurves[curveIndex]->getPlotType() != E_PLOT_TYPE_COMPLEX_FFT)
+               {
+                  m_toggleSpecAnAction.setVisible(true);
+               }
             }
 
             // If this is a new FFT plot / curve, initialize to Max Hold Zoom mode. This is because
             // the max / min of the Y axis can jitter around in FFT plots (especially the min of
             // the Y axis).
-            if(validSnrCurve && newCurveAdded && firstCurve && !m_plotZoom->m_maxHoldZoom)
+            if(validSnrCurve && newCurveAdded && firstCurve && !m_userHasSpecifiedZoomType && !m_plotZoom->m_maxHoldZoom)
             {
                maxHoldZoom();
             }
@@ -1080,6 +1094,22 @@ void MainWindow::calcSnrToggle()
    m_qwtPlot->replot();
 }
 
+void MainWindow::specAnFuncToggle()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   m_specAnFuncDisplayed = !m_specAnFuncDisplayed;
+   if(m_specAnFuncDisplayed)
+   {
+      m_toggleSpecAnAction.setIcon(m_checkedIcon);
+   }
+   else
+   {
+      m_toggleSpecAnAction.setIcon(QIcon());
+   }
+   setSpecAnGuiVisible(m_specAnFuncDisplayed);
+}
+
 void MainWindow::setLegendState(bool showLegend)
 {
     if(m_legendDisplayed != showLegend)
@@ -1154,6 +1184,24 @@ void MainWindow::zoomMode()
     m_deltaCursorAction.setIcon(QIcon());
     m_qwtMainPicker->setRubberBand( QwtPicker::RectRubberBand);
     setCursor();
+}
+
+void MainWindow::autoZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   autoZoom();
+}
+
+void MainWindow::holdZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   holdZoom();
+}
+
+void MainWindow::maxHoldZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   maxHoldZoom();
 }
 
 void MainWindow::autoZoom()
@@ -3132,5 +3180,114 @@ void MainWindow::setCursor()
    else
    {
       m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+   }
+}
+
+#define CHANGE_ZOOM_BASED_ON_TRACE_TYPE 0
+void MainWindow::on_radClearWrite_clicked()
+{
+   if(ui->radClearWrite->isChecked())
+   {
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
+      if(!m_userHasSpecifiedZoomType)
+      {
+         maxHoldZoom(); // Can get a bunch of jitter on the Y Axis. Max Hold Zoom keeps the zoom from constantly changing.
+      }
+#endif
+   }
+}
+
+void MainWindow::on_radMaxHold_clicked()
+{
+   if(ui->radMaxHold->isChecked())
+   {
+      specAn_setTraceType(fftSpecAnFunc::E_MAX_HOLD);
+#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
+      if(!m_userHasSpecifiedZoomType)
+      {
+         autoZoom(); // The jitter on the Y Axis value should not a problem in Max Hold, so default to Auto Zoom.
+      }
+#endif
+   }
+}
+
+void MainWindow::on_radAverage_clicked()
+{
+   if(ui->radAverage->isChecked())
+   {
+      on_spnSpecAnAvgAmount_valueChanged(ui->spnSpecAnAvgAmount->value()); // Make sure the current GUI average amount is used.
+      specAn_setTraceType(fftSpecAnFunc::E_AVERAGE);
+#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
+      if(!m_userHasSpecifiedZoomType)
+      {
+         autoZoom(); // The jitter on the Y Axis value should not a problem when averaging, so default to Auto Zoom.
+      }
+#endif
+   }
+}
+
+void MainWindow::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->specAn_setTraceType(newTraceType);
+   }
+}
+
+void MainWindow::setSpecAnGuiVisible(bool visible)
+{
+   // The default plotter Palette has a black background. This can cause some issues with
+   // certain GUI elements in different Windows theme styles. The 'Standard Palette' seems
+   // to work best in all situations.
+   QPalette stdPalette = this->style()->standardPalette();
+   ui->spnSpecAnAvgAmount->setPalette(stdPalette);
+   ui->cmdPeakSearch->setPalette(stdPalette);
+
+   // Radio buttons can use the 'Standard Palette', but they need to have their text
+   // set to white to be readable against the black background.
+   QPalette whiteTextPalette = stdPalette;
+   whiteTextPalette.setColor(QPalette::WindowText, Qt::white);
+   ui->radClearWrite->setPalette(whiteTextPalette);
+   ui->radMaxHold->setPalette(whiteTextPalette);
+   ui->radAverage->setPalette(whiteTextPalette);
+   ui->groupSpecAnTrace->setPalette(whiteTextPalette);
+   ui->groupSpecAnMarker->setPalette(whiteTextPalette);
+
+   ui->groupSpecAnTrace->setVisible(visible);
+   ui->groupSpecAnMarker->setVisible(visible);
+   ui->radClearWrite->setVisible(visible);
+   ui->radMaxHold->setVisible(visible);
+   ui->radAverage->setVisible(visible);
+   ui->cmdPeakSearch->setVisible(visible);
+   ui->spnSpecAnAvgAmount->setVisible(visible);
+   ui->lblSpecAnAvgLabel->setVisible(visible);
+}
+
+void MainWindow::on_spnSpecAnAvgAmount_valueChanged(int arg1)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->specAn_setAvgSize(arg1);
+   }
+}
+
+void MainWindow::on_cmdPeakSearch_clicked()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   bool validPointSelected = false;
+   if(m_qwtSelectedSample != NULL)
+   {
+      validPointSelected = m_qwtSelectedSample->peakSearch(m_plotZoom->getCurZoom());
+   }
+
+   if(validPointSelected)
+   {
+      m_qwtSelectedSample->showCursor();
+      updatePointDisplay();
+      replotMainPlot(true, true);
    }
 }

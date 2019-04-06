@@ -50,7 +50,9 @@ CurveData::CurveData( QwtPlot* parentPlot,
    lastMsgIpAddr(0),
    lastMsgXAxisType(E_INVALID_DATA_TYPE),
    lastMsgYAxisType(E_INVALID_DATA_TYPE),
-   maxNumPointsFromPlotMsg(0)
+   maxNumPointsFromPlotMsg(0),
+   fftSpecAnTraceType(fftSpecAnFunc::E_CLEAR_WRITE),
+   fftSpecAnY(data->m_plotType)
 {
    init();
    if(plotDim != E_PLOT_DIM_1D)
@@ -833,7 +835,30 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
 {
    if(plotDim == E_PLOT_DIM_1D)
    {
-      int newPointsSize = newYPoints.size();
+      const dubVect* newPointsToUse = &newYPoints;
+      dubVect fftSpecAnPoints;
+
+      // Check if the input points should be overwritten with values from the FFT Spectrum Analyzer Functionality.
+      if(fftSpecAnY.isFftPlot())
+      {
+         fftSpecAnY.update(newYPoints);
+         if(fftSpecAnTraceType == fftSpecAnFunc::E_MAX_HOLD)
+         {
+            fftSpecAnY.getMaxHoldPoints(fftSpecAnPoints);
+         }
+         else if(fftSpecAnTraceType == fftSpecAnFunc::E_AVERAGE)
+         {
+            fftSpecAnY.getAveragePoints(fftSpecAnPoints);
+         }
+
+         // If samples have been written to fftSpecAnPoints, then we should use them.
+         if(fftSpecAnPoints.size() > 0)
+         {
+            newPointsToUse = &fftSpecAnPoints;
+         }
+      }
+      
+      int newPointsSize = newPointsToUse->size();
 
       handleNewSampleMsg(sampleStartIndex, newPointsSize);
 
@@ -847,7 +872,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             resized = true;
             yOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
-         memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         memcpy(&yOrigPoints[sampleStartIndex], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
       }
       else
       {
@@ -859,19 +884,19 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             // Current scroll mode curve size is less than the number of samples in this new curve data message.
             // Resize the curve to fit all the new data.
             resized = true;
-            yOrigPoints = newYPoints;
+            yOrigPoints = (*newPointsToUse);
          }
          else
          {
             int numOrigPointsToKeep = yOrigPoints.size() - newPointsSize;
 
             // Move old Y Points to their new position.
-            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
-            memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(yOrigPoints[0]) * numOrigPointsToKeep);
+            memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(yPoints[0]) * numOrigPointsToKeep);
             smartMaxMinYPoints.scrollModeShift(newPointsSize);
 
             // Copy new Y Points in.
-            memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+            memcpy(&yOrigPoints[numOrigPointsToKeep], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
          }
       }
 
@@ -1353,4 +1378,23 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
          UpdateCurveSamples(xPoints, yPoints, index, false);
       }
    }
+}
+
+void CurveData::specAn_reset()
+{
+   fftSpecAnY.reset();
+}
+
+void CurveData::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType)
+{
+   if(newTraceType != fftSpecAnTraceType)
+   {
+      specAn_reset();
+   }
+   fftSpecAnTraceType = newTraceType;
+}
+
+void CurveData::specAn_setAvgSize(int newAvgSize)
+{
+   fftSpecAnY.setAvgSize(newAvgSize);
 }

@@ -176,6 +176,46 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    return minDist;
 }
 
+bool Cursor::peakSearch(maxMinXY searchWindow)
+{
+   bool validPeakFound = false;
+   int peakIndex = -1;
+   double maxValue = 0;
+
+   if(m_parentCurve != NULL)
+   {
+      const double* xPoints = m_parentCurve->isXNormalized() ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
+      const double* yPoints = m_parentCurve->isYNormalized() ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
+      int numPoints = (int)m_parentCurve->getNumPoints();
+
+      for(int i = 0; i < numPoints; ++i)
+      {
+         // Check if the point is within the search window (search window is probably the current zoom).
+         if( yPoints[i] <= searchWindow.maxY && yPoints[i] >= searchWindow.minY &&
+             xPoints[i] <= searchWindow.maxX && xPoints[i] >= searchWindow.minX )
+         {
+            if(!validPeakFound)
+            {
+               validPeakFound = true;
+               peakIndex = i;
+               maxValue = yPoints[i];
+            }
+            else if(yPoints[i] > maxValue)
+            {
+               peakIndex = i;
+               maxValue = yPoints[i];
+            }
+         }
+      }
+   }
+
+   if(validPeakFound)
+   {
+      m_pointIndex = peakIndex;
+   }
+   return validPeakFound;
+}
+
 void Cursor::showCursor()
 {
    hideCursor();

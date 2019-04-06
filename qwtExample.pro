@@ -47,7 +47,8 @@ SOURCES += main.cpp\
     sampleRateCalculator.cpp \
     createplotfromdata.cpp \
     AutoDelimiter.cpp \
-    Cursor.cpp
+    Cursor.cpp \
+    fftSpectrumAnalyzerFunctions.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -86,7 +87,8 @@ HEADERS  += mainwindow.h \
     createplotfromdata.h \
     AutoDelimiter.h \
     hist.h \
-    spectrumAnalyzerModeTypes.h
+    spectrumAnalyzerModeTypes.h \
+    fftSpectrumAnalyzerFunctions.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
