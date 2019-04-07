@@ -113,6 +113,7 @@ public:
    bool setHidden(bool isHidden);
    bool setVisibleHidden(bool isVisible, bool isHidden);
 
+   bool getScrollMode(){return isScrollMode;}
 
    void setCurveAppearance(CurveAppearance curveAppearance);
 
@@ -147,6 +148,9 @@ private:
    void doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples);
    unsigned int removeInvalidPoints();
 
+   void swapSamples(dubVect& samples, int swapIndex);
+   void handleScrollModeTransitions(bool scrollMode);
+
    void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
    void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
 
@@ -180,6 +184,8 @@ private:
    // If a plot has no non-hidden curves, its GUI window will not be displayed.
    bool hidden;
 
+   bool isScrollMode;
+
    // Normalize parameters
    tLinearXYAxis normFactor;
 
@@ -191,6 +197,8 @@ private:
    dubVect yPoints;
    dubVect normX;
    dubVect normY;
+
+   unsigned int newestPointIndex;
 
    double sampleRate;
    double samplePeriod;

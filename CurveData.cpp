@@ -112,6 +112,9 @@ void CurveData::init()
    attached = false;
    visible = false;
    hidden = false;
+   isScrollMode = false;
+
+   newestPointIndex = 0;
 
    samplePeriod = 0.0;
    sampleRate = 0.0;
@@ -272,6 +275,8 @@ unsigned int CurveData::getNumPoints()
 
 void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
 {
+   handleScrollModeTransitions(scrollMode);
+
    bool addingPoints = numPoints < newNumPointsSize;
    if(scrollMode)
    {
@@ -815,8 +820,47 @@ void CurveData::ResetCurveSamples(const UnpackPlotMsg* data)
    storeLastMsgStats(data);
 }
 
+
+void CurveData::swapSamples(dubVect& samples, int swapIndex)
+{
+   int numPointsAtEnd = numPoints - swapIndex;
+   int numPointsAtBeg = numPoints - numPointsAtEnd;
+   size_t pointSize = sizeof(samples[0]);
+
+   if(numPointsAtEnd > 0 && numPointsAtBeg > 0)
+   {
+      dubVect tempPoints;
+      
+      // Swap Beginning / End Points.
+      tempPoints.resize(numPointsAtBeg);
+      memcpy(&tempPoints[0], &samples[0], pointSize * numPointsAtBeg); // Store off the Beginning Points.
+      
+      memmove(&samples[0], &samples[numPointsAtBeg], pointSize * numPointsAtEnd);   // Move End Points
+      memcpy(&samples[numPointsAtEnd], &tempPoints[0], pointSize * numPointsAtBeg); // Move Beginning Points.
+   }
+}
+
+void CurveData::handleScrollModeTransitions(bool scrollMode)
+{
+   if(isScrollMode != scrollMode)
+   {
+      swapSamples(yOrigPoints, newestPointIndex+1);
+      swapSamples(yPoints,     newestPointIndex+1);
+      smartMaxMinYPoints.updateMaxMin(0, yOrigPoints.size());
+      if(plotDim == E_PLOT_DIM_2D)
+      {
+         swapSamples(xOrigPoints, newestPointIndex+1);
+         swapSamples(xPoints,     newestPointIndex+1);
+         smartMaxMinXPoints.updateMaxMin(0, xOrigPoints.size());
+      }
+      isScrollMode = scrollMode; // Store off Scroll Mode state.
+   }
+}
+
 void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode)
 {
+   handleScrollModeTransitions(scrollMode);
+
    if(plotDim == plotActionToPlotDim(data->m_plotAction))
    {
       if(plotDim == E_PLOT_DIM_1D)
@@ -873,6 +917,8 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             yOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
          memcpy(&yOrigPoints[sampleStartIndex], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
+
+         newestPointIndex = sampleStartIndex + newPointsSize - 1;
       }
       else
       {
@@ -898,6 +944,8 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             // Copy new Y Points in.
             memcpy(&yOrigPoints[numOrigPointsToKeep], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
          }
+
+         newestPointIndex = yOrigPoints.size() - 1;
       }
 
       if(resized == true)
@@ -943,6 +991,8 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
 
          memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
          memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+
+         newestPointIndex = sampleStartIndex + newPointsSize - 1;
       }
       else
       {
@@ -975,6 +1025,8 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
             memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
             memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
          }
+
+         newestPointIndex = yOrigPoints.size() - 1;
       }
 
 
