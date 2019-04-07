@@ -99,12 +99,12 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
       unsigned int numNewParentPoints = parentStopIndex - parentStartIndex;
       unsigned int parentCurveNumPoints = parentCurve->getNumPoints();
 
+      // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
+      scrollModeShift = (signed)parentCurveNumPoints - (signed)parentStopIndex;
+
       // Update Parent Point Indexes to match where the new points actually are.
       parentStopIndex = parentCurveNumPoints;
       parentStartIndex = parentStopIndex - numNewParentPoints;
-
-      // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
-      scrollModeShift = (signed)parentCurveNumPoints - (signed)parentStopIndex;
    }
 
    origStartIndex = startIndex;
