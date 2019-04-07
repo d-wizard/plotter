@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -79,7 +79,8 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
                                       CurveData*& parentCurve,
                                       int& origStartIndex,
                                       int& startIndex,
-                                      int& stopIndex)
+                                      int& stopIndex,
+                                      int& scrollModeShift )
 {
    parentCurve = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
    startIndex = parentInfo.startIndex;
@@ -90,6 +91,21 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
       startIndex += parentCurve->getNumPoints();
    if(stopIndex <= 0)
       stopIndex += parentCurve->getNumPoints();
+
+   scrollModeShift = 0;
+   if(parentCurve->getScrollMode())
+   {
+      // Parent Curve is in scroll mode. This means the actual new samples are at the end.
+      unsigned int numNewParentPoints = parentStopIndex - parentStartIndex;
+      unsigned int parentCurveNumPoints = parentCurve->getNumPoints();
+
+      // Update Parent Point Indexes to match where the new points actually are.
+      parentStopIndex = parentCurveNumPoints;
+      parentStartIndex = parentStopIndex - numNewParentPoints;
+
+      // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
+      scrollModeShift = (signed)parentCurveNumPoints - (signed)parentStopIndex;
+   }
 
    origStartIndex = startIndex;
 
@@ -122,6 +138,7 @@ unsigned int ChildCurve::getDataFromParent1D( unsigned int parentStartIndex,
    int yStartIndex;
    int yStopIndex;
    int origYStart;
+   int scrollModeShiftY;
 
    getParentUpdateInfo( m_yAxis,
                         parentStartIndex,
@@ -130,7 +147,8 @@ unsigned int ChildCurve::getDataFromParent1D( unsigned int parentStartIndex,
                         yParent,
                         origYStart,
                         yStartIndex,
-                        yStopIndex );
+                        yStopIndex,
+                        scrollModeShiftY );
 
    int startOffset = 0;
    int numSampToGet = yStopIndex - yStartIndex;
@@ -148,6 +166,13 @@ unsigned int ChildCurve::getDataFromParent1D( unsigned int parentStartIndex,
       m_ySrcData.clear();
    }
 
+   // If the parent data is being updated via scroll mode, the startOffset will be shifted.
+   if(scrollModeShiftY > 0)
+   {
+      // Shift the start offset back to its orignal position.
+      startOffset -= scrollModeShiftY;
+   }
+
    return startOffset;
 }
 
@@ -161,11 +186,13 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
    int xStartIndex;
    int xStopIndex;
    int origXStart;
+   int scrollModeShiftX;
 
    CurveData* yParent;
    int yStartIndex;
    int yStopIndex;
    int origYStart;
+   int scrollModeShiftY;
 
    getParentUpdateInfo( m_xAxis,
                         parentStartIndex,
@@ -174,7 +201,8 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
                         xParent,
                         origXStart,
                         xStartIndex,
-                        xStopIndex );
+                        xStopIndex,
+                        scrollModeShiftX );
 
    getParentUpdateInfo( m_yAxis,
                         parentStartIndex,
@@ -183,7 +211,8 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
                         yParent,
                         origYStart,
                         yStartIndex,
-                        yStopIndex );
+                        yStopIndex,
+                        scrollModeShiftY );
 
    int numXSamp = xStopIndex - xStartIndex;
    int numYSamp = yStopIndex - yStartIndex;
@@ -221,6 +250,12 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
       m_ySrcData.clear();
    }
 
+   // If the parent data is being updated via scroll mode, the startOffset will be shifted.
+   if(scrollModeShiftX == scrollModeShiftY && scrollModeShiftY > 0)
+   {
+      // Shift the start offset back to its orignal position.
+      startOffset -= scrollModeShiftY;
+   }
    return startOffset;
 }
 
