@@ -3257,12 +3257,6 @@ void MainWindow::setSpecAnGuiVisible(bool visible)
 
    ui->groupSpecAnTrace->setVisible(visible);
    ui->groupSpecAnMarker->setVisible(visible);
-   ui->radClearWrite->setVisible(visible);
-   ui->radMaxHold->setVisible(visible);
-   ui->radAverage->setVisible(visible);
-   ui->cmdPeakSearch->setVisible(visible);
-   ui->spnSpecAnAvgAmount->setVisible(visible);
-   ui->lblSpecAnAvgLabel->setVisible(visible);
 }
 
 void MainWindow::on_spnSpecAnAvgAmount_valueChanged(int arg1)
@@ -3290,4 +3284,9 @@ void MainWindow::on_cmdPeakSearch_clicked()
       updatePointDisplay();
       replotMainPlot(true, true);
    }
+}
+
+void MainWindow::on_cmdSpecAnResetZoom_clicked()
+{
+   resetZoom();
 }

@@ -455,6 +455,7 @@ private slots:
     void on_radAverage_clicked();
     void on_spnSpecAnAvgAmount_valueChanged(int arg1);
     void on_cmdPeakSearch_clicked();
+    void on_cmdSpecAnResetZoom_clicked();
 
 public slots:
     void updateCursorMenus();
