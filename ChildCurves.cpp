@@ -92,8 +92,10 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
    if(stopIndex <= 0)
       stopIndex += parentCurve->getNumPoints();
 
+   // Scroll Mode Logic
+   bool grabAllParentPoints = parentStartIndex >= parentStopIndex;
    scrollModeShift = 0;
-   if(parentCurve->getScrollMode())
+   if(parentCurve->getScrollMode() && !grabAllParentPoints)
    {
       // Parent Curve is in scroll mode. This means the actual new samples are at the end.
       unsigned int numNewParentPoints = parentStopIndex - parentStartIndex;
