@@ -32,7 +32,7 @@ class ChildCurve : public QWidget
    Q_OBJECT
 public:
    ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
-   ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
+   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
 
    void anotherCurveChanged( QString plotName,
                              QString curveName,
@@ -72,7 +72,6 @@ private:
 
    void getDataForFft( ePlotType fftType, 
                        PlotMsgIdType parentGroupMsgId,
-                       bool autoScrollModeParent, 
                        bool xParentChanged,
                        bool yParentChanged,
                        unsigned int parentStartIndex,
@@ -93,6 +92,7 @@ private:
    ePlotType m_plotType;
    tParentCurveInfo m_xAxis;
    tParentCurveInfo m_yAxis;
+   bool m_forceContiguousParentPoints;
 
    dubVect m_xSrcData;
    dubVect m_ySrcData;

@@ -31,7 +31,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotName(plotName),
    m_curveName(curveName),
    m_plotType(plotType),
-   m_yAxis(yAxis)
+   m_yAxis(yAxis),
+   m_forceContiguousParentPoints(false)
 {
    updateCurve(false, true);
 }
@@ -47,7 +48,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_curveName(curveName),
    m_plotType(plotType),
    m_xAxis(xAxis),
-   m_yAxis(yAxis)
+   m_yAxis(yAxis),
+   m_forceContiguousParentPoints(false)
 {
    updateCurve(true, true);
 }
@@ -271,14 +273,13 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
 
 void ChildCurve::getDataForFft( ePlotType fftType, 
                                 PlotMsgIdType parentGroupMsgId,
-                                bool autoScrollModeParent, 
                                 bool xParentChanged,
                                 bool yParentChanged,
                                 unsigned int parentStartIndex,
                                 unsigned int parentStopIndex )
 {
    // Check for situation where we already pulled in all the new samples for the FFT.
-   if(autoScrollModeParent && parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
+   if(m_forceContiguousParentPoints && parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
    {
       return; // Already pulled in all the new samples, nothing to do.
    }
@@ -289,7 +290,7 @@ void ChildCurve::getDataForFft( ePlotType fftType,
    int numPrevFftPoints = (int)m_ySrcData.size();
    int numPrevPointsToKeep = numPrevFftPoints - numNewPoints;
 
-   if( complexFft && autoScrollModeParent && (xParentChanged || yParentChanged) )
+   if( complexFft && m_forceContiguousParentPoints && (xParentChanged || yParentChanged) )
    {
       xParentChanged = yParentChanged = true; // Set both to true.
    }
@@ -307,7 +308,7 @@ void ChildCurve::getDataForFft( ePlotType fftType,
          parentNumPoints = std::min(parentCurveX->getNumPoints(), parentCurveY->getNumPoints());
       }
 
-      if(parentInScrollMode || !autoScrollModeParent || m_ySrcData.size() < parentNumPoints)
+      if(parentInScrollMode || !m_forceContiguousParentPoints || m_ySrcData.size() < parentNumPoints)
       {
          getDataFromParent2D(xParentChanged, yParentChanged, 0, 0); // 0, 0 means get all the samples, not a subset of samples.
       }
@@ -340,7 +341,7 @@ void ChildCurve::getDataForFft( ePlotType fftType,
          parentNumPoints = parentCurveY->getNumPoints();
       }
 
-      if(parentInScrollMode || !autoScrollModeParent || m_ySrcData.size() < parentNumPoints)
+      if(parentInScrollMode || !m_forceContiguousParentPoints || m_ySrcData.size() < parentNumPoints)
       {
          getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
       }
@@ -418,7 +419,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       {
          dubVect realFFTOut;
 
-         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
+         getDataForFft(m_plotType, parentGroupMsgId, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -443,7 +444,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect realFFTOut;
          dubVect imagFFTOut;
 
-         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
+         getDataForFft(m_plotType, parentGroupMsgId, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -593,7 +594,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
       {
          dubVect realFFTOut;
-         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
+         getDataForFft(m_plotType, parentGroupMsgId, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -626,7 +627,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect realFFTOut;
          dubVect imagFFTOut;
 
-         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
+         getDataForFft(m_plotType, parentGroupMsgId, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
          if(m_yAxis.windowFFT == true)
          {
             unsigned int dataSize = std::min(m_ySrcData.size(), m_xSrcData.size());
