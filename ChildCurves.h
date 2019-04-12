@@ -70,6 +70,14 @@ private:
                                      unsigned int parentStartIndex = 0,
                                      unsigned int parentStopIndex = 0);
 
+   void getDataForFft( ePlotType fftType, 
+                       PlotMsgIdType parentGroupMsgId,
+                       bool autoScrollModeParent, 
+                       bool xParentChanged,
+                       bool yParentChanged,
+                       unsigned int parentStartIndex,
+                       unsigned int parentStopIndex );
+
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
    
    void updateCurve( bool xParentChanged,
@@ -90,6 +98,8 @@ private:
    dubVect m_ySrcData;
 
    dubVect m_prevInfo; // Used to store previous information needed to create some child curves.
+
+   PlotMsgIdType m_lastGroupMsgId;
 };
 
 #endif

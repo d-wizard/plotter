@@ -268,6 +268,99 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
    return startOffset;
 }
 
+
+void ChildCurve::getDataForFft( ePlotType fftType, 
+                                PlotMsgIdType parentGroupMsgId,
+                                bool autoScrollModeParent, 
+                                bool xParentChanged,
+                                bool yParentChanged,
+                                unsigned int parentStartIndex,
+                                unsigned int parentStopIndex )
+{
+   // Check for situation where we already pulled in all the new samples for the FFT.
+   if(autoScrollModeParent && parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
+   {
+      return; // Already pulled in all the new samples, nothing to do.
+   }
+
+   bool complexFft = plotTypeHas2DInput(fftType);
+
+   int numNewPoints = parentStopIndex - parentStartIndex;
+   int numPrevFftPoints = (int)m_ySrcData.size();
+   int numPrevPointsToKeep = numPrevFftPoints - numNewPoints;
+
+   if( complexFft && autoScrollModeParent && (xParentChanged || yParentChanged) )
+   {
+      xParentChanged = yParentChanged = true; // Set both to true.
+   }
+
+   if(complexFft)
+   {
+      CurveData* parentCurveX = m_curveCmdr->getCurveData(m_xAxis.dataSrc.plotName, m_xAxis.dataSrc.curveName);
+      CurveData* parentCurveY = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
+
+      bool parentInScrollMode = false;
+      unsigned int parentNumPoints = 0;
+      if(parentCurveX != NULL && parentCurveY != NULL)
+      {
+         parentInScrollMode = parentCurveX->getScrollMode() && parentCurveY->getScrollMode();
+         parentNumPoints = std::min(parentCurveX->getNumPoints(), parentCurveY->getNumPoints());
+      }
+
+      if(parentInScrollMode || !autoScrollModeParent || m_ySrcData.size() < parentNumPoints)
+      {
+         getDataFromParent2D(xParentChanged, yParentChanged, 0, 0); // 0, 0 means get all the samples, not a subset of samples.
+      }
+      else
+      {
+         // Store off the original points.
+         dubVect origXSrcData = m_xSrcData;
+         dubVect origYSrcData = m_ySrcData;
+
+         // Grab the new, updated points (this will set m_xSrcData & m_ySrcData to the new points, which may just be a subset of all the curve points).
+         getDataFromParent2D(xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
+
+         // Move the previous point to before the new points
+         if(numPrevPointsToKeep > 0)
+         {
+            m_xSrcData.insert(m_xSrcData.begin(), origXSrcData.begin()+numNewPoints, origXSrcData.end());
+            m_ySrcData.insert(m_ySrcData.begin(), origYSrcData.begin()+numNewPoints, origYSrcData.end());
+         }
+      }
+   }
+   else
+   {
+      CurveData* parentCurveY = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
+
+      bool parentInScrollMode = false;
+      unsigned int parentNumPoints = 0;
+      if(parentCurveY != NULL)
+      {
+         parentInScrollMode = parentCurveY->getScrollMode();
+         parentNumPoints = parentCurveY->getNumPoints();
+      }
+
+      if(parentInScrollMode || !autoScrollModeParent || m_ySrcData.size() < parentNumPoints)
+      {
+         getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
+      }
+      else
+      {
+         // Store off the original points.
+         dubVect origYSrcData = m_ySrcData;
+
+         // Grab the new, updated points (this will set m_ySrcData to the new points, which may just be a subset of all the curve points).
+         getDataFromParent1D(parentStartIndex, parentStopIndex);
+
+         // Move the previous point to before the new points
+         if(numPrevPointsToKeep > 0)
+         {
+            m_ySrcData.insert(m_ySrcData.begin(), origYSrcData.begin()+numNewPoints, origYSrcData.end());
+         }
+      }
+   }
+}
+
 // For some combinations of parent plot type and child plot type, it is better to have the child
 // plot type set to the parent plot type.
 ePlotType ChildCurve::determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType)
@@ -325,7 +418,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       {
          dubVect realFFTOut;
 
-         getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
+         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -350,7 +443,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect realFFTOut;
          dubVect imagFFTOut;
 
-         getDataFromParent2D(xParentChanged, yParentChanged);
+         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -500,7 +593,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
       {
          dubVect realFFTOut;
-         getDataFromParent1D(0, 0); // 0, 0 means get all the samples, not a subset of samples.
+         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
 
          if(m_yAxis.windowFFT == true)
          {
@@ -533,7 +626,7 @@ void ChildCurve::updateCurve( bool xParentChanged,
          dubVect realFFTOut;
          dubVect imagFFTOut;
 
-         getDataFromParent2D(xParentChanged, yParentChanged);
+         getDataForFft(m_plotType, parentGroupMsgId, true, xParentChanged, yParentChanged, parentStartIndex, parentStopIndex);
          if(m_yAxis.windowFFT == true)
          {
             unsigned int dataSize = std::min(m_ySrcData.size(), m_xSrcData.size());
@@ -663,6 +756,8 @@ void ChildCurve::updateCurve( bool xParentChanged,
    }
 
    setToParentsSampleRate();
+
+   m_lastGroupMsgId = parentGroupMsgId;
 }
 
 void ChildCurve::setToParentsSampleRate()
