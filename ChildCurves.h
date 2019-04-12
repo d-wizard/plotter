@@ -34,7 +34,13 @@ public:
    ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
    ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
 
-   void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints, PlotMsgIdType parentMsgId);
+   void anotherCurveChanged( QString plotName,
+                             QString curveName,
+                             unsigned int parentStartIndex,
+                             unsigned int parentNumPoints,
+                             PlotMsgIdType parentGroupMsgId,
+                             PlotMsgIdType parentCurveMsgId );
+
    void setToParentsSampleRate();
    QVector<tPlotCurveAxis> getParents();
 
@@ -68,7 +74,8 @@ private:
    
    void updateCurve( bool xParentChanged,
                      bool yParentChanged,
-                     PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                     PlotMsgIdType parentGroupMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                     PlotMsgIdType parentCurveMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
                      unsigned int parentStartIndex = 0,
                      unsigned int parentStopIndex = 0);
 

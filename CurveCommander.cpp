@@ -51,7 +51,10 @@ CurveCommander::~CurveCommander()
 
 }
 
-void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, bool plotDataWasChanged)
+void CurveCommander::curveUpdated( plotMsgGroup* groupMsg,
+                                   UnpackPlotMsg* plotMsg,
+                                   CurveData* curveData,
+                                   bool plotDataWasChanged )
 {
    QString plotName(plotMsg->m_plotName.c_str());
    QString curveName(plotMsg->m_curveName.c_str());
@@ -66,6 +69,7 @@ void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, 
                  curveData,
                  plotMsg->m_sampleStartIndex,
                  updateMsgSize,
+                 groupMsg != NULL ? groupMsg->m_groupMsgId : PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
                  plotMsg->m_plotMsgID );
 
    m_childPlots_mutex.lock();
@@ -73,7 +77,13 @@ void CurveCommander::curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, 
    m_childPlots_mutex.unlock();
 }
 
-void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId)
+void CurveCommander::curveUpdated( QString plotName,
+                                   QString curveName,
+                                   CurveData* curveData,
+                                   unsigned int sampleStartIndex,
+                                   unsigned int numPoints,
+                                   PlotMsgIdType parentGroupMsgId,
+                                   PlotMsgIdType parentCurveMsgId )
 {
    if(curveData != NULL)
    {
@@ -99,7 +109,7 @@ void CurveCommander::curveUpdated(QString plotName, QString curveName, CurveData
       // New curves can't have children, so only check for children if this isn't a new curve.
       if(newCurve == false && numPoints > 0)
       {
-         notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
+         notifyChildCurvesOfParentChange(plotName, curveName, sampleStartIndex, numPoints, parentGroupMsgId, parentCurveMsgId);
       }
    }
    showHidePlotGui(plotName);
@@ -411,13 +421,23 @@ void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlot
    }
 }
 
-void CurveCommander::notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId)
+void CurveCommander::notifyChildCurvesOfParentChange( QString plotName, 
+                                                      QString curveName, 
+                                                      unsigned int sampleStartIndex, 
+                                                      unsigned int numPoints,
+                                                      PlotMsgIdType parentGroupMsgId,
+                                                      PlotMsgIdType parentCurveMsgId )
 {
    std::list<ChildCurve*>::iterator iter = m_childCurves.begin();
 
    while(iter != m_childCurves.end()) // Iterate over all child curves
    {
-      (*iter)->anotherCurveChanged(plotName, curveName, sampleStartIndex, numPoints, parentMsgId);
+      (*iter)->anotherCurveChanged( plotName, 
+                                    curveName, 
+                                    sampleStartIndex, 
+                                    numPoints, 
+                                    parentGroupMsgId, 
+                                    parentCurveMsgId );
       ++iter;
    }
 }

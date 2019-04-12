@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -233,12 +233,14 @@ class plotMsgGroup
 {
 public:
    plotMsgGroup():
+      m_groupMsgId(++m_plotMsgCount),
       m_changeCausedByUserGuiInput(false)
    {
    }
 
    // Pass in pointer to dynamically allocated UnpackPlotMsg type. delete will be called in destructor.
    plotMsgGroup(UnpackPlotMsg* unpackPlotMsg):
+      m_groupMsgId(PLOT_MSG_ID_TYPE_NO_PARENT_MSG),
       m_changeCausedByUserGuiInput(true)
    {
       m_plotMsgs.push_back(unpackPlotMsg);
@@ -253,11 +255,16 @@ public:
    }
 
    UnpackPlotMsgPtrList m_plotMsgs;
-   
+
+   PlotMsgIdType m_groupMsgId;
+
    // Indicates whether this plot msg group was created from User GUI input (example: creation of a
    // new child curve) or this plot msg group contains the data from an external plot msg (example: a TCP
    // plot message or a child curve that has a parent that's data was modified from a TCP plot message).
    bool m_changeCausedByUserGuiInput;
+
+private:
+   static PlotMsgIdType m_plotMsgCount; // This is used to generate a unique ID for each Group Plot Message.
 };
 
 class UnpackMultiPlotMsg

@@ -629,11 +629,11 @@ void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
       // Inform parent that new curve data has been completely processed (in this case, no processing was needed).
       for(UnpackPlotMsgPtrList::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
       {
-         UnpackPlotMsg* plotMsg = (*iter);
-         QString curveName( plotMsg->m_curveName.c_str() );
+         UnpackPlotMsg* subPlotMsg = (*iter);
+         QString curveName( subPlotMsg->m_curveName.c_str() );
          int curveIndex = getCurveIndex(curveName);
          CurveData* curveDataPtr = curveIndex >= 0 ? m_qwtCurves[curveIndex] : NULL;
-         m_curveCommander->curveUpdated(plotMsg, curveDataPtr, false);
+         m_curveCommander->curveUpdated(plotMsg, subPlotMsg, curveDataPtr, false);
       }
       // Done with new plot messages.
       delete plotMsg;
@@ -688,7 +688,7 @@ void MainWindow::readPlotMsgSlot()
             UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
             int curveIndex = getCurveIndex(curveName);
-            m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], true);
+            m_curveCommander->curveUpdated(multiPlotMsg, plotMsg, m_qwtCurves[curveIndex], true);
 
             // Make sure the SNR Calc bars are updated. If a new curve is plotted that is a
             // valid SNR curve, make sure the SNR Calc action is made visable.
@@ -1017,7 +1017,9 @@ void MainWindow::handleCurveDataChange(int curveIndex)
                                    m_qwtCurves[curveIndex]->getCurveTitle(),
                                    m_qwtCurves[curveIndex],
                                    0,
-                                   m_qwtCurves[curveIndex]->getNumPoints() );
+                                   m_qwtCurves[curveIndex]->getNumPoints(),
+                                   PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                                   PLOT_MSG_ID_TYPE_NO_PARENT_MSG );
 }
 
 void MainWindow::updatePlotWithNewCurveData(bool onlyCurveDataChanged)

@@ -56,8 +56,19 @@ public:
     CurveCommander(plotGuiMain* parent);
     ~CurveCommander();
 
-    void curveUpdated(UnpackPlotMsg* plotMsg, CurveData* curveData, bool plotDataWasChanged);
-    void curveUpdated(QString plotName, QString curveName, CurveData* curveData, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG);
+    void curveUpdated( plotMsgGroup* groupMsg,
+                       UnpackPlotMsg* plotMsg,
+                       CurveData* curveData,
+                       bool plotDataWasChanged );
+
+    void curveUpdated( QString plotName, 
+                       QString curveName, 
+                       CurveData* curveData, 
+                       unsigned int sampleStartIndex, 
+                       unsigned int numPoints, 
+                       PlotMsgIdType parentGroupMsgId,
+                       PlotMsgIdType parentCurveMsgId );
+
     void plotMsgGroupRemovedWithoutBeingProcessed(plotMsgGroup* plotMsgGroup);
     void curvePropertyChanged();
     void plotRemoved(QString plotName);
@@ -108,7 +119,12 @@ private:
     CurveCommander();
 
     void createPlot(QString plotName);
-    void notifyChildCurvesOfParentChange(QString plotName, QString curveName, unsigned int sampleStartIndex, unsigned int numPoints, PlotMsgIdType parentMsgId);
+    void notifyChildCurvesOfParentChange( QString plotName, 
+                                          QString curveName, 
+                                          unsigned int sampleStartIndex, 
+                                          unsigned int numPoints, 
+                                          PlotMsgIdType parentGroupMsgId,
+                                          PlotMsgIdType parentCurveMsgId );
     void removeOrphanedChildCurves();
 
     std::list<tParentMsgIdGroup>::iterator childPlots_getParentMsgIdGroupIter(PlotMsgIdType parentMsgID);
