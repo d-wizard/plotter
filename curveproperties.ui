@@ -409,6 +409,22 @@
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QCheckBox" name="chkFftSrcContiguous">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>220</y>
+       <width>141</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Force Source Contiguous</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">

@@ -485,7 +485,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
    bool xVis = true;
    bool yVis = plotTypeHas2DInput((ePlotType)index);
-   bool windowChkVis = false;
+   bool fftCheckBoxVisible = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
    bool mathCmbVis = false;
 
@@ -507,11 +507,11 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_REAL_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          ui->lblXAxisSrc->setText("Real Source");
-         windowChkVis = true;
+         fftCheckBoxVisible = true;
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
-         windowChkVis = true;
+         fftCheckBoxVisible = true;
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
@@ -542,8 +542,9 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->lblAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 
-   ui->chkWindow->setVisible(windowChkVis);
-   ui->chkScaleFftWindow->setVisible(windowChkVis);
+   ui->chkWindow->setVisible(fftCheckBoxVisible);
+   ui->chkScaleFftWindow->setVisible(fftCheckBoxVisible);
+   ui->chkFftSrcContiguous->setVisible(fftCheckBoxVisible);
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
    setUserChildPlotNames();
@@ -559,6 +560,7 @@ void curveProperties::on_cmdApply_clicked()
 
       if(newChildPlotName != "" && newChildCurveName != "")
       {
+         bool forceContiguousParentPoints = ui->chkFftSrcContiguous->isVisible() && ui->chkFftSrcContiguous->isChecked();
          if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
          {
             // New Child plot->curve does not exist, continue creating the child curve.
@@ -585,6 +587,7 @@ void curveProperties::on_cmdApply_clicked()
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
+                                              forceContiguousParentPoints,
                                               axisParent);
             }
             else
@@ -625,6 +628,7 @@ void curveProperties::on_cmdApply_clicked()
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
+                                              forceContiguousParentPoints,
                                               xAxisParent,
                                               yAxisParent);
             }

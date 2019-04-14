@@ -405,19 +405,19 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis) // 1D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo yAxis) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, yAxis) );
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, yAxis) );
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis) // 2D
+void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo xAxis, tParentCurveInfo yAxis) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, xAxis, yAxis) );
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, xAxis, yAxis) );
    }
 }
 
@@ -990,7 +990,7 @@ void CurveCommander::configForSpectrumAnalyzerView(QString plotName)
 
          m_allCurves[plotName].plotGui->setScrollMode(true, spectrumAnalyzerParams.srcNumSamples);
 
-         createChildCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName, E_PLOT_TYPE_DB_POWER_FFT_COMPLEX, xParent, yParent);
+         createChildCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName, E_PLOT_TYPE_DB_POWER_FFT_COMPLEX, true, xParent, yParent);
 
       }
       // Check if we need to make any adjustments to the Spectrum Analyzer FFT right after it has been created.

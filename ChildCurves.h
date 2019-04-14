@@ -31,8 +31,20 @@ class ChildCurve : public QWidget
 {
    Q_OBJECT
 public:
-   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
-   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
+   ChildCurve( CurveCommander* curveCmdr,
+               QString plotName,
+               QString curveName,
+               ePlotType plotType,
+               bool forceContiguousParentPoints,
+               tParentCurveInfo yAxis);
+
+   ChildCurve( CurveCommander* curveCmdr,
+               QString plotName,
+               QString curveName,
+               ePlotType plotType,
+               bool forceContiguousParentPoints,
+               tParentCurveInfo xAxis,
+               tParentCurveInfo yAxis);
 
    void anotherCurveChanged( QString plotName,
                              QString curveName,

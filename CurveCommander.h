@@ -94,8 +94,8 @@ public:
 
     void showHidePlotGui(QString plotName);
 
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis); // 1D
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis); // 2D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo yAxis); // 1D
+    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo xAxis, tParentCurveInfo yAxis); // 2D
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
     void showCreatePlotFromDataGui(QString plotName, const char* dataToPlot);

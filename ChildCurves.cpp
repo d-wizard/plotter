@@ -26,13 +26,14 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
+                        bool forceContiguousParentPoints,
                         tParentCurveInfo yAxis):
    m_curveCmdr(curveCmdr),
    m_plotName(plotName),
    m_curveName(curveName),
    m_plotType(plotType),
    m_yAxis(yAxis),
-   m_forceContiguousParentPoints(false)
+   m_forceContiguousParentPoints(forceContiguousParentPoints)
 {
    updateCurve(false, true);
 }
@@ -41,6 +42,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
                         QString curveName,
                         ePlotType plotType,
+                        bool forceContiguousParentPoints,
                         tParentCurveInfo xAxis,
                         tParentCurveInfo yAxis):
    m_curveCmdr(curveCmdr),
@@ -49,7 +51,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotType(plotType),
    m_xAxis(xAxis),
    m_yAxis(yAxis),
-   m_forceContiguousParentPoints(false)
+   m_forceContiguousParentPoints(forceContiguousParentPoints)
 {
    updateCurve(true, true);
 }
