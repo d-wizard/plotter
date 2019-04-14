@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -723,7 +723,6 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
 RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 {
    isValid = false;
-   hasBadCells = false;
 
    UINT_32 totalSamplesInCsv = 0;
 
@@ -732,13 +731,28 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
    std::string csvFile(&packedPlot[0], packedPlot.size());
 
-   csvFile = dString::ConvertLineEndingToUnix(csvFile);
+   // Determine the line ending
+   std::string lineEnding;
+   int numDosEnd = dString::Count(csvFile, "\r\n");
+   int numUnxEnd = dString::Count(csvFile, "\n");
 
-   std::vector<std::string> csvRows = dString::SplitV(csvFile, "\n");
+   if(numDosEnd == 0 || numUnxEnd > (2*numDosEnd))
+   {
+      lineEnding = "\n";
+   }
+   else
+   {
+      lineEnding = "\r\n";
+   }
+
+   // Split file into rows.
+   std::vector<std::string> csvRows;
+   dString::SplitV(csvFile, lineEnding, csvRows);
 
    try
    {
-      std::vector<std::string> csvCells = dString::SplitV(csvRows[0], CSV_CELL_DELIM);
+      std::vector<std::string> csvCells;
+      dString::SplitV(csvRows[0], CSV_CELL_DELIM, csvCells);
 
       // Determine if the first row is a header row.
       bool firstRowIsAllNums = true;
@@ -757,23 +771,20 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
       // Fill in the values from the CSV File.
       int rowStart = firstRowIsAllNums ? 0 : 1;
-      for(int i = rowStart; i < (int)csvRows.size(); ++i)
+      int numRows = (int)csvRows.size();
+
+      for(int rowIndex = rowStart; rowIndex < numRows; ++rowIndex)
       {
-         csvCells = dString::SplitV(csvRows[i], CSV_CELL_DELIM);
-         for(int j = 0; j < (int)csvCells.size(); ++j)
+         csvCells = dString::SplitV(csvRows[rowIndex], CSV_CELL_DELIM);
+         int numCellsInRow = std::min((int)csvCells.size(), numCol); // Make sure not to use more cells than are allocated (i.e. numCol)
+
+         for(int colIndex = 0; colIndex < numCellsInRow; ++colIndex)
          {
-            if(j < numCol && csvCells[j] != "")
+            if(csvCells[colIndex] != "")
             {
                double testDoub = 0.0;
-               if(dString::strTo(csvCells[j], testDoub))
-               {
-                  params[j].yOrigPoints.push_back(testDoub);
-               }
-               else
-               {
-                  hasBadCells = true;
-                  params[j].yOrigPoints.push_back(testDoub);
-               }
+               dString::strTo(csvCells[colIndex], testDoub);
+               params[colIndex].yOrigPoints.push_back(testDoub);
             }
          }
       }
@@ -781,7 +792,7 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
       // Get curve names from first row.
       if(firstRowIsAllNums == false)
       {
-         csvCells = dString::SplitV(csvRows[0], CSV_CELL_DELIM);
+         dString::SplitV(csvRows[0], CSV_CELL_DELIM, csvCells);
          for(int i = 0; i < numCol; ++i)
          {
             params[i].curveName = csvCells[i].c_str();
