@@ -24,6 +24,7 @@
 #include <QClipboard>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QElapsedTimer>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -3185,47 +3186,44 @@ void MainWindow::setCursor()
    }
 }
 
-#define CHANGE_ZOOM_BASED_ON_TRACE_TYPE 0
 void MainWindow::on_radClearWrite_clicked()
 {
    if(ui->radClearWrite->isChecked())
    {
       specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
-#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
-      if(!m_userHasSpecifiedZoomType)
-      {
-         maxHoldZoom(); // Can get a bunch of jitter on the Y Axis. Max Hold Zoom keeps the zoom from constantly changing.
-      }
-#endif
    }
 }
 
 void MainWindow::on_radMaxHold_clicked()
 {
+   // If the Max Hold Radio Button has been double clicked, do a Clear Write to reset the Max Hold values.
+   static QElapsedTimer doubleClickTimer;
+   qint64 timeSinceLastClick_ms = doubleClickTimer.elapsed();
+   doubleClickTimer.start();
+   if(timeSinceLastClick_ms < 500)
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+
+   // Set to Max Hold.
    if(ui->radMaxHold->isChecked())
    {
       specAn_setTraceType(fftSpecAnFunc::E_MAX_HOLD);
-#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
-      if(!m_userHasSpecifiedZoomType)
-      {
-         autoZoom(); // The jitter on the Y Axis value should not a problem in Max Hold, so default to Auto Zoom.
-      }
-#endif
    }
 }
 
 void MainWindow::on_radAverage_clicked()
 {
+   // If the Average Radio Button has been double clicked, do a Clear Write to reset the Average.
+   static QElapsedTimer doubleClickTimer;
+   qint64 timeSinceLastClick_ms = doubleClickTimer.elapsed();
+   doubleClickTimer.start();
+   if(timeSinceLastClick_ms < 500)
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+
+   // Set to Average.
    if(ui->radAverage->isChecked())
    {
       on_spnSpecAnAvgAmount_valueChanged(ui->spnSpecAnAvgAmount->value()); // Make sure the current GUI average amount is used.
       specAn_setTraceType(fftSpecAnFunc::E_AVERAGE);
-#if CHANGE_ZOOM_BASED_ON_TRACE_TYPE == 1
-      if(!m_userHasSpecifiedZoomType)
-      {
-         autoZoom(); // The jitter on the Y Axis value should not a problem when averaging, so default to Auto Zoom.
-      }
-#endif
    }
 }
 

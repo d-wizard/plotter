@@ -1500,11 +1500,26 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
+   QString fileTypeFilterList = tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)");
+
+   // Read the last used filter from persistent memory.
+   std::string persistentSaveStr = PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION;
+   std::string persistentReadValue;
+   persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
+
+   // Initialize selection with stored value (if there was one).
+   QString selectedFilter;
+   if(fileTypeFilterList.contains(persistentReadValue.c_str()))
+      selectedFilter = persistentReadValue.c_str();
+
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                    getOpenSaveDir(),
-                                                   tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)"));
+                                                   fileTypeFilterList,
+                                                   &selectedFilter);
 
+   // Write user selections to persisent memory.
    setOpenSavePath(fileName);
+   persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
    localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText());
 
