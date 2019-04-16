@@ -94,8 +94,8 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
                                       int& scrollModeShift )
 {
    parentCurve = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
-   startIndex = parentInfo.startIndex;
-   stopIndex = parentInfo.stopIndex;
+   startIndex = parentInfo.startIndex; // User specified slice of parent.
+   stopIndex = parentInfo.stopIndex;   // User specified slice of parent.
 
    // Slice... Handle negative indexes, 0 is beginning for start and 0 is end for stop.
    if(startIndex < 0)
@@ -105,19 +105,35 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
 
    // Scroll Mode Logic
    bool grabAllParentPoints = parentStartIndex >= parentStopIndex;
+   bool parentIsInScrollMode = parentCurve->getScrollMode();
    scrollModeShift = 0;
-   if(parentCurve->getScrollMode() && !grabAllParentPoints)
+   if(parentIsInScrollMode && !grabAllParentPoints)
    {
       // Parent Curve is in scroll mode. This means the actual new samples are at the end.
-      unsigned int numNewParentPoints = parentStopIndex - parentStartIndex;
-      unsigned int parentCurveNumPoints = parentCurve->getNumPoints();
+      int oldestPoint = parentCurve->getOldestPoint_nonScrollModeVersion(); // This value can be used to determine where the new samples got moved to via scroll mode.
+      int parentCurveNumPoints = parentCurve->getNumPoints();
 
-      // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
-      scrollModeShift = (signed)parentCurveNumPoints - (signed)parentStopIndex;
+      int numNewParentPoints = parentStopIndex - parentStartIndex;
 
-      // Update Parent Point Indexes to match where the new points actually are.
-      parentStopIndex = parentCurveNumPoints;
-      parentStartIndex = parentStopIndex - numNewParentPoints;
+      int numSampAfter = parentStopIndex - oldestPoint;
+      if(numSampAfter > 0)
+      {
+         numSampAfter -= parentCurveNumPoints;
+      }
+
+      int newParentStopIndex = parentCurveNumPoints + numSampAfter;
+      int newParentStartIndex = newParentStopIndex - numNewParentPoints;
+
+      if(newParentStartIndex >= 0 && newParentStopIndex > newParentStartIndex)
+      {
+         // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
+         scrollModeShift = newParentStopIndex - parentStopIndex;
+
+         // Update Parent Point Indexes to match where the new points actually are.
+         parentStopIndex = newParentStopIndex;
+         parentStartIndex = newParentStartIndex;
+      }
+      //else something weird happened don't update.
    }
 
    origStartIndex = startIndex;
@@ -180,11 +196,7 @@ unsigned int ChildCurve::getDataFromParent1D( unsigned int parentStartIndex,
    }
 
    // If the parent data is being updated via scroll mode, the startOffset will be shifted.
-   if(scrollModeShiftY > 0)
-   {
-      // Shift the start offset back to its orignal position.
-      startOffset -= scrollModeShiftY;
-   }
+   startOffset -= scrollModeShiftY;
 
    return startOffset;
 }
@@ -264,7 +276,7 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
    }
 
    // If the parent data is being updated via scroll mode, the startOffset will be shifted.
-   if(scrollModeShiftX == scrollModeShiftY && scrollModeShiftY > 0)
+   if(scrollModeShiftX == scrollModeShiftY)
    {
       // Shift the start offset back to its orignal position.
       startOffset -= scrollModeShiftY;
