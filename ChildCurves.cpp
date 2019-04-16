@@ -35,6 +35,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints)
 {
+   m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(false, true);
 }
 
@@ -53,6 +54,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints)
 {
+   m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(true, true);
 }
 
@@ -285,6 +287,48 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
 }
 
 
+bool ChildCurve::handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
+                                                 bool xParentChanged,
+                                                 bool yParentChanged,
+                                                 unsigned int parentStartIndex,
+                                                 unsigned int parentStopIndex)
+{
+   // Check for situation where we already pulled in all the new samples for the FFT.
+   if( m_forceContiguousParentPoints && xParentChanged != yParentChanged &&
+       parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG )
+   {
+      // Check if we already pulled in the samples when processing the other axis's parent.
+      for(QVector<tParentUpdateChunk>::iterator iter = m_fft_parentChunksProcessedInCurGroupMsg.begin(); iter != m_fft_parentChunksProcessedInCurGroupMsg.end(); ++iter)
+      {
+         if( iter->parentStartIndex == parentStartIndex && iter->parentStopIndex == parentStopIndex &&
+             iter->xParentChanged != xParentChanged && iter->yParentChanged != yParentChanged )
+         {
+            return true; // Already pulled in all these new samples, nothing to do.
+         }
+      }
+   }
+   else if(m_forceContiguousParentPoints) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
+   {
+      // New plot message group. Clear out the stored info from the old group.
+      m_fft_parentChunksProcessedInCurGroupMsg.clear();
+   }
+
+   // No early return, so this must be a new chunk.
+   if(m_forceContiguousParentPoints) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
+   {
+      // New Chunk. Add it to the list.
+      tParentUpdateChunk thisParentChunk;
+      thisParentChunk.xParentChanged   = xParentChanged;
+      thisParentChunk.yParentChanged   = yParentChanged;
+      thisParentChunk.parentStartIndex = parentStartIndex;
+      thisParentChunk.parentStopIndex  = parentStopIndex;
+
+      m_fft_parentChunksProcessedInCurGroupMsg.push_back(thisParentChunk);
+   }
+
+   return false; // No early return, no duplicate chunks found.
+}
+
 void ChildCurve::getDataForFft( ePlotType fftType, 
                                 PlotMsgIdType parentGroupMsgId,
                                 bool xParentChanged,
@@ -292,10 +336,15 @@ void ChildCurve::getDataForFft( ePlotType fftType,
                                 unsigned int parentStartIndex,
                                 unsigned int parentStopIndex )
 {
-   // Check for situation where we already pulled in all the new samples for the FFT.
-   if(m_forceContiguousParentPoints && parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG)
+   bool duplicateChunk = handleDuplicateFftParentChunks( parentGroupMsgId,
+                                                         xParentChanged,
+                                                         yParentChanged,
+                                                         parentStartIndex,
+                                                         parentStopIndex );
+
+   if(duplicateChunk)
    {
-      return; // Already pulled in all the new samples, nothing to do.
+      return; // Already pulled in all these new samples, nothing to do.
    }
 
    bool complexFft = plotTypeHas2DInput(fftType);

@@ -58,7 +58,18 @@ public:
 
    QString getPlotName(){return m_plotName;}
    QString getCurveName(){return m_curveName;}
+
 private:
+
+   // Types
+   typedef struct
+   {
+      bool xParentChanged;
+      bool yParentChanged;
+      unsigned int parentStartIndex;
+      unsigned int parentStopIndex;
+   }tParentUpdateChunk;
+
    // Eliminate default, copy, assign
    ChildCurve();
    ChildCurve(ChildCurve const&);
@@ -89,6 +100,12 @@ private:
                        unsigned int parentStartIndex,
                        unsigned int parentStopIndex );
 
+   bool handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
+                                        bool xParentChanged,
+                                        bool yParentChanged,
+                                        unsigned int parentStartIndex,
+                                        unsigned int parentStopIndex );
+
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
    
    void updateCurve( bool xParentChanged,
@@ -112,6 +129,8 @@ private:
    dubVect m_prevInfo; // Used to store previous information needed to create some child curves.
 
    PlotMsgIdType m_lastGroupMsgId;
+   QVector<tParentUpdateChunk> m_fft_parentChunksProcessedInCurGroupMsg;
+
 };
 
 #endif
