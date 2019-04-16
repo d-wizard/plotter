@@ -114,7 +114,7 @@ void CurveData::init()
    hidden = false;
    isScrollMode = false;
 
-   newestPointIndex = 0;
+   oldestPoint_nonScrollModeVersion = 0;
 
    samplePeriod = 0.0;
    sampleRate = 0.0;
@@ -844,13 +844,15 @@ void CurveData::handleScrollModeTransitions(bool scrollMode)
 {
    if(isScrollMode != scrollMode)
    {
-      swapSamples(yOrigPoints, newestPointIndex+1);
-      swapSamples(yPoints,     newestPointIndex+1);
+      int swapPoint = scrollMode ? oldestPoint_nonScrollModeVersion : numPoints - oldestPoint_nonScrollModeVersion;
+
+      swapSamples(yOrigPoints, swapPoint);
+      swapSamples(yPoints,     swapPoint);
       smartMaxMinYPoints.updateMaxMin(0, yOrigPoints.size());
       if(plotDim == E_PLOT_DIM_2D)
       {
-         swapSamples(xOrigPoints, newestPointIndex+1);
-         swapSamples(xPoints,     newestPointIndex+1);
+         swapSamples(xOrigPoints, swapPoint);
+         swapSamples(xPoints,     swapPoint);
          smartMaxMinXPoints.updateMaxMin(0, xOrigPoints.size());
       }
       isScrollMode = scrollMode; // Store off Scroll Mode state.
@@ -917,8 +919,6 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             yOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
          memcpy(&yOrigPoints[sampleStartIndex], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
-
-         newestPointIndex = sampleStartIndex + newPointsSize - 1;
       }
       else
       {
@@ -944,9 +944,9 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             // Copy new Y Points in.
             memcpy(&yOrigPoints[numOrigPointsToKeep], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
          }
-
-         newestPointIndex = yOrigPoints.size() - 1;
       }
+
+      oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
 
       if(resized == true)
       {
@@ -991,8 +991,6 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
 
          memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
          memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
-
-         newestPointIndex = sampleStartIndex + newPointsSize - 1;
       }
       else
       {
@@ -1025,10 +1023,9 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
             memcpy(&xOrigPoints[numOrigPointsToKeep], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
             memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
          }
-
-         newestPointIndex = yOrigPoints.size() - 1;
       }
 
+      oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 

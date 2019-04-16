@@ -114,6 +114,7 @@ public:
    bool setVisibleHidden(bool isVisible, bool isHidden);
 
    bool getScrollMode(){return isScrollMode;}
+   unsigned int getOldestPoint_nonScrollModeVersion(){return oldestPoint_nonScrollModeVersion;}
 
    void setCurveAppearance(CurveAppearance curveAppearance);
 
@@ -198,7 +199,7 @@ private:
    dubVect normX;
    dubVect normY;
 
-   unsigned int newestPointIndex;
+   unsigned int oldestPoint_nonScrollModeVersion; // This can equal numPoints. In that case the newest sample is the last point.
 
    double sampleRate;
    double samplePeriod;
