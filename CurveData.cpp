@@ -52,7 +52,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
    lastMsgYAxisType(E_INVALID_DATA_TYPE),
    maxNumPointsFromPlotMsg(0),
    fftSpecAnTraceType(fftSpecAnFunc::E_CLEAR_WRITE),
-   fftSpecAnY(data->m_plotType)
+   fftSpecAn(data->m_plotType)
 {
    init();
    if(plotDim != E_PLOT_DIM_1D)
@@ -885,16 +885,16 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
       dubVect fftSpecAnPoints;
 
       // Check if the input points should be overwritten with values from the FFT Spectrum Analyzer Functionality.
-      if(fftSpecAnY.isFftPlot())
+      if(fftSpecAn.isFftPlot())
       {
-         fftSpecAnY.update(newYPoints);
+         fftSpecAn.update(newYPoints);
          if(fftSpecAnTraceType == fftSpecAnFunc::E_MAX_HOLD)
          {
-            fftSpecAnY.getMaxHoldPoints(fftSpecAnPoints);
+            fftSpecAn.getMaxHoldPoints(fftSpecAnPoints);
          }
          else if(fftSpecAnTraceType == fftSpecAnFunc::E_AVERAGE)
          {
-            fftSpecAnY.getAveragePoints(fftSpecAnPoints);
+            fftSpecAn.getAveragePoints(fftSpecAnPoints);
          }
 
          // If samples have been written to fftSpecAnPoints, then we should use them.
@@ -1431,7 +1431,7 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
 
 void CurveData::specAn_reset()
 {
-   fftSpecAnY.reset();
+   fftSpecAn.reset();
 }
 
 void CurveData::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType)
@@ -1445,5 +1445,5 @@ void CurveData::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceT
 
 void CurveData::specAn_setAvgSize(int newAvgSize)
 {
-   fftSpecAnY.setAvgSize(newAvgSize);
+   fftSpecAn.setAvgSize(newAvgSize);
 }

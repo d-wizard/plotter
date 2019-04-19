@@ -219,7 +219,7 @@ private:
    sampleRateCalc sampleRateCalculator;
 
    fftSpecAnFunc::eFftSpecAnTraceType fftSpecAnTraceType;
-   fftSpecAnFunc fftSpecAnY;
+   fftSpecAnFunc fftSpecAn;
 };
 
 #endif
