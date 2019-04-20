@@ -51,6 +51,7 @@ public:
    void getAveragePoints(dubVect& ioXPoints);
    
    void setAvgSize(int newAvgSize);
+   int getAvgCount(){return m_allAvgFfts.size();}
 
    bool isFftPlot(){return m_isFftPlot;}
 

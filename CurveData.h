@@ -134,6 +134,7 @@ public:
    void specAn_reset();
    void specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType);
    void specAn_setAvgSize(int newAvgSize);
+   int specAn_getAvgCount(){return fftSpecAn.getAvgCount();}
    
 private:
    CurveData();

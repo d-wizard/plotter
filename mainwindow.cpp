@@ -965,6 +965,20 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       }
    }
 
+   // If the FFT Functions GUI stuff is visible, update the FFT Average Count.
+   if(ui->lblSpecAnAvgCntLabel->isVisible())
+   {
+      QString avgCountStr = "---"; // Default Value.
+
+      // When in average mode, set the value to the number of FFTs that have been averaged.
+      if(ui->radAverage->isChecked() && m_selectedCurveIndex >= 0 && m_selectedCurveIndex < m_qwtCurves.size())
+      {
+         avgCountStr = QString::number(m_qwtCurves[m_selectedCurveIndex]->specAn_getAvgCount());
+      }
+
+      ui->lblSpecAnAvgCntLabel->setText("Avg Count: " + avgCountStr);
+   }
+
    initCursorIndex(curveIndex);
 }
 
