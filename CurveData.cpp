@@ -115,6 +115,7 @@ void CurveData::init()
    isScrollMode = false;
 
    oldestPoint_nonScrollModeVersion = 0;
+   plotSize_nonScrollModeVersion = 0;
 
    samplePeriod = 0.0;
    sampleRate = 0.0;
@@ -947,6 +948,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
       }
 
       oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+      plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
 
       if(resized == true)
       {
@@ -1026,6 +1028,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
       }
 
       oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+      plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 

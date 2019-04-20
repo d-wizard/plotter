@@ -115,6 +115,7 @@ public:
 
    bool getScrollMode(){return isScrollMode;}
    unsigned int getOldestPoint_nonScrollModeVersion(){return oldestPoint_nonScrollModeVersion;}
+   unsigned int getPlotSize_nonScrollModeVersion(){return plotSize_nonScrollModeVersion;}
 
    void setCurveAppearance(CurveAppearance curveAppearance);
 
@@ -201,6 +202,7 @@ private:
    dubVect normY;
 
    unsigned int oldestPoint_nonScrollModeVersion; // This can equal numPoints. In that case the newest sample is the last point.
+   unsigned int plotSize_nonScrollModeVersion;
 
    double sampleRate;
    double samplePeriod;

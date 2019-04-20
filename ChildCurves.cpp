@@ -32,6 +32,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotName(plotName),
    m_curveName(curveName),
    m_plotType(plotType),
+   m_plotIsFft(plotTypeIsFft(plotType)),
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints)
 {
@@ -50,6 +51,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotName(plotName),
    m_curveName(curveName),
    m_plotType(plotType),
+   m_plotIsFft(plotTypeIsFft(plotType)),
    m_xAxis(xAxis),
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints)
@@ -95,38 +97,51 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
                                       int& stopIndex,
                                       int& scrollModeShift )
 {
+   // Grab parameters from the Parent Curve.
    parentCurve = m_curveCmdr->getCurveData(parentInfo.dataSrc.plotName, parentInfo.dataSrc.curveName);
+   int parentNumPoints = parentCurve->getNumPoints(); // Number of points actually being displayed in the parent curve.
+   int origMsgNumPoints = parentCurve->getPlotSize_nonScrollModeVersion(); // The size that the parent curve would be if it weren't in Scroll Mode.
+   bool parentIsInScrollMode = parentCurve->getScrollMode();
+
+   bool sliceParentSamples = parentInfo.startIndex != 0 || parentInfo.stopIndex != 0;
+   bool grabAllParentPoints = parentStartIndex >= parentStopIndex;
+
    startIndex = parentInfo.startIndex; // User specified slice of parent.
    stopIndex = parentInfo.stopIndex;   // User specified slice of parent.
 
    // Slice... Handle negative indexes, 0 is beginning for start and 0 is end for stop.
    if(startIndex < 0)
-      startIndex += parentCurve->getNumPoints();
+      startIndex += parentNumPoints;
    if(stopIndex <= 0)
-      stopIndex += parentCurve->getNumPoints();
+      stopIndex += parentNumPoints;
+
+   // When in Scroll Mode, check for situation where we need to limit the parent samples to
+   // use the most recent samples in the curve. This way the child plot can have the same plot
+   // dimensions as the parent (if it was not in Scroll Mode).
+   if(parentIsInScrollMode && grabAllParentPoints && !sliceParentSamples && !m_plotIsFft)
+   {
+      startIndex += (parentNumPoints - origMsgNumPoints);
+   }
 
    // Scroll Mode Logic
-   bool grabAllParentPoints = parentStartIndex >= parentStopIndex;
-   bool parentIsInScrollMode = parentCurve->getScrollMode();
    scrollModeShift = 0;
    if(parentIsInScrollMode && !grabAllParentPoints)
    {
       // Parent Curve is in scroll mode. This means the actual new samples are at the end.
       int oldestPoint = parentCurve->getOldestPoint_nonScrollModeVersion(); // This value can be used to determine where the new samples got moved to via scroll mode.
-      int parentCurveNumPoints = parentCurve->getNumPoints();
 
       int numNewParentPoints = parentStopIndex - parentStartIndex;
 
-      int numSampAfter = parentStopIndex - oldestPoint;
-      if(numSampAfter > 0)
+      int numSampAfter = oldestPoint - parentStopIndex;
+      if(numSampAfter < 0)
       {
-         numSampAfter -= parentCurveNumPoints;
+         numSampAfter += origMsgNumPoints;
       }
 
-      int newParentStopIndex = parentCurveNumPoints + numSampAfter;
+      int newParentStopIndex = parentNumPoints - numSampAfter;
       int newParentStartIndex = newParentStopIndex - numNewParentPoints;
 
-      if(newParentStartIndex >= 0 && newParentStopIndex > newParentStartIndex)
+      if(newParentStartIndex >= 0 && newParentStopIndex > newParentStartIndex && newParentStopIndex <= parentNumPoints)
       {
          // The Parent Point Indexes were modified, need to keep track of this to make sure the Child puts the new points in the correct location.
          scrollModeShift = newParentStopIndex - parentStopIndex;

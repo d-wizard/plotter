@@ -119,6 +119,7 @@ private:
    QString m_plotName;
    QString m_curveName;
    ePlotType m_plotType;
+   bool m_plotIsFft;
    tParentCurveInfo m_xAxis;
    tParentCurveInfo m_yAxis;
    bool m_forceContiguousParentPoints;
