@@ -324,7 +324,7 @@ bool ChildCurve::handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
    }
    else if(m_forceContiguousParentPoints) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
    {
-      // New plot message group. Clear out the stored info from the old group.
+      // New plot message group (or other reason). Clear out the stored info from the old group.
       m_fft_parentChunksProcessedInCurGroupMsg.clear();
    }
 
