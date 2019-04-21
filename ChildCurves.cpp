@@ -125,7 +125,7 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
 
    // Scroll Mode Logic
    scrollModeShift = 0;
-   if(parentIsInScrollMode && !grabAllParentPoints)
+   if(parentIsInScrollMode && !grabAllParentPoints && !sliceParentSamples)
    {
       // Parent Curve is in scroll mode. This means the actual new samples are at the end.
       int oldestPoint = parentCurve->getOldestPoint_nonScrollModeVersion(); // This value can be used to determine where the new samples got moved to via scroll mode.
