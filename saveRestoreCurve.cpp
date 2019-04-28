@@ -733,8 +733,20 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
    // Determine the line ending
    std::string lineEnding;
-   int numDosEnd = dString::Count(csvFile, "\r\n");
-   int numUnxEnd = dString::Count(csvFile, "\n");
+   int numDosEnd, numUnxEnd;
+
+   // Limit the number of characters to search over.
+   if(csvFile.size() <= 500000)
+   {
+      numDosEnd = dString::Count(csvFile, "\r\n");
+      numUnxEnd = dString::Count(csvFile, "\n");
+   }
+   else
+   {
+      std::string csvFileSmall = csvFile.substr(0, 500000);
+      numDosEnd = dString::Count(csvFileSmall, "\r\n");
+      numUnxEnd = dString::Count(csvFileSmall, "\n");
+   }
 
    if(numDosEnd == 0 || numUnxEnd > (2*numDosEnd))
    {
@@ -782,8 +794,7 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
          {
             if(csvCells[colIndex] != "")
             {
-               double testDoub = 0.0;
-               dString::strTo(csvCells[colIndex], testDoub);
+               double testDoub = strtod(csvCells[colIndex].c_str(), 0);
                params[colIndex].yOrigPoints.push_back(testDoub);
             }
          }
