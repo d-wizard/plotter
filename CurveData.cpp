@@ -888,7 +888,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
       // Check if the input points should be overwritten with values from the FFT Spectrum Analyzer Functionality.
       if(fftSpecAn.isFftPlot())
       {
-         fftSpecAn.update(newYPoints);
+         fftSpecAn.update(newYPoints, fftSpecAnTraceType);
          if(fftSpecAnTraceType == fftSpecAnFunc::E_MAX_HOLD)
          {
             fftSpecAn.getMaxHoldPoints(fftSpecAnPoints);

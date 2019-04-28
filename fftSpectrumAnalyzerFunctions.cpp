@@ -86,7 +86,7 @@ void fftSpecAnFunc::reset()
 }
 
 
-void fftSpecAnFunc::update(const dubVect& newPoints)
+void fftSpecAnFunc::update(const dubVect& newPoints, eFftSpecAnTraceType fftSpecAnTraceType)
 {
    int newNumBins = newPoints.size();
    if(newNumBins > 0)
@@ -106,8 +106,15 @@ void fftSpecAnFunc::update(const dubVect& newPoints)
       }
       m_fftNumBins = newNumBins;
 
-      updateMax(newPoints);
-      updateAvg(newPoints);
+      // Update Max Hold / Average.
+      if(fftSpecAnTraceType == E_MAX_HOLD)
+      {
+         updateMax(newPoints);
+      }
+      else if(fftSpecAnTraceType == E_AVERAGE)
+      {
+         updateAvg(newPoints);
+      }
    }
 
 }
@@ -152,7 +159,8 @@ void fftSpecAnFunc::updateMax(const dubVect& newPoints)
    }
    else
    {
-      for(unsigned int i = 0; i < newPoints.size(); ++i)
+      unsigned int newPointsSize = newPoints.size();
+      for(unsigned int i = 0; i < newPointsSize; ++i)
       {
          bool oldValid = isDoubleValid(m_maxHold[i]);
          bool newValid = isDoubleValid(newPoints[i]);
@@ -174,11 +182,23 @@ void fftSpecAnFunc::updateMax(const dubVect& newPoints)
 
 void fftSpecAnFunc::updateAvg(const dubVect& newPoints)
 {
+   bool hadToConvertToLinear = false;
+   const dubVect* linearNewPoints = &newPoints; // Default to using input points (if the input is already linear, this avoids a copy)
+
+   // If the FFT is in the log domain, we need to covert to linear.
+   if(m_isLogFft)
+   {
+      dubVect* linearPoints = new dubVect; // This will be deleted later in this function.
+      convertToLinear(newPoints, *linearPoints);
+      linearNewPoints = linearPoints;
+      hadToConvertToLinear = true; // Make sure 'new' gets deleted.
+   }
+
    if(m_allAvgFfts.size() < m_numDesiredAvgPoints)
    {
       // Haven't filled in all the average FFTs yet.
-      m_allAvgFfts.push_back(newPoints);
-      avgSum_add(newPoints);
+      m_allAvgFfts.push_back(*linearNewPoints);
+      avgSum_add(*linearNewPoints);
    }
    else
    {
@@ -188,43 +208,52 @@ void fftSpecAnFunc::updateAvg(const dubVect& newPoints)
       avgSum_sub(m_allAvgFfts[0]);
 
       // Next, add new points to sum.
-      avgSum_add(newPoints);
+      avgSum_add(*linearNewPoints);
 
       // Next, overwrite old FFT bin points with the new ones.
       dubVect* oldest = &m_allAvgFfts[0];
-      memcpy( &((*oldest)[0]), &newPoints[0], sizeof(newPoints[0])*m_fftNumBins );
+      memcpy( &((*oldest)[0]), &((*linearNewPoints)[0]), sizeof(newPoints[0])*m_fftNumBins );
 
-      // Finally, move the old FFT in the list to the back (i.e. make it the newest).
+      // Finally, move the oldest FFT in the list to the back (i.e. make it the newest).
       m_allAvgFfts.move(0, m_numDesiredAvgPoints-1);
-
    }
 
    calcAvg();
+
+   // If we had to convert to linear, then the pointer is pointing to dynamically allocated memory. Make sure it is deleted.
+   if(hadToConvertToLinear)
+   {
+      delete linearNewPoints;
+   }
+}
+
+void fftSpecAnFunc::convertToLinear(const dubVect& fftBins, dubVect& linearBins)
+{
+   int numFftBins = fftBins.size();
+   linearBins.resize(numFftBins);
+
+   for(int bin = 0; bin < numFftBins; ++bin)
+   {
+      if(isDoubleValid(fftBins[bin]))
+      {
+         linearBins[bin] += pow(10.0, fftBins[bin] / 10);
+      }
+      else
+      {
+         linearBins[bin] = 0; // If not valid, then the input must be 0 (i.e. log of 0 is invalid)
+      }
+   }
 }
 
 void fftSpecAnFunc::avgSum_add(const dubVect& fftBins)
 {
    int numFftBins = fftBins.size();
-   if(m_isLogFft)
+   for(int bin = 0; bin < numFftBins; ++bin)
    {
-      for(int bin = 0; bin < numFftBins; ++bin)
+      if(isDoubleValid(fftBins[bin]))
       {
-         if(isDoubleValid(fftBins[bin]))
-         {
-            m_avgSumLinear[bin] += pow(10.0, fftBins[bin] / 10);
-            m_numAvgPointsPerBin[bin]++;
-         }
-      }
-   }
-   else
-   {
-      for(int bin = 0; bin < numFftBins; ++bin)
-      {
-         if(isDoubleValid(fftBins[bin]))
-         {
-            m_avgSumLinear[bin] += fftBins[bin];
-            m_numAvgPointsPerBin[bin]++;
-         }
+         m_avgSumLinear[bin] += fftBins[bin];
+         m_numAvgPointsPerBin[bin]++;
       }
    }
 }
@@ -232,26 +261,12 @@ void fftSpecAnFunc::avgSum_add(const dubVect& fftBins)
 void fftSpecAnFunc::avgSum_sub(const dubVect& fftBins)
 {
    int numFftBins = fftBins.size();
-   if(m_isLogFft)
+   for(int bin = 0; bin < numFftBins; ++bin)
    {
-      for(int bin = 0; bin < numFftBins; ++bin)
+      if(isDoubleValid(fftBins[bin]))
       {
-         if(isDoubleValid(fftBins[bin]))
-         {
-            m_avgSumLinear[bin] -= pow(10.0, fftBins[bin] / 10);
-            m_numAvgPointsPerBin[bin]--;
-         }
-      }
-   }
-   else
-   {
-      for(int bin = 0; bin < numFftBins; ++bin)
-      {
-         if(isDoubleValid(fftBins[bin]))
-         {
-            m_avgSumLinear[bin] -= fftBins[bin];
-            m_numAvgPointsPerBin[bin]--;
-         }
+         m_avgSumLinear[bin] -= fftBins[bin];
+         m_numAvgPointsPerBin[bin]--;
       }
    }
 }

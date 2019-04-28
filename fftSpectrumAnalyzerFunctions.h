@@ -45,7 +45,7 @@ public:
    ~fftSpecAnFunc();
    
    void reset();
-   void update(const dubVect& newPoints);
+   void update(const dubVect& newPoints, eFftSpecAnTraceType fftSpecAnTraceType);
 
    void getMaxHoldPoints(dubVect& ioXPoints);
    void getAveragePoints(dubVect& ioXPoints);
@@ -65,6 +65,7 @@ private:
    void updateAvg(const dubVect& newPoints);
    void calcAvg();
 
+   void convertToLinear(const dubVect& fftBins, dubVect& linearBins);
    void avgSum_add(const dubVect& fftBins);
    void avgSum_sub(const dubVect& fftBins);
 
