@@ -761,6 +761,10 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
    // Split file into rows.
    std::vector<std::string> csvRows;
    dString::SplitV(csvFile, lineEnding, csvRows);
+   while(csvRows[csvRows.size()-1] == "") // Remove empty lines from the bottom.
+   {
+      csvRows.pop_back();
+   }
 
    try
    {
@@ -790,15 +794,15 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
       {
          int colIndex = 0;
          const char* colPtr = csvRows[rowIndex].c_str();
+         const char* endPtr = colPtr + csvRows[rowIndex].size();
          const char* delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR); // Returns NULL if no match is found.
 
          // Keep looping until Num Columns is hit or no more delimiters exist.
          while(colIndex < numCol && delimPos)
          {
-            if(colPtr != delimPos)
-            {
-               params[colIndex].yOrigPoints.push_back(strtod(colPtr, NULL));
-            }
+            double newValue = colPtr != delimPos ? strtod(colPtr, NULL) : NAN; // If cell is empty, set point to "Not A Number"
+            params[colIndex].yOrigPoints.push_back(newValue);
+
             colPtr = delimPos + 1;
             delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR);
             ++colIndex;
@@ -807,7 +811,8 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
          // Handle last column that has no delmiter after it.
          if(colIndex < numCol)
          {
-            params[colIndex].yOrigPoints.push_back(strtod(colPtr, NULL));
+            double newValue = colPtr != endPtr ? strtod(colPtr, NULL) : NAN; // If cell is empty, set point to "Not A Number"
+            params[colIndex].yOrigPoints.push_back(newValue);
          }
       }
 
