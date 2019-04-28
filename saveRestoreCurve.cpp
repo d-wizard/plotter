@@ -27,6 +27,7 @@
 
 static const std::string EXCEL_LINE_DELIM = "\r\n";
 static const std::string CSV_CELL_DELIM = ",";
+static const char        CSV_CELL_DELIM_CHAR = ',';
 static const std::string CLIPBOARD_EXCEL_CELL_DELIM = "\t";
 
 static const std::string C_HEADER_LINE_DELIM = "\r\n";
@@ -787,16 +788,26 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
       for(int rowIndex = rowStart; rowIndex < numRows; ++rowIndex)
       {
-         csvCells = dString::SplitV(csvRows[rowIndex], CSV_CELL_DELIM);
-         int numCellsInRow = std::min((int)csvCells.size(), numCol); // Make sure not to use more cells than are allocated (i.e. numCol)
+         int colIndex = 0;
+         const char* colPtr = csvRows[rowIndex].c_str();
+         const char* delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR); // Returns NULL if no match is found.
 
-         for(int colIndex = 0; colIndex < numCellsInRow; ++colIndex)
+         // Keep looping until Num Columns is hit or no more delimiters exist.
+         while(colIndex < numCol && delimPos)
          {
-            if(csvCells[colIndex] != "")
+            if(colPtr != delimPos)
             {
-               double testDoub = strtod(csvCells[colIndex].c_str(), 0);
-               params[colIndex].yOrigPoints.push_back(testDoub);
+               params[colIndex].yOrigPoints.push_back(strtod(colPtr, NULL));
             }
+            colPtr = delimPos + 1;
+            delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR);
+            ++colIndex;
+         }
+
+         // Handle last column that has no delmiter after it.
+         if(colIndex < numCol)
+         {
+            params[colIndex].yOrigPoints.push_back(strtod(colPtr, NULL));
          }
       }
 
