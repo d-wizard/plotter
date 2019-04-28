@@ -17,12 +17,31 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
+#include <QMutex>
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 #include "TCPThreads.h" // Socket types.
 
 // Global, can be changed outside of this file.
 unsigned int g_maxTcpPlotMsgSize = (40*1024*1024) + MAX_PLOT_MSG_HEADER_SIZE; // 40 MB+
+
+
+// PlotMsgIdType is 64 bit. Make sure the increment of the value can't get interrupted
+// on 32 bit builds (not sure if that can actually happen, but better safe than sorry).
+PlotMsgIdType getUniquePlotMsgId()
+{
+   static PlotMsgIdType uniqueIdCount = 0;
+   static QMutex uniqueIdLock; // Used to make sure increment can't get interrupted.
+
+   PlotMsgIdType retVal;
+
+   uniqueIdLock.lock();
+   retVal = ++uniqueIdCount;
+   uniqueIdLock.unlock();
+
+   return retVal;
+}
+
 
 GetEntirePlotMsg::GetEntirePlotMsg(struct sockaddr_storage* client):
    m_unpackState(E_READ_ACTION),
@@ -185,12 +204,8 @@ bool GetEntirePlotMsg::ReadOneByte(char inByte)
    return valueFilled;
 }
 
-// Initialize the static Plot Message Count variable that is used to generate a unique ID for each Plot Message.
-PlotMsgIdType UnpackPlotMsg::m_plotMsgCount = 0;
-PlotMsgIdType plotMsgGroup::m_plotMsgCount = 0;
-
 UnpackPlotMsg::UnpackPlotMsg():
-   m_plotMsgID(++m_plotMsgCount),
+   m_plotMsgID(getUniquePlotMsgId()),
    m_plotAction(E_INVALID_PLOT_ACTION),
    m_plotName(""),
    m_curveName(""),
@@ -209,7 +224,7 @@ UnpackPlotMsg::UnpackPlotMsg():
 }
 
 UnpackPlotMsg::UnpackPlotMsg(tIncomingMsg* inMsg):
-   m_plotMsgID(++m_plotMsgCount),
+   m_plotMsgID(getUniquePlotMsgId()),
    m_plotAction(E_INVALID_PLOT_ACTION),
    m_plotName(""),
    m_curveName(""),

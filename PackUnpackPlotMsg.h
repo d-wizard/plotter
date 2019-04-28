@@ -36,6 +36,8 @@
 #define MAX_PLOT_MSG_HEADER_SIZE (256)
 extern unsigned int g_maxTcpPlotMsgSize; // This value can be changed via ini file.
 
+PlotMsgIdType getUniquePlotMsgId(); // Prototype of function provided in .cpp file
+
 inline bool validPlotAction(ePlotAction in)
 {
    bool valid = false;
@@ -209,7 +211,6 @@ public:
    const char* GetMsgPtr(){return m_msg;}
    UINT_32 GetMsgPtrSize(){return m_msgSize;}
 
-   static PlotMsgIdType m_plotMsgCount; // This is used to generate a unique ID for each Plot Message.
 private:
    
    void unpack(void* dst, unsigned int size);
@@ -233,7 +234,7 @@ class plotMsgGroup
 {
 public:
    plotMsgGroup():
-      m_groupMsgId(++m_plotMsgCount),
+      m_groupMsgId(getUniquePlotMsgId()),
       m_changeCausedByUserGuiInput(false)
    {
    }
@@ -262,9 +263,6 @@ public:
    // new child curve) or this plot msg group contains the data from an external plot msg (example: a TCP
    // plot message or a child curve that has a parent that's data was modified from a TCP plot message).
    bool m_changeCausedByUserGuiInput;
-
-private:
-   static PlotMsgIdType m_plotMsgCount; // This is used to generate a unique ID for each Group Plot Message.
 };
 
 class UnpackMultiPlotMsg
