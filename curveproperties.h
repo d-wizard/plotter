@@ -21,6 +21,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QSpinBox>
 #include <QVector>
 #include <list>
 #include "PlotHelperTypes.h"
@@ -168,6 +169,8 @@ private slots:
 
    void on_chkPropHide_clicked();
 
+   void on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -187,6 +190,7 @@ private:
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 
    void fillInPropTab(bool userChangedPropertiesGuiSettings = false);
+   void fillInPropTab_childCurveParents(tPlotCurveAxis& plotCurveInfo);
    void propTabApply();
 
    void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
@@ -212,6 +216,9 @@ private:
    void fillInIpBlockTab(bool useLastIpAddr = false);
 
    void initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, const std::string persistParamName);
+   void initSpnBoxValueFromPersistParam(QSpinBox*  spnBoxPtr, const std::string persistParamName);
+
+   bool determineChildFftMeasurementAxisValues(tParentCurveInfo& axisParent);
 
    Ui::curveProperties *ui;
 

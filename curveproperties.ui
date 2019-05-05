@@ -42,7 +42,7 @@
       <number>0</number>
      </property>
      <property name="maxVisibleItems">
-      <number>13</number>
+      <number>14</number>
      </property>
      <item>
       <property name="text">
@@ -109,6 +109,11 @@
        <string>Math Between Curves</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>FFT Measurement</string>
+      </property>
+     </item>
     </widget>
     <widget class="QLabel" name="lblPlotType">
      <property name="geometry">
@@ -123,7 +128,7 @@
       <string>Plot Type</string>
      </property>
     </widget>
-    <widget class="QComboBox" name="cmbXAxisSrc">
+    <widget class="QComboBox" name="cmbXAxisSrc_fftMeasurement">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -425,6 +430,74 @@
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QComboBox" name="cmbXAxisSrc">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>50</y>
+       <width>251</width>
+       <height>21</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="lblFftMeasChildPlotSize">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>50</y>
+       <width>71</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Child Plot Size</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spnFFtMeasChildPlotSize">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>50</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>1000000</number>
+     </property>
+     <property name="value">
+      <number>100</number>
+     </property>
+    </widget>
+    <zorder>lblFftMeasChildPlotSize</zorder>
+    <zorder>spnFFtMeasChildPlotSize</zorder>
+    <zorder>cmbPlotType</zorder>
+    <zorder>lblPlotType</zorder>
+    <zorder>cmbXAxisSrc_fftMeasurement</zorder>
+    <zorder>lblXAxisSrc</zorder>
+    <zorder>cmbYAxisSrc</zorder>
+    <zorder>lblYAxisSrc</zorder>
+    <zorder>lblDestPlotName</zorder>
+    <zorder>cmbDestPlotName</zorder>
+    <zorder>lblDestCurveName</zorder>
+    <zorder>txtDestCurveName</zorder>
+    <zorder>chkSrcSlice</zorder>
+    <zorder>spnXSrcStart</zorder>
+    <zorder>spnXSrcStop</zorder>
+    <zorder>spnYSrcStart</zorder>
+    <zorder>spnYSrcStop</zorder>
+    <zorder>cmdXUseZoomForSlice</zorder>
+    <zorder>cmdYUseZoomForSlice</zorder>
+    <zorder>txtAvgAmount</zorder>
+    <zorder>lblAvgAmount</zorder>
+    <zorder>chkWindow</zorder>
+    <zorder>cmbChildMathOperators</zorder>
+    <zorder>chkScaleFftWindow</zorder>
+    <zorder>chkFftSrcContiguous</zorder>
+    <zorder>cmbXAxisSrc</zorder>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">

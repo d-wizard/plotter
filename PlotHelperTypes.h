@@ -140,6 +140,7 @@ typedef enum
    E_PLOT_TYPE_DELTA,
    E_PLOT_TYPE_SUM,
    E_PLOT_TYPE_MATH_BETWEEN_CURVES,
+   E_PLOT_TYPE_FFT_MEASUREMENT,
 
    // The following values are not represented in the GUI. Since these value
    // don't need to match a GUI value, enumerate from the end.
@@ -172,6 +173,7 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
    case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+   case E_PLOT_TYPE_FFT_MEASUREMENT:
    case E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE:
       return true;
       break;
@@ -200,6 +202,7 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_DB_POWER_FFT_REAL:
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
+   case E_PLOT_TYPE_FFT_MEASUREMENT:
    default:
       twoDInput = false;
       break;
@@ -266,6 +269,18 @@ typedef struct
     eAxis   srcImAxis;
 }tFFTCurve;
 
+typedef enum
+{
+   E_FFT_MEASURE__SIG_POWER,
+   E_FFT_MEASURE__SIG_BW,
+   E_FFT_MEASURE__NOISE_POWER,
+   E_FFT_MEASURE__NOISE_BW,
+   E_FFT_MEASURE__NOISE_PER_HZ,
+   E_FFT_MEASURE__SNR,
+   E_FFT_MEASURE__SNR_PER_HZ,
+   E_FFT_MEASURE__NO_FFT_MEASUREMENT
+}eFftSigNoiseMeasurements;
+
 typedef struct
 {
    QString plotName;
@@ -282,6 +297,8 @@ typedef struct
    bool windowFFT;
    bool scaleFftWindow;
    eMathBetweenCurves_operators mathBetweenCurvesOperator;
+   eFftSigNoiseMeasurements fftMeasurementType;
+   int fftMeasurementPlotSize; // Only valid for fftMeasurementType values != to E_FFT_MEASURE__NO_FFT_MEASUREMENT
 }tParentCurveInfo;
 
 typedef enum

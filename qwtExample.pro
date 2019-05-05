@@ -48,7 +48,8 @@ SOURCES += main.cpp\
     createplotfromdata.cpp \
     AutoDelimiter.cpp \
     Cursor.cpp \
-    fftSpectrumAnalyzerFunctions.cpp
+    fftSpectrumAnalyzerFunctions.cpp \
+    fftMeasChildParam.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -88,7 +89,8 @@ HEADERS  += mainwindow.h \
     AutoDelimiter.h \
     hist.h \
     spectrumAnalyzerModeTypes.h \
-    fftSpectrumAnalyzerFunctions.h
+    fftSpectrumAnalyzerFunctions.h \
+    fftMeasChildParam.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

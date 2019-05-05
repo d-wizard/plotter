@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -53,6 +53,8 @@ public:
    bool curveUpdated(CurveData* curve, QList<CurveData*>& allCurves);
 
    void updateSampleRate();
+
+   double getMeasurement(eFftSigNoiseMeasurements type);
 private:
 
    typedef struct curveDataIndexes
@@ -146,6 +148,13 @@ private:
    tFftBinChunk m_signalChunk;
    tFftBinChunk m_signalNoiseOverlapChunk;
 
+   double m_signalPower;
+   double m_signalBandwidth;
+   double m_noisePower;
+   double m_noiseBandwidth;
+   double m_noiseBwPerHz;
+   double m_snrDb;
+   double m_snrDbHz;
 
 };
 

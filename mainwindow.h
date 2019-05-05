@@ -182,6 +182,9 @@ public:
     void externalZoomReset();
     void setSnrBarMode(bool newState);
 
+    double getFftMeasurement(eFftSigNoiseMeasurements type);
+    bool areFftMeasurementsVisible();
+
     bool m_spectrumAnalyzerViewSet;
 private:
     // Define indexes for the array of delta cursor labels.

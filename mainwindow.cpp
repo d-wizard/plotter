@@ -938,8 +938,8 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
          // New curve, but starting in the middle.
          if(plotDim == E_PLOT_DIM_1D)
          {
-            // For 1D, prepend vector with zeros.
-            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
+            // For 1D, prepend vector with 'Not a Number'.
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
          }
          else
          {
@@ -1108,6 +1108,9 @@ void MainWindow::calcSnrToggle()
       m_toggleSnrCalcAction.setIcon(QIcon());
       m_snrCalcBars->hide();
    }
+
+   m_curveCommander->curvePropertyChanged(); // Inform Curve Commander (useful for FFT Measurement Child Plots)
+
    m_qwtPlot->replot();
 }
 
@@ -3304,3 +3307,27 @@ void MainWindow::on_cmdSpecAnResetZoom_clicked()
 {
    resetZoom();
 }
+
+double MainWindow::getFftMeasurement(eFftSigNoiseMeasurements type)
+{
+   double retVal = NAN;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+   if(m_snrCalcBars != NULL)
+   {
+      retVal = m_snrCalcBars->getMeasurement(type);
+   }
+   return retVal;
+}
+
+
+bool MainWindow::areFftMeasurementsVisible()
+{
+   bool retVal = false;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+   if(m_snrCalcBars != NULL)
+   {
+      retVal = m_snrCalcBars->isVisable();
+   }
+   return retVal;
+}
+

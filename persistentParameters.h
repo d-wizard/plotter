@@ -39,6 +39,8 @@ static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION = "curveSa
 static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotType";
 static const std::string PERSIST_PARAM_CHILD_CURVE_MATH_TYPE = "childCurveMathType";
 
+static const std::string PERSIST_PARAM_FFT_MEAS_CHILD_SIZE = "fftMeasurementChildSize";
+
 void persistentParam_setPath(std::string path);
 
 bool persistentParam_setParam_str(const std::string& paramName, std::string writeVal);

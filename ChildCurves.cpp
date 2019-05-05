@@ -21,6 +21,7 @@
 #include "fftHelper.h"
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
+#include "fftMeasChildParam.h"
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
@@ -34,7 +35,9 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotType(plotType),
    m_plotIsFft(plotTypeIsFft(plotType)),
    m_yAxis(yAxis),
-   m_forceContiguousParentPoints(forceContiguousParentPoints)
+   m_forceContiguousParentPoints(forceContiguousParentPoints),
+   m_fftMeasSize(100),
+   m_fftMeasPointIndex(0)
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(false, true);
@@ -54,7 +57,9 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_plotIsFft(plotTypeIsFft(plotType)),
    m_xAxis(xAxis),
    m_yAxis(yAxis),
-   m_forceContiguousParentPoints(forceContiguousParentPoints)
+   m_forceContiguousParentPoints(forceContiguousParentPoints),
+   m_fftMeasSize(0), // Don't care, this is not valid for 2D
+   m_fftMeasPointIndex(0)
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(true, true);
@@ -73,8 +78,10 @@ void ChildCurve::anotherCurveChanged( QString plotName,
    bool curveIsXAxisParent = plotTypeHas2DInput(m_plotType) &&
                              (m_xAxis.dataSrc.plotName == plotName) &&
                              (m_xAxis.dataSrc.curveName == curveName);
+   bool parentOfFftMeasurementChild = (m_yAxis.dataSrc.plotName == plotName) &&
+                                      (m_plotType == E_PLOT_TYPE_FFT_MEASUREMENT);
 
-   bool parentChanged = curveIsYAxisParent || curveIsXAxisParent;
+   bool parentChanged = curveIsYAxisParent || curveIsXAxisParent || parentOfFftMeasurementChild;
    if(parentChanged)
    {
       updateCurve( curveIsXAxisParent,
@@ -827,6 +834,46 @@ void ChildCurve::updateCurve( bool xParentChanged,
          }
 
          m_curveCmdr->update1dChildCurve(m_plotName, m_curveName, m_plotType, offset, mathOut, parentCurveMsgId);
+      }
+      break;
+      case E_PLOT_TYPE_FFT_MEASUREMENT:
+      {
+         MainWindow* parentPlot = m_curveCmdr->getMainPlot(m_yAxis.dataSrc.plotName);
+
+         if(parentPlot != NULL && parentPlot->areFftMeasurementsVisible()) // Only plot FFT Measurement if the measurement are visible on the parent.
+         {
+            m_ySrcData.clear(); // Clear out previous values, only sending 1 point.
+            m_ySrcData.push_back(parentPlot->getFftMeasurement(m_yAxis.fftMeasurementType)); // Grab the FFT Meaurement value to be plotted.
+
+            // Set the FFT Measurement Child Plot Size.
+            if(m_fftMeasSize != m_yAxis.fftMeasurementPlotSize && m_yAxis.fftMeasurementPlotSize > 0)
+            {
+               m_fftMeasSize = m_yAxis.fftMeasurementPlotSize;
+            }
+
+            // Check if we need to use a previous sibling curve point index value.
+            bool useSiblingPointIndex = fftMeasChildParam_getIndex( m_yAxis.dataSrc.plotName,
+                                                                    m_plotName,
+                                                                    m_curveName,
+                                                                    parentGroupMsgId,
+                                                                    m_fftMeasSize,
+                                                                    m_fftMeasPointIndex );
+
+            // Check if this is a new FFT measurement in a Child Plot that is already plotting other FFT Measurements.
+            if(useSiblingPointIndex && parentGroupMsgId < 0 && (m_fftMeasPointIndex + 1) < m_fftMeasSize)
+            {
+               // Fill the end with 'Not A Number' values (this helps with scan mode).
+               m_ySrcData.insert(m_ySrcData.end(), m_fftMeasSize - m_fftMeasPointIndex - 1, NAN);
+            }
+
+            // Update the Child Plot with the new FFT Measurement value.
+            m_curveCmdr->update1dChildCurve( m_plotName, m_curveName, m_plotType, m_fftMeasPointIndex, m_ySrcData, parentCurveMsgId);
+
+            if(++m_fftMeasPointIndex >= m_fftMeasSize)
+            {
+               m_fftMeasPointIndex = 0;
+            }
+         }
       }
       break;
       default:

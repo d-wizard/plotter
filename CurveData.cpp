@@ -147,6 +147,7 @@ void CurveData::fill1DxPoints()
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
       case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+      case E_PLOT_TYPE_FFT_MEASUREMENT:
       {
          unsigned int xPointSize = xOrigPoints.size();
          if(samplePeriod == 0.0 || samplePeriod == 1.0)

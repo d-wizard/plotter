@@ -132,6 +132,8 @@ private:
    PlotMsgIdType m_lastGroupMsgId;
    QVector<tParentUpdateChunk> m_fft_parentChunksProcessedInCurGroupMsg;
 
+   int m_fftMeasSize;
+   int m_fftMeasPointIndex;
 };
 
 #endif

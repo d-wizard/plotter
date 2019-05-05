@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -32,7 +32,14 @@ plotSnrCalc::plotSnrCalc(QwtPlot* parentPlot, QLabel* snrLabel):
    m_curveSampleRate(0.0),
    m_isVisable(false),
    m_activeBarIndex(-1),
-   m_dcBinIndex(-1)
+   m_dcBinIndex(-1),
+   m_signalPower(0.0),
+   m_signalBandwidth(0.0),
+   m_noisePower(0.0),
+   m_noiseBandwidth(0.0),
+   m_noiseBwPerHz(0.0),
+   m_snrDb(0.0),
+   m_snrDbHz(0.0)
 {
    m_snrLabel->setVisible(m_isVisable);
 
@@ -815,28 +822,31 @@ void plotSnrCalc::setLabel()
 {
    QColor color = m_parentCurve->getColor();
 
-   double signalPower = 10*log10(m_signalChunk.powerLinear);
-   double signalBandwidth = m_signalChunk.bandwidth;
+   m_signalPower = 10*log10(m_signalChunk.powerLinear);
+   m_signalBandwidth = m_signalChunk.bandwidth;
 
-   double noisePower = 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-   double noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
-   double noiseBwPerHz = noisePower - 10*log10(noiseBandwidth);
+   m_noisePower = 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
+   m_noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
+   m_noiseBwPerHz = m_noisePower - 10*log10(m_noiseBandwidth);
+
+   m_snrDb = m_signalPower - m_noisePower;
+   m_snrDbHz = m_signalPower - m_noiseBwPerHz;
 
    QString lblText =
          "S: " +
-         numToStrDb(signalPower, "dB") +
+         numToStrDb(m_signalPower, "dB") +
          " / " +
-         numToHz(signalBandwidth) +
+         numToHz(m_signalBandwidth) +
          "  |  N: " +
-         numToStrDb(noisePower, "dB") +
+         numToStrDb(m_noisePower, "dB") +
          " / " +
-         numToHz(noiseBandwidth) +
+         numToHz(m_noiseBandwidth) +
          " / " +
-         numToStrDb(noiseBwPerHz, "dB/Hz") +
+         numToStrDb(m_noiseBwPerHz, "dB/Hz") +
          "  |  SNR: " +
-         numToStrDb(signalPower - noisePower, "dB") +
+         numToStrDb(m_snrDb, "dB") +
          " / " +
-         numToStrDb(signalPower - noiseBwPerHz, "dB/Hz");
+         numToStrDb(m_snrDbHz, "dB/Hz");
 
    QPalette palette = m_snrLabel->palette();
    palette.setColor( QPalette::WindowText, color);
@@ -844,3 +854,37 @@ void plotSnrCalc::setLabel()
    m_snrLabel->setPalette(palette);
    m_snrLabel->setText(lblText);
 }
+
+double plotSnrCalc::getMeasurement(eFftSigNoiseMeasurements type)
+{
+   double retVal = NAN;
+   switch(type)
+   {
+      case E_FFT_MEASURE__SIG_POWER:
+         retVal = m_signalPower;
+      break;
+      case E_FFT_MEASURE__SIG_BW:
+         retVal = m_signalBandwidth;
+      break;
+      case E_FFT_MEASURE__NOISE_POWER:
+         retVal = m_noisePower;
+      break;
+      case E_FFT_MEASURE__NOISE_BW:
+         retVal = m_noiseBandwidth;
+      break;
+      case E_FFT_MEASURE__NOISE_PER_HZ:
+         retVal = m_noiseBwPerHz;
+      break;
+      case E_FFT_MEASURE__SNR:
+         retVal = m_snrDb;
+      break;
+      case E_FFT_MEASURE__SNR_PER_HZ:
+         retVal = m_snrDbHz;
+      break;
+      default:
+         // Do Nothing.
+      break;
+   }
+   return retVal;
+}
+

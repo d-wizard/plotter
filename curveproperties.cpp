@@ -114,9 +114,20 @@ const QString plotTypeNames[] = {
    "FFT",
    "Delta",
    "Sum",
-   "Math"
+   "Math",
+   "FFT Measurement"
 };
 
+const QString fftMeasureNames[] = {
+   "Signal Power",
+   "Signal BW",
+   "Noise Power",
+   "Noise BW",
+   "Noise Per Hz",
+   "SNR",
+   "SNR dB Hz",
+   "No Measurement"
+};
 
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
@@ -181,6 +192,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Attempt to restore the Child Curve combo box values from persistent memory.
    initCmbBoxValueFromPersistParam(ui->cmbPlotType, PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE);
    initCmbBoxValueFromPersistParam(ui->cmbChildMathOperators, PERSIST_PARAM_CHILD_CURVE_MATH_TYPE);
+   initSpnBoxValueFromPersistParam(ui->spnFFtMeasChildPlotSize, PERSIST_PARAM_FFT_MEAS_CHILD_SIZE);
 }
 
 curveProperties::~curveProperties()
@@ -212,6 +224,10 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       m_plotNameCombos[i].cmbBoxPtr->clear();
    }
 
+   // Save and clear FFT Measurement Parent Combo
+   QString fftMeasureComboVal = ui->cmbXAxisSrc_fftMeasurement->currentText();
+   ui->cmbXAxisSrc_fftMeasurement->clear();
+
    QList<QString> curveNames; // All the curve names in the default plot (either the plot specified by plotName or firstPlotName)
 
    foreach( QString curPlotName, allCurves.keys() )
@@ -229,6 +245,16 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          {
             m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
          }
+      }
+
+      // Add the Parent FFT Measurement Sources
+      if(allCurves[curPlotName].plotGui->areFftMeasurementsVisible())
+      {
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SIG_POWER]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__NOISE_POWER]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__NOISE_PER_HZ]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SNR]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SNR_PER_HZ]);
       }
 
       tCurveDataInfo* curves = &(allCurves[curPlotName].curves);
@@ -312,6 +338,16 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       {
          // I don't think we should ever get here... but just incase...
          setCombosToPrevValues();
+      }
+   }
+
+   // Set FFT Measurement Combo Box back
+   for(int i = 0; i < ui->cmbXAxisSrc_fftMeasurement->count(); ++i)
+   {
+      if(ui->cmbXAxisSrc_fftMeasurement->itemText(i) == fftMeasureComboVal)
+      {
+         ui->cmbXAxisSrc_fftMeasurement->setCurrentIndex(i);
+         break;
       }
    }
 
@@ -487,7 +523,9 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    bool yVis = plotTypeHas2DInput((ePlotType)index);
    bool fftCheckBoxVisible = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
+   bool sliceVis = true;
    bool mathCmbVis = false;
+   bool fftMeasureVis = false;
 
    storeUserChildPlotNames((ePlotType)m_prevChildCurvePlotTypeIndex);
    m_prevChildCurvePlotTypeIndex = index;
@@ -512,6 +550,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_COMPLEX_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
          fftCheckBoxVisible = true;
+         /* no break */
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
@@ -523,18 +562,25 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          ui->lblYAxisSrc->setText("Math RHS");
          mathCmbVis = true;
       break;
-
+      case E_PLOT_TYPE_FFT_MEASUREMENT:
+         ui->lblXAxisSrc->setText("Measurement");
+         xVis = false;
+         sliceVis = false;
+         fftMeasureVis = true;
+      break;
    }
 
    m_cmbXAxisSrc->setVisible(xVis);
    m_cmbYAxisSrc->setVisible(yVis);
+   ui->cmbXAxisSrc_fftMeasurement->setVisible(fftMeasureVis);
 
-   ui->lblXAxisSrc->setVisible(xVis);
+   ui->lblXAxisSrc->setVisible(xVis || fftMeasureVis);
    ui->spnXSrcStart->setVisible(xVis && slice);
    ui->spnXSrcStop->setVisible(xVis && slice);
    ui->cmdXUseZoomForSlice->setVisible(xVis && slice);
 
    ui->lblYAxisSrc->setVisible(yVis);
+   ui->chkSrcSlice->setVisible(sliceVis);
    ui->spnYSrcStart->setVisible(yVis && slice);
    ui->spnYSrcStop->setVisible(yVis && slice);
    ui->cmdYUseZoomForSlice->setVisible(yVis && slice);
@@ -546,6 +592,9 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->chkScaleFftWindow->setVisible(fftCheckBoxVisible);
    ui->chkFftSrcContiguous->setVisible(fftCheckBoxVisible);
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
+
+   ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis);
+   ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis);
 
    setUserChildPlotNames();
 }
@@ -584,11 +633,30 @@ void curveProperties::on_cmdApply_clicked()
                axisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
 
-               m_curveCmdr->createChildCurve( newChildPlotName,
-                                              newChildCurveName,
-                                              plotType,
-                                              forceContiguousParentPoints,
-                                              axisParent);
+               // Determine FFT Measurement type (only valid for E_PLOT_TYPE_FFT_MEASUREMENT plot types).
+               axisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               axisParent.fftMeasurementPlotSize = -1;
+               bool createTheChildPlot = true; // Normally there are no conditions that would keep us from creating the child plot.
+               if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+               {
+                  // FFT Measurement Child Plots are done a little differently. Use the return value to ensure we should actually create the Child Plot.
+                  createTheChildPlot = determineChildFftMeasurementAxisValues(axisParent);
+
+                  // Store off the value of the FFT Measurement Child Curve.
+                  if(createTheChildPlot)
+                  {
+                     persistentParam_setParam_f64(PERSIST_PARAM_FFT_MEAS_CHILD_SIZE, ui->spnFFtMeasChildPlotSize->value());
+                  }
+               }
+
+               if(createTheChildPlot)
+               {
+                  m_curveCmdr->createChildCurve( newChildPlotName,
+                                                 newChildCurveName,
+                                                 plotType,
+                                                 forceContiguousParentPoints,
+                                                 axisParent);
+               }
             }
             else
             {
@@ -619,11 +687,15 @@ void curveProperties::on_cmdApply_clicked()
                xAxisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                xAxisParent.mathBetweenCurvesOperator =
                   (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
+               xAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               xAxisParent.fftMeasurementPlotSize = -1;
 
                // Y Axis values need to match X Axis value.
                yAxisParent.windowFFT = xAxisParent.windowFFT;
                yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
                yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
+               yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               yAxisParent.fftMeasurementPlotSize = -1;
 
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
@@ -1561,12 +1633,8 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
       calcSampRateStr << std::setprecision(3) << std::fixed << parentCurve->getCalculatedSampleRateFromPlotMsgs();
       ui->txtCalcSampleRate->setText(calcSampRateStr.str().c_str());
 
-      ui->propParentCurves->clear();
-      QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
-      for(int i = 0; i < parent.size(); ++i)
-      {
-         ui->propParentCurves->addItem(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
-      }
+      // Fill in the Child Curve Parents GUI elements.
+      fillInPropTab_childCurveParents(plotCurveInfo);
 
       // Fill in Last Msg Ip Addr field.
       ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->getLastMsgIpAddr().m_ipV4Addr));
@@ -1600,6 +1668,46 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
        ui->txtPropYMax->setText("");
        ui->propParentCurves->clear();
        ui->txtLastIp->setText("");
+   }
+}
+
+void curveProperties::fillInPropTab_childCurveParents(tPlotCurveAxis &plotCurveInfo)
+{
+   QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   int numNewItems = parent.size();
+   int numCurrentGuiItems = ui->propParentCurves->count();
+
+   // Store off the values that need be to written to the GUI.
+   QVector<QString> newItems;
+   for(int i = 0; i < numNewItems; ++i)
+   {
+      newItems.push_back(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
+   }
+
+   // Check if the GUI values need to be changed.
+   bool updateGui = true;
+   if(numNewItems == numCurrentGuiItems)
+   {
+      // Check if all items match.
+      updateGui = false;
+      for(int i = 0; i < numNewItems; ++i)
+      {
+         if(ui->propParentCurves->item(i)->text() != newItems[i])
+         {
+            updateGui = true; // Mismatch detected, need to update GUI.
+            break;
+         }
+      }
+   }
+
+   // Update the GUI values (only if a change is needed).
+   if(updateGui)
+   {
+      ui->propParentCurves->clear();
+      for(int i = 0; i < numNewItems; ++i)
+      {
+         ui->propParentCurves->addItem(newItems[i]);
+      }
    }
 }
 
@@ -1665,10 +1773,9 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    twoDInput = plotTypeHas2DInput(plotType);
 
-   if(plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_DELTA && plotType != E_PLOT_TYPE_SUM)
+   if(plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_DELTA && plotType != E_PLOT_TYPE_SUM && plotType != E_PLOT_TYPE_FFT_MEASUREMENT)
    {
       QString plotPrefix = plotTypeNames[plotType] + " of ";
-      QString plotSuffix = "";
       QString plotMid = "";
 
       if(twoDInput)
@@ -1698,22 +1805,30 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
          plotMid = xSrc.curveName;
       }
 
-      // Generate the plot name.
-      if(plotPrefix != "")
+      // Generate the plot / curve names.
+      plotName = plotPrefix + plotMid;
+      curveName = plotMid;
+
+      plotNameMustBeUnique = true;
+   }
+   else if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+   {
+      QString plotPrefix = plotTypeNames[plotType] + " of ";
+      QStringList split = ui->cmbXAxisSrc_fftMeasurement->currentText().split(PLOT_CURVE_SEP); // Get Parent Plot Name and Suggested Curve Name for combo box.
+      if(split.size() == 2)
       {
-         plotName = plotPrefix + plotMid;
+         // Generate the plot / curve names.
+         plotName = plotPrefix + split[0]; // Use the Parent Plot Name.
+         curveName = split[1]; // Set the suggested Child Curve Name to the FFT Measurement String.
+         plotNameMustBeUnique = false;
       }
       else
       {
-         plotName = plotMid;
+         // Generate the plot / curve names.
+         plotName = plotPrefix + xSrc.plotName;
+         curveName = xSrc.curveName;
+         plotNameMustBeUnique = true;
       }
-      if(plotSuffix != "")
-      {
-         plotName = plotName + plotSuffix;
-      }
-
-      curveName = plotMid;
-      plotNameMustBeUnique = true;
    }
    else
    {
@@ -1980,8 +2095,55 @@ void curveProperties::initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, cons
    }
 }
 
+void curveProperties::initSpnBoxValueFromPersistParam(QSpinBox* spnBoxPtr, const std::string persistParamName)
+{
+   // Attempt to restore the spin box value from persistent memory.
+   double value_f64 = -1; // Init to invalid index.
+   bool restoreSuccess = persistentParam_getParam_f64(persistParamName, value_f64);
+   if(restoreSuccess)
+   {
+      int value_int = value_f64; // Double float to int.
+      spnBoxPtr->setValue(value_int);
+   }
+}
+
 void curveProperties::on_chkPropHide_clicked()
 {
    // If hidden is checked, don't bother the user with the state of visible.
    ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
+}
+
+void curveProperties::on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int index)
+{
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   setUserChildPlotNames();
+}
+
+// FFT Measurement Child Plots use a different Combo Box than the rest of the Child Curve Plot
+// Types. Also, they do not reference a 'Curve Name'. Instead the Curve Name indicates which
+// FFT Measurement to plot.
+bool curveProperties::determineChildFftMeasurementAxisValues(tParentCurveInfo& axisParent)
+{
+   bool validMatchFound = false;
+   // Need to update dataSrc to get the plot / curve names from the correct combo box.
+   QStringList split = ui->cmbXAxisSrc_fftMeasurement->currentText().split(PLOT_CURVE_SEP);
+   if(split.size() == 2) // Make sure the FFT Measurement Combo Box text is valid
+   {
+      axisParent.dataSrc.plotName = split[0];
+      axisParent.dataSrc.curveName = split[1];
+      axisParent.dataSrc.axis = E_Y_AXIS;
+
+      for(int i = 0; i < E_FFT_MEASURE__NO_FFT_MEASUREMENT; ++i)
+      {
+         if(axisParent.dataSrc.curveName == fftMeasureNames[i])
+         {
+            axisParent.fftMeasurementType = (eFftSigNoiseMeasurements)i;
+            axisParent.fftMeasurementPlotSize = ui->spnFFtMeasChildPlotSize->value();
+            validMatchFound = true;
+            break;
+         }
+      }
+   }
+   return validMatchFound;
 }
