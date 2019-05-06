@@ -80,7 +80,7 @@ public:
    ePlotDim getPlotDim();
    ePlotType getPlotType(){ return plotType;}
    unsigned int getNumPoints();
-   void setNumPoints(unsigned int newNumPointsSize, bool scrollMode);
+   void setNumPoints(unsigned int newNumPointsSize);
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
    QString getCurveTitle();
@@ -93,7 +93,7 @@ public:
    void setCurveDataGuiPoints(bool onlyNeedToUpdate1D);
 
    void ResetCurveSamples(const UnpackPlotMsg* data);
-   void UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode);
+   void UpdateCurveSamples(const UnpackPlotMsg* data);
 
    bool setSampleRate(double inSampleRate, bool userSpecified = true);
    double getSampleRate(){return sampleRate;}
@@ -113,7 +113,8 @@ public:
    bool setHidden(bool isHidden);
    bool setVisibleHidden(bool isVisible, bool isHidden);
 
-   bool getScrollMode(){return isScrollMode;}
+   bool getScrollMode(){return scrollMode;}
+   void handleScrollModeTransitions(bool plotScrollMode);
    unsigned int getOldestPoint_nonScrollModeVersion(){return oldestPoint_nonScrollModeVersion;}
    unsigned int getPlotSize_nonScrollModeVersion(){return plotSize_nonScrollModeVersion;}
 
@@ -152,10 +153,9 @@ private:
    unsigned int removeInvalidPoints();
 
    void swapSamples(dubVect& samples, int swapIndex);
-   void handleScrollModeTransitions(bool scrollMode);
 
-   void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
-   void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
+   void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints);
+   void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints);
 
    void storeLastMsgStats(const UnpackPlotMsg* data);
 
@@ -187,7 +187,7 @@ private:
    // If a plot has no non-hidden curves, its GUI window will not be displayed.
    bool hidden;
 
-   bool isScrollMode;
+   bool scrollMode;
 
    // Normalize parameters
    tLinearXYAxis normFactor;

@@ -40,6 +40,9 @@ const QString Y_AXIS_APPEND = ".yAxis";
 const QString COMPLEX_FFT_REAL_APPEND = ".real";
 const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
 
+// Define values that will be used to fill in points in situations where something should be there, but what the point values should be is unknown.
+static const double FILL_IN_POINT_1D = NAN;
+static const double FILL_IN_POINT_2D = NAN;
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 

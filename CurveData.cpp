@@ -112,7 +112,7 @@ void CurveData::init()
    attached = false;
    visible = false;
    hidden = false;
-   isScrollMode = false;
+   scrollMode = false;
 
    oldestPoint_nonScrollModeVersion = 0;
    plotSize_nonScrollModeVersion = 0;
@@ -275,10 +275,8 @@ unsigned int CurveData::getNumPoints()
    return numPoints;
 }
 
-void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
+void CurveData::setNumPoints(unsigned int newNumPointsSize)
 {
-   handleScrollModeTransitions(scrollMode);
-
    bool addingPoints = numPoints < newNumPointsSize;
    if(scrollMode)
    {
@@ -287,10 +285,16 @@ void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
       numPoints = newNumPointsSize;
       if(addingPoints)
       {
-         // Increasing curve size, add zero's to beginning.
-         yOrigPoints.insert(yOrigPoints.begin(), delta, 0);
+         // Increasing curve size, add "Fill in Point" values to beginning.
          if(plotDim == E_PLOT_DIM_2D)
-            xOrigPoints.insert(xOrigPoints.begin(), delta, 0);
+         {
+            yOrigPoints.insert(yOrigPoints.begin(), delta, FILL_IN_POINT_2D);
+            xOrigPoints.insert(xOrigPoints.begin(), delta, FILL_IN_POINT_2D);
+         }
+         else
+         {
+            yOrigPoints.insert(yOrigPoints.begin(), delta, FILL_IN_POINT_1D);
+         }
       }
       else
       {
@@ -842,11 +846,11 @@ void CurveData::swapSamples(dubVect& samples, int swapIndex)
    }
 }
 
-void CurveData::handleScrollModeTransitions(bool scrollMode)
+void CurveData::handleScrollModeTransitions(bool plotScrollMode)
 {
-   if(isScrollMode != scrollMode)
+   if(plotScrollMode != scrollMode)
    {
-      int swapPoint = scrollMode ? oldestPoint_nonScrollModeVersion : numPoints - oldestPoint_nonScrollModeVersion;
+      int swapPoint = plotScrollMode ? oldestPoint_nonScrollModeVersion : numPoints - oldestPoint_nonScrollModeVersion;
 
       swapSamples(yOrigPoints, swapPoint);
       swapSamples(yPoints,     swapPoint);
@@ -857,37 +861,37 @@ void CurveData::handleScrollModeTransitions(bool scrollMode)
          swapSamples(xPoints,     swapPoint);
          smartMaxMinXPoints.updateMaxMin(0, xOrigPoints.size());
       }
-      isScrollMode = scrollMode; // Store off Scroll Mode state.
+      scrollMode = plotScrollMode; // Store off Scroll Mode state.
    }
 }
 
-void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode)
+void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data)
 {
-   handleScrollModeTransitions(scrollMode);
-
    if(plotDim == plotActionToPlotDim(data->m_plotAction))
    {
       if(plotDim == E_PLOT_DIM_1D)
       {
-         UpdateCurveSamples(data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+         UpdateCurveSamples(data->m_yAxisValues, data->m_sampleStartIndex, false);
       }
       else
       {
-         UpdateCurveSamples(data->m_xAxisValues, data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+         UpdateCurveSamples(data->m_xAxisValues, data->m_yAxisValues, data->m_sampleStartIndex, false);
       }
       storeLastMsgStats(data);
    }
 }
 
-void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints)
 {
    if(plotDim == E_PLOT_DIM_1D)
    {
+      bool updateAsScrollMode = scrollMode && !modifySpecificPoints;
+
       const dubVect* newPointsToUse = &newYPoints;
       dubVect fftSpecAnPoints;
 
       // Check if the input points should be overwritten with values from the FFT Spectrum Analyzer Functionality.
-      if(fftSpecAn.isFftPlot())
+      if(fftSpecAn.isFftPlot() && !modifySpecificPoints)
       {
          fftSpecAn.update(newYPoints, fftSpecAnTraceType);
          if(fftSpecAnTraceType == fftSpecAnFunc::E_MAX_HOLD)
@@ -912,7 +916,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
 
       bool resized = false;
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          // Check if the current size can handle the new samples.
          if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
@@ -948,8 +952,11 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
          }
       }
 
-      oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
-      plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
+      if(modifySpecificPoints == false)
+      {
+         oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+         plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
+      }
 
       if(resized == true)
       {
@@ -959,7 +966,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
 
       numPoints = yOrigPoints.size();
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          performMathOnPoints(sampleStartIndex, newPointsSize);
       }
@@ -972,15 +979,17 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
    }
 }
 
-void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints)
 {
    if(plotDim == E_PLOT_DIM_2D)
    {
+      bool updateAsScrollMode = scrollMode && !modifySpecificPoints;
+
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
 
       handleNewSampleMsg(sampleStartIndex, newPointsSize);
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
@@ -1028,12 +1037,15 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
          }
       }
 
-      oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
-      plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
+      if(modifySpecificPoints == false)
+      {
+         oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+         plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
+      }
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          performMathOnPoints(sampleStartIndex, newPointsSize);
       }
@@ -1420,7 +1432,7 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
       {
          dubVect yPoints;
          yPoints.push_back(yValue);
-         UpdateCurveSamples(yPoints, index, false);
+         UpdateCurveSamples(yPoints, index, true);
       }
       else
       {
@@ -1428,7 +1440,7 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
          dubVect yPoints;
          xPoints.push_back(xValue);
          yPoints.push_back(yValue);
-         UpdateCurveSamples(xPoints, yPoints, index, false);
+         UpdateCurveSamples(xPoints, yPoints, index, true);
       }
    }
 }

@@ -924,7 +924,7 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       }
       else
       {
-         m_qwtCurves[curveIndex]->UpdateCurveSamples(unpackPlotMsg, m_scrollMode);
+         m_qwtCurves[curveIndex]->UpdateCurveSamples(unpackPlotMsg);
       }
    }
    else
@@ -938,20 +938,31 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
          // New curve, but starting in the middle.
          if(plotDim == E_PLOT_DIM_1D)
          {
-            // For 1D, prepend vector with 'Not a Number'.
-            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
+            // For 1D, prepend vector with 'Fill in Point' values.
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_1D);
          }
          else
          {
-            // For 2D, prepend vector with 'Not a Number' values (i.e. values that won't show up on the plot).
-            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
-            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
+            // For 2D, prepend vector with 'Fill in Point' values (i.e. values that won't show up on the plot).
+            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_2D);
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_2D);
          }
       }
 
       CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
 
-      m_qwtCurves.push_back(new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg));
+      // Create the new curve.
+      CurveData* newCurve = new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg);
+      m_qwtCurves.push_back(newCurve);
+      if(m_scrollMode)
+      {
+         // Set new curve to scroll mode and make its size match the selected curve's size.
+         newCurve->handleScrollModeTransitions(m_scrollMode);
+         if(m_qwtCurves.size() > 1 && m_selectedCurveIndex >= 0)
+         {
+            newCurve->setNumPoints(m_qwtCurves[m_selectedCurveIndex]->getNumPoints());
+         }
+      }
 
       m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
 
@@ -1273,6 +1284,14 @@ void MainWindow::scrollModeToggle()
       m_scrollModeAction.setIcon(QIcon());
       m_scrollModeChangePlotSizeAction.setVisible(false);
    }
+
+   // Inform all the Child Curves of the new Scroll Mode state.
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->handleScrollModeTransitions(m_scrollMode);
+   }
+   updatePlotWithNewCurveData(true);
 }
 
 void MainWindow::scrollModeChangePlotSize()
@@ -1301,7 +1320,7 @@ void MainWindow::scrollModeSetPlotSize(int newPlotSize)
    size_t numCurves = m_qwtCurves.size();
    for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
    {
-      m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
+      m_qwtCurves[curveIndex]->setNumPoints(newPlotSize);
       handleCurveDataChange(curveIndex);
    }
 }
