@@ -193,6 +193,12 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    initCmbBoxValueFromPersistParam(ui->cmbPlotType, PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE);
    initCmbBoxValueFromPersistParam(ui->cmbChildMathOperators, PERSIST_PARAM_CHILD_CURVE_MATH_TYPE);
    initSpnBoxValueFromPersistParam(ui->spnFFtMeasChildPlotSize, PERSIST_PARAM_FFT_MEAS_CHILD_SIZE);
+
+   // Set "Match Parent Scroll" Check Box.
+   double chkBoxVal = 0.0;
+   if(persistentParam_getParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, chkBoxVal))
+      ui->chkMatchParentScroll->setChecked(chkBoxVal != 0.0); // Restore value from Persistent Parameters.
+   setMatchParentScrollChkBoxVisible();
 }
 
 curveProperties::~curveProperties()
@@ -357,6 +363,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    }
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 
    if(userSpecifiedPlotCurveName)
    {
@@ -433,6 +440,7 @@ void curveProperties::existingPlotsChanged()
    {
       fillInPropTab();
    }
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::setCombosToPrevValues()
@@ -597,6 +605,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis);
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -610,6 +619,7 @@ void curveProperties::on_cmdApply_clicked()
       if(newChildPlotName != "" && newChildCurveName != "")
       {
          bool forceContiguousParentPoints = ui->chkFftSrcContiguous->isVisible() && ui->chkFftSrcContiguous->isChecked();
+         bool matchParentScrollMode = ui->chkMatchParentScroll->isVisible() && ui->chkMatchParentScroll->isChecked();
          if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
          {
             // New Child plot->curve does not exist, continue creating the child curve.
@@ -655,6 +665,7 @@ void curveProperties::on_cmdApply_clicked()
                                                  newChildCurveName,
                                                  plotType,
                                                  forceContiguousParentPoints,
+                                                 matchParentScrollMode,
                                                  axisParent);
                }
             }
@@ -701,6 +712,7 @@ void curveProperties::on_cmdApply_clicked()
                                               newChildCurveName,
                                               plotType,
                                               forceContiguousParentPoints,
+                                              matchParentScrollMode,
                                               xAxisParent,
                                               yAxisParent);
             }
@@ -844,6 +856,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       {
          showApplyButton = true;
          setUserChildPlotNames();
+         setMatchParentScrollChkBoxVisible();
       }
       break;
 
@@ -1917,6 +1930,7 @@ void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
@@ -1924,6 +1938,7 @@ void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 QString curveProperties::getOpenSaveDir()
@@ -2118,6 +2133,7 @@ void curveProperties::on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int inde
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 // FFT Measurement Child Plots use a different Combo Box than the rest of the Child Curve Plot
@@ -2146,4 +2162,33 @@ bool curveProperties::determineChildFftMeasurementAxisValues(tParentCurveInfo& a
       }
    }
    return validMatchFound;
+}
+
+void curveProperties::setMatchParentScrollChkBoxVisible()
+{
+   bool isVisible = false;
+   tPlotCurveAxis curveX = m_cmbXAxisSrc->getPlotCurveAxis();
+   CurveData* parentCurveX = m_curveCmdr->getCurveData(curveX.plotName, curveX.curveName);
+
+   if(m_cmbXAxisSrc->isVisible() && parentCurveX != NULL && parentCurveX->getScrollMode())
+   {
+      isVisible = true;
+   }
+   else
+   {
+      tPlotCurveAxis curveY = m_cmbYAxisSrc->getPlotCurveAxis();
+      CurveData* parentCurveY = m_curveCmdr->getCurveData(curveY.plotName, curveY.curveName);
+
+      if(m_cmbYAxisSrc->isVisible() && parentCurveY != NULL && parentCurveY->getScrollMode())
+      {
+         isVisible = true;
+      }
+   }
+
+   ui->chkMatchParentScroll->setVisible(isVisible);
+}
+
+void curveProperties::on_chkMatchParentScroll_clicked()
+{
+   persistentParam_setParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, ui->chkMatchParentScroll->isChecked() ? 1.0 : 0.0); // Store off check box state.
 }

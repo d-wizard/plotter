@@ -141,7 +141,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent = 0);
+    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, bool startInScrollMode = false, QWidget *parent = 0);
     ~MainWindow();
 
     void readPlotMsg(plotMsgGroup* plotMsg);

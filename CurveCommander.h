@@ -84,8 +84,23 @@ public:
 
     void create1dCurve(QString plotName, QString curveName, ePlotType plotType, dubVect& yPoints, tCurveMathProperties* mathProps = NULL);
     void create2dCurve(QString plotName, QString curveName, dubVect& xPoints, dubVect& yPoints, tCurveMathProperties* mathProps = NULL);
-    void update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
-    void update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
+
+    void update1dChildCurve( QString& plotName, 
+                             QString& curveName, 
+                             ePlotType plotType, 
+                             unsigned int sampleStartIndex, 
+                             dubVect& yPoints, 
+                             PlotMsgIdType parentMsgId,
+                             bool startInScrollMode );
+
+    void update2dChildCurve( QString& plotName, 
+                             QString& curveName, 
+                             unsigned int sampleStartIndex, 
+                             dubVect& xPoints, 
+                             dubVect& yPoints, 
+                             PlotMsgIdType parentMsgId,
+                             bool startInScrollMode );
+
     void destroyAllPlots();
 
     void plotWindowClose(QString plotName){emit plotWindowCloseSignal(plotName);}
@@ -94,8 +109,20 @@ public:
 
     void showHidePlotGui(QString plotName);
 
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo yAxis); // 1D
-    void createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo xAxis, tParentCurveInfo yAxis); // 2D
+    void createChildCurve( QString plotName, 
+                           QString curveName, 
+                           ePlotType plotType, 
+                           bool forceContiguousParentPoints,
+                           bool startChildInScrollMode,
+                           tParentCurveInfo yAxis ); // 1D
+
+    void createChildCurve( QString plotName, 
+                           QString curveName, 
+                           ePlotType plotType, 
+                           bool forceContiguousParentPoints,
+                           bool startChildInScrollMode,
+                           tParentCurveInfo xAxis, 
+                           tParentCurveInfo yAxis ); // 2D
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
     void showCreatePlotFromDataGui(QString plotName, const char* dataToPlot);
@@ -118,7 +145,7 @@ public:
 private:
     CurveCommander();
 
-    void createPlot(QString plotName);
+    void createPlot(QString plotName, bool startInScrollMode = false);
     void notifyChildCurvesOfParentChange( QString plotName, 
                                           QString curveName, 
                                           unsigned int sampleStartIndex, 

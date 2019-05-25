@@ -40,6 +40,7 @@ static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotTy
 static const std::string PERSIST_PARAM_CHILD_CURVE_MATH_TYPE = "childCurveMathType";
 
 static const std::string PERSIST_PARAM_FFT_MEAS_CHILD_SIZE = "fftMeasurementChildSize";
+static const std::string PERSIST_PARAM_MATCH_PARENT_SCROLL = "matchParentScroll";
 
 void persistentParam_setPath(std::string path);
 

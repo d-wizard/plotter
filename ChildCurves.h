@@ -36,6 +36,7 @@ public:
                QString curveName,
                ePlotType plotType,
                bool forceContiguousParentPoints,
+               bool startChildInScrollMode,
                tParentCurveInfo yAxis);
 
    ChildCurve( CurveCommander* curveCmdr,
@@ -43,6 +44,7 @@ public:
                QString curveName,
                ePlotType plotType,
                bool forceContiguousParentPoints,
+               bool startChildInScrollMode,
                tParentCurveInfo xAxis,
                tParentCurveInfo yAxis);
 
@@ -107,7 +109,10 @@ private:
                                         unsigned int parentStopIndex );
 
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
-   
+
+   void update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
+   void update2dChildCurve(unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
+
    void updateCurve( bool xParentChanged,
                      bool yParentChanged,
                      PlotMsgIdType parentGroupMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
@@ -123,6 +128,7 @@ private:
    tParentCurveInfo m_xAxis;
    tParentCurveInfo m_yAxis;
    bool m_forceContiguousParentPoints;
+   bool m_startChildInScrollMode;
 
    dubVect m_xSrcData;
    dubVect m_ySrcData;

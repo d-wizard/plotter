@@ -472,6 +472,22 @@
       <number>100</number>
      </property>
     </widget>
+    <widget class="QCheckBox" name="chkMatchParentScroll">
+     <property name="geometry">
+      <rect>
+       <x>360</x>
+       <y>30</y>
+       <width>211</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Match Parent Scroll Mode</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
     <zorder>lblFftMeasChildPlotSize</zorder>
     <zorder>spnFFtMeasChildPlotSize</zorder>
     <zorder>cmbPlotType</zorder>
@@ -498,6 +514,7 @@
     <zorder>chkScaleFftWindow</zorder>
     <zorder>chkFftSrcContiguous</zorder>
     <zorder>cmbXAxisSrc</zorder>
+    <zorder>chkMatchParentScroll</zorder>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">

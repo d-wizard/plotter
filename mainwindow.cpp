@@ -59,7 +59,7 @@ QString activityIndicatorStr = QChar(0xCF, 0x25); // Black Circle Character.
 // plot name is created.
 static tPersistentPlotParamMap g_persistentPlotParams;
 
-MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent) :
+MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, bool startInScrollMode, QWidget *parent) :
    QMainWindow(parent),
    m_spectrumAnalyzerViewSet(false),
    ui(new Ui::MainWindow),
@@ -291,6 +291,11 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     restorePersistentPlotParams();
 
     setSpecAnGuiVisible(false);
+
+    if(startInScrollMode)
+    {
+       scrollModeToggle(); // Toggle scroll mode to On.
+    }
 }
 
 MainWindow::~MainWindow()

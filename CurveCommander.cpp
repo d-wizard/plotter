@@ -222,11 +222,11 @@ tCurveCommanderInfo& CurveCommander::getCurveCommanderInfo()
     return m_allCurves;
 }
 
-void CurveCommander::createPlot(QString plotName)
+void CurveCommander::createPlot(QString plotName, bool startInScrollMode)
 {
    if(validPlot(plotName) == false)
    {
-      m_allCurves[plotName].plotGui = new MainWindow(this, m_plotGuiMain, plotName);
+      m_allCurves[plotName].plotGui = new MainWindow(this, m_plotGuiMain, plotName, startInScrollMode);
    }
 }
 
@@ -314,9 +314,15 @@ void CurveCommander::create2dCurve(QString plotName, QString curveName, dubVect&
    showHidePlotGui(plotName);
 }
 
-void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId)
+void CurveCommander::update1dChildCurve( QString& plotName, 
+                                         QString& curveName, 
+                                         ePlotType plotType, 
+                                         unsigned int sampleStartIndex, 
+                                         dubVect& yPoints, 
+                                         PlotMsgIdType parentMsgId,
+                                         bool startInScrollMode )
 {
-   createPlot(plotName);
+   createPlot(plotName, startInScrollMode);
 
    UnpackPlotMsg* plotMsg = new UnpackPlotMsg(); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_1D_PLOT;
@@ -344,9 +350,15 @@ void CurveCommander::update1dChildCurve(QString plotName, QString curveName, ePl
    }
 }
 
-void CurveCommander::update2dChildCurve(QString plotName, QString curveName, unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId)
+void CurveCommander::update2dChildCurve( QString& plotName, 
+                                         QString& curveName, 
+                                         unsigned int sampleStartIndex, 
+                                         dubVect& xPoints, 
+                                         dubVect& yPoints, 
+                                         PlotMsgIdType parentMsgId,
+                                         bool startInScrollMode )
 {
-   createPlot(plotName);
+   createPlot(plotName, startInScrollMode);
 
    UnpackPlotMsg* plotMsg = new UnpackPlotMsg(); // Will be deleted when it is processed in mainwindow.cpp
    plotMsg->m_plotAction = E_UPDATE_2D_PLOT;
@@ -407,19 +419,30 @@ void CurveCommander::showHidePlotGui(QString plotName)
 }
 
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo yAxis) // 1D
+void CurveCommander::createChildCurve( QString plotName, 
+                                       QString curveName, 
+                                       ePlotType plotType, 
+                                       bool forceContiguousParentPoints,
+                                       bool startChildInScrollMode,
+                                       tParentCurveInfo yAxis ) // 1D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, yAxis) );
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, startChildInScrollMode, yAxis) );
    }
 }
 
-void CurveCommander::createChildCurve(QString plotName, QString curveName, ePlotType plotType, bool forceContiguousParentPoints, tParentCurveInfo xAxis, tParentCurveInfo yAxis) // 2D
+void CurveCommander::createChildCurve( QString plotName, 
+                                       QString curveName, 
+                                       ePlotType plotType, 
+                                       bool forceContiguousParentPoints,
+                                       bool startChildInScrollMode,
+                                       tParentCurveInfo xAxis, 
+                                       tParentCurveInfo yAxis ) // 2D
 {
    if(validCurve(plotName, curveName) == false)
    {
-      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, xAxis, yAxis) );
+      m_childCurves.push_back( new ChildCurve(this, plotName, curveName, plotType, forceContiguousParentPoints, startChildInScrollMode, xAxis, yAxis) );
    }
 }
 
@@ -992,7 +1015,7 @@ void CurveCommander::configForSpectrumAnalyzerView(QString plotName)
 
          m_allCurves[plotName].plotGui->setScrollMode(true, spectrumAnalyzerParams.srcNumSamples);
 
-         createChildCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName, E_PLOT_TYPE_DB_POWER_FFT_COMPLEX, true, xParent, yParent);
+         createChildCurve(spectrumAnalyzerParams.specAnPlotName, spectrumAnalyzerParams.specAnCurveName, E_PLOT_TYPE_DB_POWER_FFT_COMPLEX, true, false, xParent, yParent);
 
       }
       // Check if we need to make any adjustments to the Spectrum Analyzer FFT right after it has been created.

@@ -171,6 +171,8 @@ private slots:
 
    void on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int index);
 
+   void on_chkMatchParentScroll_clicked();
+
 private:
    void closeEvent(QCloseEvent* event);
 
@@ -219,6 +221,8 @@ private:
    void initSpnBoxValueFromPersistParam(QSpinBox*  spnBoxPtr, const std::string persistParamName);
 
    bool determineChildFftMeasurementAxisValues(tParentCurveInfo& axisParent);
+
+   void setMatchParentScrollChkBoxVisible();
 
    Ui::curveProperties *ui;
 
