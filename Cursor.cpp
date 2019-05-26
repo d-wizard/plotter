@@ -122,7 +122,7 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    }
 
    // Initialize for 2D plot
-   int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
+   int startIndex = validMinDist ? 1 : 0;
    int endIndex = m_parentCurve->getNumPoints();
 
    // For 1D curves, we can reduce the number of points to search over.
