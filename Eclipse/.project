@@ -97,6 +97,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/ColorCodes</locationURI>
 		</link>
 		<link>
+			<name>Cursor.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Cursor.cpp</locationURI>
+		</link>
+		<link>
 			<name>Cursor.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Cursor.h</locationURI>
