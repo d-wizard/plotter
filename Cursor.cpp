@@ -113,15 +113,20 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
 
    double xDelta = fabs(xPoints[minPointIndex] - xPos)*inverseWidth;
    double yDelta = fabs(yPoints[minPointIndex] - yPos)*inverseHeight;
-   double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+   double minDist = std::numeric_limits<double>::max(); // Initialize to maximum possible double value.
+   bool validMinDist = isDoubleValid(xDelta) && isDoubleValid(yDelta);
+
+   if(validMinDist)
+   {
+      minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta)); // Only set the actual vaulue if both x and y points are valid.
+   }
 
    // Initialize for 2D plot
    int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
    int endIndex = m_parentCurve->getNumPoints();
 
-
    // For 1D curves, we can reduce the number of points to search over.
-   if(useFast1dSearch)
+   if(useFast1dSearch && validMinDist)
    {
       int roundDownMinDist = (int)(minDist * width * m_parentCurve->getLinearXAxisCorrection().m) + 1;
       startIndex = minPointIndex - roundDownMinDist;
