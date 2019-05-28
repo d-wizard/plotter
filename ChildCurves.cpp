@@ -43,6 +43,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(false, true);
+   configForMatchParentScrollMode();
 }
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
@@ -67,6 +68,7 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(true, true);
+   configForMatchParentScrollMode();
 }
 
 void ChildCurve::anotherCurveChanged( QString plotName,
@@ -476,6 +478,29 @@ ePlotType ChildCurve::determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, 
    return retVal;
 }
 
+// When a new curve is created, limit the previous info vector to the size of the parent.
+void ChildCurve::configForMatchParentScrollMode()
+{
+   // Set m_prevInfo.size()
+   if(m_plotIsFft == false) // FFTs handle scroll mode in their own way (TODO, the following code may work for FFTs, I haven't tried).
+   {
+      // Just check Y Axis Parent for now (all child plot use y axis, some use both).
+      CurveData* parentCurveY    = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
+      //int parentNumPointsY       = parentCurveY != NULL ? parentCurveY->getNumPoints() : 0; // Number of points actually being displayed in the parent curve.
+      int origMsgNumPointsY      = parentCurveY != NULL ? parentCurveY->getPlotSize_nonScrollModeVersion() : 0; // The size that the parent curve would be if it weren't in Scroll Mode.
+      bool parentIsInScrollModeY = parentCurveY != NULL ? parentCurveY->getScrollMode() : false;
+
+      if(m_startChildInScrollMode && parentIsInScrollModeY) // Is this check really needed??? (i.e. if not is scroll mode won't the parent and child curve match?)
+      {
+         if((int)m_prevInfo.size() > origMsgNumPointsY && origMsgNumPointsY > 0)
+         {
+            // Parent size if larger than its non-scroll mode version. Need to reduce m_prevInfo.
+            memmove(&m_prevInfo[0], &m_prevInfo[m_prevInfo.size() - origMsgNumPointsY], origMsgNumPointsY*sizeof(m_prevInfo[0])); // Move samples at the end to the beginning.
+            m_prevInfo.resize(origMsgNumPointsY);
+         }
+      }
+   }
+}
 
 void ChildCurve::update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId)
 {

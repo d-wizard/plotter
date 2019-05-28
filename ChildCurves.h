@@ -110,6 +110,8 @@ private:
 
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
 
+   void configForMatchParentScrollMode();
+
    void update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
    void update2dChildCurve(unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
 

@@ -76,6 +76,10 @@ CurveData::CurveData( QwtPlot* parentPlot,
    initCurve();
    setVisible(true); // Display the curve on the parent plot.
    storeLastMsgStats(data);
+
+   // Init parameters that are used to de-mangled values when scroll mode is applied.
+   oldestPoint_nonScrollModeVersion = data->m_sampleStartIndex + numPoints;
+   plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
 }
 
 CurveData::~CurveData()
