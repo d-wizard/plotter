@@ -1297,6 +1297,7 @@ void MainWindow::scrollModeToggle()
       m_qwtCurves[i]->handleScrollModeTransitions(m_scrollMode);
    }
    updatePlotWithNewCurveData(true);
+   m_curveCommander->curvePropertyChanged(); // Inform Properies GUI that scroll mode has changed.
 }
 
 void MainWindow::scrollModeChangePlotSize()

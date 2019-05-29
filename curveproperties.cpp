@@ -2166,20 +2166,18 @@ bool curveProperties::determineChildFftMeasurementAxisValues(tParentCurveInfo& a
 
 void curveProperties::setMatchParentScrollChkBoxVisible()
 {
+   // All Child Plots will use m_cmbXAxisSrc. So, if the curve defined in that GUI dropdown box
+   // is in scroll mode and the plot type isn't FFT, show the "Match Parent Scroll Mode" check box.
    bool isVisible = false;
-   tPlotCurveAxis curveX = m_cmbXAxisSrc->getPlotCurveAxis();
-   CurveData* parentCurveX = m_curveCmdr->getCurveData(curveX.plotName, curveX.curveName);
 
-   if(m_cmbXAxisSrc->isVisible() && parentCurveX != NULL && parentCurveX->getScrollMode())
-   {
-      isVisible = true;
-   }
-   else
-   {
-      tPlotCurveAxis curveY = m_cmbYAxisSrc->getPlotCurveAxis();
-      CurveData* parentCurveY = m_curveCmdr->getCurveData(curveY.plotName, curveY.curveName);
+   ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
 
-      if(m_cmbYAxisSrc->isVisible() && parentCurveY != NULL && parentCurveY->getScrollMode())
+   // FFT child plots handle scroll mode in their own way, also plots based on FFT measurements shouldn't inherit parent's scroll mode.
+   if(plotTypeIsFft(plotType) == false && plotType != E_PLOT_TYPE_FFT_MEASUREMENT)
+   {
+      tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
+      CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
+      if(parentCurve != NULL && parentCurve->getScrollMode())
       {
          isVisible = true;
       }
