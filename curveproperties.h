@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QVector>
+#include <QSharedPointer>
 #include <list>
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
@@ -84,6 +85,14 @@ public:
       userSpecified(false)
    {}
 
+   // tPltCrvCmbBoxPtr functions (i.e. abstraction functions for cmbBoxPtr)
+   void setVisible(bool vis) {cmbBoxPtr->setVisible(vis);}
+   bool isVisible() {return cmbBoxPtr->isVisible();}
+   QString currentText() {return cmbBoxPtr->currentText();}
+   void setText(QString text) {cmbBoxPtr->setText(text);}
+   tPlotCurveAxis getPlotCurveAxis() {return cmbBoxPtr->getPlotCurveAxis();}
+   tPlotCurveComboBox::eCmbBoxCurveType getElementType() {return cmbBoxPtr->getElementType();}
+
    tPltCrvCmbBoxPtr cmbBoxPtr;
    QString          cmbBoxVal;
    bool             displayAxesSeparately;
@@ -92,6 +101,7 @@ public:
    ePreferredAxis   preferredAxis;
    bool             userSpecified;
 };
+typedef QSharedPointer<tCmbBoxAndValue> tCmbBoxValPtr;
 
 class CurveCommander;
 
@@ -240,19 +250,19 @@ private:
    int m_numMathOpsReadFromSrc;
 
    // Plot / Curve Combo boxes
-   tPltCrvCmbBoxPtr m_cmbXAxisSrc;
-   tPltCrvCmbBoxPtr m_cmbYAxisSrc;
-   tPltCrvCmbBoxPtr m_cmbSrcCurve_math;
-   tPltCrvCmbBoxPtr m_cmbCurveToSave;
-   tPltCrvCmbBoxPtr m_cmbPropPlotCurveName;
-   tPltCrvCmbBoxPtr m_cmbDestPlotName;
-   tPltCrvCmbBoxPtr m_cmbOpenCurvePlotName;
-   tPltCrvCmbBoxPtr m_cmbPlotToSave;
-   tPltCrvCmbBoxPtr m_cmbIpBlockPlotNames;
+   tCmbBoxValPtr m_cmbXAxisSrc;
+   tCmbBoxValPtr m_cmbYAxisSrc;
+   tCmbBoxValPtr m_cmbSrcCurve_math;
+   tCmbBoxValPtr m_cmbCurveToSave;
+   tCmbBoxValPtr m_cmbPropPlotCurveName;
+   tCmbBoxValPtr m_cmbDestPlotName;
+   tCmbBoxValPtr m_cmbOpenCurvePlotName;
+   tCmbBoxValPtr m_cmbPlotToSave;
+   tCmbBoxValPtr m_cmbIpBlockPlotNames;
 
 
-   QVector<tCmbBoxAndValue> m_plotCurveCombos;
-   QVector<tCmbBoxAndValue> m_plotNameCombos;
+   QVector<tCmbBoxValPtr> m_plotCurveCombos;
+   QVector<tCmbBoxValPtr> m_plotNameCombos;
 
    QString m_childCurveNewPlotNameUser;
    QString m_childCurveNewCurveNameUser;

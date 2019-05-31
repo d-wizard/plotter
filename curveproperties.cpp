@@ -153,31 +153,44 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    ui->availableOps->setCurrentRow(initialAvailableMathOpSelectionIndex);
    ui->lblMapOpValueLabel->setText(mathOpsValueLabel[initialAvailableMathOpSelectionIndex]);
 
-   m_cmbXAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbXAxisSrc         ));
-   m_cmbYAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbYAxisSrc         ));
-   m_cmbSrcCurve_math     = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbSrcCurve_math    ));
-   m_cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
-   m_cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
-   m_cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
-   m_cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
-   m_cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
-   m_cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
+   // Create Combo Box Pointers (tPltCrvCmbBoxPtr).
+   tPltCrvCmbBoxPtr cmbXAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbXAxisSrc         ));
+   tPltCrvCmbBoxPtr cmbYAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbYAxisSrc         ));
+   tPltCrvCmbBoxPtr cmbSrcCurve_math     = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbSrcCurve_math    ));
+   tPltCrvCmbBoxPtr cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
+   tPltCrvCmbBoxPtr cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
+   tPltCrvCmbBoxPtr cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
+   tPltCrvCmbBoxPtr cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
+   tPltCrvCmbBoxPtr cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
+   tPltCrvCmbBoxPtr cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
+
+   // Set tCmbBoxAndValue
+   m_cmbXAxisSrc          = tCmbBoxValPtr(new tCmbBoxAndValue(cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
+   m_cmbYAxisSrc          = tCmbBoxValPtr(new tCmbBoxAndValue(cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
+   m_cmbSrcCurve_math     = tCmbBoxValPtr(new tCmbBoxAndValue(cmbSrcCurve_math, true, true));
+   m_cmbCurveToSave       = tCmbBoxValPtr(new tCmbBoxAndValue(cmbCurveToSave));
+   m_cmbPropPlotCurveName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPropPlotCurveName, false));
+
+   m_cmbDestPlotName      = tCmbBoxValPtr(new tCmbBoxAndValue(cmbDestPlotName));
+   m_cmbOpenCurvePlotName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbOpenCurvePlotName));
+   m_cmbPlotToSave        = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPlotToSave));
+   m_cmbIpBlockPlotNames  = tCmbBoxValPtr(new tCmbBoxAndValue(cmbIpBlockPlotNames));
 
 
    // Initialize the list of all the combo boxes that display PlotName->CurveName
    m_plotCurveCombos.clear();
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbSrcCurve_math, true, true));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbCurveToSave));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbPropPlotCurveName, false));
+   m_plotCurveCombos.append(m_cmbXAxisSrc);
+   m_plotCurveCombos.append(m_cmbYAxisSrc);
+   m_plotCurveCombos.append(m_cmbSrcCurve_math);
+   m_plotCurveCombos.append(m_cmbCurveToSave);
+   m_plotCurveCombos.append(m_cmbPropPlotCurveName);
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbDestPlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbOpenCurvePlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbPlotToSave));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbIpBlockPlotNames));
+   m_plotNameCombos.append(m_cmbDestPlotName);
+   m_plotNameCombos.append(m_cmbOpenCurvePlotName);
+   m_plotNameCombos.append(m_cmbPlotToSave);
+   m_plotNameCombos.append(m_cmbIpBlockPlotNames);
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -219,15 +232,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    // Save current values of the GUI elements. Clear the combo box members.
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
    {
-      m_plotCurveCombos[i].cmbBoxVal = m_plotCurveCombos[i].cmbBoxPtr->currentText();
-      m_plotCurveCombos[i].cmbBoxPtr->clear();
+      m_plotCurveCombos[i]->cmbBoxVal = m_plotCurveCombos[i]->cmbBoxPtr->currentText();
+      m_plotCurveCombos[i]->cmbBoxPtr->clear();
    }
 
    // Save current values of the GUI elements. Clear Plot Name combo boxes.
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
-      m_plotNameCombos[i].cmbBoxVal = m_plotNameCombos[i].cmbBoxPtr->currentText();
-      m_plotNameCombos[i].cmbBoxPtr->clear();
+      m_plotNameCombos[i]->cmbBoxVal = m_plotNameCombos[i]->cmbBoxPtr->currentText();
+      m_plotNameCombos[i]->cmbBoxPtr->clear();
    }
 
    // Save and clear FFT Measurement Parent Combo
@@ -241,15 +254,15 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       // Add to dest plot name combo box
       for(int i = 0; i < m_plotNameCombos.size(); ++i)
       {
-         m_plotNameCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
+         m_plotNameCombos[i]->cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
       }
 
       // Add the "All Curves" curve name to the drop down box.
       for(int i = 0; i < m_plotCurveCombos.size(); ++i)
       {
-         if(m_plotCurveCombos[i].displayAllCurves)
+         if(m_plotCurveCombos[i]->displayAllCurves)
          {
-            m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
+            m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
          }
       }
 
@@ -290,7 +303,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
-               m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
+               m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
             }
          }
          else
@@ -298,19 +311,19 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
                // Add the "All Axes" plot/curve name to the drop down box.
-               if(m_plotCurveCombos[i].displayAllAxes)
+               if(m_plotCurveCombos[i]->displayAllAxes)
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
                }
 
-               if(m_plotCurveCombos[i].displayAxesSeparately)
+               if(m_plotCurveCombos[i]->displayAxesSeparately)
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_Y);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_Y);
                }
                else
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
                }
             }
          }
@@ -448,13 +461,13 @@ void curveProperties::setCombosToPrevValues()
    // Set Plot/Curve Name Combos to previous values
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
    {
-      trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+      trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, m_plotCurveCombos[i]->cmbBoxVal);
    }
 
    // Set Plot Name Combos to previous values
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
-      trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
+      trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, m_plotNameCombos[i]->cmbBoxVal);
    }
 }
 
@@ -472,21 +485,21 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       bool updateComboSuccess = false;
 
       // Only "Try to Restore" if there is something to restore from.
-      if(restoreUserSpecifed && m_plotCurveCombos[i].userSpecified)
+      if(restoreUserSpecifed && m_plotCurveCombos[i]->userSpecified)
       {
-         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
-         m_plotCurveCombos[i].userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, m_plotCurveCombos[i]->cmbBoxVal);
+         m_plotCurveCombos[i]->userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
-      if(updateComboSuccess == false && m_plotCurveCombos[i].preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
+      if(updateComboSuccess == false && m_plotCurveCombos[i]->preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
       {
-         if( m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_X &&
-             trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D_real) )
+         if( m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_X &&
+             trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D_real) )
          {
             updateComboSuccess = true;
          }
-         else if( m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y &&
-                  trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D_imag) )
+         else if( m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y &&
+                  trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D_imag) )
          {
             updateComboSuccess = true;
          }
@@ -495,21 +508,21 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       // Try to set to 1D Curve Name.
       if(updateComboSuccess == false)
       {
-         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D);
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D);
          if(updateComboSuccess == false)
          {
             // 1D Curve Name doesn't exists, must be 2D. Set to 2D Curve Name.
-            if(m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y)
-               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dy);
+            if(m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y)
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName2Dy);
             else
-               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dx);
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName2Dx);
          }
       }
 
       //
       if(!restoreUserSpecifed && updateComboSuccess)
       {
-         m_plotCurveCombos[i].userSpecified = true;
+         m_plotCurveCombos[i]->userSpecified = true;
       }
    }
 
@@ -519,21 +532,21 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       bool updateComboSuccess = false;
 
       // Only "Try to Restore" if there is something to restore from.
-      if(restoreUserSpecifed && m_plotNameCombos[i].userSpecified)
+      if(restoreUserSpecifed && m_plotNameCombos[i]->userSpecified)
       {
-         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
-         m_plotNameCombos[i].userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
+         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, m_plotNameCombos[i]->cmbBoxVal);
+         m_plotNameCombos[i]->userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
       if(updateComboSuccess == false)
       {
-         trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, plotName);
+         trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, plotName);
       }
 
       //
       if(!restoreUserSpecifed && updateComboSuccess)
       {
-         m_plotNameCombos[i].userSpecified = true;
+         m_plotNameCombos[i]->userSpecified = true;
       }
    }
 
