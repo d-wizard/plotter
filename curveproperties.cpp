@@ -458,7 +458,7 @@ void curveProperties::setCombosToPrevValues()
    }
 }
 
-void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst)
+void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool restoreUserSpecifed)
 {
    QString plotCurveName1D_real = plotName + PLOT_CURVE_SEP + realCurveName;
    QString plotCurveName1D_imag = plotName + PLOT_CURVE_SEP + imagCurveName;
@@ -471,9 +471,11 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    {
       bool updateComboSuccess = false;
 
-      if(tryToRestoreFirst)
+      // Only "Try to Restore" if there is something to restore from.
+      if(restoreUserSpecifed && m_plotCurveCombos[i].userSpecified)
       {
          updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+         m_plotCurveCombos[i].userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
       if(updateComboSuccess == false && m_plotCurveCombos[i].preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
@@ -493,14 +495,21 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       // Try to set to 1D Curve Name.
       if(updateComboSuccess == false)
       {
-         if(trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D) == false)
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D);
+         if(updateComboSuccess == false)
          {
             // 1D Curve Name doesn't exists, must be 2D. Set to 2D Curve Name.
             if(m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y)
-               trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dy);
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dy);
             else
-               trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dx);
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dx);
          }
+      }
+
+      //
+      if(!restoreUserSpecifed && updateComboSuccess)
+      {
+         m_plotCurveCombos[i].userSpecified = true;
       }
    }
 
@@ -508,13 +517,23 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
       bool updateComboSuccess = false;
-      if(tryToRestoreFirst)
+
+      // Only "Try to Restore" if there is something to restore from.
+      if(restoreUserSpecifed && m_plotNameCombos[i].userSpecified)
       {
          updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
+         m_plotNameCombos[i].userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
+
       if(updateComboSuccess == false)
       {
          trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, plotName);
+      }
+
+      //
+      if(!restoreUserSpecifed && updateComboSuccess)
+      {
+         m_plotNameCombos[i].userSpecified = true;
       }
    }
 

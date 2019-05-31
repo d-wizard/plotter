@@ -50,7 +50,8 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAxesSeparate):
@@ -59,7 +60,8 @@ public:
       displayAxesSeparately(displayAxesSeparate),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
@@ -68,7 +70,8 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(preferredAxisIn)
+      preferredAxis(preferredAxisIn),
+      userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAllCurvesIn, bool displayAllAxesIn):
@@ -77,7 +80,8 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(displayAllCurvesIn),
       displayAllAxes(displayAllAxesIn),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      userSpecified(false)
    {}
 
    tPltCrvCmbBoxPtr cmbBoxPtr;
@@ -86,6 +90,7 @@ public:
    bool             displayAllCurves;
    bool             displayAllAxes;
    ePreferredAxis   preferredAxis;
+   bool             userSpecified;
 };
 
 class CurveCommander;
@@ -177,7 +182,7 @@ private:
    void closeEvent(QCloseEvent* event);
 
    void setCombosToPrevValues();
-   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst);
+   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool restoreUserSpecifed);
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
