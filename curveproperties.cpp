@@ -693,6 +693,7 @@ void curveProperties::on_cmdApply_clicked()
 
                if(createTheChildPlot)
                {
+                  m_cmbXAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
                   m_curveCmdr->createChildCurve( newChildPlotName,
                                                  newChildCurveName,
                                                  plotType,
@@ -740,6 +741,8 @@ void curveProperties::on_cmdApply_clicked()
                yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
                yAxisParent.fftMeasurementPlotSize = -1;
 
+               m_cmbXAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
+               m_cmbYAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
@@ -1015,6 +1018,7 @@ void curveProperties::mathTabApply()
       else
          parentPlotGui->setCurveProperties_allAxes(curve.curveName, sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
 
+      m_cmbSrcCurve_math->userSpecified = true; // User hit the Apply button, i.e. user specified.
       fillInMathTab();
    }
 
@@ -1433,6 +1437,9 @@ void curveProperties::on_cmdXUseZoomForSlice_clicked()
          // Set GUI elements.
          ui->spnXSrcStart->setValue(dim.minX);
          ui->spnXSrcStop->setValue(dim.maxX);
+
+         // User hit a button, i.e. user specified.
+         m_cmbXAxisSrc->userSpecified = true;
       }
    }
    else
@@ -1474,6 +1481,9 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
          // Set GUI elements.
          ui->spnYSrcStart->setValue(dim.minX);
          ui->spnYSrcStop->setValue(dim.maxX);
+
+         // User hit a button, i.e. user specified.
+         m_cmbYAxisSrc->userSpecified = true;
       }
    }
    else
@@ -1540,6 +1550,9 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
          PackedCurveData dataToWriteToFile;
          packedCurve.getPackedData(dataToWriteToFile);
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+         // User hit a button, i.e. user specified.
+         m_cmbCurveToSave->userSpecified = true;
       }
    }
 
@@ -1611,6 +1624,9 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          PackedCurveData dataToWriteToFile;
          savePlot.getPackedData(dataToWriteToFile);
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+         // User hit the button, i.e. user specified.
+         m_cmbPlotToSave->userSpecified = true;
       }
    }
 }
