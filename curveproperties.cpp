@@ -138,6 +138,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_selectedMathOpLeft(0),
    m_selectedMathOpRight(0),
    m_numMathOpsReadFromSrc(0),
+   m_guiIsChanging(false),
    m_childCurveNewPlotNameUser(""),
    m_childCurveNewCurveNameUser(""),
    m_prevChildCurvePlotTypeIndex(-1)
@@ -228,6 +229,8 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
    bool firstPlotCurveNameCmbBoxFound = false;
 
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
+
+   m_guiIsChanging = true; // Set to true to keep GUI change functions (e.g. currentIndexChanged) from marking Combo Boxes as 'User Specified'
 
    // Save current values of the GUI elements. Clear the combo box members.
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
@@ -383,6 +386,10 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       // Store off the IP Address of the last message from the plot / curve that was selected when this function was called.
       m_lastUpdatedPlotIpAddr = m_curveCmdr->getCurveData(plotName, curveName)->getLastMsgIpAddr().m_ipV4Addr;
    }
+
+   // Done Modifying the GUI.
+   m_guiIsChanging = false;
+
 }
 
 void curveProperties::findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName)
@@ -485,10 +492,10 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       bool updateComboSuccess = false;
 
       // Only "Try to Restore" if there is something to restore from.
-      if(restoreUserSpecifed && m_plotCurveCombos[i]->userSpecified)
+      if(restoreUserSpecifed && m_plotCurveCombos[i]->userSpecified())
       {
          updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, m_plotCurveCombos[i]->cmbBoxVal);
-         m_plotCurveCombos[i]->userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
+         m_plotCurveCombos[i]->userSpecified(updateComboSuccess); // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
       if(updateComboSuccess == false && m_plotCurveCombos[i]->preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
@@ -519,10 +526,10 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
          }
       }
 
-      //
+      // If updating with user specifed values (i.e. restoreUserSpecifed is false), mark this combo box as user specified.
       if(!restoreUserSpecifed && updateComboSuccess)
       {
-         m_plotCurveCombos[i]->userSpecified = true;
+         m_plotCurveCombos[i]->userSpecified(true);
       }
    }
 
@@ -532,10 +539,10 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       bool updateComboSuccess = false;
 
       // Only "Try to Restore" if there is something to restore from.
-      if(restoreUserSpecifed && m_plotNameCombos[i]->userSpecified)
+      if(restoreUserSpecifed && m_plotNameCombos[i]->userSpecified())
       {
          updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, m_plotNameCombos[i]->cmbBoxVal);
-         m_plotNameCombos[i]->userSpecified = updateComboSuccess; // If trySetComboItemIndex failed, then user specified value is no longer valid.
+         m_plotNameCombos[i]->userSpecified(updateComboSuccess); // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
       if(updateComboSuccess == false)
@@ -543,10 +550,10 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
          trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, plotName);
       }
 
-      //
+      // If updating with user specifed values (i.e. restoreUserSpecifed is false), mark this combo box as user specified.
       if(!restoreUserSpecifed && updateComboSuccess)
       {
-         m_plotNameCombos[i]->userSpecified = true;
+         m_plotNameCombos[i]->userSpecified(true);
       }
    }
 
@@ -693,7 +700,7 @@ void curveProperties::on_cmdApply_clicked()
 
                if(createTheChildPlot)
                {
-                  m_cmbXAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
+                  m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
                   m_curveCmdr->createChildCurve( newChildPlotName,
                                                  newChildCurveName,
                                                  plotType,
@@ -741,8 +748,8 @@ void curveProperties::on_cmdApply_clicked()
                yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
                yAxisParent.fftMeasurementPlotSize = -1;
 
-               m_cmbXAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
-               m_cmbYAxisSrc->userSpecified = true; // User hit the Apply button, i.e. user specified.
+               m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+               m_cmbYAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
@@ -1018,7 +1025,7 @@ void curveProperties::mathTabApply()
       else
          parentPlotGui->setCurveProperties_allAxes(curve.curveName, sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
 
-      m_cmbSrcCurve_math->userSpecified = true; // User hit the Apply button, i.e. user specified.
+      m_cmbSrcCurve_math->userSpecified(true); // User hit the Apply button, i.e. user specified.
       fillInMathTab();
    }
 
@@ -1027,6 +1034,8 @@ void curveProperties::mathTabApply()
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   m_cmbSrcCurve_math->userSpecified(true, m_guiIsChanging);
 
    fillInMathTab();
 }
@@ -1439,7 +1448,7 @@ void curveProperties::on_cmdXUseZoomForSlice_clicked()
          ui->spnXSrcStop->setValue(dim.maxX);
 
          // User hit a button, i.e. user specified.
-         m_cmbXAxisSrc->userSpecified = true;
+         m_cmbXAxisSrc->userSpecified(true);
       }
    }
    else
@@ -1483,7 +1492,7 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
          ui->spnYSrcStop->setValue(dim.maxX);
 
          // User hit a button, i.e. user specified.
-         m_cmbYAxisSrc->userSpecified = true;
+         m_cmbYAxisSrc->userSpecified(true);
       }
    }
    else
@@ -1552,7 +1561,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
 
          // User hit a button, i.e. user specified.
-         m_cmbCurveToSave->userSpecified = true;
+         m_cmbCurveToSave->userSpecified(true);
       }
    }
 
@@ -1626,7 +1635,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
 
          // User hit the button, i.e. user specified.
-         m_cmbPlotToSave->userSpecified = true;
+         m_cmbPlotToSave->userSpecified(true);
       }
    }
 }
@@ -1666,6 +1675,8 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   m_cmbPropPlotCurveName->userSpecified(true, m_guiIsChanging);
 
    fillInPropTab(true);
 }
@@ -1977,6 +1988,12 @@ void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
+   m_cmbXAxisSrc->userSpecified(true, m_guiIsChanging);
+   if(m_cmbYAxisSrc->isVisible())
+   {
+      m_cmbYAxisSrc->userSpecified(true, m_guiIsChanging); // Lock the matching Y Axis value.
+   }
+
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();
 }
@@ -1984,6 +2001,8 @@ void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
 void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   m_cmbYAxisSrc->userSpecified(true, m_guiIsChanging);
 
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();

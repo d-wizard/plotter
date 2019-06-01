@@ -52,7 +52,7 @@ public:
       displayAllCurves(false),
       displayAllAxes(false),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
-      userSpecified(false)
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAxesSeparate):
@@ -62,7 +62,7 @@ public:
       displayAllCurves(false),
       displayAllAxes(false),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
-      userSpecified(false)
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
@@ -72,7 +72,7 @@ public:
       displayAllCurves(false),
       displayAllAxes(false),
       preferredAxis(preferredAxisIn),
-      userSpecified(false)
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAllCurvesIn, bool displayAllAxesIn):
@@ -82,7 +82,7 @@ public:
       displayAllCurves(displayAllCurvesIn),
       displayAllAxes(displayAllAxesIn),
       preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
-      userSpecified(false)
+      m_userSpecified(false)
    {}
 
    // tPltCrvCmbBoxPtr functions (i.e. abstraction functions for cmbBoxPtr)
@@ -93,13 +93,25 @@ public:
    tPlotCurveAxis getPlotCurveAxis() {return cmbBoxPtr->getPlotCurveAxis();}
    tPlotCurveComboBox::eCmbBoxCurveType getElementType() {return cmbBoxPtr->getElementType();}
 
+   // User Specified Functions
+   void userSpecified(bool usrSpecified, bool blocked = false)
+   {
+      if(!blocked)
+      {
+         m_userSpecified = usrSpecified;
+      }
+   }
+   bool userSpecified(){return m_userSpecified;}
+
    tPltCrvCmbBoxPtr cmbBoxPtr;
    QString          cmbBoxVal;
    bool             displayAxesSeparately;
    bool             displayAllCurves;
    bool             displayAllAxes;
    ePreferredAxis   preferredAxis;
-   bool             userSpecified;
+
+private:
+   bool             m_userSpecified;
 };
 typedef QSharedPointer<tCmbBoxAndValue> tCmbBoxValPtr;
 
@@ -263,6 +275,7 @@ private:
 
    QVector<tCmbBoxValPtr> m_plotCurveCombos;
    QVector<tCmbBoxValPtr> m_plotNameCombos;
+   bool m_guiIsChanging;
 
    QString m_childCurveNewPlotNameUser;
    QString m_childCurveNewCurveNameUser;
