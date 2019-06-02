@@ -222,6 +222,8 @@ private:
    void fillInPropTab_childCurveParents(tPlotCurveAxis& plotCurveInfo);
    void propTabApply();
 
+   void setPersistentSuggestChildOnParentPlot(ePlotType plotType, bool childOnParentPlot);
+   bool getPersistentSuggestChildOnParentPlot(ePlotType plotType, bool& childOnParentPlot);
    void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
 
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);

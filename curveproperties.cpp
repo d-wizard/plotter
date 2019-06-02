@@ -129,6 +129,8 @@ const QString fftMeasureNames[] = {
    "No Measurement"
 };
 
+// This is persistent only while the executable is running.
+static QMap<ePlotType, bool> gSuggestChildOnParentPlot;
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
@@ -707,6 +709,7 @@ void curveProperties::on_cmdApply_clicked()
                                                  forceContiguousParentPoints,
                                                  matchParentScrollMode,
                                                  axisParent);
+                  setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == axisParent.dataSrc.plotName);
                }
             }
             else
@@ -757,6 +760,7 @@ void curveProperties::on_cmdApply_clicked()
                                               matchParentScrollMode,
                                               xAxisParent,
                                               yAxisParent);
+               setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == xAxisParent.dataSrc.plotName || newChildPlotName == yAxisParent.dataSrc.plotName);
             }
          }
          else
@@ -1825,6 +1829,22 @@ void curveProperties::on_cmdRemoveCurve_clicked()
    }
 }
 
+void curveProperties::setPersistentSuggestChildOnParentPlot(ePlotType plotType, bool childOnParentPlot)
+{
+   gSuggestChildOnParentPlot[plotType] = childOnParentPlot;
+}
+
+bool curveProperties::getPersistentSuggestChildOnParentPlot(ePlotType plotType, bool& childOnParentPlot)
+{
+   bool exists = gSuggestChildOnParentPlot.find(plotType) != gSuggestChildOnParentPlot.end();
+   if(exists)
+   {
+      childOnParentPlot = gSuggestChildOnParentPlot[plotType];
+   }
+
+   return exists;
+}
+
 void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName)
 {
    plotName = "";
@@ -1845,8 +1865,14 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    twoDInput = plotTypeHas2DInput(plotType);
 
-   if(plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_DELTA && plotType != E_PLOT_TYPE_SUM && plotType != E_PLOT_TYPE_FFT_MEASUREMENT)
+   // Determine if a previous child plot with the same plot type was generated on its parent plot.
+   bool prevWasOnParent = false;
+   bool validSuggestPrevOnParent = getPersistentSuggestChildOnParentPlot(plotType, prevWasOnParent);
+
+   if( (validSuggestPrevOnParent && !prevWasOnParent) ||
+       (!validSuggestPrevOnParent && plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_FFT_MEASUREMENT) )
    {
+      // Suggest Child on its own plot.
       QString plotPrefix = plotTypeNames[plotType] + " of ";
       QString plotMid = "";
 
