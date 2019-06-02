@@ -102,15 +102,14 @@ private:
                        unsigned int parentStartIndex,
                        unsigned int parentStopIndex );
 
-   bool handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
-                                        bool xParentChanged,
-                                        bool yParentChanged,
-                                        unsigned int parentStartIndex,
-                                        unsigned int parentStopIndex );
+   bool handleDuplicate2DParentChunks( PlotMsgIdType parentGroupMsgId,
+                                       bool xParentChanged,
+                                       bool yParentChanged,
+                                       unsigned int parentStartIndex,
+                                       unsigned int parentStopIndex,
+                                       bool childIsInScrollMode = false );
 
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
-
-   void configForMatchParentScrollMode();
 
    void update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
    void update2dChildCurve(unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
@@ -135,7 +134,7 @@ private:
    dubVect m_xSrcData;
    dubVect m_ySrcData;
 
-   dubVect m_prevInfo; // Used to store previous information needed to create some child curves.
+   dubVect m_prevInfo; // Used to store previous information needed to create some child curves / window coef's for FFTs.
 
    PlotMsgIdType m_lastGroupMsgId;
    QVector<tParentUpdateChunk> m_fft_parentChunksProcessedInCurGroupMsg;

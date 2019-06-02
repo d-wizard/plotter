@@ -43,7 +43,6 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(false, true);
-   configForMatchParentScrollMode();
 }
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
@@ -68,7 +67,6 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(true, true);
-   configForMatchParentScrollMode();
 }
 
 void ChildCurve::anotherCurveChanged( QString plotName,
@@ -315,14 +313,17 @@ unsigned int ChildCurve::getDataFromParent2D( bool xParentChanged,
 }
 
 
-bool ChildCurve::handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
-                                                 bool xParentChanged,
-                                                 bool yParentChanged,
-                                                 unsigned int parentStartIndex,
-                                                 unsigned int parentStopIndex)
+bool ChildCurve::handleDuplicate2DParentChunks( PlotMsgIdType parentGroupMsgId,
+                                                bool xParentChanged,
+                                                bool yParentChanged,
+                                                unsigned int parentStartIndex,
+                                                unsigned int parentStopIndex,
+                                                bool childIsInScrollMode )
 {
+   bool needToCheckForDuplicates = (m_plotIsFft && m_forceContiguousParentPoints) || (!m_plotIsFft && childIsInScrollMode);
+
    // Check for situation where we already pulled in all the new samples for the FFT.
-   if( m_forceContiguousParentPoints && xParentChanged != yParentChanged &&
+   if( needToCheckForDuplicates && xParentChanged != yParentChanged &&
        parentGroupMsgId == m_lastGroupMsgId && parentGroupMsgId != PLOT_MSG_ID_TYPE_NO_PARENT_MSG )
    {
       // Check if we already pulled in the samples when processing the other axis's parent.
@@ -335,14 +336,14 @@ bool ChildCurve::handleDuplicateFftParentChunks( PlotMsgIdType parentGroupMsgId,
          }
       }
    }
-   else if(m_forceContiguousParentPoints) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
+   else if(needToCheckForDuplicates) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
    {
       // New plot message group (or other reason). Clear out the stored info from the old group.
       m_fft_parentChunksProcessedInCurGroupMsg.clear();
    }
 
    // No early return, so this must be a new chunk.
-   if(m_forceContiguousParentPoints) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
+   if(needToCheckForDuplicates) // Only need to update m_fft_parentChunksForCurGroupMsg in Force Contiguous mode.
    {
       // New Chunk. Add it to the list.
       tParentUpdateChunk thisParentChunk;
@@ -364,11 +365,11 @@ void ChildCurve::getDataForFft( ePlotType fftType,
                                 unsigned int parentStartIndex,
                                 unsigned int parentStopIndex )
 {
-   bool duplicateChunk = handleDuplicateFftParentChunks( parentGroupMsgId,
-                                                         xParentChanged,
-                                                         yParentChanged,
-                                                         parentStartIndex,
-                                                         parentStopIndex );
+   bool duplicateChunk = handleDuplicate2DParentChunks( parentGroupMsgId,
+                                                        xParentChanged,
+                                                        yParentChanged,
+                                                        parentStartIndex,
+                                                        parentStopIndex );
 
    if(duplicateChunk)
    {
@@ -478,29 +479,6 @@ ePlotType ChildCurve::determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, 
    return retVal;
 }
 
-// When a new curve is created, limit the previous info vector to the size of the parent.
-void ChildCurve::configForMatchParentScrollMode()
-{
-   // Set m_prevInfo.size()
-   if(m_plotIsFft == false) // FFTs handle scroll mode in their own way (TODO, the following code may work for FFTs, I haven't tried).
-   {
-      // Just check Y Axis Parent for now (all child plot use y axis, some use both).
-      CurveData* parentCurveY    = m_curveCmdr->getCurveData(m_yAxis.dataSrc.plotName, m_yAxis.dataSrc.curveName);
-      //int parentNumPointsY       = parentCurveY != NULL ? parentCurveY->getNumPoints() : 0; // Number of points actually being displayed in the parent curve.
-      int origMsgNumPointsY      = parentCurveY != NULL ? parentCurveY->getPlotSize_nonScrollModeVersion() : 0; // The size that the parent curve would be if it weren't in Scroll Mode.
-      bool parentIsInScrollModeY = parentCurveY != NULL ? parentCurveY->getScrollMode() : false;
-
-      if(m_startChildInScrollMode && parentIsInScrollModeY) // Is this check really needed??? (i.e. if not is scroll mode won't the parent and child curve match?)
-      {
-         if((int)m_prevInfo.size() > origMsgNumPointsY && origMsgNumPointsY > 0)
-         {
-            // Parent size if larger than its non-scroll mode version. Need to reduce m_prevInfo.
-            memmove(&m_prevInfo[0], &m_prevInfo[m_prevInfo.size() - origMsgNumPointsY], origMsgNumPointsY*sizeof(m_prevInfo[0])); // Move samples at the end to the beginning.
-            m_prevInfo.resize(origMsgNumPointsY);
-         }
-      }
-   }
-}
 
 void ChildCurve::update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId)
 {
@@ -520,6 +498,8 @@ void ChildCurve::updateCurve( bool xParentChanged,
                               unsigned int parentStartIndex,
                               unsigned int parentStopIndex )
 {
+   CurveData* childCurve    = m_curveCmdr->getCurveData(m_plotName, m_curveName);
+   bool childIsInScrollMode = childCurve != NULL ? childCurve->getScrollMode() : m_startChildInScrollMode; // This value only applies to non-FFT children.
 
    switch(m_plotType)
    {
@@ -612,8 +592,20 @@ void ChildCurve::updateCurve( bool xParentChanged,
                                                     parentStartIndex,
                                                     parentStopIndex );
 
+         // If Child is in scroll mode, only need to keep track of the most recent samples.
+         if(childIsInScrollMode)
+            offset = 0;
+
+         // For plots with 2D inputs, this function will be called for both axes. Only need to update the first time.
+         bool uniqueInputData = !handleDuplicate2DParentChunks( parentGroupMsgId,
+                                                                xParentChanged,
+                                                                yParentChanged,
+                                                                parentStartIndex,
+                                                                parentStopIndex,
+                                                                childIsInScrollMode );
+
          int dataSize = std::min(m_xSrcData.size(), m_ySrcData.size());
-         if(dataSize > 0)
+         if(dataSize > 0 && uniqueInputData)
          {
             int pmDemodSize = m_prevInfo.size();
 
@@ -631,6 +623,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(pmDemodSize < ((int)offset + dataSize))
             {
                m_prevInfo.resize(offset + dataSize);
+            }
+            else if(childIsInScrollMode)
+            {
+               m_prevInfo.resize(dataSize); // Just need to store the new data off.
             }
 
             FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_prevInfo[offset], prevPhase);
@@ -646,8 +642,20 @@ void ChildCurve::updateCurve( bool xParentChanged,
                                                     parentStartIndex,
                                                     parentStopIndex );
 
+         // If Child is in scroll mode, only need to keep track of the most recent samples.
+         if(childIsInScrollMode)
+            offset = 0;
+
+         // For plots with 2D inputs, this function will be called for both axes. Only need to update the first time.
+         bool uniqueInputData = !handleDuplicate2DParentChunks( parentGroupMsgId,
+                                                                xParentChanged,
+                                                                yParentChanged,
+                                                                parentStartIndex,
+                                                                parentStopIndex,
+                                                                childIsInScrollMode );
+
          int dataSize = std::min(m_xSrcData.size(), m_ySrcData.size());
-         if(dataSize > 0)
+         if(dataSize > 0 && uniqueInputData)
          {
             int pmDemodSize = m_prevInfo.size();
 
@@ -666,6 +674,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
             {
                m_prevInfo.resize(offset + dataSize);
             }
+            else if(childIsInScrollMode)
+            {
+               m_prevInfo.resize(dataSize); // Just need to store the new data off.
+            }
 
             PmDemod(m_xSrcData, m_ySrcData, &m_prevInfo[offset], prevPhase);
             pmDemod.assign(&m_prevInfo[offset], (&m_prevInfo[offset])+dataSize);
@@ -677,6 +689,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
       {
          ePlotType childCurvePlotType = determineChildPlotTypeFor1D(m_yAxis, m_plotType);
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
+
+         // If Child is in scroll mode, only need to keep track of the most recent samples.
+         if(childIsInScrollMode)
+            offset = 0;
 
          int dataSize = m_ySrcData.size();
          if(dataSize > 0)
@@ -697,6 +713,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(prevAvgSize < ((int)offset + dataSize))
             {
                m_prevInfo.resize(offset + dataSize);
+            }
+            else if(childIsInScrollMode)
+            {
+               m_prevInfo.resize(dataSize); // Just need to store the new data off.
             }
 
             double avgKeepAmount = 1.0 - m_yAxis.avgAmount;
@@ -787,6 +807,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
          ePlotType childCurvePlotType = determineChildPlotTypeFor1D(m_yAxis, m_plotType);
          unsigned int offset = getDataFromParent1D(parentStartIndex, parentStopIndex);
 
+         // If Child is in scroll mode, only need to keep track of the most recent samples.
+         if(childIsInScrollMode)
+            offset = 0;
+
          int dataSize = m_ySrcData.size();
          if(dataSize > 0)
          {
@@ -806,6 +830,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
             if(prevSize < ((int)offset + dataSize))
             {
                m_prevInfo.resize(offset + dataSize);
+            }
+            else if(childIsInScrollMode)
+            {
+               m_prevInfo.resize(dataSize); // Just need to store the new data off.
             }
 
             if(m_plotType == E_PLOT_TYPE_DELTA)
