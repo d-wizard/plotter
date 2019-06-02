@@ -78,7 +78,7 @@ CurveData::CurveData( QwtPlot* parentPlot,
    storeLastMsgStats(data);
 
    // Init parameters that are used to de-mangled values when scroll mode is applied.
-   oldestPoint_nonScrollModeVersion = data->m_sampleStartIndex + numPoints;
+   oldestPoint_nonScrollModeVersion = numPoints; // Note data->m_sampleStartIndex is not used in the constructor. All the initial points need to be specified.
    plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
 }
 
