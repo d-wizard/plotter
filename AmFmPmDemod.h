@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -95,13 +95,20 @@ inline void PmDemod(dubVect& reInput, dubVect& imInput, double* demodOutput, dou
    {
       curPhase = atan2(imInput[i], reInput[i]);
       deltaPhase = curPhase - prevPhase;
-      deltaPhase = fmod(deltaPhase, M_2X_PI);
-      if(deltaPhase < M_NEG_PI)
-         deltaPhase += M_2X_PI;
-      else if(deltaPhase > M_PI)
-         deltaPhase -= M_2X_PI;
 
-      curPhase = prevPhase + deltaPhase;
+      // Add / subtract 2Pi from current phase to keep avoid large jumps in the phase
+      // (but only do this if both previous and current phase are valid, i.e. if delta phase is valid).
+      if(isDoubleValid(deltaPhase))
+      {
+         deltaPhase = fmod(deltaPhase, M_2X_PI);
+         if(deltaPhase < M_NEG_PI)
+            deltaPhase += M_2X_PI;
+         else if(deltaPhase > M_PI)
+            deltaPhase -= M_2X_PI;
+
+         curPhase = prevPhase + deltaPhase;
+      }
+
       demodOutput[i] = curPhase;
       prevPhase = curPhase;
    }
