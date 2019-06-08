@@ -630,6 +630,14 @@ void ChildCurve::updateCurve( bool xParentChanged,
             }
 
             FmPmDemod(m_xSrcData, m_ySrcData, fmDemod, &m_prevInfo[offset], prevPhase);
+
+            // The very first point has no previous point to take a delta against.
+            // So, set the very first delta to 'Not a Number'.
+            if(pmDemodSize == 0)
+            {
+               fmDemod[0] = NAN; // Set very first phase delta to 'Not a Number'
+            }
+
             update1dChildCurve(m_curveName, m_plotType, offset, fmDemod, parentCurveMsgId);
          }
       }
