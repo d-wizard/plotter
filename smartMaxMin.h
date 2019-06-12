@@ -65,6 +65,7 @@ public:
    void scrollModeShift(unsigned int shiftAmount);
 
    void getMaxMin(double& retMax, double& retMin, bool& retReal);
+   void getFirstLastReal(int& firstRealPointIndex, int& lastRealPointIndex);
 
    void handleShortenedNumPoints();
 private:
@@ -86,6 +87,8 @@ private:
    double m_curMax;
    double m_curMin;
    bool m_curMaxMinHasRealPoints;
+   int m_firstRealPointIndex;
+   int m_lastRealPointIndex;
 };
 
 #endif // SMARTMAXMIN_H

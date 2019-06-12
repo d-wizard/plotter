@@ -690,6 +690,20 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
    // Calculate xStartIndex, xEndIndex, sampPerPixel values.
    getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel);
 
+   // Don't plot NAN points at the beginning / end of curve data.
+   {
+      int xStartIndexLimit, xEndIndexLimit;
+      smartMaxMinYPoints.getFirstLastReal(xStartIndexLimit, xEndIndexLimit);
+      xEndIndexLimit++; // Convert inclusive to exclusive.
+
+      // Update indexes to avoid plotting NAN point at the beginning / end,
+      // but only if they don't cause the indexes to get out of order.
+      if(xStartIndexLimit > xStartIndex && xStartIndexLimit < xEndIndex)
+         xStartIndex = xStartIndexLimit;
+      if(xEndIndexLimit < xEndIndex && xEndIndexLimit > xStartIndex)
+         xEndIndex = xEndIndexLimit;
+   }
+
    if( (sampPerPixel <= 3) ||
        (numPoints < (sampPerPixel+2)) )
    {

@@ -28,7 +28,9 @@ smartMaxMin::smartMaxMin(const dubVect *srcVect, unsigned int minSegSize, unsign
    m_srcVect(srcVect),
    m_curMax(0.0),
    m_curMin(0.0),
-   m_curMaxMinHasRealPoints(false)
+   m_curMaxMinHasRealPoints(false),
+   m_firstRealPointIndex(-1),
+   m_lastRealPointIndex(-1)
 {
 }
 
@@ -175,6 +177,9 @@ void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
       }
    }
 
+   // Segments might have changed, update min / max.
+   calcTotalMaxMin();
+
    //debug_verifySegmentsAreContiguous();
 }
 
@@ -183,6 +188,12 @@ void smartMaxMin::getMaxMin(double &retMax, double &retMin, bool& retReal)
    retMax  = m_curMax;
    retMin  = m_curMin;
    retReal = m_curMaxMinHasRealPoints;
+}
+
+void smartMaxMin::getFirstLastReal(int& firstRealPointIndex, int& lastRealPointIndex)
+{
+   firstRealPointIndex = m_firstRealPointIndex;
+   lastRealPointIndex  = m_lastRealPointIndex;
 }
 
 void smartMaxMin::handleShortenedNumPoints()
@@ -204,6 +215,9 @@ void smartMaxMin::handleShortenedNumPoints()
          iter++;
       }
    }
+
+   // Segments might have changed, update min / max.
+   calcTotalMaxMin();
 }
 
 void smartMaxMin::calcTotalMaxMin()
@@ -214,6 +228,9 @@ void smartMaxMin::calcTotalMaxMin()
       double newMax = iter->maxValue;
       double newMin = iter->minValue;
       bool maxMinIsRealValue = iter->realPoints;
+      int firstRealPointIndex = iter->firstRealPointIndex;
+      int lastRealPointIndex  = iter->lastRealPointIndex;
+
       ++iter;
 
       while(iter != m_segList.end())
@@ -239,6 +256,13 @@ void smartMaxMin::calcTotalMaxMin()
                }
             }
             maxMinIsRealValue = true;
+
+            // Determine first / last real point index.
+            if(firstRealPointIndex < 0)
+            {
+               firstRealPointIndex = iter->firstRealPointIndex;
+            }
+            lastRealPointIndex = iter->lastRealPointIndex;
          }
 
          ++iter;
@@ -247,6 +271,8 @@ void smartMaxMin::calcTotalMaxMin()
       m_curMax = newMax;
       m_curMin = newMin;
       m_curMaxMinHasRealPoints = maxMinIsRealValue;
+      m_firstRealPointIndex = firstRealPointIndex;
+      m_lastRealPointIndex = lastRealPointIndex;
    }
 }
 
