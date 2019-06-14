@@ -324,7 +324,7 @@ private:
     void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
 
     void initCursorIndex(int curveIndex);
-    void handleCurveDataChange(int curveIndex);
+    void handleCurveDataChange(int curveIndex, bool onlyPlotSizeChanged = false);
     void updatePlotWithNewCurveData(bool onlyCurveDataChanged);
 
     maxMinXY calcMaxMin();

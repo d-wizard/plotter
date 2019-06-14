@@ -1037,18 +1037,18 @@ void MainWindow::initCursorIndex(int curveIndex)
    }
 }
 
-void MainWindow::handleCurveDataChange(int curveIndex)
+void MainWindow::handleCurveDataChange(int curveIndex, bool onlyPlotSizeChanged)
 {
    initCursorIndex(curveIndex);
 
    updatePlotWithNewCurveData(false);
 
-   // inform parent that a curve has been added / changed
+   // inform children that a curve has been added / changed
    m_curveCommander->curveUpdated( this->getPlotName(),
                                    m_qwtCurves[curveIndex]->getCurveTitle(),
                                    m_qwtCurves[curveIndex],
                                    0,
-                                   m_qwtCurves[curveIndex]->getNumPoints(),
+                                   onlyPlotSizeChanged ? 0 : m_qwtCurves[curveIndex]->getNumPoints(), // If only the plot size changed, don't inform the child plots of the change.
                                    PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
                                    PLOT_MSG_ID_TYPE_NO_PARENT_MSG );
 }
@@ -1327,7 +1327,7 @@ void MainWindow::scrollModeSetPlotSize(int newPlotSize)
    for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
    {
       m_qwtCurves[curveIndex]->setNumPoints(newPlotSize);
-      handleCurveDataChange(curveIndex);
+      handleCurveDataChange(curveIndex, true);
    }
 }
 
