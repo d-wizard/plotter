@@ -2734,6 +2734,13 @@ void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
   else
   {
       QCoreApplication::instance()->removeEventFilter(this);
+
+      // Make sure the drag Calc SNR Bar cursor isn't shown when this plot window isn't in focus any more.
+      if(m_showCalcSnrBarCursor)
+      {
+         m_showCalcSnrBarCursor = false;
+         setCursor(); // Update Cursor in case Calc SNR Bar cursor changed.
+      }
   }
 }
 
