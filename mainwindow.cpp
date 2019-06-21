@@ -134,6 +134,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_snrCalcBars(NULL),
    m_dragZoomModeActive(false),
    m_moveCalcSnrBarActive(false),
+   m_showCalcSnrBarCursor(false),
    m_debouncePointSelected(false)
 {
     ui->setupUi(this);
@@ -301,6 +302,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
 MainWindow::~MainWindow()
 {
     delete m_snrCalcBars;
+    m_snrCalcBars = NULL;
 
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
@@ -451,7 +453,6 @@ void MainWindow::resetPlot()
     m_qwtMainPicker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerDragPointMachine());//
 
     m_qwtMainPicker->setRubberBandPen( QColor( Qt::green ) );
-    m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtMainPicker->setTrackerPen( QColor( Qt::white ) );
 
 
@@ -1165,7 +1166,6 @@ void MainWindow::cursorMode()
    m_deltaCursorAction.setIcon(QIcon());
    m_qwtMainPicker->setStateMachine( new QwtPickerDragRectMachine() );
    m_qwtSelectedSampleDelta->hideCursor();
-   m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
    setCursor();
    updatePointDisplay();
    replotMainPlot(true, true);
@@ -1203,7 +1203,6 @@ void MainWindow::deltaCursorMode()
             m_canvasXOverYRatio);
         m_qwtSelectedSampleDelta->showCursor();
 
-        m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
     }
     setCursor();
@@ -1218,7 +1217,6 @@ void MainWindow::zoomMode()
     m_zoomAction.setIcon(m_checkedIcon);
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
-    m_qwtMainPicker->setRubberBand( QwtPicker::RectRubberBand);
     setCursor();
 }
 
@@ -1565,13 +1563,20 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& sele
    return selectCurveIndex;
 }
 
+bool MainWindow::isSelectionCloseToBar(const QPointF& pos)
+{
+   return m_snrCalcBars->isSelectionCloseToBar( pos,
+                                                m_plotZoom->getCurZoom(),
+                                                m_canvasWidth_pixels,
+                                                m_canvasHeight_pixels );
+}
+
+
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
    // Check if we should switch to dragging SNR Calc Bar mode.
-   if( m_selectMode == E_CURSOR && m_snrCalcBars->isVisable() &&
-       m_snrCalcBars->isSelectionCloseToBar(pos, m_plotZoom->getCurZoom(),
-                                       m_canvasWidth_pixels, m_canvasHeight_pixels))
+   if( m_showCalcSnrBarCursor || (m_selectMode != E_ZOOM && m_snrCalcBars->isVisable() && isSelectionCloseToBar(pos)) )
    {
       // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
       // movement while the left mouse button is held down.
@@ -1639,7 +1644,13 @@ void MainWindow::pointSelected(const QPointF &pos)
 
 void MainWindow::rectSelected(const QRectF &pos)
 {
-   if(m_selectMode == E_ZOOM)
+   // This function is called when the user unclicks the left mouse button. Reset the state if a Calc SNR was being moved.
+   if(m_moveCalcSnrBarActive)
+   {
+      m_moveCalcSnrBarActive = false;
+      setCursor(); // Set the cursor back to normal.
+   }
+   else if(m_selectMode == E_ZOOM)
    {
       QRectF rectCopy = pos;
       maxMinXY zoomDim;
@@ -1647,14 +1658,6 @@ void MainWindow::rectSelected(const QRectF &pos)
       rectCopy.getCoords(&zoomDim.minX, &zoomDim.minY, &zoomDim.maxX, &zoomDim.maxY);
 
       m_plotZoom->SetZoom(zoomDim);
-
-   }
-
-   // This function is called when the user unclicks the left mouse button. Reset the state if a Calc SNR was being moved.
-   if(m_moveCalcSnrBarActive)
-   {
-      m_moveCalcSnrBarActive = false;
-      setCursor(); // Set the cursor back to normal.
    }
 }
 
@@ -2339,6 +2342,26 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 usedEvent = false;
             }
 
+        }
+        else if(event->type() == QEvent::MouseMove)
+        {
+           // For now this is only keeping track of the Calc SNR Bars. No need to do anything if those are not visible.
+           if(m_snrCalcBars != NULL && m_snrCalcBars->isVisable())
+           {
+              QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+
+              // Convert mouse point on the canvis to the point on the plot GUI element.
+              QPointF plotPoint;
+              plotPoint.setX(m_qwtPlot->canvasMap(QwtPlot::xBottom).invTransform(mouseEvent->pos().x()));
+              plotPoint.setY(m_qwtPlot->canvasMap(QwtPlot::yLeft).invTransform(mouseEvent->pos().y()));
+
+              if(!m_moveCalcSnrBarActive) // Calling isSelectionCloseToBar when m_moveCalcSnrBarActive is true will screw up the bar that is being moved.
+              {
+                 m_showCalcSnrBarCursor = isSelectionCloseToBar(plotPoint);
+                 setCursor(); // Update Cursor in case Calc SNR Bar cursor changed.
+              }
+           }
+           usedEvent = false; // Never block default functionality for mouse movement.
         }
         else
         {
@@ -3210,22 +3233,25 @@ void MainWindow::setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle 
 
 void MainWindow::setCursor()
 {
+   QwtPicker::RubberBand pickerRubberBand = QwtPicker::CrossRubberBand; // Default picker.
    if(m_dragZoomModeActive)
    {
       m_qwtPlot->canvas()->setCursor(Qt::OpenHandCursor);
    }
-   else if(m_moveCalcSnrBarActive)
+   else if(m_moveCalcSnrBarActive || m_showCalcSnrBarCursor)
    {
       m_qwtPlot->canvas()->setCursor(Qt::SizeHorCursor);
    }
    else if(m_selectMode == E_ZOOM)
    {
       m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
+      pickerRubberBand = QwtPicker::RectRubberBand; // When in zoom mode, draw a rectangle to show the user the new zoom area.
    }
    else
    {
       m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
    }
+   m_qwtMainPicker->setRubberBand(pickerRubberBand);
 }
 
 void MainWindow::on_radClearWrite_clicked()

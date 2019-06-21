@@ -314,6 +314,7 @@ private:
     QPointF m_dragZoomMode_newPoint;
 
     bool m_moveCalcSnrBarActive;
+    bool m_showCalcSnrBarCursor;
 
     bool m_debouncePointSelected;
 
@@ -391,6 +392,8 @@ private:
     void setCursor();
 
     int findIndexWithClosestPoint(const QPointF &pos, unsigned int &selectedCurvePointIndex);
+
+    bool isSelectionCloseToBar(const QPointF& pos);
 
     int getCurveIndex(CurveData* ptr);
 
