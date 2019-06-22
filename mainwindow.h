@@ -307,6 +307,7 @@ private:
     void resetActivityIndicator();
 
     plotSnrCalc* m_snrCalcBars;
+    QPointF m_snrBarStartPoint;
 
     bool m_dragZoomModeActive;
     QMutex m_dragZoomModeMutex;

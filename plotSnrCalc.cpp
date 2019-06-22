@@ -888,3 +888,19 @@ double plotSnrCalc::getMeasurement(eFftSigNoiseMeasurements type)
    return retVal;
 }
 
+QPointF plotSnrCalc::selectedBarPos()
+{
+   QPointF retVal(NAN, NAN);
+   if(m_activeBarIndex >= 0 && m_activeBarIndex < (signed)ARRAY_SIZE(m_allBars))
+   {
+      double pos = m_allBars[m_activeBarIndex]->getBarPos();
+      retVal.setX(pos);
+      retVal.setY(pos);
+   }
+   return retVal;
+}
+
+void plotSnrCalc::selectedBarPos(QPointF val)
+{
+   moveBar(val);
+}

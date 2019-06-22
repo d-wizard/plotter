@@ -55,6 +55,10 @@ public:
    void updateSampleRate();
 
    double getMeasurement(eFftSigNoiseMeasurements type);
+
+   QPointF selectedBarPos();
+   void selectedBarPos(QPointF val);
+
 private:
 
    typedef struct curveDataIndexes

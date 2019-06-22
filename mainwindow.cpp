@@ -132,6 +132,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
    m_snrCalcBars(NULL),
+   m_snrBarStartPoint(NAN, NAN),
    m_dragZoomModeActive(false),
    m_moveCalcSnrBarActive(false),
    m_showCalcSnrBarCursor(false),
@@ -1580,6 +1581,7 @@ void MainWindow::pointSelected(const QPointF &pos)
    {
       // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
       // movement while the left mouse button is held down.
+      m_snrBarStartPoint = m_snrCalcBars->selectedBarPos();
       m_moveCalcSnrBarActive = true;
       connect(m_qwtMainPicker, SIGNAL(moved(QPointF)), this, SLOT(pickerMoved_calcSnr(QPointF)));
       setCursor(); // Set the cursor for moving a Calc SNR Bar.
@@ -2158,13 +2160,19 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Escape can be used if a mouse selection was accidentally clicked.
                if(m_moveCalcSnrBarActive)
                {
-                  // Absorb the Escape button press. This fixes an issue where the Calc SNR Bar cursor gets stuck on.
+                  // Move the calc bar back to where it was before the user started to move it.
+                  m_snrCalcBars->selectedBarPos(m_snrBarStartPoint);
+                  m_qwtPlot->replot();
+
+                  m_showCalcSnrBarCursor = false;
                }
-               else
-               {
-                  // Use default Escape button behavoir.
-                  usedEvent = false;
-               }
+
+               // Turn off all the modifiers. This way the cursor will be set back to it's default.
+               m_dragZoomModeActive = false;
+               m_moveCalcSnrBarActive = false;
+               setCursor();
+
+               usedEvent = false; // Use default Escape button behavoir.
             }
             else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
