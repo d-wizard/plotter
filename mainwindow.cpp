@@ -2148,7 +2148,25 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
         {
             QKeyEvent *KeyEvent = (QKeyEvent*)event;
 
-            if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            if(KeyEvent->key() == Qt::Key_Enter || KeyEvent->key() == Qt::Key_Return)
+            {
+                // Pressing the Enter key can cause some weird behavoir (I think this is due to the QwtPlotPicker)
+                // So, capture all Enter/Return key presses before they can be handled and drop them on the ground.
+            }
+            else if(KeyEvent->key() == Qt::Key_Escape)
+            {
+               // Escape can be used if a mouse selection was accidentally clicked.
+               if(m_moveCalcSnrBarActive)
+               {
+                  // Absorb the Escape button press. This fixes an issue where the Calc SNR Bar cursor gets stuck on.
+               }
+               else
+               {
+                  // Use default Escape button behavoir.
+                  usedEvent = false;
+               }
+            }
+            else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                 m_plotZoom->changeZoomFromSavedZooms(-1);
             }
