@@ -34,7 +34,7 @@ plotBar::plotBar( QwtPlot* parentPlot,
          width,
          penStyle,
          curveStyle,
-         2);
+         3);
 }
 
 
