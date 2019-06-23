@@ -56,6 +56,7 @@ createPlotFromData::createPlotFromData(CurveCommander *curveCmdr, QString plotNa
       }
    }
 
+   plotName = ""; // This is kind of a hack. I don't like the idea of suggesting a copy/paste curve being created on the same plot that it was pasted on.
    ui->cmbPlotName->lineEdit()->setText(plotName);
 
    fillInValidPlotCurve();
