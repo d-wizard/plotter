@@ -1,4 +1,4 @@
-/* Copyright 2013, 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -117,7 +117,7 @@ void* dServerSocket_acceptThread(void* voidDSock)
    SOCKET connectionFd = 0;
 
    dSock->acceptThread.active = 1;
-   printf("acceptThread start\n");
+   //printf("acceptThread start\n");
 
    while(!dSock->acceptThread.kill)
    {
@@ -136,7 +136,7 @@ void* dServerSocket_acceptThread(void* voidDSock)
       }
    }
    dSock->acceptThread.active = 0;
-   printf("acceptThread end\n");
+   //printf("acceptThread end\n");
 
    return NULL;
 }
@@ -147,7 +147,7 @@ void* dServerSocket_rxThread(void* voidDClientConn)
    int packetSize = 0;
 
    dClientConn->rxThread.active = 1;
-   printf("rxThread start\n");
+   //printf("rxThread start\n");
    while(!dClientConn->rxThread.kill)
    {
       dServerSocket_updateIndexForNextPacket(&dClientConn->rxBuff);
@@ -166,13 +166,13 @@ void* dServerSocket_rxThread(void* voidDClientConn)
       }
       else
       {
-         printf("rxThread wrong packet size\n");
+         //printf("rxThread wrong packet size\n");
          dClientConn->rxThread.kill = 1;
       }
 
    }
    dClientConn->rxThread.active = 0;
-   printf("rxThread end\n");
+   //printf("rxThread end\n");
 
    sem_post(dClientConn->killThisThreadSem);
 
@@ -183,7 +183,7 @@ void* dServerSocket_procThread(void* voidDClientConn)
 {
    dClientConnection* dClientConn = (dClientConnection*)voidDClientConn;
    dClientConn->procThread.active = 1;
-   printf("procThread start\n");
+   //printf("procThread start\n");
 
    do
    {
@@ -192,7 +192,7 @@ void* dServerSocket_procThread(void* voidDClientConn)
    }while(!dClientConn->procThread.kill);
 
    dClientConn->procThread.active = 0;
-   printf("procThread end\n");
+   //printf("procThread end\n");
 
    return NULL;
 }
@@ -204,7 +204,7 @@ void* dServer_killThreads(void* voidDSock)
    struct dClientConnList* curClient = NULL;
    
    dSock->killThread.active = 1;
-   printf("killThread Start\n");
+   //printf("killThread Start\n");
 
 
    // Make sure all the client connection threads have been
@@ -244,7 +244,7 @@ void* dServer_killThreads(void* voidDSock)
    }
 
    dSock->killThread.active = 0;
-   printf("killThread end\n");
+   //printf("killThread end\n");
 
    return NULL;
 }
@@ -393,7 +393,7 @@ void dServerSocket_newClientConn(dServerSocket* dSock, SOCKET clientFd, struct s
 
    pthread_create((pthread_t*)&dConn->rxThread, NULL, dServerSocket_rxThread, dConn);
    pthread_create((pthread_t*)&dConn->procThread, NULL, dServerSocket_procThread, dConn);
-   printf("New Client %d\n", clientFd);
+   //printf("New Client %d\n", clientFd);
 }
 
 void dServerSocket_killAll(dServerSocket* dSock)
