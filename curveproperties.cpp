@@ -549,7 +549,7 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
 
       if(updateComboSuccess == false)
       {
-         trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, plotName);
+         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, plotName);
       }
 
       // If updating with user specifed values (i.e. restoreUserSpecifed is false), mark this combo box as user specified.
