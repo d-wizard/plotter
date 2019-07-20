@@ -5,7 +5,8 @@
 #-------------------------------------------------
 revDateStampTarget.target = Makefile
 revDateStampTarget.depends = FORCE
-revDateStampTarget.commands = python ./revDateStamp.py
+win32: revDateStampTarget.commands = cd $$PWD & python ./revDateStamp.py # Windows version
+else:  revDateStampTarget.commands = cd $$PWD;  python ./revDateStamp.py  # Unix version
 QMAKE_EXTRA_TARGETS += revDateStampTarget
 
 RC_FILE = mainwindow.rc
