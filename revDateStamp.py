@@ -44,8 +44,14 @@ def writeWholeFile(path, fileText):
 
 def getSvnVersion():
    retVal = 0
+   
+   # Set CWD to the path this script is in
+   origCwd = os.getcwd()
+   os.chdir(scriptDir)
+   
    svnVersionCmd = SVN_PATH + ' info'
 
+   # Run the 'info' command and loop over the results until the revision information line is found.
    p = os.popen(svnVersionCmd, "r")
    while 1:
       line = p.readline()
@@ -55,6 +61,10 @@ def getSvnVersion():
       if line.find(REV_DELIM) >= 0:
          retVal = int(line.split(REV_DELIM)[1])
          break
+   
+   # Set CWD back (probably not needed, but just in case...)
+   os.chdir(origCwd)
+   
    return retVal
        
 svnRev = getSvnVersion()
