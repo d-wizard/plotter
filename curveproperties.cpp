@@ -62,12 +62,14 @@ const QString mathOpsStr[] = {
 "SHIFT UP",
 "SHIFT DOWN",
 "POWER",
-"LOG()",
-"MOD()",
-"ABS()",
-"ROUND()",
-"ROUNDUP()",
-"ROUNDDOWN()"
+"LOG",
+"MOD",
+"ABS",
+"ROUND",
+"ROUNDUP",
+"ROUNDDOWN",
+"LIMIT UPPER",
+"LIMIT LOWER"
 };
 
 const QString mathOpsSymbol[] = {
@@ -82,7 +84,9 @@ const QString mathOpsSymbol[] = {
 "abs",
 "round",
 "round up",
-"round down"
+"round down",
+"limit upper",
+"limit lower"
 };
 
 
@@ -98,7 +102,9 @@ const QString mathOpsValueLabel[] = {
 "", // ABS has no value, so set the text to nothing.
 "Decimal Point to Round",
 "Decimal Point to Round Up",
-"Decimal Point to Round Down"
+"Decimal Point to Round Down",
+"Upper Hard Limit Vaue",
+"Lower Hard Limit Vaue"
 };
 
 const QString plotTypeNames[] = {

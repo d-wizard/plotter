@@ -1332,6 +1332,18 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                      (*dataIter) = floor((*dataIter) * decimal) / decimal;
                   }
                break;
+               case E_LIMIT_UPPER:
+                  if((*dataIter) > mathIter->num)
+                  {
+                     (*dataIter) = mathIter->num;
+                  }
+               break;
+               case E_LIMIT_LOWER:
+                  if((*dataIter) < mathIter->num)
+                  {
+                     (*dataIter) = mathIter->num;
+                  }
+               break;
             }
          }
       }

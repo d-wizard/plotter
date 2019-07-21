@@ -317,7 +317,9 @@ typedef enum
    E_ABS,
    E_ROUND,
    E_ROUND_UP,
-   E_ROUND_DOWN
+   E_ROUND_DOWN,
+   E_LIMIT_UPPER,
+   E_LIMIT_LOWER
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -335,6 +337,8 @@ inline bool valid_eMathOp(eMathOp in)
    case E_ROUND:
    case E_ROUND_UP:
    case E_ROUND_DOWN:
+   case E_LIMIT_UPPER:
+   case E_LIMIT_LOWER:
       return true;
       break;
    }
@@ -355,6 +359,8 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_ROUND:
    case E_ROUND_UP:
    case E_ROUND_DOWN:
+   case E_LIMIT_UPPER:
+   case E_LIMIT_LOWER:
       return true;
       break;
    case E_ABS:
