@@ -66,8 +66,8 @@ const QString mathOpsStr[] = {
 "MOD",
 "ABS",
 "ROUND",
-"ROUNDUP",
-"ROUNDDOWN",
+"ROUND UP",
+"ROUND DOWN",
 "LIMIT UPPER",
 "LIMIT LOWER"
 };
