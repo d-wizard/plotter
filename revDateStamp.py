@@ -1,4 +1,4 @@
-# Copyright 2015 Dan Williams. All Rights Reserved.
+# Copyright 2015, 2019 Dan Williams. All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -20,16 +20,21 @@ import os
 import string
 import time
 
+scriptDir = os.path.dirname(os.path.realpath(__file__))
+
 SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"'
 
 REV_DELIM = 'Revision: '
 
-FILE_NAME = 'revDateStamp.h'
+FILE_NAME = os.path.join(scriptDir, 'revDateStamp.h')
 
 def readWholeFile(path):
-   fileId = open(path, 'r')
-   retVal = fileId.read()
-   fileId.close()
+   try:
+      fileId = open(path, 'r')
+      retVal = fileId.read()
+      fileId.close()
+   except:
+      retVal = ""
    return retVal
    
 def writeWholeFile(path, fileText):
