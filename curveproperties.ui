@@ -232,6 +232,9 @@
        <height>17</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Allows the ability to only use a subset of the parents samples in the child plot.</string>
+     </property>
      <property name="text">
       <string>Source Slice</string>
      </property>
@@ -244,6 +247,10 @@
        <width>71</width>
        <height>22</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Start sample index (inclusive).
+Negative values reference samples from the end of the plot.</string>
      </property>
      <property name="minimum">
       <number>-2000000000</number>
@@ -261,6 +268,10 @@
        <height>22</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Stop sample index (exclusive).
+Negative values reference samples from the end of the plot.</string>
+     </property>
      <property name="minimum">
       <number>-2000000000</number>
      </property>
@@ -276,6 +287,10 @@
        <width>71</width>
        <height>22</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Start sample index (inclusive).
+Negative values reference samples from the end of the plot.</string>
      </property>
      <property name="minimum">
       <number>-2000000000</number>
@@ -293,6 +308,10 @@
        <height>22</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Stop sample index (exclusive).
+Negative values reference samples from the end of the plot.</string>
+     </property>
      <property name="minimum">
       <number>-2000000000</number>
      </property>
@@ -309,6 +328,9 @@
        <height>23</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Sets start / stop slice indexes based on the current zoom.</string>
+     </property>
      <property name="text">
       <string>Use Zoom</string>
      </property>
@@ -322,6 +344,9 @@
        <height>23</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Sets start / stop slice indexes based on the current zoom.</string>
+     </property>
      <property name="text">
       <string>Use Zoom</string>
      </property>
@@ -334,6 +359,10 @@
        <width>113</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Specifies the average amount. Must be between 0 and 1.
+The closer the value is to 1, the more averaging will be performed.</string>
      </property>
      <property name="text">
       <string>0.98</string>
@@ -360,6 +389,9 @@
        <width>111</width>
        <height>17</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Use Blackman-Harris windowing.</string>
      </property>
      <property name="text">
       <string>Window FFT Data</string>
@@ -407,6 +439,10 @@
        <height>17</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>Windowing has loss. This will add gain to compensate for the loss.
+(This isn't perfect, but it gets the values pretty close.)</string>
+     </property>
      <property name="text">
       <string>Compensate for Window Loss</string>
      </property>
@@ -422,6 +458,11 @@
        <width>141</width>
        <height>17</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Discontinuities in the parent data can cause problems for the FFT.
+If checked, this will force the parent data to be contiguous.
+Basically, this does scroll mode on the parent even if it isn't actually in scroll mode.</string>
      </property>
      <property name="text">
       <string>Force Source Contiguous</string>
@@ -481,6 +522,10 @@
        <height>17</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>If checked, this will make the child match the parents scoll mode settings.
+If unchecked, the child will match the non-scroll mode version of the parent.</string>
+     </property>
      <property name="text">
       <string>Match Parent Scroll Mode</string>
      </property>
@@ -528,6 +573,10 @@
        <width>113</width>
        <height>20</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Specifies sample rate in samples per second.
+Set to 0 for default behavoir.</string>
      </property>
     </widget>
     <widget class="QLabel" name="label">
@@ -598,6 +647,9 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="toolTip">
+      <string>e, pi, or 2pi can be typed to specify certain irrational numbers.</string>
+     </property>
     </widget>
     <widget class="QPushButton" name="cmdOpRight">
      <property name="geometry">
@@ -607,6 +659,9 @@
        <width>75</width>
        <height>23</height>
       </rect>
+     </property>
+     <property name="toolTip">
+      <string>Add the math operation to the list.</string>
      </property>
      <property name="text">
       <string>---&gt;</string>
@@ -674,7 +729,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Mult-Curve Selection Options</string>
+      <string>Multi-Curve Selection Options</string>
      </property>
      <widget class="QRadioButton" name="radMultCurveTop">
       <property name="geometry">
@@ -684,6 +739,10 @@
         <width>82</width>
         <height>17</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Specifies math operations that should be applied to all 
+curves BEFORE any math operations for individual curves.</string>
       </property>
       <property name="text">
        <string>Add to Top</string>
@@ -701,6 +760,10 @@
         <height>17</height>
        </rect>
       </property>
+      <property name="toolTip">
+       <string>Specifies math operations that should be applied to all 
+curves AFTER any math operations for individual curves.</string>
+      </property>
       <property name="text">
        <string>Add to Bottom</string>
       </property>
@@ -713,6 +776,10 @@
         <width>121</width>
         <height>17</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>If checked, only the multi-curve math operations will be applied.
+Any math operations appiled to individual curves will be ignored.</string>
       </property>
       <property name="text">
        <string>Overwrite All Curves</string>
@@ -1687,6 +1754,9 @@
         <width>51</width>
         <height>41</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>This will keep a child plot from being updated when its parent changes.</string>
       </property>
       <property name="text">
        <string>Unlink
