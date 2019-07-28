@@ -513,10 +513,8 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
          SaveRaw(plotGui, plotName, plotInfo);
       break;
       case E_SAVE_RESTORE_CSV:
-         SaveExcel(plotGui, plotInfo, CSV_CELL_DELIM);
-      break;
       case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
-         SaveExcel(plotGui, plotInfo, CLIPBOARD_EXCEL_CELL_DELIM);
+         SaveExcel(plotGui, plotInfo, type);
       break;
       case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
       case E_SAVE_RESTORE_C_HEADER_INT:
@@ -577,12 +575,13 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
 
 }
 
-void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, std::string delim)
+void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSaveRestorePlotCurveType type)
 {
+   std::string delim = type == E_SAVE_RESTORE_CLIPBOARD_EXCEL ? CLIPBOARD_EXCEL_CELL_DELIM : CSV_CELL_DELIM;
    QVector<QStringList> curveCsvFiles;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_CSV);
+      SaveCurve curveFile(plotGui, plotInfo[i], type);
       curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
       curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
    }
