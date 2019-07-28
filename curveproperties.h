@@ -253,6 +253,8 @@ private:
 
    void setMatchParentScrollChkBoxVisible();
 
+   void useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnStart, QSpinBox* spnStop);
+
    Ui::curveProperties *ui;
 
    CurveCommander* m_curveCmdr;

@@ -1428,51 +1428,19 @@ void curveProperties::on_cmbRestoreCurveNameFilter_currentIndexChanged(int index
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdXUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
-   CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
-   if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
-   {
-      // Valid 1D parent, continue
-      MainWindow* mainPlot = m_curveCmdr->getMainPlot(curve.plotName);
-      if(mainPlot != NULL)
-      {
-         // Get zoom dimensions.
-         maxMinXY dim = mainPlot->getZoomDimensions();
-
-         // Use sample rate to convert back to start/stop indexes of source data.
-         double sampleRate = parentCurve->getSampleRate();
-         if(sampleRate != 0.0)
-         {
-            dim.minX *= sampleRate;
-            dim.maxX *= sampleRate;
-         }
-
-         // Bound.
-         if(dim.minX < 0)
-            dim.minX = 0;
-         if(dim.maxX >= parentCurve->getNumPoints())
-            dim.maxX = parentCurve->getNumPoints() - 1;
-
-         // Set GUI elements.
-         ui->spnXSrcStart->setValue(dim.minX);
-         ui->spnXSrcStop->setValue(dim.maxX);
-
-         // User hit a button, i.e. user specified.
-         m_cmbXAxisSrc->userSpecified(true);
-      }
-   }
-   else
-   {
-      ui->spnXSrcStart->setValue(0);
-      ui->spnXSrcStop->setValue(0);
-   }
+   useZoomForSlice(m_cmbXAxisSrc, ui->spnXSrcStart, ui->spnXSrcStop);
 }
 
 // Get source curve start and stop indexes from the current zoom
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdYUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = m_cmbYAxisSrc->getPlotCurveAxis();
+   useZoomForSlice(m_cmbYAxisSrc, ui->spnYSrcStart, ui->spnYSrcStop);
+}
+
+void curveProperties::useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnStart, QSpinBox* spnStop)
+{
+   tPlotCurveAxis curve = cmbAxisSrc->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
    if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
    {
@@ -1498,17 +1466,17 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
             dim.maxX = parentCurve->getNumPoints() - 1;
 
          // Set GUI elements.
-         ui->spnYSrcStart->setValue(dim.minX);
-         ui->spnYSrcStop->setValue(dim.maxX);
+         spnStart->setValue(dim.minX);
+         spnStop->setValue(dim.maxX);
 
          // User hit a button, i.e. user specified.
-         m_cmbYAxisSrc->userSpecified(true);
+         cmbAxisSrc->userSpecified(true);
       }
    }
    else
    {
-      ui->spnYSrcStart->setValue(0);
-      ui->spnYSrcStop->setValue(0);
+      spnStart->setValue(0);
+      spnStop->setValue(0);
    }
 }
 
