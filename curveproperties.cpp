@@ -1448,22 +1448,15 @@ void curveProperties::useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnSta
       MainWindow* mainPlot = m_curveCmdr->getMainPlot(curve.plotName);
       if(mainPlot != NULL)
       {
-         // Get zoom dimensions.
-         maxMinXY dim = mainPlot->getZoomDimensions();
+         maxMinXY dim = parentCurve->get1dDisplayedIndexes();
 
-         // Use sample rate to convert back to start/stop indexes of source data.
-         double sampleRate = parentCurve->getSampleRate();
-         if(sampleRate != 0.0)
-         {
-            dim.minX *= sampleRate;
-            dim.maxX *= sampleRate;
-         }
+         dim.minX += 1; // Min is the sample before the first sample displayed.
 
          // Bound.
-         if(dim.minX < 0)
+         if(dim.minX < 0 || dim.minX >= parentCurve->getNumPoints())
             dim.minX = 0;
-         if(dim.maxX >= parentCurve->getNumPoints())
-            dim.maxX = parentCurve->getNumPoints() - 1;
+         if(dim.maxX < 0 || dim.maxX >= parentCurve->getNumPoints())
+            dim.maxX = 0;
 
          // Set GUI elements.
          spnStart->setValue(dim.minX);

@@ -519,7 +519,7 @@ maxMinXY CurveData::getMinMaxInRange(const dubVect& in, unsigned int start, unsi
 // xEndIndex is a return value, exclusive.
 // sampPerPixel is a return value.
 // The member variable numPoints must be 2 or greater.
-void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel)
+void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel, bool addMargin)
 {
    xStartIndex = 0;
    xEndIndex = numPoints;
@@ -546,14 +546,18 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
       double xStartIndex_float = findFirstSampleGreaterThan(xPointsForGui, xStartIndex_guess, zoomMin) - 1;
       double xEndIndex_float = findFirstSampleGreaterThan(xPointsForGui, xEndIndex_guess, zoomMax);
 
-      // Add some margin so we plot a little before / after the zoom coordinates.
-      double margin = sampPerPixel_float > 0 ? 2.0*sampPerPixel_float: 2.0;
-      xStartIndex_float -= margin;
-      xEndIndex_float   += margin;
+      if(addMargin)
+      {
+         // Add some margin so we plot a little before / after the zoom coordinates.
+         double margin = sampPerPixel_float > 0 ? 2.0*sampPerPixel_float : 2.0;
+         xStartIndex_float -= margin;
+         xEndIndex_float   += margin;
+      }
 
       // Bound float based index when converting to integer (just in case the floating point version is bad... avoid overflow)
-      if(xStartIndex_float < 0)
-         xStartIndex = 0;
+      double limitBasedOnMargin = addMargin ? 0 : -1; // If we are not adding any margin, need to use -1 to indicate the first sample is included.
+      if(xStartIndex_float < limitBasedOnMargin)
+         xStartIndex = limitBasedOnMargin;
       else if(xStartIndex_float >= (double)numPoints)
          xStartIndex = numPoints-1;
       else
@@ -564,7 +568,7 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
       else if(xEndIndex_float >= (double)numPoints)
          xEndIndex = numPoints;
       else
-         xEndIndex   = (int)std::ceil(xEndIndex_float);
+         xEndIndex = (int)std::ceil(xEndIndex_float);
 
       if(xEndIndex <= xStartIndex)
       {
@@ -590,6 +594,30 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
          sampPerPixel = sampPerPixel_float; // Convert from float to int (round down).
       }
    }
+}
+
+
+maxMinXY CurveData::get1dDisplayedIndexes()
+{
+   maxMinXY retVal;
+   retVal.minX = -1;
+   retVal.maxX = -1;
+
+   if(plotDim == E_PLOT_DIM_1D && numPoints > 1)
+   {
+      dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
+
+      unsigned int sampPerPixel = 0;
+      int xStartIndex = 0;
+      int xEndIndex = numPoints;
+
+      getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel, false);
+
+      retVal.minX = xStartIndex;
+      retVal.maxX = xEndIndex;
+   }
+
+   return retVal;
 }
 
 int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue)
@@ -688,7 +716,7 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
    int xEndIndex = numPoints;
 
    // Calculate xStartIndex, xEndIndex, sampPerPixel values.
-   getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel);
+   getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel, true);
 
    // Don't plot NAN points at the beginning / end of curve data.
    {
