@@ -2257,7 +2257,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                      curveVect.push_back(m_qwtCurves[i]);
                   }
                }
-               SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
+               SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL, true);
                PackedCurveData clipboardDataString;
                savePlot.getPackedData(clipboardDataString);
 

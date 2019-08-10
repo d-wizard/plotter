@@ -154,7 +154,8 @@ static std::string getCHeaderTypedefStr(QString plotName, QString curveName, std
           "#endif" + C_HEADER_LINE_DELIM;
 }
 
-SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type)
+SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type, bool limitToZoom):
+   m_limitToZoom(limitToZoom)
 {
    switch(type)
    {
@@ -249,36 +250,49 @@ void SaveCurve::SaveRaw(CurveData* curve)
 
 void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim)
 {
-    std::stringstream csvFile;
-    if(curve->getPlotDim() == E_PLOT_DIM_2D)
-    {
-       csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
-       csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
+   std::stringstream csvFile;
+   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   {
+      csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
+      csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
+      
+      for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
+      {
+         plotGui->setDisplayIoMapipXAxis(csvFile, curve);
+         csvFile << curve->getXPoints()[i] << delim;
+         plotGui->setDisplayIoMapipYAxis(csvFile);
+         csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
+      }
+      plotGui->clearDisplayIoMapIp(csvFile);
+   }
+   else
+   {
+      unsigned int startInclusive = 0;
+      unsigned int stopExclusive = curve->getNumPoints();
 
-       for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
-       {
-          plotGui->setDisplayIoMapipXAxis(csvFile, curve);
-          csvFile << curve->getXPoints()[i] << delim;
-          plotGui->setDisplayIoMapipYAxis(csvFile);
-          csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
-       }
-       plotGui->clearDisplayIoMapIp(csvFile);
-    }
-    else
-    {
-        csvFile << curve->getCurveTitle().toStdString() << EXCEL_LINE_DELIM;
+      if(m_limitToZoom)
+      {
+         maxMinXY displayed = curve->get1dDisplayedIndexes();
+         displayed.minX += 1; // Min is the sample before the first sample displayed.
 
-        plotGui->setDisplayIoMapipYAxis(csvFile);
-        for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
-        {
-           csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
-        }
-        plotGui->clearDisplayIoMapIp(csvFile);
-    }
+         if(displayed.minX > startInclusive)
+            startInclusive = displayed.minX;
+         if(displayed.maxX < stopExclusive)
+            stopExclusive = displayed.maxX;
+      }
+      
+      csvFile << curve->getCurveTitle().toStdString() << EXCEL_LINE_DELIM;
 
+      plotGui->setDisplayIoMapipYAxis(csvFile);
+      for(unsigned int i = startInclusive; i < stopExclusive; ++i)
+      {
+         csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
+      }
+      plotGui->clearDisplayIoMapIp(csvFile);
+   }
 
-    packedCurveData.resize(csvFile.str().size());
-    memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
+   packedCurveData.resize(csvFile.str().size());
+   memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
 }
 
 void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type)
@@ -504,7 +518,8 @@ void RestoreCurve::unpack(void* toUnpack, size_t unpackSize)
 }
 
 
-SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type)
+SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type, bool limitToZoom):
+   m_limitToZoom(limitToZoom)
 {
    switch(type)
    {
@@ -537,7 +552,7 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
    UINT_32 fileSize = 0;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_RAW);
+      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_RAW, m_limitToZoom);
       curveRawFiles.push_back(curveFile.packedCurveData);
       fileSize += curveFile.packedCurveData.size();
    }
@@ -581,7 +596,7 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSa
    QVector<QStringList> curveCsvFiles;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], type);
+      SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
       curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
    }
@@ -624,7 +639,7 @@ void SavePlot::SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, e
 {
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], type);
+      SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       packedCurveHead.insert(packedCurveHead.end(), curveFile.packedCurveHead.begin(), curveFile.packedCurveHead.end());
       packedCurveData.insert(packedCurveData.end(), curveFile.packedCurveData.begin(), curveFile.packedCurveData.end());
    }

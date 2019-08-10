@@ -60,7 +60,7 @@ typedef struct
 class SaveCurve
 {
 public:
-   SaveCurve(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
+   SaveCurve(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type, bool limitToZoom = false);
    void getPackedData(PackedCurveData& packedDataReturn);
 
    PackedCurveData packedCurveHead;
@@ -74,6 +74,8 @@ private:
    void SaveRaw(CurveData* curve);
    void SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim);
    void SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
+
+   bool m_limitToZoom;
 };
 
 class RestoreCurve
@@ -101,7 +103,7 @@ private:
 class SavePlot
 {
 public:
-   SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
+   SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type, bool limitToZoom = false);
    void getPackedData(PackedCurveData& packedDataReturn);
 
    PackedCurveData packedCurveHead;
@@ -115,6 +117,8 @@ private:
    void SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo);
    void SaveExcel(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
    void SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
+
+   bool m_limitToZoom;
 };
 
 class RestorePlot
