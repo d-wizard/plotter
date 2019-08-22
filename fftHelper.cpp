@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015, 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015, 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -20,6 +20,55 @@
 #include <math.h>
 #include "PlotHelperTypes.h"
 #include "fftHelper.h"
+
+// Overwrite NaN samples at the beginning with 0's
+// There are many reasons why samples at the beginning might be NaN values:
+// Scroll mode, FM Demod, etc...
+static void fixStartNanComplex(fftw_complex* in, unsigned int N)
+{
+   for(unsigned int i = 0; i < N; ++i)
+   {
+      bool goodRe = true;
+      bool goodIm = true;
+      if(!isDoubleValid(in[i][0])) // Check if Real Value is NaN
+      {
+         goodRe = false;
+         in[i][0] = 0;
+      }
+      if(!isDoubleValid(in[i][1])) // Check if Imaginary Value is NaN
+      {
+         goodIm = false;
+         in[i][1] = 0;
+      }
+
+      if(goodRe && goodIm)
+      {
+         break;
+      }
+   }
+}
+
+// Overwrite NaN samples at the beginning with 0's
+// There are many reasons why samples at the beginning might be NaN values:
+// Scroll mode, FM Demod, etc...
+static void fixStartNanReal(fftw_complex* in, unsigned int N)
+{
+   for(unsigned int i = 0; i < N; ++i)
+   {
+      bool good = true;
+      if(!isDoubleValid(in[i][0])) // Check if Real Value is NaN (note: imaginary value is the same as real value).
+      {
+         good = false;
+         in[i][0] = 0;
+         in[i][1] = 0;
+      }
+
+      if(good)
+      {
+         break;
+      }
+   }
+}
 
 void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double *windowCoef)
 {
@@ -49,6 +98,9 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
              in[i][1] = inIm[i] * windowCoef[i];
           }
        }
+
+       // Overwrite NaN samples at the beginning with 0's
+       fixStartNanComplex(in, N);
 
        p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
@@ -111,9 +163,12 @@ void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
           for(unsigned int i = 0; i < N; ++i)
           {
              in[i][0] = inRe[i] * windowCoef[i];
-             in[i][1] = inRe[i] * windowCoef[i];
+             in[i][1] = in[i][0]; // Set Imaginary value to the same as real.
           }
        }
+
+       // Overwrite NaN samples at the beginning with 0's
+       fixStartNanReal(in, N);
 
        p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
