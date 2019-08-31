@@ -627,11 +627,19 @@ void PlotZoom::UpdateScrollBars()
    m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
    m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
 
-   // Check if zoom and plot are the same, take into account rounding error
-   bool areTheyClose_minX = areTheyClose(m_zoomDimensions.minX, m_plotDimensions.minX);
-   bool areTheyClose_maxX = areTheyClose(m_zoomDimensions.maxX, m_plotDimensions.maxX);
-   bool areTheyClose_minY = areTheyClose(m_zoomDimensions.minY, m_plotDimensions.minY);
-   bool areTheyClose_maxY = areTheyClose(m_zoomDimensions.maxY, m_plotDimensions.maxY);
+
+   // Normalize to -1 to 1 before checking if they are close (calculate m & b from the plot dimensions)
+   double mX = 2.0 / (m_plotDimensions.maxX -  m_plotDimensions.minX);
+   double mY = 2.0 / (m_plotDimensions.maxY -  m_plotDimensions.minY);
+   double bX = 1.0 - mX * m_plotDimensions.maxX;
+   double bY = 1.0 - mY * m_plotDimensions.maxY;
+
+
+   // Check if zoom and plot are the same, take into account rounding error by comparing normalized versions of zoom and plot.
+   bool areTheyClose_minX = areTheyClose(m_zoomDimensions.minX*mX+bX, -1);
+   bool areTheyClose_maxX = areTheyClose(m_zoomDimensions.maxX*mX+bX,  1);
+   bool areTheyClose_minY = areTheyClose(m_zoomDimensions.minY*mY+bY, -1);
+   bool areTheyClose_maxY = areTheyClose(m_zoomDimensions.maxY*mY+bY,  1);
 
    bool setXScrollBars = false;
    bool setYScrollBars = false;
