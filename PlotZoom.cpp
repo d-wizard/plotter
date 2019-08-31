@@ -541,7 +541,7 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
 
       ResetPlotAxisScale();
 
-      UpdateScrollBars();
+      UpdateScrollBars(changeCausedByUserGuiInput);
 
       // Remove any saved next zooms and store the current zoom and the new zoom.
       if(saveZoom == true)
@@ -616,7 +616,7 @@ void PlotZoom::moveZoom(double deltaX, double deltaY, bool changeCausedByUserGui
    }
 }
 
-void PlotZoom::UpdateScrollBars()
+void PlotZoom::UpdateScrollBars(bool changeCausedByUserGuiInput)
 {
    // Update Scroll Bar variables.
    m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
@@ -688,7 +688,9 @@ void PlotZoom::UpdateScrollBars()
       setYScrollBars = true;
    }
 
-   if(setXScrollBars == false)
+   // Make sure not to flicker the scroll bar on and off when the plot data is changing.
+   // So only turn it off if a change was made by user GUI input.
+   if(setXScrollBars == false && (changeCausedByUserGuiInput || !m_horzScroll->isVisible()))
    {
       m_horzScroll->setRange(0, 0);
       m_horzScroll->setVisible(false);
@@ -702,7 +704,9 @@ void PlotZoom::UpdateScrollBars()
       m_horzScroll->setSliderPosition(m_curXScrollPos);
    }
 
-   if(setYScrollBars == false)
+   // Make sure not to flicker the scroll bar on and off when the plot data is changing.
+   // So only turn it off if a change was made by user GUI input.
+   if(setYScrollBars == false && (changeCausedByUserGuiInput || !m_vertScroll->isVisible()))
    {
       m_vertScroll->setRange(0, 0);
       m_vertScroll->setVisible(false);
