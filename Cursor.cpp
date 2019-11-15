@@ -92,6 +92,11 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    // delta calculation to make the x and y delta ratio 1:1
    double width = (maxMin.maxX - maxMin.minX);
    double height = (maxMin.maxY - maxMin.minY) * displayRatio;
+
+   // Avoid divide by zero (also negative width/height don't make any sense).
+   if(width <= 0.0) width = 1.0;
+   if(height <= 0.0) height = 1.0;
+
    double inverseWidth = 1.0/width;
    double inverseHeight = 1.0/height;
 
