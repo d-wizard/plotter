@@ -2221,12 +2221,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                resetZoom();
             }
-            else if(KeyEvent->key() == Qt::Key_E && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !m_allowNewCurves)
+            else if(KeyEvent->key() == Qt::Key_E && KeyEvent->modifiers().testFlag(Qt::AltModifier) && !m_allowNewCurves)
             {
                // Enable new plot messages.
                togglePlotUpdateAbility();
             }
-            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && m_allowNewCurves)
+            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::AltModifier) && m_allowNewCurves)
             {
                // Disable new plot messages.
                togglePlotUpdateAbility();
@@ -2235,6 +2235,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                // Toggle new plot messages.
                togglePlotUpdateAbility();
+            }
+            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               deltaCursorMode();
             }
             else if(KeyEvent->key() == Qt::Key_L && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {

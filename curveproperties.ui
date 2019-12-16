@@ -1206,11 +1206,16 @@ Any math operations appiled to individual curves will be ignored.</string>
    ctrl + y | Restore reverted zoom window
 
    -----------------------------------------------------------------
+   | Delta Cursor
+   -----------------------------------------------------------------
+   ctrl + d | Set new Delta Cursor point
+
+   -----------------------------------------------------------------
    | Enable / Disable New Curves Settings
    -----------------------------------------------------------------
-   ctrl + e | Enable New Curves
-   ctrl + d | Disable New Curves
    ctrl + t | Toggle Enable / Disable New Curves
+   alt + e | Enable New Curves
+   alt + d | Disable New Curves
 
    -----------------------------------------------------------------
    | Copy / Paste Curves
