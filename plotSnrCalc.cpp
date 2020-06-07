@@ -772,6 +772,7 @@ void plotSnrCalc::updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes
 {
    if(fftChunk->indexes != newIndexes)
    {
+      bool fullCalcFftChunk = false;
       // If start / stop indexes are out of order, no calculations are needed.
       if(newIndexes.startIndex > newIndexes.stopIndex)
       {
@@ -782,6 +783,8 @@ void plotSnrCalc::updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes
       else if( fftChunk->indexes.startIndex == newIndexes.startIndex ||
                fftChunk->indexes.stopIndex == newIndexes.stopIndex )
       {
+         double origPower = fftChunk->powerLinear; // Store off so we can check for floating point round error after the delta has been taken into account.
+
          tFftBinChunk delta;
          bool binsAdded = calcBinDelta(fftChunk->indexes, newIndexes, &delta);
          if(binsAdded)
@@ -794,11 +797,23 @@ void plotSnrCalc::updateFftChunk(tFftBinChunk* fftChunk, const tCurveDataIndexes
             fftChunk->bandwidth -= delta.bandwidth;
             fftChunk->powerLinear -= delta.powerLinear;
          }
+
+         // Check if the delta has caused the logarithmic power to be Not-a-number.
+         if(fftChunk->powerLinear <= 0 && origPower > 0)
+         {
+            fullCalcFftChunk = true; // Floating point rounding has likely caused us to have an invalid power. Do a full FFT Chunk calc.
+         }
       }
       else
       {
+         fullCalcFftChunk = true; // Do a full FFT Chunk calc.
+      }
+
+      if(fullCalcFftChunk)
+      {
          calcFftChunk(fftChunk, newIndexes);
       }
+
       fftChunk->indexes = newIndexes;
    }
 }
