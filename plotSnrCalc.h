@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -118,7 +118,7 @@ private:
    void findIndexes(double start, double stop, tCurveDataIndexes* indexes, int numPoints, const double* xPoints, double hzPerBin);
    int findIndex(double barPoint, int numPoints, const double* xPoints, double hzPerBin, bool highSide);
 
-   tCurveDataIndexes determineBinOverlap(const tCurveDataIndexes& indexes1, const tCurveDataIndexes& indexes2);
+   void determineNoiseChunks(const tCurveDataIndexes& noise, const tCurveDataIndexes& signal, tCurveDataIndexes& noiseLeftRet, tCurveDataIndexes& noiseRightRet);
 
    bool calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurveDataIndexes& newIndexes, tFftBinChunk* retFftBinChunk);
 
@@ -148,9 +148,9 @@ private:
 
    int m_dcBinIndex;
 
-   tFftBinChunk m_noiseChunk;
+   tFftBinChunk m_noiseChunkLeft;
+   tFftBinChunk m_noiseChunkRight;
    tFftBinChunk m_signalChunk;
-   tFftBinChunk m_signalNoiseOverlapChunk;
 
    double m_signalPower;
    double m_signalBandwidth;

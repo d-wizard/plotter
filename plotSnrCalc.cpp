@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -339,7 +339,7 @@ void plotSnrCalc::autoSetBars()
 
 void plotSnrCalc::calcSnr()
 {
-   if(m_noiseChunk.indexes.startIndex < 0 || m_signalChunk.indexes.startIndex < 0)
+   if(m_noiseChunkLeft.indexes.startIndex < 0 || m_signalChunk.indexes.startIndex < 0)
    {
       calcSnrSlow();
    }
@@ -360,8 +360,11 @@ void plotSnrCalc::calcSnrSlow()
 
       findDcBinIndex(numPoints, xPoints);
 
-      tCurveDataIndexes newNoiseIndexes  = m_noiseChunk.indexes;
       tCurveDataIndexes newSignalIndexes = m_signalChunk.indexes;
+
+      // Left has start index, right has stop index.
+      tCurveDataIndexes newNoiseIndexes  = m_noiseChunkLeft.indexes;
+      newNoiseIndexes.stopIndex = m_noiseChunkRight.indexes.stopIndex;
 
       // Noise
       findIndexes(
@@ -381,11 +384,12 @@ void plotSnrCalc::calcSnrSlow()
          xPoints,
          hzPerBin);
 
-      tCurveDataIndexes newSignalNoiseOverlapIndexes = determineBinOverlap(newNoiseIndexes, newSignalIndexes);
+      tCurveDataIndexes noiseLeft, noiseRight;
+      determineNoiseChunks(newNoiseIndexes, newSignalIndexes, noiseLeft, noiseRight);
 
-      calcFftChunk(&m_noiseChunk,              newNoiseIndexes);
-      calcFftChunk(&m_signalChunk,             newSignalIndexes);
-      calcFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
+      calcFftChunk(&m_noiseChunkLeft,  noiseLeft);
+      calcFftChunk(&m_noiseChunkRight, noiseRight);
+      calcFftChunk(&m_signalChunk,     newSignalIndexes);
 
       setLabel();
    }
@@ -402,8 +406,11 @@ void plotSnrCalc::calcSnrFast()
 
       findDcBinIndex(numPoints, xPoints);
 
-      tCurveDataIndexes newNoiseIndexes  = m_noiseChunk.indexes;
       tCurveDataIndexes newSignalIndexes = m_signalChunk.indexes;
+
+      // Left has start index, right has stop index.
+      tCurveDataIndexes newNoiseIndexes  = m_noiseChunkLeft.indexes;
+      newNoiseIndexes.stopIndex = m_noiseChunkRight.indexes.stopIndex;
 
       if(m_activeBarIndex < 2)
       {
@@ -427,11 +434,14 @@ void plotSnrCalc::calcSnrFast()
             xPoints,
             hzPerBin);
       }
-      tCurveDataIndexes newSignalNoiseOverlapIndexes = determineBinOverlap(newNoiseIndexes, newSignalIndexes);
 
-      updateFftChunk(&m_noiseChunk,              newNoiseIndexes);
-      updateFftChunk(&m_signalChunk,             newSignalIndexes);
-      updateFftChunk(&m_signalNoiseOverlapChunk, newSignalNoiseOverlapIndexes);
+      tCurveDataIndexes noiseLeft, noiseRight;
+      determineNoiseChunks(newNoiseIndexes, newSignalIndexes, noiseLeft, noiseRight);
+
+
+      updateFftChunk(&m_noiseChunkLeft,  noiseLeft);
+      updateFftChunk(&m_noiseChunkRight, noiseRight);
+      updateFftChunk(&m_signalChunk,     newSignalIndexes);
 
       setLabel();
    }
@@ -624,21 +634,74 @@ int plotSnrCalc::findIndex(double barPoint, int numPoints, const double* xPoints
    return retVal;
 }
 
-
-plotSnrCalc::tCurveDataIndexes plotSnrCalc::determineBinOverlap(const tCurveDataIndexes &indexes1, const tCurveDataIndexes &indexes2)
+void plotSnrCalc::determineNoiseChunks(const tCurveDataIndexes& noise, const tCurveDataIndexes& signal, tCurveDataIndexes& noiseLeftRet, tCurveDataIndexes& noiseRightRet)
 {
-   tCurveDataIndexes retVal;
-   if( (indexes1.startIndex > indexes2.stopIndex) || (indexes2.startIndex > indexes1.stopIndex) )
+   tCurveDataIndexes noiseLeft = noise;
+   tCurveDataIndexes noiseRight = noise;
+   bool emptyLeft = false;
+   bool emptyRight = false;
+
+   // There are 6 orientations.
+
+   // S1, S2, N1, N2
+   if(noise.startIndex > signal.stopIndex)
    {
-      // No Overlap.
+      // No overlap
+      emptyLeft = true;
+   }
+   // N1, N2, S1, S2
+   else if(signal.startIndex > noise.stopIndex)
+   {
+      // No overlap
+      emptyRight = true;
+   }
+   // S1, N1, N2, S2 (noise is completely overlapped)
+   else if(signal.startIndex <= noise.startIndex && noise.stopIndex <= signal.stopIndex)
+   {
+      emptyLeft = true;
+      emptyRight = true;
+   }
+   // N1, S1, S2, N2
+   else if(noise.startIndex < signal.startIndex && signal.stopIndex < noise.stopIndex)
+   {
+      // Signal is in the middle of noise, there is some noise in both chunks.
+      noiseLeft.stopIndex = signal.startIndex-1;
+      noiseRight.startIndex = signal.stopIndex+1;
+   }
+   // S1, N1, S2, N2
+   else if(signal.startIndex <= noise.startIndex && signal.stopIndex < noise.stopIndex)
+   {
+      emptyLeft = true;
+
+      noiseRight.startIndex = signal.stopIndex+1;
+   }
+   // N1, S1, N2, S2
+   else if(noise.startIndex < signal.startIndex && noise.stopIndex <= signal.stopIndex)
+   {
+      noiseLeft.stopIndex = signal.startIndex-1;
+
+      emptyRight = true;
    }
    else
    {
-      retVal.startIndex = std::max(indexes1.startIndex, indexes2.startIndex);
-      retVal.stopIndex  = std::min(indexes1.stopIndex,  indexes2.stopIndex);
+      assert(0);
    }
-   return retVal;
+
+   if(emptyLeft)
+   {
+      // Indexes are inclusive. Make sure start is still the begining of noise. So subtract 1 from start to indicate empty chunk.
+      noiseLeft.stopIndex = noiseLeft.startIndex-1;
+   }
+   if(emptyRight)
+   {
+      // Indexes are inclusive. Make sure stop is still the end of noise. So add 1 to stop to indicate empty chunk.
+      noiseRight.startIndex = noiseRight.stopIndex+1;
+   }
+
+   noiseLeftRet = noiseLeft;
+   noiseRightRet = noiseRight;
 }
+
 
 bool plotSnrCalc::calcBinDelta(const tCurveDataIndexes& oldIndexes, const tCurveDataIndexes& newIndexes, tFftBinChunk* retFftBinChunk)
 {
@@ -825,8 +888,8 @@ void plotSnrCalc::setLabel()
    m_signalPower = 10*log10(m_signalChunk.powerLinear);
    m_signalBandwidth = m_signalChunk.bandwidth;
 
-   m_noisePower = 10*log10(m_noiseChunk.powerLinear - m_signalNoiseOverlapChunk.powerLinear);
-   m_noiseBandwidth = m_noiseChunk.bandwidth - m_signalNoiseOverlapChunk.bandwidth;
+   m_noisePower = 10*log10(m_noiseChunkLeft.powerLinear + m_noiseChunkRight.powerLinear);
+   m_noiseBandwidth = m_noiseChunkLeft.bandwidth + m_noiseChunkRight.bandwidth;
    m_noiseBwPerHz = m_noisePower - 10*log10(m_noiseBandwidth);
 
    m_snrDb = m_signalPower - m_noisePower;
