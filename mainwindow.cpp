@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -890,6 +890,7 @@ void MainWindow::setCurveVisibleHidden(QString curveName, bool visible, bool hid
        if(curveChanged)
        {
           handleCurveDataChange(curveIndex);
+          updateCurveOrder();
        }
     }
 }
@@ -3028,8 +3029,19 @@ void MainWindow::updateCurveOrder()
       setSelectedCurveIndex(boundedSelectedCurveIndex);
    }
 
+   // Make sure cursors are in front of curve data.
+   if(m_qwtSelectedSample->isAttached == true)
+   {
+      m_qwtSelectedSample->showCursor();
+   }
+   if(m_qwtSelectedSampleDelta->isAttached == true)
+   {
+      m_qwtSelectedSampleDelta->showCursor();
+   }
+
    updatePointDisplay();
    m_snrCalcBars->moveToFront();
+
    replotMainPlot();
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);
