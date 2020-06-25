@@ -3030,11 +3030,11 @@ void MainWindow::updateCurveOrder()
    }
 
    // Make sure cursors are in front of curve data.
-   if(m_qwtSelectedSample->isAttached == true)
+   if(m_qwtSelectedSample != NULL && m_qwtSelectedSample->isAttached == true)
    {
       m_qwtSelectedSample->showCursor();
    }
-   if(m_qwtSelectedSampleDelta->isAttached == true)
+   if(m_qwtSelectedSampleDelta != NULL && m_qwtSelectedSampleDelta->isAttached == true)
    {
       m_qwtSelectedSampleDelta->showCursor();
    }
