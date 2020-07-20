@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -25,8 +25,10 @@
 #include <algorithm>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QColorDialog>
 #include <fstream>
 #include <iomanip>
+#include <assert.h>
 #include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
@@ -1694,6 +1696,10 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
 
          // If hidden is checked, don't bother the user with the state of visible.
          ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
+
+         // Set the Curve Color button to the color of the curve.
+         QColor curveColor = parentCurve->getCurveAppearance().color;
+         setPropTabCurveColor(curveColor);
       }
    }
    else
@@ -1769,6 +1775,18 @@ void curveProperties::propTabApply()
       {
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
       }
+
+      // Check for curve color change.
+      QColor newColor = getPropTabCurveColor();
+      QColor oldColor = parentCurve->getCurveAppearance().color;
+      if(newColor != oldColor)
+      {
+         // Update the color of the curve.
+         CurveAppearance appearance = parentCurve->getCurveAppearance();
+         appearance.color = newColor;
+         parentCurve->setCurveAppearance(appearance);
+      }
+
    }
    fillInPropTab(true);
 }
@@ -2249,4 +2267,34 @@ void curveProperties::setMatchParentScrollChkBoxVisible()
 void curveProperties::on_chkMatchParentScroll_clicked()
 {
    persistentParam_setParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, ui->chkMatchParentScroll->isChecked() ? 1.0 : 0.0); // Store off check box state.
+}
+
+QColor curveProperties::getPropTabCurveColor()
+{
+   return ui->cmdPropColor->palette().color(QPalette::ButtonText);
+}
+
+void curveProperties::setPropTabCurveColor(QColor color)
+{
+   if(color.isValid())
+   {
+      QPalette colorButtonPalette = ui->cmdPropColor->palette();
+      colorButtonPalette.setColor(QPalette::ButtonText, color);
+      ui->cmdPropColor->setPalette(colorButtonPalette);
+   }
+   else
+   {
+      assert(0);
+   }
+}
+
+
+void curveProperties::on_cmdPropColor_clicked()
+{
+   QColor newColor = QColorDialog::getColor(getPropTabCurveColor(), this);
+
+   if(newColor.isValid())
+   {
+      setPropTabCurveColor(newColor);
+   }
 }

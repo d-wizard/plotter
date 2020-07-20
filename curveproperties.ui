@@ -1782,6 +1782,37 @@ Parent</string>
       <string>Remove</string>
      </property>
     </widget>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>390</x>
+       <y>60</y>
+       <width>41</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Color</string>
+     </property>
+     <widget class="QPushButton" name="cmdPropColor">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>21</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>▮</string>
+      </property>
+     </widget>
+    </widget>
    </widget>
   </widget>
   <widget class="QPushButton" name="cmdApply">

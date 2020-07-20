@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -49,6 +49,19 @@ public:
    QColor color;
    QwtPlotCurve::CurveStyle style;
    qreal width;
+
+   // Operators
+   bool operator==(const CurveAppearance& rhs)
+   {
+       return (color == rhs.color) &&
+              (style == rhs.style) &&
+              (width == rhs.width);
+   }
+
+   bool operator!=(const CurveAppearance& rhs)
+   {
+       return !(*this == rhs);
+   }
 };
 
 class CurveData
@@ -119,6 +132,7 @@ public:
    unsigned int getPlotSize_nonScrollModeVersion(){return plotSize_nonScrollModeVersion;}
 
    void setCurveAppearance(CurveAppearance curveAppearance);
+   CurveAppearance getCurveAppearance();
 
    tPlotterIpAddr getLastMsgIpAddr(){return lastMsgIpAddr;}
    ePlotDataTypes getLastMsgDataType(eAxis axis){return axis == E_X_AXIS ? lastMsgXAxisType : lastMsgYAxisType;}
