@@ -1788,7 +1788,7 @@ Parent</string>
        <x>390</x>
        <y>60</y>
        <width>41</width>
-       <height>81</height>
+       <height>51</height>
       </rect>
      </property>
      <property name="title">
@@ -1800,16 +1800,21 @@ Parent</string>
         <x>10</x>
         <y>20</y>
         <width>21</width>
-        <height>41</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="font">
        <font>
-        <pointsize>20</pointsize>
+        <pointsize>50</pointsize>
+        <weight>50</weight>
+        <italic>false</italic>
+        <bold>false</bold>
+        <underline>false</underline>
+        <kerning>false</kerning>
        </font>
       </property>
       <property name="text">
-       <string>▮</string>
+       <string>▀</string>
       </property>
      </widget>
     </widget>
