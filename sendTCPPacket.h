@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,12 +29,20 @@
    #include <stdio.h>
    #include <winsock2.h>
    #include <windows.h>
+
+   // MinGW has some special issues with the <ws2tcpip.h> include (e.g finding getaddrinfo, freeaddrinfo)
+   #ifdef __MINGW32_VERSION
+      #if defined _WIN32_WINNT && _WIN32_WINNT < 0x0501 || !defined _WIN32_WINNT
+         #undef _WIN32_WINNT
+         #define _WIN32_WINNT 0x0501 // Make sure to compile against a not super old version.
+      #endif
+   #endif
    #include <ws2tcpip.h>
 
    #ifndef inline
       #define inline __inline
    #endif
-   
+
 #elif defined SEND_MSG_TCP_LINUX_BUILD
    #include <stdio.h>
    #include <unistd.h>
@@ -53,9 +61,19 @@
 #endif
 
 
-static inline int sendTCPPacket_init(const char* hostName, unsigned short port)
+// Define Macro for determining if a Socket FD is valid.
+#ifndef IS_VALID_SOCKET_FD
+#define IS_VALID_SOCKET_FD(socketFd) ((signed)socketFd >= 0)
+#endif
+
+#ifndef INVALID_SOCKET_FD
+#define INVALID_SOCKET_FD (-1)
+#endif
+
+// There are situations where we don't want to print that a connection failed over and over. Allow the user to specify if an error should be printed.
+static inline int sendTCPPacket_init_and_print(const char* hostName, unsigned short port, int printConnectFail)
 {
-   SOCKET sockfd = -1; // Initialize to invalid value.
+   SOCKET sockfd = INVALID_SOCKET_FD; // Initialize to invalid value.
    struct addrinfo hints;
    struct addrinfo* serverInfoList;
    struct addrinfo* servInfo;
@@ -94,11 +112,11 @@ static inline int sendTCPPacket_init(const char* hostName, unsigned short port)
    // Loop through the list, until a connection is made.
    for(servInfo = serverInfoList; servInfo != NULL; servInfo = servInfo->ai_next)
    {
-      SOCKET newConnectionFd = socket( servInfo->ai_family, 
+      SOCKET newConnectionFd = socket( servInfo->ai_family,
                                        servInfo->ai_socktype,
                                        servInfo->ai_protocol );
 
-      if((signed)newConnectionFd >= 0)
+      if( IS_VALID_SOCKET_FD(newConnectionFd) )
       {
          if(connect(newConnectionFd, servInfo->ai_addr, (int)servInfo->ai_addrlen) >= 0)
          {
@@ -114,7 +132,7 @@ static inline int sendTCPPacket_init(const char* hostName, unsigned short port)
    }
 
    // Check if a connection was actually made.
-   if(servInfo == NULL)
+   if(servInfo == NULL && printConnectFail)
    {
       printf("Client failed to connect to server.\n");
    }
@@ -122,9 +140,14 @@ static inline int sendTCPPacket_init(const char* hostName, unsigned short port)
    freeaddrinfo(serverInfoList); // Free the memory allocated in getaddrinfo.
 
    return (int)sockfd;
-   
+
 }
 
+
+static inline int sendTCPPacket_init(const char* hostName, unsigned short port)
+{
+   return sendTCPPacket_init_and_print(hostName, port, 1);
+}
 
 static inline int sendTCPPacket_send(SOCKET sockfd, const char* msg, unsigned int msgSize)
 {
@@ -141,13 +164,13 @@ static inline int sendTCPPacket(const char* hostName, unsigned short port, const
    int success = 0;
    SOCKET sockfd = sendTCPPacket_init(hostName, port);
 
-   if((int)sockfd > -1)
+   if( IS_VALID_SOCKET_FD(sockfd) )
    {
       success = sendTCPPacket_send(sockfd, msg, msgSize) != -1;
 
       success = (sendTCPPacket_close(sockfd) == 0) && success;
-   }   
-   
+   }
+
    return success ? 0 : -1; // Convert bool (1 = pass, 0 = fail) to (0 = pass, -1 = fail)
 }
 

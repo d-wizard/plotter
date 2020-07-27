@@ -32,31 +32,31 @@
 class sampleRateCalc
 {
    typedef struct TimeNumSampPair
-	{
-		double time;
-		long numSamp;
+   {
+      double time;
+      long numSamp;
       TimeNumSampPair(): time(0), numSamp(0){}
-	}tTimeNumSampPair;
+   }tTimeNumSampPair;
 
 public:
-	sampleRateCalc();
-	~sampleRateCalc();
+   sampleRateCalc();
+   ~sampleRateCalc();
 
    void newSamples(long numSamp);
 
    double getSampleRate();
 private:
 
-	double m_sampleRate;
+   double m_sampleRate;
 
-	double m_averageTimeBetweenSampleMessages;
+   double m_averageTimeBetweenSampleMessages;
 
    double m_minTimeToStore;
    long m_minMsgsToStore;
 
    int m_numFirstTimesToRemove;
 
-	QMutex m_mutex;
+   QMutex m_mutex;
 
 
    QList<tTimeNumSampPair> m_sampleMsgList;
