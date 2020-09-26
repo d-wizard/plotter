@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -28,7 +28,8 @@ class overwriteRenameDialog;
 typedef enum
 {
    OVERWRITE,
-   RENAME,
+   RENAME_AUTO,
+   RENAME_MANUAL,
    CANCEL
 }ePlotExistsReturn;
 
@@ -45,9 +46,11 @@ public:
 private slots:
    void on_cmdOverwrite_clicked();
 
-   void on_cmdRename_clicked();
-
    void on_cmdCancel_clicked();
+
+   void on_cmdRenameAuto_clicked();
+
+   void on_cmdRenameManual_clicked();
 
 private:
    Ui::overwriteRenameDialog *ui;
