@@ -1487,7 +1487,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(toSave.curveName);
 
       // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_STR;
       std::string persistentReadValue;
       persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
 
@@ -1510,9 +1510,6 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
                                                        suggestedSavePath,
                                                        filterString,
                                                        &selectedFilter);
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
       eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
       if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
@@ -1525,6 +1522,11 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
          saveType = E_SAVE_RESTORE_C_HEADER_INT;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+
+      // Write user selections to persisent memory.
+      setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+      persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
 
       if(saveType != E_SAVE_RESTORE_INVALID)
       {
@@ -1552,7 +1554,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(plotName);
 
       // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_STR;
       std::string persistentReadValue;
       persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
 
@@ -1575,9 +1577,6 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
                                                        suggestedSavePath,
                                                        filterString,
                                                        &selectedFilter);
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
       // Fill in vector of curve data in the correct order.
       QVector<CurveData*> curves;
@@ -1599,6 +1598,11 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          saveType = E_SAVE_RESTORE_C_HEADER_INT;
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+
+      // Write user selections to persisent memory.
+      setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+      persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
 
       if(saveType != E_SAVE_RESTORE_INVALID)
       {

@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 - 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -33,8 +33,10 @@
 static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR = "curveSavePrevDir";
 
 static const std::string PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION = "curveOpenPrevTypeSelection";
-static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION = "plotSavePrevSaveSelection";
-static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION = "curveSavePrevSaveSelection";
+static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_STR    = "plotSavePrevSaveSelection";
+static const std::string PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX  = "plotSavePrevSaveSelectionIndex";
+static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_STR   = "curveSavePrevSaveSelection";
+static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX = "curveSavePrevSaveSelectionIndex";
 
 static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotType";
 static const std::string PERSIST_PARAM_CHILD_CURVE_MATH_TYPE = "childCurveMathType";

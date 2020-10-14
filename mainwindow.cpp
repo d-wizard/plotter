@@ -35,6 +35,8 @@
 #include "dString.h"
 #include "saveRestoreCurve.h"
 #include "persistentPlotParameters.h"
+#include "persistentParameters.h"
+#include "FileSystemOperations.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -2251,6 +2253,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Toggle
                toggleCursorCanSelectAnyCurveAction();
             }
+            else if(KeyEvent->key() == Qt::Key_P && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               silentSavePlotToFile();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
@@ -3431,3 +3437,71 @@ bool MainWindow::areFftMeasurementsVisible()
    return retVal;
 }
 
+
+void MainWindow::silentSavePlotToFile()
+{
+   std::string saveDir;
+   if(persistentParam_getParam_str(PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR, saveDir))
+   {
+      if(fso::DirExists(saveDir))
+      {
+         double dubSaveType;
+         if(persistentParam_getParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, dubSaveType))
+         {
+            QString plotName = getPlotName();
+            eSaveRestorePlotCurveType saveType = (eSaveRestorePlotCurveType)((int)dubSaveType);
+            std::string fileName = plotName.toStdString();
+
+            // Determine Ext from Save Type
+            std::string ext;
+            switch(saveType)
+            {
+               case E_SAVE_RESTORE_CSV:
+                  ext = ".csv";
+               break;
+               // Fall through on all header types.
+               case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
+               case E_SAVE_RESTORE_C_HEADER_INT:
+               case E_SAVE_RESTORE_C_HEADER_FLOAT:
+                  ext = ".h";
+               break;
+               default:
+                  ext = ".plot";
+               break;
+            }
+
+            int fileNameAppendNum = 0;
+            std::string fullPath = saveDir + fso::dirSep() + fileName + ext;
+            while(fso::FileExists(fullPath))
+            {
+               fileNameAppendNum++;
+               fullPath = saveDir + fso::dirSep() + fileName + "_" + QString::number(fileNameAppendNum).toStdString() + ext;
+            }
+
+            // Fill in vector of curve data in the correct order.
+            tCurveCommanderInfo allPlots = m_curveCommander->getCurveCommanderInfo();
+            QVector<CurveData*> curves;
+            curves.resize(allPlots[plotName].curves.size());
+            foreach( QString key, allPlots[plotName].curves.keys() )
+            {
+               int index = allPlots[plotName].plotGui->getCurveIndex(key);
+               curves[index] = allPlots[plotName].curves[key];
+            }
+
+            // Save the plot data.
+            SavePlot savePlot(this, plotName, curves, saveType);
+            PackedCurveData dataToWriteToFile;
+            savePlot.getPackedData(dataToWriteToFile);
+            fso::WriteFile(fullPath, &dataToWriteToFile[0], dataToWriteToFile.size());
+         }
+         else
+         {
+            // TODO?
+         }
+      }
+      else
+      {
+         // TODO?
+      }
+   }
+}
