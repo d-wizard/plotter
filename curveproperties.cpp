@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1721,6 +1721,7 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
        ui->txtPropYMax->setText("");
        ui->propParentCurves->clear();
        ui->txtLastIp->setText("");
+       setPropTabCurveColor(Qt::black);
    }
 }
 
