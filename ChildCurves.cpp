@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -930,19 +930,12 @@ void ChildCurve::updateCurve( bool xParentChanged,
             }
 
             // Check if we need to use a previous sibling curve point index value.
-            bool useSiblingPointIndex = fftMeasChildParam_getIndex( m_yAxis.dataSrc.plotName,
-                                                                    m_plotName,
-                                                                    m_curveName,
-                                                                    parentGroupMsgId,
-                                                                    m_fftMeasSize,
-                                                                    m_fftMeasPointIndex );
-
-            // Check if this is a new FFT measurement in a Child Plot that is already plotting other FFT Measurements.
-            if(useSiblingPointIndex && parentGroupMsgId < 0 && (m_fftMeasPointIndex + 1) < m_fftMeasSize)
-            {
-               // Fill the end with 'Not A Number' values (this helps with scan mode).
-               m_ySrcData.insert(m_ySrcData.end(), m_fftMeasSize - m_fftMeasPointIndex - 1, NAN);
-            }
+            fftMeasChildParam_getIndex( m_yAxis.dataSrc.plotName,
+                                        m_plotName,
+                                        m_curveName,
+                                        parentGroupMsgId,
+                                        m_fftMeasSize,
+                                        m_fftMeasPointIndex );
 
             // Update the Child Plot with the new FFT Measurement value.
             update1dChildCurve(m_curveName, m_plotType, m_fftMeasPointIndex, m_ySrcData, parentCurveMsgId);
