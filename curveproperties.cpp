@@ -1855,51 +1855,7 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    twoDInput = plotTypeHas2DInput(plotType);
 
-   // Determine if a previous child plot with the same plot type was generated on its parent plot.
-   bool prevWasOnParent = false;
-   bool validSuggestPrevOnParent = getPersistentSuggestChildOnParentPlot(plotType, prevWasOnParent);
-
-   if( (validSuggestPrevOnParent && !prevWasOnParent) ||
-       (!validSuggestPrevOnParent && plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_FFT_MEASUREMENT) )
-   {
-      // Suggest Child on its own plot.
-      QString plotPrefix = plotTypeNames[plotType] + " of ";
-      QString plotMid = "";
-
-      if(twoDInput)
-      {
-         if(xSrc.plotName == ySrc.plotName)
-         {
-            if(xSrc.curveName == ySrc.curveName)
-            {
-               // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
-               // Use the Curve Name.
-               plotMid = ySrc.curveName;
-            }
-            else
-            {
-               // Use the Plot Name.
-               plotMid = ySrc.plotName;
-            }
-         }
-         else
-         {
-            // Use both Curve Names.
-            plotMid = xSrc.curveName + " - " + ySrc.curveName;
-         }
-      }
-      else
-      {
-         plotMid = xSrc.curveName;
-      }
-
-      // Generate the plot / curve names.
-      plotName = plotPrefix + plotMid;
-      curveName = plotMid;
-
-      plotNameMustBeUnique = true;
-   }
-   else if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+   if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
    {
       QString plotPrefix = plotTypeNames[plotType] + " of ";
       QStringList split = ui->cmbXAxisSrc_fftMeasurement->currentText().split(PLOT_CURVE_SEP); // Get Parent Plot Name and Suggested Curve Name for combo box.
@@ -1920,10 +1876,57 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
    }
    else
    {
-      // This defaults to remain on the same plot as the parent.
-      plotName = xSrc.plotName;
-      plotNameMustBeUnique = false; // Plot Name should be the same.
-      curveName = plotTypeNames[plotType] + " of " + xSrc.curveName;
+      // Determine if a previous child plot with the same plot type was generated on its parent plot.
+      bool prevWasOnParent = false;
+      bool validSuggestPrevOnParent = getPersistentSuggestChildOnParentPlot(plotType, prevWasOnParent);
+
+      if( (validSuggestPrevOnParent && !prevWasOnParent) ||
+          (!validSuggestPrevOnParent && plotType != E_PLOT_TYPE_AVERAGE) )
+      {
+         // Suggest Child on its own plot.
+         QString plotPrefix = plotTypeNames[plotType] + " of ";
+         QString plotMid = "";
+
+         if(twoDInput)
+         {
+            if(xSrc.plotName == ySrc.plotName)
+            {
+               if(xSrc.curveName == ySrc.curveName)
+               {
+                  // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
+                  // Use the Curve Name.
+                  plotMid = ySrc.curveName;
+               }
+               else
+               {
+                  // Use the Plot Name.
+                  plotMid = ySrc.plotName;
+               }
+            }
+            else
+            {
+               // Use both Curve Names.
+               plotMid = xSrc.curveName + " - " + ySrc.curveName;
+            }
+         }
+         else
+         {
+            plotMid = xSrc.curveName;
+         }
+
+         // Generate the plot / curve names.
+         plotName = plotPrefix + plotMid;
+         curveName = plotMid;
+
+         plotNameMustBeUnique = true;
+      }
+      else
+      {
+         // This defaults to remain on the same plot as the parent.
+         plotName = xSrc.plotName;
+         plotNameMustBeUnique = false; // Plot Name should be the same.
+         curveName = plotTypeNames[plotType] + " of " + xSrc.curveName;
+      }
    }
 
    if(plotNameMustBeUnique && m_curveCmdr->validPlot(plotName))
