@@ -123,7 +123,8 @@ const QString plotTypeNames[] = {
    "Delta",
    "Sum",
    "Math",
-   "FFT Measurement"
+   "FFT Measurement",
+   "Curve Stats"
 };
 
 const QString fftMeasureNames[] = {
@@ -135,6 +136,15 @@ const QString fftMeasureNames[] = {
    "SNR",
    "SNR dB Hz",
    "No Measurement"
+};
+
+const QString childStatsNames[] = {
+   "Num Samples",
+   "X Min",
+   "X Max",
+   "Y Min",
+   "Y Max",
+   "Sample Rate"
 };
 
 // This is persistent only while the executable is running.
@@ -216,6 +226,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Attempt to restore the Child Curve combo box values from persistent memory.
    initCmbBoxValueFromPersistParam(ui->cmbPlotType, PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE);
    initCmbBoxValueFromPersistParam(ui->cmbChildMathOperators, PERSIST_PARAM_CHILD_CURVE_MATH_TYPE);
+   initCmbBoxValueFromPersistParam(ui->cmbChildStatsTypes, PERSIST_PARAM_CHILD_CURVE_STAT_TYPE);
    initSpnBoxValueFromPersistParam(ui->spnFFtMeasChildPlotSize, PERSIST_PARAM_FFT_MEAS_CHILD_SIZE);
 
    // Set "Match Parent Scroll" Check Box.
@@ -582,6 +593,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
    bool sliceVis = true;
    bool mathCmbVis = false;
+   bool childStatsCmbVis = false;
    bool fftMeasureVis = false;
 
    storeUserChildPlotNames((ePlotType)m_prevChildCurvePlotTypeIndex);
@@ -593,7 +605,9 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_AVERAGE:
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
+      case E_PLOT_TYPE_CURVE_STATS:
          ui->lblXAxisSrc->setText("Source");
+         childStatsCmbVis = (index == E_PLOT_TYPE_CURVE_STATS);
       break;
       case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
@@ -650,6 +664,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->chkFftSrcContiguous->setVisible(fftCheckBoxVisible);
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
+   ui->cmbChildStatsTypes->setVisible(childStatsCmbVis);
+
    ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis);
    ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis);
 
@@ -694,7 +710,8 @@ void curveProperties::on_cmdApply_clicked()
 
                // Determine FFT Measurement type (only valid for E_PLOT_TYPE_FFT_MEASUREMENT plot types).
                axisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               axisParent.fftMeasurementPlotSize = -1;
+               axisParent.curveStatType = E_CURVE_STATS__NO_CURVE_STAT;
+               axisParent.curveStatstPlotSize = -1;
                bool createTheChildPlot = true; // Normally there are no conditions that would keep us from creating the child plot.
                if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
                {
@@ -706,6 +723,11 @@ void curveProperties::on_cmdApply_clicked()
                   {
                      persistentParam_setParam_f64(PERSIST_PARAM_FFT_MEAS_CHILD_SIZE, ui->spnFFtMeasChildPlotSize->value());
                   }
+               }
+               else if(plotType == E_PLOT_TYPE_CURVE_STATS)
+               {
+                  axisParent.curveStatType = (eCurveStats)(ui->cmbChildStatsTypes->currentIndex());
+                  axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
                }
 
                if(createTheChildPlot)
@@ -750,14 +772,14 @@ void curveProperties::on_cmdApply_clicked()
                xAxisParent.mathBetweenCurvesOperator =
                   (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
                xAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               xAxisParent.fftMeasurementPlotSize = -1;
+               xAxisParent.curveStatstPlotSize = -1;
 
                // Y Axis values need to match X Axis value.
                yAxisParent.windowFFT = xAxisParent.windowFFT;
                yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
                yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
                yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               yAxisParent.fftMeasurementPlotSize = -1;
+               yAxisParent.curveStatstPlotSize = -1;
 
                m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
                m_cmbYAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
@@ -793,6 +815,11 @@ void curveProperties::on_cmdApply_clicked()
       {
          // Save the math type used to persistent memory.
          persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_MATH_TYPE, ui->cmbChildMathOperators->currentIndex());
+      }
+      else if(ui->cmbPlotType->currentIndex() == E_PLOT_TYPE_CURVE_STATS)
+      {
+         // Save the stats type used to persistent memory.
+         persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_STAT_TYPE, ui->cmbChildStatsTypes->currentIndex());
       }
 
    }
@@ -1874,6 +1901,12 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
          plotNameMustBeUnique = true;
       }
    }
+   else if(plotType == E_PLOT_TYPE_CURVE_STATS)
+   {
+      unsigned childStatsIndex = ((unsigned)ui->cmbChildStatsTypes->currentIndex()) % ARRAY_SIZE(childStatsNames);
+      plotName = plotTypeNames[plotType] + " of " + xSrc.curveName;
+      curveName = childStatsNames[childStatsIndex];
+   }
    else
    {
       // Determine if a previous child plot with the same plot type was generated on its parent plot.
@@ -2241,7 +2274,7 @@ bool curveProperties::determineChildFftMeasurementAxisValues(tParentCurveInfo& a
          if(axisParent.dataSrc.curveName == fftMeasureNames[i])
          {
             axisParent.fftMeasurementType = (eFftSigNoiseMeasurements)i;
-            axisParent.fftMeasurementPlotSize = ui->spnFFtMeasChildPlotSize->value();
+            axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
             validMatchFound = true;
             break;
          }
@@ -2305,4 +2338,12 @@ void curveProperties::on_cmdPropColor_clicked()
    {
       setPropTabCurveColor(newColor);
    }
+}
+
+void curveProperties::on_cmbChildStatsTypes_currentIndexChanged(int index)
+{
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }

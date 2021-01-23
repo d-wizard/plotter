@@ -1,4 +1,4 @@
-/* Copyright 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -20,17 +20,17 @@
 #include <QVector>
 #include <QMutex>
 #include <QMutexLocker>
-#include "fftMeasChildParam.h"
+#include "curveStatsChildParam.h"
 
 static QMap<tFftMeasChildKey, tFftMeasChildParam> g_map;
 static QMutex g_mutex;
 
-bool fftMeasChildParam_getIndex( const QString& parentPlotName, 
-                                 const QString& childPlotName, 
-                                 const QString& childCurveName, // Is this needed? 
-                                 PlotMsgIdType groupMsgId, 
-                                 int childCurveSize, 
-                                 int& childPointIndex ) // Index is read / write
+bool curveStatsChildParam_getIndex( const QString& parentPlotName,
+                                    const QString& childPlotName,
+                                    const QString& childCurveName, // Is this needed?
+                                    PlotMsgIdType groupMsgId,
+                                    int childCurveSize,
+                                    int& childPointIndex ) // Index is read / write
 {
    QMutexLocker lock(&g_mutex); // Keep changes to the Map thread safe.
    bool matchFound = false;
@@ -62,7 +62,7 @@ bool fftMeasChildParam_getIndex( const QString& parentPlotName,
    return matchFound;
 }
 
-void fftMeasChildParam_plotRemoved(const QString& plotName)
+void curveStatsChildParam_plotRemoved(const QString& plotName)
 {
    QMutexLocker lock(&g_mutex); // Keep changes to the Map thread safe.
 

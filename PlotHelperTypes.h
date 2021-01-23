@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -144,6 +144,7 @@ typedef enum
    E_PLOT_TYPE_SUM,
    E_PLOT_TYPE_MATH_BETWEEN_CURVES,
    E_PLOT_TYPE_FFT_MEASUREMENT,
+   E_PLOT_TYPE_CURVE_STATS,
 
    // The following values are not represented in the GUI. Since these value
    // don't need to match a GUI value, enumerate from the end.
@@ -177,6 +178,7 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_SUM:
    case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
    case E_PLOT_TYPE_FFT_MEASUREMENT:
+   case E_PLOT_TYPE_CURVE_STATS:
    case E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE:
       return true;
       break;
@@ -206,6 +208,7 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
    case E_PLOT_TYPE_FFT_MEASUREMENT:
+   case E_PLOT_TYPE_CURVE_STATS:
    default:
       twoDInput = false;
       break;
@@ -284,6 +287,17 @@ typedef enum
    E_FFT_MEASURE__NO_FFT_MEASUREMENT
 }eFftSigNoiseMeasurements;
 
+typedef enum
+{
+   E_CURVE_STATS__NUM_SAMP,
+   E_CURVE_STATS__X_MIN,
+   E_CURVE_STATS__X_MAX,
+   E_CURVE_STATS__Y_MIN,
+   E_CURVE_STATS__Y_MAX,
+   E_CURVE_STATS__SAMP_RATE,
+   E_CURVE_STATS__NO_CURVE_STAT
+}eCurveStats;
+
 typedef struct
 {
    QString plotName;
@@ -300,8 +314,11 @@ typedef struct
    bool windowFFT;
    bool scaleFftWindow;
    eMathBetweenCurves_operators mathBetweenCurvesOperator;
+
+   // Curve Stats Child Plot Parameters.
    eFftSigNoiseMeasurements fftMeasurementType;
-   int fftMeasurementPlotSize; // Only valid for fftMeasurementType values != to E_FFT_MEASURE__NO_FFT_MEASUREMENT
+   eCurveStats curveStatType;
+   int curveStatstPlotSize;
 }tParentCurveInfo;
 
 typedef enum

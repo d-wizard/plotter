@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -183,6 +183,7 @@ public:
     void setSnrBarMode(bool newState);
 
     double getFftMeasurement(eFftSigNoiseMeasurements type);
+    double getCurveStat(QString& curveName, eCurveStats type);
     bool areFftMeasurementsVisible();
 
     bool m_spectrumAnalyzerViewSet;

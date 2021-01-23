@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -3425,6 +3425,43 @@ double MainWindow::getFftMeasurement(eFftSigNoiseMeasurements type)
    return retVal;
 }
 
+double MainWindow::getCurveStat(QString& curveName, eCurveStats type)
+{
+   double retVal = 0.0;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   int curveIndex = getCurveIndex(curveName);
+   if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+   {
+      CurveData* curve = m_qwtCurves[curveIndex];
+      switch(type)
+      {
+         case E_CURVE_STATS__NUM_SAMP:
+            retVal = curve->getNumPoints();
+         break;
+         case E_CURVE_STATS__X_MIN:
+            retVal = curve->getMaxMinXYOfData().minX;
+         break;
+         case E_CURVE_STATS__X_MAX:
+            retVal = curve->getMaxMinXYOfData().maxX;
+         break;
+         case E_CURVE_STATS__Y_MIN:
+            retVal = curve->getMaxMinXYOfData().minY;
+         break;
+         case E_CURVE_STATS__Y_MAX:
+            retVal = curve->getMaxMinXYOfData().maxY;
+         break;
+         case E_CURVE_STATS__SAMP_RATE:
+            retVal = curve->getCalculatedSampleRateFromPlotMsgs();
+         break;
+         default:
+         case E_CURVE_STATS__NO_CURVE_STAT:
+            // Do Nothing, just return 0.
+         break;
+      }
+   }
+   return retVal;
+}
 
 bool MainWindow::areFftMeasurementsVisible()
 {

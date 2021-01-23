@@ -1,4 +1,4 @@
-/* Copyright 2016 - 2017, 2019 - 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2016 - 2017, 2019 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -40,6 +40,7 @@ static const std::string PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX = "c
 
 static const std::string PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE = "childCurvePlotType";
 static const std::string PERSIST_PARAM_CHILD_CURVE_MATH_TYPE = "childCurveMathType";
+static const std::string PERSIST_PARAM_CHILD_CURVE_STAT_TYPE = "childCurveStatType";
 
 static const std::string PERSIST_PARAM_FFT_MEAS_CHILD_SIZE = "fftMeasurementChildSize";
 static const std::string PERSIST_PARAM_MATCH_PARENT_SCROLL = "matchParentScroll";

@@ -21,7 +21,7 @@
 #include "fftHelper.h"
 #include "AmFmPmDemod.h"
 #include "handleLogData.h"
-#include "fftMeasChildParam.h"
+#include "curveStatsChildParam.h"
 
 ChildCurve::ChildCurve( CurveCommander* curveCmdr,
                         QString plotName,
@@ -38,8 +38,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints),
    m_startChildInScrollMode(startChildInScrollMode),
-   m_fftMeasSize(100),
-   m_fftMeasPointIndex(0)
+   m_curveStatsChildSize(100),
+   m_curveStatsChildPointIndex(0)
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(false, true);
@@ -62,8 +62,8 @@ ChildCurve::ChildCurve( CurveCommander* curveCmdr,
    m_yAxis(yAxis),
    m_forceContiguousParentPoints(forceContiguousParentPoints),
    m_startChildInScrollMode(startChildInScrollMode),
-   m_fftMeasSize(0), // Don't care, this is not valid for 2D
-   m_fftMeasPointIndex(0)
+   m_curveStatsChildSize(0), // Don't care, this is not valid for 2D
+   m_curveStatsChildPointIndex(0)
 {
    m_fft_parentChunksProcessedInCurGroupMsg.reserve(2); // Typically the max number of duplicate parent chunks will be 2 (when the parent fills in the end and starts over at the beginning).
    updateCurve(true, true);
@@ -84,8 +84,10 @@ void ChildCurve::anotherCurveChanged( QString plotName,
                              (m_xAxis.dataSrc.curveName == curveName);
    bool parentOfFftMeasurementChild = (m_yAxis.dataSrc.plotName == plotName) &&
                                       (m_plotType == E_PLOT_TYPE_FFT_MEASUREMENT);
+   bool parentOfCurveStatusChild = (m_yAxis.dataSrc.plotName == plotName) && (m_yAxis.dataSrc.curveName == curveName) &&
+                                   (m_plotType == E_PLOT_TYPE_CURVE_STATS);
 
-   bool parentChanged = curveIsYAxisParent || curveIsXAxisParent || parentOfFftMeasurementChild;
+   bool parentChanged = curveIsYAxisParent || curveIsXAxisParent || parentOfFftMeasurementChild || parentOfCurveStatusChild;
    if(parentChanged)
    {
       updateCurve( curveIsXAxisParent,
@@ -915,34 +917,44 @@ void ChildCurve::updateCurve( bool xParentChanged,
       }
       break;
       case E_PLOT_TYPE_FFT_MEASUREMENT:
+      case E_PLOT_TYPE_CURVE_STATS:
       {
          MainWindow* parentPlot = m_curveCmdr->getMainPlot(m_yAxis.dataSrc.plotName);
 
-         if(parentPlot != NULL && parentPlot->areFftMeasurementsVisible()) // Only plot FFT Measurement if the measurement are visible on the parent.
+         bool valid = (m_plotType != E_PLOT_TYPE_FFT_MEASUREMENT || parentPlot->areFftMeasurementsVisible()); // Only plot FFT Measurement if the measurement are visible on the parent.
+
+         if(parentPlot != NULL && valid)
          {
             m_ySrcData.clear(); // Clear out previous values, only sending 1 point.
-            m_ySrcData.push_back(parentPlot->getFftMeasurement(m_yAxis.fftMeasurementType)); // Grab the FFT Meaurement value to be plotted.
+            if(m_plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+            {
+               m_ySrcData.push_back(parentPlot->getFftMeasurement(m_yAxis.fftMeasurementType)); // Grab the FFT Meaurement value to be plotted.
+            }
+            else
+            {
+               m_ySrcData.push_back(parentPlot->getCurveStat(m_yAxis.dataSrc.curveName, m_yAxis.curveStatType));
+            }
 
             // Set the FFT Measurement Child Plot Size.
-            if(m_fftMeasSize != m_yAxis.fftMeasurementPlotSize && m_yAxis.fftMeasurementPlotSize > 0)
+            if(m_curveStatsChildSize != m_yAxis.curveStatstPlotSize && m_yAxis.curveStatstPlotSize > 0)
             {
-               m_fftMeasSize = m_yAxis.fftMeasurementPlotSize;
+               m_curveStatsChildSize = m_yAxis.curveStatstPlotSize;
             }
 
             // Check if we need to use a previous sibling curve point index value.
-            fftMeasChildParam_getIndex( m_yAxis.dataSrc.plotName,
-                                        m_plotName,
-                                        m_curveName,
-                                        parentGroupMsgId,
-                                        m_fftMeasSize,
-                                        m_fftMeasPointIndex );
+            curveStatsChildParam_getIndex( m_yAxis.dataSrc.plotName,
+                                           m_plotName,
+                                           m_curveName,
+                                           parentGroupMsgId,
+                                           m_curveStatsChildSize,
+                                           m_curveStatsChildPointIndex );
 
             // Update the Child Plot with the new FFT Measurement value.
-            update1dChildCurve(m_curveName, m_plotType, m_fftMeasPointIndex, m_ySrcData, parentCurveMsgId);
+            update1dChildCurve(m_curveName, m_plotType, m_curveStatsChildPointIndex, m_ySrcData, parentCurveMsgId);
 
-            if(++m_fftMeasPointIndex >= m_fftMeasSize)
+            if(++m_curveStatsChildPointIndex >= m_curveStatsChildSize)
             {
-               m_fftMeasPointIndex = 0;
+               m_curveStatsChildPointIndex = 0;
             }
          }
       }

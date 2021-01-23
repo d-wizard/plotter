@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,7 +22,7 @@
 #include "createplotfromdata.h"
 #include "ChildCurves.h"
 #include "spectrumAnalyzerModeTypes.h"
-#include "fftMeasChildParam.h"
+#include "curveStatsChildParam.h"
 
 #define MAX_NUM_STORED_CURVES (1000)
 
@@ -161,7 +161,7 @@ void CurveCommander::plotRemoved(QString plotName)
    if(plotWasRemoved)
    {
       removeOrphanedChildCurves();
-      fftMeasChildParam_plotRemoved(plotName);
+      curveStatsChildParam_plotRemoved(plotName);
 
       // Update Curve Properties GUI
       if(m_curvePropGui != NULL)

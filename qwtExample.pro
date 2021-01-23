@@ -50,7 +50,7 @@ SOURCES += main.cpp\
     AutoDelimiter.cpp \
     Cursor.cpp \
     fftSpectrumAnalyzerFunctions.cpp \
-    fftMeasChildParam.cpp
+    curveStatsChildParam.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -91,7 +91,7 @@ HEADERS  += mainwindow.h \
     hist.h \
     spectrumAnalyzerModeTypes.h \
     fftSpectrumAnalyzerFunctions.h \
-    fftMeasChildParam.h
+    curveStatsChildParam.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

@@ -42,7 +42,7 @@
       <number>0</number>
      </property>
      <property name="maxVisibleItems">
-      <number>14</number>
+      <number>15</number>
      </property>
      <item>
       <property name="text">
@@ -112,6 +112,11 @@
      <item>
       <property name="text">
        <string>FFT Measurement</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Curve Statistics</string>
       </property>
      </item>
     </widget>
@@ -533,6 +538,46 @@ If unchecked, the child will match the non-scroll mode version of the parent.</s
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QComboBox" name="cmbChildStatsTypes">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>10</y>
+       <width>101</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>Num Samples</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>X Min</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>X Max</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Y Min</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Y Max</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Sample Rate</string>
+      </property>
+     </item>
+    </widget>
     <zorder>lblFftMeasChildPlotSize</zorder>
     <zorder>spnFFtMeasChildPlotSize</zorder>
     <zorder>cmbPlotType</zorder>
@@ -560,6 +605,7 @@ If unchecked, the child will match the non-scroll mode version of the parent.</s
     <zorder>chkFftSrcContiguous</zorder>
     <zorder>cmbXAxisSrc</zorder>
     <zorder>chkMatchParentScroll</zorder>
+    <zorder>cmbChildStatsTypes</zorder>
    </widget>
    <widget class="QWidget" name="tabCurveMath">
     <attribute name="title">

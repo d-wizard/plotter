@@ -1,4 +1,4 @@
-/* Copyright 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,32 +22,32 @@
 #include <QString>
 #include "PlotHelperTypes.h"
 
-typedef struct fftMeasChildKey
+typedef struct curveStatsChildKey
 {
    QString parentPlotName;
    QString childPlotName;
 
    // Constructors
-   fftMeasChildKey(void) :
+   curveStatsChildKey(void) :
       parentPlotName(""),
       childPlotName("")
    {
    }
 
-   fftMeasChildKey(QString parentPlotName_in, QString childPlotName_in) :
+   curveStatsChildKey(QString parentPlotName_in, QString childPlotName_in) :
       parentPlotName(parentPlotName_in),
       childPlotName(childPlotName_in)
    {
    }
 
-   bool operator==(const struct fftMeasChildKey& rhs)
+   bool operator==(const struct curveStatsChildKey& rhs)
    {
        return (parentPlotName == rhs.parentPlotName) &&
               (childPlotName  == rhs.childPlotName );
    }
-   bool operator!=(const struct fftMeasChildKey& rhs){ return !operator==(rhs); }
+   bool operator!=(const struct curveStatsChildKey& rhs){ return !operator==(rhs); }
 
-   bool operator<(const struct fftMeasChildKey& rhs) const
+   bool operator<(const struct curveStatsChildKey& rhs) const
    {
       if(parentPlotName != rhs.parentPlotName)
       {
@@ -58,7 +58,7 @@ typedef struct fftMeasChildKey
 
 }tFftMeasChildKey;
 
-typedef struct fftMeasChildParam
+typedef struct curveStatsChildParam
 {
    QString childCurveName;
    PlotMsgIdType groupMsgId;
@@ -66,7 +66,7 @@ typedef struct fftMeasChildParam
    int childPointIndex;
 
    // Constructors
-   fftMeasChildParam(void) :
+   curveStatsChildParam(void) :
       childCurveName(""),
       groupMsgId(0),
       childCurveSize(0),
@@ -74,7 +74,7 @@ typedef struct fftMeasChildParam
    {
    }
 
-   fftMeasChildParam( QString childCurveName_in,
+   curveStatsChildParam( QString childCurveName_in,
                       PlotMsgIdType groupMsgId_in,
                       int childCurveSize_in,
                       int childPointIndex_in) :
@@ -87,14 +87,14 @@ typedef struct fftMeasChildParam
 
 }tFftMeasChildParam;
 
-bool fftMeasChildParam_getIndex( const QString& parentPlotName, 
-                                 const QString& childPlotName, 
-                                 const QString& childCurveName, 
-                                 PlotMsgIdType groupMsgId, 
-                                 int childCurveSize, 
-                                 int& childPointIndex ); // Index is read / write
+bool curveStatsChildParam_getIndex( const QString& parentPlotName,
+                                    const QString& childPlotName,
+                                    const QString& childCurveName,
+                                    PlotMsgIdType groupMsgId,
+                                    int childCurveSize,
+                                    int& childPointIndex ); // Index is read / write
 
-void fftMeasChildParam_plotRemoved(const QString& plotName);
+void curveStatsChildParam_plotRemoved(const QString& plotName);
 
 
 

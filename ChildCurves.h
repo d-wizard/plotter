@@ -1,4 +1,4 @@
-/* Copyright 2014, 2016, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2016, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -139,8 +139,8 @@ private:
    PlotMsgIdType m_lastGroupMsgId;
    QVector<tParentUpdateChunk> m_fft_parentChunksProcessedInCurGroupMsg;
 
-   int m_fftMeasSize;
-   int m_fftMeasPointIndex;
+   int m_curveStatsChildSize;
+   int m_curveStatsChildPointIndex;
 };
 
 #endif
