@@ -306,7 +306,7 @@ void CurveData::setNumPoints(unsigned int newNumPointsSize)
          // Decreasing curve size, remove samples from beginning.
          yOrigPoints.erase(yOrigPoints.begin(), yOrigPoints.begin()+delta);
          if(plotDim == E_PLOT_DIM_2D)
-            xOrigPoints.erase(yOrigPoints.begin(), xOrigPoints.begin()+delta);
+            xOrigPoints.erase(xOrigPoints.begin(), xOrigPoints.begin()+delta);
       }
    }
    else
