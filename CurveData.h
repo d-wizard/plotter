@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -215,6 +215,10 @@ private:
    dubVect yPoints;
    dubVect normX;
    dubVect normY;
+
+   // Reducing the number of points sent to the plot algorithm helps speed things up.
+   dubVect reducedXPoints;
+   dubVect reducedYPoints;
 
    unsigned int oldestPoint_nonScrollModeVersion; // This can equal numPoints. In that case the newest sample is the last point.
    unsigned int plotSize_nonScrollModeVersion;

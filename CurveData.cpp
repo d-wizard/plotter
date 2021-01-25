@@ -742,17 +742,14 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
    }
    else
    {
-      dubVect guiXPoint;
-      dubVect guiYPoint;
-
       // TODO should be able to predict how large this needs to be, rather than just setting it to the max.
-      guiXPoint.resize(xPointsForGui->size());
-      guiYPoint.resize(yPointsForGui->size());
+      reducedXPoints.resize(xPointsForGui->size());
+      reducedYPoints.resize(yPointsForGui->size());
 
       unsigned int sampCount = 0;
 
-      guiXPoint[sampCount] = (*xPointsForGui)[xStartIndex];
-      guiYPoint[sampCount] = (*yPointsForGui)[xStartIndex];
+      reducedXPoints[sampCount] = (*xPointsForGui)[xStartIndex];
+      reducedYPoints[sampCount] = (*yPointsForGui)[xStartIndex];
       sampCount++;
 
       for(int i = (xStartIndex+1); i < (xEndIndex-1); i += sampPerPixel)
@@ -761,36 +758,36 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
          maxMinXY maxMin = getMinMaxInRange((*yPointsForGui), i, sampToProcess);
          if(maxMin.minX < maxMin.maxX)
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
-            guiYPoint[sampCount] = maxMin.minY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
+            reducedYPoints[sampCount] = maxMin.minY;
             sampCount++;
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
          }
          else if(maxMin.minX > maxMin.maxX)
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
-            guiYPoint[sampCount] = maxMin.minY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
+            reducedYPoints[sampCount] = maxMin.minY;
             sampCount++;
          }
          else
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
          }
       }
 
-      guiXPoint[sampCount] = (*xPointsForGui)[xEndIndex-1];
-      guiYPoint[sampCount] = (*yPointsForGui)[xEndIndex-1];
+      reducedXPoints[sampCount] = (*xPointsForGui)[xEndIndex-1];
+      reducedYPoints[sampCount] = (*yPointsForGui)[xEndIndex-1];
       sampCount++;
 
-      curve->setSamples( &guiXPoint[0],
-                         &guiYPoint[0],
+      curve->setSamples( &reducedXPoints[0],
+                         &reducedYPoints[0],
                          sampCount);
    }
 }
