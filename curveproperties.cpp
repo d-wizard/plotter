@@ -605,9 +605,12 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_AVERAGE:
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
+         ui->lblXAxisSrc->setText("Source");
+      break;
       case E_PLOT_TYPE_CURVE_STATS:
          ui->lblXAxisSrc->setText("Source");
-         childStatsCmbVis = (index == E_PLOT_TYPE_CURVE_STATS);
+         childStatsCmbVis = true;
+         sliceVis = false;
       break;
       case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
@@ -666,8 +669,8 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 
    ui->cmbChildStatsTypes->setVisible(childStatsCmbVis);
 
-   ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis);
-   ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis);
+   ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
+   ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
 
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();
@@ -2292,7 +2295,7 @@ void curveProperties::setMatchParentScrollChkBoxVisible()
    ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
 
    // FFT child plots handle scroll mode in their own way, also plots based on FFT measurements shouldn't inherit parent's scroll mode.
-   if(plotTypeIsFft(plotType) == false && plotType != E_PLOT_TYPE_FFT_MEASUREMENT)
+   if(plotTypeIsFft(plotType) == false && plotType != E_PLOT_TYPE_FFT_MEASUREMENT && plotType != E_PLOT_TYPE_CURVE_STATS)
    {
       tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
       CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
