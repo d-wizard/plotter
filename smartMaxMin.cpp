@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -218,6 +218,77 @@ void smartMaxMin::handleShortenedNumPoints()
 
    // Segments might have changed, update min / max.
    calcTotalMaxMin();
+}
+
+tMaxMinSegment smartMaxMin::getMinMaxOfSubrange(unsigned int start, unsigned int numPoints)
+{
+   tSegList::iterator iter = m_segList.begin();
+   return getMinMaxOfSubrange(start, numPoints, iter);
+}
+
+tMaxMinSegment smartMaxMin::getMinMaxOfSubrange(unsigned int start, unsigned int numPoints, tSegList::iterator& iterInOut)
+{
+   tMaxMinSegment retVal;
+   retVal.startIndex = 0;
+   retVal.numPoints = 0;
+
+   bool segFound = false;
+
+   int stop = start + numPoints;
+   tSegList::iterator iter = iterInOut;
+   if(iter != m_segList.end())
+   {
+      while(iter != m_segList.end())
+      {
+         int segStop = iter->startIndex + iter->numPoints;
+         if(iter->startIndex >= (int)start)
+         {
+            if(segStop <= stop)
+            {
+               // Segment is fully contained in the input range. Add it to the retVal.
+               if(!segFound)
+               {
+                  segFound = true;
+                  retVal = *iter;
+               }
+               else
+               {
+                  retVal.numPoints += iter->numPoints;
+
+                  if(iter->maxValue > retVal.maxValue)
+                  {
+                     retVal.maxValue = iter->maxValue;
+                     retVal.maxIndex = iter->maxIndex;
+                  }
+                  if(iter->minValue < retVal.minValue)
+                  {
+                     retVal.minValue = iter->minValue;
+                     retVal.minIndex = iter->minIndex;
+                  }
+
+                  if(!retVal.realPoints && iter->realPoints)
+                  {
+                     // New segment has first real points.
+                     retVal.realPoints = true;
+                     retVal.firstRealPointIndex = iter->firstRealPointIndex;
+                     retVal.lastRealPointIndex = iter->lastRealPointIndex;
+                  }
+                  else if(iter->realPoints)
+                  {
+                     retVal.lastRealPointIndex = iter->lastRealPointIndex;
+                  }
+               }
+            }
+            else
+            {
+               break;
+            }
+         }
+         iterInOut = iter;
+         ++iter;
+      }
+   }
+   return retVal;
 }
 
 void smartMaxMin::calcTotalMaxMin()
@@ -454,3 +525,78 @@ void smartMaxMin::debug_verifyAllPointsAreInList()
       }
    }
 }
+
+
+fastMonotonicMaxMin::fastMonotonicMaxMin(smartMaxMin& parent):
+   m_parent(parent),
+   m_parentIter(m_parent.getBeginIter())
+{
+
+}
+
+maxMinXY fastMonotonicMaxMin::getMinMaxInRange(unsigned int start, unsigned int len)
+{
+   tMaxMinSegment seg = m_parent.getMinMaxOfSubrange(start, len, m_parentIter);
+   const dubVect& in = *m_parent.getSrcVect();
+   maxMinXY retValSeg; // minX / maxX are the positions of the min and max. minY / maxY are the values of the min and max.
+
+   if(seg.numPoints > 0)
+   {
+      // Got some points from smartMaxMin. Include the samples before and after the points from smartMaxMin.
+      retValSeg.minY = seg.minValue;
+      retValSeg.maxY = seg.maxValue;
+      retValSeg.minX = seg.minIndex;
+      retValSeg.maxX = seg.maxIndex;
+
+      for(int i = start; i < seg.startIndex; ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+      for(unsigned int i = (seg.startIndex+seg.numPoints); i < (start+len); ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+   }
+   else
+   {
+      // No segments in smartMaxMin were fully contained in the desire range. Manually do the min/max measurement.
+      retValSeg.minY = in[start];
+      retValSeg.maxY = in[start];
+      retValSeg.minX = start;
+      retValSeg.maxX = start;
+      for(unsigned int i = start+1; i < (start+len); ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+   }
+
+   return retValSeg;
+}
+

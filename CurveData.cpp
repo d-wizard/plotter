@@ -491,31 +491,6 @@ void CurveData::resetNormalizeFactor()
 }
 
 
-maxMinXY CurveData::getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len)
-{
-   maxMinXY retVal;
-   retVal.minY = in[start];
-   retVal.maxY = in[start];
-   retVal.minX = start;
-   retVal.maxX = start;
-
-   for(unsigned int i = start+1; i < (start+len); ++i)
-   {
-      if(in[i] > retVal.maxY)
-      {
-         retVal.maxX = i;
-         retVal.maxY = in[i];
-      }
-      if(in[i] < retVal.minY)
-      {
-         retVal.minX = i;
-         retVal.minY = in[i];
-      }
-   }
-
-   return retVal;
-}
-
 // xStartIndex is a return value, inclusive.
 // xEndIndex is a return value, exclusive.
 // sampPerPixel is a return value.
@@ -686,7 +661,7 @@ int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSe
 void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
 {
    dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
-   dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
+   dubVect* yPointsForGui = yNormalized ? &normY : &yPoints; // fastMonotonicMaxMin works today because it uses yPoints for max/min then redoes the normalization. If a change brings in more difference between yPoints and yPointsForGui that might break fastMonotonicMaxMin.
 
    if(numPoints <= 0)
    {
@@ -745,6 +720,7 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
       // TODO should be able to predict how large this needs to be, rather than just setting it to the max.
       reducedXPoints.resize(xPointsForGui->size());
       reducedYPoints.resize(yPointsForGui->size());
+      fastMonotonicMaxMin fastMinMax(smartMaxMinYPoints);
 
       unsigned int sampCount = 0;
 
@@ -755,7 +731,13 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
       for(int i = (xStartIndex+1); i < (xEndIndex-1); i += sampPerPixel)
       {
          unsigned int sampToProcess = std::min((int)sampPerPixel, (xEndIndex-1) - i);
-         maxMinXY maxMin = getMinMaxInRange((*yPointsForGui), i, sampToProcess);
+         maxMinXY maxMin = fastMinMax.getMinMaxInRange(i, sampToProcess);
+         if(yNormalized)
+         {
+            maxMin.maxY = (normFactor.yAxis.m * maxMin.maxY) + normFactor.yAxis.b;
+            maxMin.minY = (normFactor.yAxis.m * maxMin.minY) + normFactor.yAxis.b;
+         }
+
          if(maxMin.minX < maxMin.maxX)
          {
             reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];

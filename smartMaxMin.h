@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -68,8 +68,15 @@ public:
    void getFirstLastReal(int& firstRealPointIndex, int& lastRealPointIndex);
 
    void handleShortenedNumPoints();
+
+   tMaxMinSegment getMinMaxOfSubrange(unsigned int start, unsigned int numPoints);
+   tMaxMinSegment getMinMaxOfSubrange(unsigned int start, unsigned int numPoints, tSegList::iterator& iterInOut);
+   tSegList::iterator getBeginIter(){return m_segList.begin();}
+   const dubVect* getSrcVect(){return m_srcVect;}
 private:
    smartMaxMin();
+   smartMaxMin(smartMaxMin const&);
+   void operator=(smartMaxMin const&);
 
    void calcTotalMaxMin();
    void calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
@@ -89,6 +96,26 @@ private:
    bool m_curMaxMinHasRealPoints;
    int m_firstRealPointIndex;
    int m_lastRealPointIndex;
+};
+
+
+// This can be used to more quickly determine the min/max of subranges of plot data. This can only be used if
+// the subranges monotonically increasing up through the plot data.
+class fastMonotonicMaxMin
+{
+public:
+   fastMonotonicMaxMin(smartMaxMin& parent);
+
+   maxMinXY getMinMaxInRange(unsigned int start, unsigned int len);
+
+private:
+   fastMonotonicMaxMin();
+   fastMonotonicMaxMin(fastMonotonicMaxMin const&);
+   void operator=(fastMonotonicMaxMin const&);
+
+   smartMaxMin& m_parent;
+   tSegList::iterator m_parentIter;
+
 };
 
 #endif // SMARTMAXMIN_H
