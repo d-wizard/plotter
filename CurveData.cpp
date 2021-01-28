@@ -894,6 +894,15 @@ void CurveData::handleScrollModeTransitions(bool plotScrollMode)
 {
    if(plotScrollMode != scrollMode)
    {
+      if(!plotScrollMode)
+      {
+         // Toggling out of scroll mode. If num points has been changed, set it back before reverting out of scroll mode.
+         if(plotSize_nonScrollModeVersion != numPoints && plotSize_nonScrollModeVersion > 0)
+         {
+            setNumPoints(plotSize_nonScrollModeVersion);
+         }
+      }
+
       int swapPoint = plotScrollMode ? oldestPoint_nonScrollModeVersion : numPoints - oldestPoint_nonScrollModeVersion;
 
       swapSamples(yOrigPoints, swapPoint);
