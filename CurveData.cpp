@@ -452,6 +452,17 @@ void CurveData::findMaxMin()
 
 void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis)
 {
+   if(desiredScale.maxX == desiredScale.minX) // Max sure desired scale height /width isn't zero.
+   {
+      desiredScale.maxX += 1.0;
+      desiredScale.minX -= 1.0;
+   }
+   if(desiredScale.maxY == desiredScale.minY)
+   {
+      desiredScale.maxY += 1.0;
+      desiredScale.minY -= 1.0;
+   }
+
    if(!normXAxis || (desiredScale.maxX == maxMin_beforeScale.maxX && desiredScale.minX == maxMin_beforeScale.minX))
    {
       normFactor.xAxis.m = 1.0;
@@ -460,10 +471,20 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool n
    }
    else
    {
-      normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
-      normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
+      if( (maxMin_beforeScale.maxX - maxMin_beforeScale.minX) > 0)
+      {
+         normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
+         normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
+      }
+      else
+      {
+         // No width. Don't change the scale. Just move to middle.
+         normFactor.xAxis.m = 1.0;
+         normFactor.xAxis.b = (desiredScale.maxX - desiredScale.minX) / 2.0 + desiredScale.minX - maxMin_beforeScale.minX;
+      }
       xNormalized = true;
    }
+
    if(!normYAxis || (desiredScale.maxY == maxMin_beforeScale.maxY && desiredScale.minY == maxMin_beforeScale.minY))
    {
       normFactor.yAxis.m = 1.0;
@@ -472,8 +493,17 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool n
    }
    else
    {
-      normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin_beforeScale.maxY - maxMin_beforeScale.minY);
-      normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin_beforeScale.maxY);
+      if( (maxMin_beforeScale.maxY - maxMin_beforeScale.minY) > 0)
+      {
+         normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin_beforeScale.maxY - maxMin_beforeScale.minY);
+         normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin_beforeScale.maxY);
+      }
+      else
+      {
+         // No height. Don't change the scale. Just move to middle.
+         normFactor.yAxis.m = 1.0;
+         normFactor.yAxis.b = (desiredScale.maxY - desiredScale.minY) / 2.0 + desiredScale.minY - maxMin_beforeScale.minY;
+      }
       yNormalized = true;
    }
 
