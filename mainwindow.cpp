@@ -25,6 +25,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QElapsedTimer>
+#include <QtWidgets>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
