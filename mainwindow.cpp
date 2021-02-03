@@ -3362,6 +3362,7 @@ void MainWindow::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTrace
 
 void MainWindow::setSpecAnGuiVisible(bool visible)
 {
+#if 0
    // The default plotter Palette has a black background. This can cause some issues with
    // certain GUI elements in different Windows theme styles. The 'Standard Palette' seems
    // to work best in all situations.
@@ -3378,7 +3379,7 @@ void MainWindow::setSpecAnGuiVisible(bool visible)
    ui->radAverage->setPalette(whiteTextPalette);
    ui->groupSpecAnTrace->setPalette(whiteTextPalette);
    ui->groupSpecAnMarker->setPalette(whiteTextPalette);
-
+#endif
    ui->groupSpecAnTrace->setVisible(visible);
    ui->groupSpecAnMarker->setVisible(visible);
 }
