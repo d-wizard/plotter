@@ -2344,11 +2344,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
                 bool holdYAxis = KeyEvent->modifiers().testFlag(Qt::ShiftModifier);
 
-                if(wheelEvent->delta() > 0)
+                auto stdMouseUpDownDelta = wheelEvent->angleDelta().y(); // X axis is for fancy mouses that can scroll left/right.
+                if(stdMouseUpDownDelta > 0)
                 {
                     m_plotZoom->Zoom(ZOOM_IN_PERCENT, relMousePos, holdYAxis);
                 }
-                else if(wheelEvent->delta() < 0)
+                else if(stdMouseUpDownDelta < 0)
                 {
                     m_plotZoom->Zoom(ZOOM_OUT_PERCENT, relMousePos, holdYAxis);
                 }

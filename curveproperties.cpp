@@ -40,7 +40,7 @@ const int TAB_CREATE_MATH = 1;
 const int TAB_RESTORE_MSG = 2;
 const int TAB_OPEN_SAVE_CURVE = 3;
 const int TAB_IP_BLOCK = 4;
-const int TAB_HOTKEYS = 5;
+//const int TAB_HOTKEYS = 5; (not actually used, so comment out)
 const int TAB_PROPERTIES = 6;
 
 const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751058;
@@ -624,7 +624,7 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_COMPLEX_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
          fftCheckBoxVisible = true;
-         /* no break */
+         // fall through
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
