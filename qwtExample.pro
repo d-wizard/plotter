@@ -7,8 +7,7 @@
 # Run pre-build python script to generate revDateStamp.h
 revDateStampTarget.target = ./revDateStamp.h
 revDateStampTarget.depends = FORCE
-win32: revDateStampTarget.commands = cd $$PWD & python ./revDateStamp.py # Windows version
-else:  revDateStampTarget.commands = cd $$PWD;  python ./revDateStamp.py  # Unix version
+revDateStampTarget.commands = $$system(python ./revDateStamp.py)
 QMAKE_EXTRA_TARGETS += revDateStampTarget
 
 RC_FILE = mainwindow.rc
