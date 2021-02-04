@@ -1,4 +1,4 @@
-/* Copyright 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -216,7 +216,7 @@ void createPlotFromData::parseInputData()
              localDelim.toStdString(),
              isHex) );
 
-   QStringList dataSplit = prunedData.split(localDelim, QString::SkipEmptyParts);
+   QStringList dataSplit = prunedData.split(localDelim, Qt::SkipEmptyParts);
    int i_numInValues = dataSplit.count();
 
    if(isHex == false)

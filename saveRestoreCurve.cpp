@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -598,7 +598,7 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSa
    {
       SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
-      curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
+      curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), Qt::SkipEmptyParts));
    }
 
    int maxNumLines = 0;
