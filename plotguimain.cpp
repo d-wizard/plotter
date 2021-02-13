@@ -172,18 +172,33 @@ void plotGuiMain::restorePlotFilesInListSlot()
 void plotGuiMain::updateBinarySlot()
 {
    std::string pathToThisBinary = QCoreApplication::applicationFilePath().toStdString();
-   std::string updateCmdToRun = updatePlotter(pathToThisBinary);
-   if(updateCmdToRun != "")
+   std::string updateCmdToRun;
+   std::vector<std::string> updateCmdArgs;
+   std::string updateCmdLine;
+
+   std::string failText = "";
+
+   if(updatePlotter(pathToThisBinary, updateCmdToRun, updateCmdArgs, updateCmdLine))
    {
-      QProcess process(this);
-      process.startDetached(updateCmdToRun.c_str());
-      QApplication::quit();
+      if(startExecutable(updateCmdToRun, updateCmdArgs, updateCmdLine))
+      {
+         QApplication::quit();
+      }
+      else
+      {
+         failText = "Failed to start update executable.";
+      }
    }
    else
    {
+      failText = "Failed to find update executable.";
+   }
+
+   if(failText != "")
+   {
       QMessageBox Msgbox;
       Msgbox.setWindowTitle("Update Failed");
-      Msgbox.setText("Failed to find update executable.");
+      Msgbox.setText(failText.c_str());
       Msgbox.exec();
    }
 }

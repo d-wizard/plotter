@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,10 +19,13 @@
 #ifndef UPDATE_H
 #define UPDATE_H
 #include <string>
+#include <vector>
 
 
-std::string updatePlotter(std::string pathToThisBinary);
+bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string plotterCmdLine);
 
 void cleanupAfterUpdate();
+
+bool startExecutable(std::string& exePath, std::vector<std::string>& exeArgs, std::string& cmdLine);
 
 #endif // UPDATE_H

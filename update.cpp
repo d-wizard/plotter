@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,7 +29,7 @@
 #include "persistentParameters.h"
 
 #ifdef Q_OS_WIN
-#include <windows.h> // Sleep
+#include <windows.h> // Sleep, CreateProcessA
 #endif
 
 #define COPY_UPDATER_TO_TEMP_DIR
@@ -119,8 +119,7 @@ static bool copyFile(std::string srcPath, std::string destPath)
 }
 #endif
 
-
-std::string updatePlotter(std::string pathToThisBinary)
+bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string plotterCmdLine)
 {
    std::string updateBinaryFileName = UPDATE_FILES[UPDATE_FILES_UPDATE_EXE_INDEX];
 
@@ -128,7 +127,7 @@ std::string updatePlotter(std::string pathToThisBinary)
    std::string pathToUpdateBinary = fso::GetDir(pathToThisBinary) + fso::dirSep() + updateBinaryFileName;
 
    std::string finalUpdateBinaryPath;
-   std::string updateCmd = "";
+   bool valid = false;
    if(fso::FileExists(pathToUpdateBinary))
    {
 #ifdef COPY_UPDATER_TO_TEMP_DIR
@@ -162,9 +161,16 @@ std::string updatePlotter(std::string pathToThisBinary)
 #endif
 
       // Add quotes around finalUpdateBinaryPath and pathToThisBinary
-      updateCmd = "\"" + finalUpdateBinaryPath + "\" -p \"" + pathToThisBinary + "\"";
+      plotterCmdLine = "\"" + finalUpdateBinaryPath + "\" -p \"" + pathToThisBinary + "\"";
+
+      plotterUpdatePath = finalUpdateBinaryPath;
+
+      plotterUpdateArgs.push_back("-p");
+      plotterUpdateArgs.push_back(pathToThisBinary);
+
+      valid = true;
    }
-   return updateCmd;
+   return valid;
 }
 
 void cleanupAfterUpdate()
@@ -228,4 +234,46 @@ void cleanupAfterUpdate()
       }while(!canExitWhile);
    }
 
+}
+
+
+bool startExecutable(std::string& exePath, std::vector<std::string> &exeArgs, std::string& cmdLine)
+{
+#ifdef Q_OS_WIN
+   (void)exeArgs; // Unused here.
+   STARTUPINFOA si;
+   PROCESS_INFORMATION pi;
+
+   ZeroMemory(&si, sizeof(si));
+   si.cb = sizeof(si);
+   ZeroMemory(&pi, sizeof(pi));
+
+   std::vector<char> cmdLineCopy;
+   cmdLineCopy.resize(cmdLine.size()+1);
+   cmdLineCopy[cmdLine.size()] = '\0'; // Null Terminator
+   memcpy(&cmdLineCopy[0], cmdLine.c_str(), cmdLine.size());
+
+
+   BOOL createProcessResult = CreateProcessA
+   (
+      exePath.c_str(),
+      cmdLineCopy.data(),
+      NULL, NULL, FALSE,
+      CREATE_NEW_CONSOLE,
+      NULL, NULL,
+      &si,
+      &pi
+   );
+   return !!createProcessResult;
+#else
+   // startDetached doesn't seem to work with QT5 (it did with QT4). Now this app won't quit while the child app is running.
+   // At least that is the case in Windows. Maybe it will work in Linux. Otherwise system might do it.
+   (void)cmdLine;
+   QString cmd(exePath.c_str());
+   QStringList args;
+   for(auto& arg : exeArgs)
+       args.push_back(arg.c_str());
+
+   return QProcess::startDetached(cmd, args);
+#endif
 }
