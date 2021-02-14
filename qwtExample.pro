@@ -11,8 +11,16 @@ revDateStampTarget.commands = $$system(python ./revDateStamp.py)
 QMAKE_EXTRA_TARGETS += revDateStampTarget
 
 RC_FILE = mainwindow.rc
+
+# QWT and FFTW libraries are in directories labeled 32 or 64. Determine which directory to find the libraries in.
+contains(QT_ARCH, i386) {
+    ARCHDIR = 32
+} else {
+    ARCHDIR = 64
+}
+
 QWTDIR = ../qwt-6.1
-FFTWDIR = ../fftw-3.3.3-dll32
+FFTWDIR = ../fftw-dll
 include ( $${QWTDIR}/qwt.prf )
 
 QT       += core gui
@@ -103,10 +111,10 @@ FORMS    += mainwindow.ui \
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$FFTWDIR
 
-qwtAddLibrary($${QWTDIR}/lib, qwt)
+qwtAddLibrary($${QWTDIR}/lib/$${ARCHDIR}, qwt)
 
 LIBS += -lws2_32
-LIBS += -L$$FFTWDIR -lfftw3-3
+LIBS += -L$$FFTWDIR/$$ARCHDIR -lfftw3-3
 
 RESOURCES += \
     qtResource.qrc
