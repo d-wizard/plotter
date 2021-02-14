@@ -1,4 +1,4 @@
-/* Copyright 2014, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -561,7 +561,7 @@ void dString::SplitV(const std::string& t_input, const std::string& t_delimiter,
    {
       const char* pc_newLinePos = strstr(pc_inStr, pc_searchStr); // Don't do NULL check, Count verified that something will be found.
 
-      int i_numCharInNewStr = (int)pc_newLinePos - (int)pc_inStr;
+      int i_numCharInNewStr = (int)((char*)pc_newLinePos - (char*)pc_inStr);
 
       t_retVal[i] = std::string(pc_inStr, i_numCharInNewStr);
 
@@ -606,7 +606,7 @@ void dString::SplitL(const std::string& t_input, const std::string& t_delimiter,
    {
       const char* pc_newLinePos = strstr(pc_inStr, pc_searchStr); // Don't do NULL check, Count verified that something will be found.
 
-      int i_numCharInNewStr = (int)pc_newLinePos - (int)pc_inStr;
+      int i_numCharInNewStr = (int)((char*)pc_newLinePos - (char*)pc_inStr);
 
       t_retVal.push_back(std::string(pc_inStr, i_numCharInNewStr));
 
