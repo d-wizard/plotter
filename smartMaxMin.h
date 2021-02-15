@@ -73,13 +73,16 @@ public:
    tMaxMinSegment getMinMaxOfSubrange(unsigned int start, unsigned int numPoints, tSegList::iterator& iterInOut);
    tSegList::iterator getBeginIter(){return m_segList.begin();}
    const dubVect* getSrcVect(){return m_srcVect;}
+
+   static void calcMaxMinOfSeg(const double* srcPoints, unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
+   static void combineSegments(tMaxMinSegment& seg1, const tMaxMinSegment& seg2); // seg1 is input and the return value (i.e. the combined version)
+
 private:
    smartMaxMin();
    smartMaxMin(smartMaxMin const&);
    void operator=(smartMaxMin const&);
 
    void calcTotalMaxMin();
-   void calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
 
    void combineSegments();
 
@@ -106,7 +109,7 @@ class fastMonotonicMaxMin
 public:
    fastMonotonicMaxMin(smartMaxMin& parent);
 
-   maxMinXY getMinMaxInRange(unsigned int start, unsigned int len);
+   tMaxMinSegment getMinMaxInRange(unsigned int start, unsigned int len);
 
 private:
    fastMonotonicMaxMin();

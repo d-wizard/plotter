@@ -761,35 +761,42 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
       for(int i = (xStartIndex+1); i < (xEndIndex-1); i += sampPerPixel)
       {
          unsigned int sampToProcess = std::min((int)sampPerPixel, (xEndIndex-1) - i);
-         maxMinXY maxMin = fastMinMax.getMinMaxInRange(i, sampToProcess);
+         tMaxMinSegment maxMin = fastMinMax.getMinMaxInRange(i, sampToProcess);
+
          if(yNormalized)
          {
-            maxMin.maxY = (normFactor.yAxis.m * maxMin.maxY) + normFactor.yAxis.b;
-            maxMin.minY = (normFactor.yAxis.m * maxMin.minY) + normFactor.yAxis.b;
+            maxMin.maxValue = (normFactor.yAxis.m * maxMin.maxValue) + normFactor.yAxis.b;
+            maxMin.minValue = (normFactor.yAxis.m * maxMin.minValue) + normFactor.yAxis.b;
          }
 
-         if(maxMin.minX < maxMin.maxX)
+         if(!maxMin.realPoints)
          {
-            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
-            reducedYPoints[sampCount] = maxMin.minY;
-            sampCount++;
-            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            reducedYPoints[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[i]; // No valid points, set to start index in the range.
+            reducedYPoints[sampCount] = NAN;
             sampCount++;
          }
-         else if(maxMin.minX > maxMin.maxX)
+         else if(maxMin.minIndex < maxMin.maxIndex)
          {
-            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            reducedYPoints[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minIndex];
+            reducedYPoints[sampCount] = maxMin.minValue;
             sampCount++;
-            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
-            reducedYPoints[sampCount] = maxMin.minY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxIndex];
+            reducedYPoints[sampCount] = maxMin.maxValue;
+            sampCount++;
+         }
+         else if(maxMin.minIndex > maxMin.maxIndex)
+         {
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxIndex];
+            reducedYPoints[sampCount] = maxMin.maxValue;
+            sampCount++;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minIndex];
+            reducedYPoints[sampCount] = maxMin.minValue;
             sampCount++;
          }
          else
          {
-            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            reducedYPoints[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxIndex];
+            reducedYPoints[sampCount] = maxMin.maxValue;
             sampCount++;
          }
       }

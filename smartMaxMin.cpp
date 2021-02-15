@@ -127,7 +127,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       tMaxMinSegment newSeg;
       unsigned int calcSize = std::min(pointsRemaining, m_maxSegSize);
 
-      calcMaxMinOfSeg(nextSegStartIndex, calcSize, newSeg);
+      calcMaxMinOfSeg(m_srcVect->data(), nextSegStartIndex, calcSize, newSeg);
       m_segList.push_back(newSeg);
 
       nextSegStartIndex += calcSize;
@@ -160,7 +160,7 @@ void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
       else if(startIndex < shiftAmount)
       {
          // Part of the segment has been shifted out. Re-calc min/max on the remaining points.
-         calcMaxMinOfSeg(0, numPoints + numPointsErased - shiftAmount, *iter);
+         calcMaxMinOfSeg(m_srcVect->data(), 0, numPoints + numPointsErased - shiftAmount, *iter);
          ++iter;
       }
       else
@@ -210,7 +210,7 @@ void smartMaxMin::handleShortenedNumPoints()
       {
          if( (iter->startIndex + iter->numPoints) >= srcVectSize )
          {
-            calcMaxMinOfSeg(iter->startIndex, srcVectSize - iter->startIndex, *iter);
+            calcMaxMinOfSeg(m_srcVect->data(), iter->startIndex, srcVectSize - iter->startIndex, *iter);
          }
          iter++;
       }
@@ -351,7 +351,7 @@ void smartMaxMin::calcTotalMaxMin()
 // Find the max and min in the vector, but only allow real numbers to be used
 // to determine the max and min (ingore values that are not real, i.e 'Not a Number'
 // and Positive Infinity or Negative Inifinty)
-void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg)
+void smartMaxMin::calcMaxMinOfSeg(const double* srcPoints, unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg)
 {
    // Initialize max and min to +/- 1 just in case all the input points are not real numbers.
    seg.maxValue = 1;
@@ -364,7 +364,6 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    seg.firstRealPointIndex = -1;
    seg.lastRealPointIndex  = -1;
 
-   const double* srcPoints = &((*m_srcVect)[0]);
    unsigned int stopIndex = startIndex + numPoints;
 
    // Find first point that is a real number.
@@ -385,23 +384,68 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    }
 
    // Loop through the input value to find the max and min.
-   for(unsigned int i = startIndex; i < stopIndex; ++i)
+   if(seg.realPoints)
    {
-      if(isDoubleValid(srcPoints[i])) // Only allow real numbers.
+      for(unsigned int i = startIndex; i < stopIndex; ++i)
       {
-         if(seg.minValue > srcPoints[i])
+         if(isDoubleValid(srcPoints[i])) // Only allow real numbers.
          {
-            seg.minValue = srcPoints[i];
-            seg.minIndex = i;
+            if(seg.minValue > srcPoints[i])
+            {
+               seg.minValue = srcPoints[i];
+               seg.minIndex = i;
+            }
+            if(seg.maxValue < srcPoints[i])
+            {
+               seg.maxValue = srcPoints[i];
+               seg.maxIndex = i;
+            }
+            seg.lastRealPointIndex = i;
          }
-         if(seg.maxValue < srcPoints[i])
-         {
-            seg.maxValue = srcPoints[i];
-            seg.maxIndex = i;
-         }
-         seg.lastRealPointIndex = i;
       }
    }
+}
+
+// Combine two segments. Result will be filled into seg1.
+// seg1 should be before seg2 in the source data (i.e. seg1.startIndex+seg1.numPoints <= seg2.startIndex)
+void smartMaxMin::combineSegments(tMaxMinSegment& seg1, const tMaxMinSegment& seg2)
+{
+   // First, update the Max/Min values and their indexes.
+   if(seg1.realPoints && seg2.realPoints)
+   {
+      // Both segments contain real values, simply find the min and max between the two segments.
+      if(seg1.maxValue < seg2.maxValue)
+      {
+         seg1.maxValue = seg2.maxValue;
+         seg1.maxIndex = seg2.maxIndex;
+      }
+      if(seg1.minValue > seg2.minValue)
+      {
+         seg1.minValue = seg2.minValue;
+         seg1.minIndex = seg2.minIndex;
+      }
+      seg1.lastRealPointIndex = seg2.lastRealPointIndex; // seg2 is getting combined into seg1.
+   }
+   else if(seg2.realPoints)
+   {
+      // seg1 is not real but seg2 is, so just use seg2 values
+      seg1.maxValue = seg2.maxValue;
+      seg1.maxIndex = seg2.maxIndex;
+      seg1.minValue = seg2.minValue;
+      seg1.minIndex = seg2.minIndex;
+      seg1.firstRealPointIndex = seg2.firstRealPointIndex;
+      seg1.lastRealPointIndex  = seg2.lastRealPointIndex;
+   }
+   // else seg1 is real and seg2 isn't (thus keep seg1 the same) or both are not real (also keep seg1 the same)
+
+   // Next, update the variable that indicates if any of the points in the segment contain real values.
+   if(seg1.realPoints || seg2.realPoints)
+   {
+      seg1.realPoints = true;
+   }
+
+   // Finally, update the number of points in the new, combined segment.
+   seg1.numPoints += seg2.numPoints;
 }
 
 // Combine small segments.
@@ -423,43 +467,8 @@ void smartMaxMin::combineSegments()
          // Check if the two segments together are small enough to combine.
          if( (cur->numPoints + next->numPoints) < m_minSegSize )
          {
-            // First, update the Max/Min values and their indexes.
-            if(cur->realPoints && next->realPoints)
-            {
-               // Both segments contain real values, simply find the min and max between the two segments.
-               if(cur->maxValue < next->maxValue)
-               {
-                  cur->maxValue = next->maxValue;
-                  cur->maxIndex = next->maxIndex;
-               }
-               if(cur->minValue > next->minValue)
-               {
-                  cur->minValue = next->minValue;
-                  cur->minIndex = next->minIndex;
-               }
-               cur->lastRealPointIndex = next->lastRealPointIndex; // Next is getting erased.
-            }
-            else if(next->realPoints)
-            {
-               // cur is not real but next is, so just use next values
-               cur->maxValue = next->maxValue;
-               cur->maxIndex = next->maxIndex;
-               cur->minValue = next->minValue;
-               cur->minIndex = next->minIndex;
-               cur->firstRealPointIndex = next->firstRealPointIndex;
-               cur->lastRealPointIndex  = next->lastRealPointIndex;
-            }
-            // else cur is real and next isn't (thus keep cur the same) or both are not real (also keep cur the same)
-
-            // Next, update the variable that indicates if any of the points in the segment contain real values.
-            if(cur->realPoints || next->realPoints)
-            {
-               cur->realPoints = true;
-            }
-
-            // Finally, update the number of points in the new, combined segment.
-            cur->numPoints += next->numPoints;
-
+            // Combine cur and next then erase next.
+            combineSegments(*cur, *next);
             m_segList.erase(next);
          }
          else
@@ -534,67 +543,32 @@ fastMonotonicMaxMin::fastMonotonicMaxMin(smartMaxMin& parent):
 
 }
 
-maxMinXY fastMonotonicMaxMin::getMinMaxInRange(unsigned int start, unsigned int len)
+tMaxMinSegment fastMonotonicMaxMin::getMinMaxInRange(unsigned int start, unsigned int len)
 {
    tMaxMinSegment seg = m_parent.getMinMaxOfSubrange(start, len, m_parentIter);
-   const dubVect& in = *m_parent.getSrcVect();
-   maxMinXY retValSeg; // minX / maxX are the positions of the min and max. minY / maxY are the values of the min and max.
+   const double* srcData = m_parent.getSrcVect()->data();
+   tMaxMinSegment retValSeg;
 
    if(seg.numPoints > 0)
    {
       // Got some points from smartMaxMin. Include the samples before and after the points from smartMaxMin.
-      retValSeg.minY = seg.minValue;
-      retValSeg.maxY = seg.maxValue;
-      retValSeg.minX = seg.minIndex;
-      retValSeg.maxX = seg.maxIndex;
+      tMaxMinSegment beforeSeg, afterSeg;
+      int beforeSegLen = seg.startIndex - start;
+      int afterSegLen = len - beforeSegLen - seg.numPoints;
 
-      for(int i = start; i < seg.startIndex; ++i)
-      {
-         if(in[i] > retValSeg.maxY)
-         {
-            retValSeg.maxX = i;
-            retValSeg.maxY = in[i];
-         }
-         if(in[i] < retValSeg.minY)
-         {
-            retValSeg.minX = i;
-            retValSeg.minY = in[i];
-         }
-      }
-      for(unsigned int i = (seg.startIndex+seg.numPoints); i < (start+len); ++i)
-      {
-         if(in[i] > retValSeg.maxY)
-         {
-            retValSeg.maxX = i;
-            retValSeg.maxY = in[i];
-         }
-         if(in[i] < retValSeg.minY)
-         {
-            retValSeg.minX = i;
-            retValSeg.minY = in[i];
-         }
-      }
+      // Get the segments before and after.
+      smartMaxMin::calcMaxMinOfSeg(srcData, start, beforeSegLen, beforeSeg);
+      smartMaxMin::calcMaxMinOfSeg(srcData, seg.startIndex+seg.numPoints, afterSegLen, afterSeg);
+
+      // Combine the segments (Be careful of the order. Needs to be beforeSeg, then seg, then afterSeg).
+      retValSeg = beforeSeg;
+      smartMaxMin::combineSegments(retValSeg, seg);
+      smartMaxMin::combineSegments(retValSeg, afterSeg);
    }
    else
    {
       // No segments in smartMaxMin were fully contained in the desire range. Manually do the min/max measurement.
-      retValSeg.minY = in[start];
-      retValSeg.maxY = in[start];
-      retValSeg.minX = start;
-      retValSeg.maxX = start;
-      for(unsigned int i = start+1; i < (start+len); ++i)
-      {
-         if(in[i] > retValSeg.maxY)
-         {
-            retValSeg.maxX = i;
-            retValSeg.maxY = in[i];
-         }
-         if(in[i] < retValSeg.minY)
-         {
-            retValSeg.minX = i;
-            retValSeg.minY = in[i];
-         }
-      }
+      smartMaxMin::calcMaxMinOfSeg(m_parent.getSrcVect()->data(), start, len, retValSeg);
    }
 
    return retValSeg;
