@@ -19,7 +19,7 @@ contains(QT_ARCH, i386) {
     ARCHDIR = 64
 }
 
-QWTDIR = ../qwt-6.1
+QWTDIR = ../../qwt_sources_and_bin/latest6.1_myMods/qwt-6.1
 FFTWDIR = ../fftw-dll
 include ( $${QWTDIR}/qwt.prf )
 
@@ -111,7 +111,7 @@ FORMS    += mainwindow.ui \
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$FFTWDIR
 
-qwtAddLibrary($${QWTDIR}/lib/$${ARCHDIR}, qwt)
+qwtAddLibrary($${QWTDIR}/../lib/$${ARCHDIR}, qwt)
 
 LIBS += -lws2_32
 LIBS += -L$$FFTWDIR/$$ARCHDIR -lfftw3-3
