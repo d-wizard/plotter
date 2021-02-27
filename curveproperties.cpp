@@ -65,6 +65,7 @@ const QString mathOpsStr[] = {
 "SHIFT DOWN",
 "POWER",
 "LOG",
+"ALOG",
 "MOD",
 "ABS",
 "ROUND",
@@ -82,6 +83,7 @@ const QString mathOpsSymbol[] = {
 ">>",
 "^",
 "log",
+"alog",
 "mod",
 "abs",
 "round",
@@ -100,6 +102,7 @@ const QString mathOpsValueLabel[] = {
 "Bits to Shift Down by",
 "Raise to Power Value",
 "Base of log",
+"Base of inverse log",
 "Modulus Denominator",
 "", // ABS has no value, so set the text to nothing.
 "Decimal Point to Round",
