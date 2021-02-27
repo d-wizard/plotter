@@ -259,9 +259,11 @@ private:
 
    void useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnStart, QSpinBox* spnStop);
 
-   // Properties Tab - Curve Color Setter/Getter
+   // Properties Tab - Curve Appearance Setters/Getters
    QColor getPropTabCurveColor();
    void setPropTabCurveColor(QColor color);
+   double getPropTabCurveWidth();
+   void setPropTabCurveWidth(double width);
 
    Ui::curveProperties *ui;
 

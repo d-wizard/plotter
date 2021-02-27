@@ -1735,8 +1735,9 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
          ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
 
          // Set the Curve Color button to the color of the curve.
-         QColor curveColor = parentCurve->getCurveAppearance().color;
-         setPropTabCurveColor(curveColor);
+         CurveAppearance appear = parentCurve->getCurveAppearance();
+         setPropTabCurveColor(appear.color);
+         setPropTabCurveWidth(appear.width);
       }
    }
    else
@@ -1755,6 +1756,7 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
        ui->propParentCurves->clear();
        ui->txtLastIp->setText("");
        setPropTabCurveColor(Qt::black);
+       setPropTabCurveWidth(1.0);
    }
 }
 
@@ -1814,14 +1816,15 @@ void curveProperties::propTabApply()
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
       }
 
-      // Check for curve color change.
+      // Check for curve appearance change.
+      CurveAppearance appearance = parentCurve->getCurveAppearance();
       QColor newColor = getPropTabCurveColor();
-      QColor oldColor = parentCurve->getCurveAppearance().color;
-      if(newColor != oldColor)
+      double newWidth = getPropTabCurveWidth();
+      if(newColor != appearance.color || newWidth != appearance.width)
       {
-         // Update the color of the curve.
-         CurveAppearance appearance = parentCurve->getCurveAppearance();
+         // Update the appearance of the curve.
          appearance.color = newColor;
+         appearance.width = newWidth;
          parentCurve->setCurveAppearance(appearance);
       }
 
@@ -2352,4 +2355,14 @@ void curveProperties::on_cmbChildStatsTypes_currentIndexChanged(int index)
 
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();
+}
+
+double curveProperties::getPropTabCurveWidth()
+{
+   return ui->spnWidth->value();
+}
+
+void curveProperties::setPropTabCurveWidth(double width)
+{
+   ui->spnWidth->setValue(width);
 }

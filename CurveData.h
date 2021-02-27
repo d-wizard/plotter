@@ -43,7 +43,13 @@ public:
       color(initColor),
       style(initStyle)
    {
-      width = initStyle == QwtPlotCurve::Dots ? 3.0 : 0.0;
+      width = initStyle == QwtPlotCurve::Dots ? 3.0 : 1.0;
+   }
+   CurveAppearance(QColor initColor, QwtPlotCurve::CurveStyle initStyle, qreal initwidth):
+      color(initColor),
+      style(initStyle),
+      width(initwidth)
+   {
    }
 
    QColor color;
