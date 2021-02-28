@@ -1209,10 +1209,15 @@ void curveProperties::displayUserMathOp()
 
    for(iter = m_mathOps.begin(); iter != m_mathOps.end(); ++iter)
    {
+#if 0 // Old version (didn't do a good job of switching in/out of scientific notation)
       char number[50];
       snprintf(number, sizeof(number), "%f", iter->num);
       number[sizeof(number)-1] = 0;
-
+#else // New version (better at displaying those sig-figs)
+      std::stringstream iostr;
+      iostr << iter->num;
+      QString number(iostr.str().c_str());
+#endif
       QString displayStr = mathOpsSymbol[iter->op] + " " + QString(number);
 
       if(needsValue_eMathOp(iter->op) == false)
