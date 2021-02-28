@@ -186,6 +186,8 @@ public:
     double getCurveStat(QString& curveName, eCurveStats type);
     bool areFftMeasurementsVisible();
 
+    void saveCurveAppearance(QString curveName, CurveAppearance& appearance);
+
     bool m_spectrumAnalyzerViewSet;
 private:
     // Define indexes for the array of delta cursor labels.
@@ -403,6 +405,8 @@ private:
     void setSpecAnGuiVisible(bool visible);
 
     void silentSavePlotToFile();
+
+    void fillWithSavedAppearance(QString& curveName, CurveAppearance& appearance);
 
 private slots:
     void pointSelected(const QPointF &pos);

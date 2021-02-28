@@ -961,6 +961,7 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       }
 
       CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
+      fillWithSavedAppearance(name, newCurveAppearance); // If the user changed the curve appearance from the defaults for this curve name, use the user values.
 
       // Create the new curve.
       CurveData* newCurve = new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg);
@@ -2998,6 +2999,7 @@ void MainWindow::changeCurveStyle(int inVal)
    }
    else if(curveIndex == -1)
    {
+      // Apply to all curves.
       m_defaultCurveStyle = curveStyle;
       for(curveIndex = 0; curveIndex < m_qwtCurves.size(); ++curveIndex)
       {
@@ -3542,6 +3544,27 @@ void MainWindow::silentSavePlotToFile()
       else
       {
          // TODO?
+      }
+   }
+}
+
+
+void MainWindow::saveCurveAppearance(QString curveName, CurveAppearance& appearance)
+{
+   auto ppp = persistentPlotParam_get(g_persistentPlotParams, m_plotName);
+   auto map = ppp->m_curveAppearanceMap.get();
+   map[curveName] = appearance;
+   ppp->m_curveAppearanceMap.set(map);
+}
+
+void MainWindow::fillWithSavedAppearance(QString& curveName, CurveAppearance& appearance)
+{
+   if(persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_curveAppearanceMap.isValid())
+   {
+      auto map = persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_curveAppearanceMap.get();
+      if(map.find(curveName) != map.end())
+      {
+         appearance = map[curveName];
       }
    }
 }

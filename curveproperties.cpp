@@ -1826,6 +1826,7 @@ void curveProperties::propTabApply()
          appearance.color = newColor;
          appearance.width = newWidth;
          parentCurve->setCurveAppearance(appearance);
+         parentPlot->saveCurveAppearance(plotCurveInfo.curveName, appearance); // Keep track of the user's changes from default values.
       }
 
    }

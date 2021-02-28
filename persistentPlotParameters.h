@@ -1,4 +1,4 @@
-/* Copyright 2017 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2017 - 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -51,6 +51,9 @@ private:
     T m_value;
 };
 
+// Create type that stores Curve Appearance for a given Curve Name.
+class CurveAppearance; // Forward Declare
+typedef QMap<QString, CurveAppearance> tPersistentPlotCurveAppearanceMap;
 
 // Class that stores all persistent plot parameters for a specific plot name.
 class persistentPlotParameters{
@@ -62,7 +65,7 @@ public:
    persistentPlotParam<QwtPlotCurve::CurveStyle> m_curveStyle;
    persistentPlotParam<bool> m_legend;
    persistentPlotParam<bool> m_cursorCanSelectAnyCurve;
-
+   persistentPlotParam<tPersistentPlotCurveAppearanceMap> m_curveAppearanceMap; // Stores Curve Appearance for a given Curve Name.
 };
 
 // Map typedef. The key to the map is the plot name.

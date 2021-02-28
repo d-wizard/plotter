@@ -39,6 +39,7 @@
 class CurveAppearance
 {
 public:
+   CurveAppearance(){};
    CurveAppearance(QColor initColor, QwtPlotCurve::CurveStyle initStyle):
       color(initColor),
       style(initStyle)
