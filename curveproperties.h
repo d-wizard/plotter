@@ -261,7 +261,7 @@ private:
 
    // Properties Tab - Curve Appearance Setters/Getters
    QColor getPropTabCurveColor();
-   void setPropTabCurveColor(QColor color);
+   void setPropTabCurveColor(QColor color, bool setToDefault = false);
    double getPropTabCurveWidth();
    void setPropTabCurveWidth(double width);
 

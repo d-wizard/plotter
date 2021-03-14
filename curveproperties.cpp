@@ -1760,7 +1760,7 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
        ui->txtPropYMax->setText("");
        ui->propParentCurves->clear();
        ui->txtLastIp->setText("");
-       setPropTabCurveColor(Qt::black);
+       setPropTabCurveColor(Qt::black, true);
        setPropTabCurveWidth(1.0);
    }
 }
@@ -2330,13 +2330,29 @@ QColor curveProperties::getPropTabCurveColor()
    return ui->cmdPropColor->palette().color(QPalette::ButtonText);
 }
 
-void curveProperties::setPropTabCurveColor(QColor color)
+void curveProperties::setPropTabCurveColor(QColor color, bool setToDefault)
 {
    if(color.isValid())
    {
+      // No Text is needed.
+      ui->cmdPropColor->setText("");
+
+      // Set the background color.
+      if(setToDefault)
+      {
+         ui->cmdPropColor->setStyleSheet("");
+      }
+      else
+      {
+         QString rgbColorStr = QString::number(color.red()) + "," + QString::number(color.green()) + "," + QString::number(color.blue());
+         ui->cmdPropColor->setStyleSheet("background-color: rgb(" + rgbColorStr + ")");
+      }
+
+      // Store color as the ButtonText color (this is easier to read than background color.
       QPalette colorButtonPalette = ui->cmdPropColor->palette();
       colorButtonPalette.setColor(QPalette::ButtonText, color);
       ui->cmdPropColor->setPalette(colorButtonPalette);
+      ui->cmdPropColor->update();
    }
    else
    {
@@ -2347,11 +2363,16 @@ void curveProperties::setPropTabCurveColor(QColor color)
 
 void curveProperties::on_cmdPropColor_clicked()
 {
-   QColor newColor = QColorDialog::getColor(getPropTabCurveColor(), this);
-
-   if(newColor.isValid())
+   tPlotCurveAxis plotCurveInfo = m_cmbPropPlotCurveName->getPlotCurveAxis();
+   CurveData* parentCurve = m_curveCmdr->getCurveData(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   if(parentCurve != NULL)
    {
-      setPropTabCurveColor(newColor);
+      QColor newColor = QColorDialog::getColor(getPropTabCurveColor(), this);
+
+      if(newColor.isValid())
+      {
+         setPropTabCurveColor(newColor);
+      }
    }
 }
 
