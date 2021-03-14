@@ -13,74 +13,59 @@
   <property name="windowTitle">
    <string>Plot/Curve Exists</string>
   </property>
-  <widget class="QPushButton" name="cmdOverwrite">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>50</y>
-     <width>61</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Overwrite</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="cmdRenameAuto">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>50</y>
-     <width>51</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Rename</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="cmdCancel">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>50</y>
-     <width>51</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Cancel</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="lblExistsMsg">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>0</y>
-     <width>271</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="cmdRenameManual">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>50</y>
-     <width>61</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Advanced</string>
-   </property>
-  </widget>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="3">
+    <widget class="QPushButton" name="cmdRenameManual">
+     <property name="text">
+      <string>Advanced</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="cmdRenameAuto">
+     <property name="text">
+      <string>Rename</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="cmdOverwrite">
+     <property name="text">
+      <string>Overwrite</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QPushButton" name="cmdCancel">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="0" colspan="5">
+    <widget class="QLabel" name="lblExistsMsg">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>
