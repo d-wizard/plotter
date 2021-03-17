@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>658</width>
+    <width>710</width>
     <height>456</height>
    </rect>
   </property>
@@ -56,583 +56,703 @@
       <attribute name="title">
        <string>Create Child</string>
       </attribute>
-      <widget class="QComboBox" name="cmbPlotType">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>10</y>
-         <width>141</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <property name="maxVisibleItems">
-        <number>15</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>1D Plot</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>2D Plot</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Real FFT</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Complex FFT</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>AM Demod</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>FM Demod</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>PM Demod</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Average</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>dB Power from Real</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>dB Power from Complex</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Delta</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Sum</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Math Between Curves</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>FFT Measurement</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Curve Statistics</string>
-        </property>
-       </item>
-      </widget>
-      <widget class="QLabel" name="lblPlotType">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>61</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Plot Type</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbXAxisSrc_fftMeasurement">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>50</y>
-         <width>251</width>
-         <height>21</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblXAxisSrc">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>50</y>
-         <width>71</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>X Axis Source</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbYAxisSrc">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>90</y>
-         <width>251</width>
-         <height>21</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblYAxisSrc">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>90</y>
-         <width>71</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Y Axis Source</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblDestPlotName">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>140</y>
-         <width>71</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Plot Name</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbDestPlotName">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>140</y>
-         <width>251</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="editable">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblDestCurveName">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>180</y>
-         <width>71</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Curve Name</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="txtDestCurveName">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>180</y>
-         <width>251</width>
-         <height>20</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chkSrcSlice">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>10</y>
-         <width>81</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Allows the ability to only use a subset of the parents samples in the child plot.</string>
-       </property>
-       <property name="text">
-        <string>Source Slice</string>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spnXSrcStart">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>50</y>
-         <width>71</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Start sample index (inclusive).
+      <layout class="QGridLayout" name="gridLayout_24">
+       <item row="9" column="0" colspan="5">
+        <layout class="QGridLayout" name="gridLayout_25">
+         <item row="0" column="0">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QGroupBox" name="groupBox_20">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Plot Type</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QComboBox" name="cmbPlotType">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <property name="maxVisibleItems">
+                 <number>15</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>1D Plot</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>2D Plot</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Real FFT</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Complex FFT</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>AM Demod</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>FM Demod</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>PM Demod</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Average</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>dB Power from Real</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>dB Power from Complex</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Delta</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Sum</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Math Between Curves</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>FFT Measurement</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Curve Statistics</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cmbChildMathOperators">
+                <item>
+                 <property name="text">
+                  <string>Add</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Subtract</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Multiply</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Divide</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cmbChildStatsTypes">
+                <item>
+                 <property name="text">
+                  <string>Num Samples</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>X Min</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>X Max</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Y Min</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Y Max</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Sample Rate</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_22">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Sources</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_30">
+              <item row="0" column="3" rowspan="2">
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QSpinBox" name="spnXSrcStart">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Start sample index (inclusive).
 Negative values reference samples from the end of the plot.</string>
-       </property>
-       <property name="minimum">
-        <number>-2000000000</number>
-       </property>
-       <property name="maximum">
-        <number>2000000000</number>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spnXSrcStop">
-       <property name="geometry">
-        <rect>
-         <x>440</x>
-         <y>50</y>
-         <width>71</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Stop sample index (exclusive).
+                    </property>
+                    <property name="minimum">
+                     <number>-9</number>
+                    </property>
+                    <property name="maximum">
+                     <number>9</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spnXSrcStop">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Stop sample index (exclusive).
 Negative values reference samples from the end of the plot.</string>
-       </property>
-       <property name="minimum">
-        <number>-2000000000</number>
-       </property>
-       <property name="maximum">
-        <number>2000000000</number>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spnYSrcStart">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>90</y>
-         <width>71</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Start sample index (inclusive).
+                    </property>
+                    <property name="minimum">
+                     <number>-9</number>
+                    </property>
+                    <property name="maximum">
+                     <number>9</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="cmdXUseZoomForSlice">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Sets start / stop slice indexes based on the current zoom.</string>
+                    </property>
+                    <property name="text">
+                     <string>Use Zoom</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_9">
+                    <item>
+                     <widget class="QSpinBox" name="spnYSrcStart">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>Start sample index (inclusive).
 Negative values reference samples from the end of the plot.</string>
-       </property>
-       <property name="minimum">
-        <number>-2000000000</number>
-       </property>
-       <property name="maximum">
-        <number>2000000000</number>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spnYSrcStop">
-       <property name="geometry">
-        <rect>
-         <x>440</x>
-         <y>90</y>
-         <width>71</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Stop sample index (exclusive).
+                      </property>
+                      <property name="minimum">
+                       <number>-9</number>
+                      </property>
+                      <property name="maximum">
+                       <number>9</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spnYSrcStop">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>Stop sample index (exclusive).
 Negative values reference samples from the end of the plot.</string>
-       </property>
-       <property name="minimum">
-        <number>-2000000000</number>
-       </property>
-       <property name="maximum">
-        <number>2000000000</number>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="cmdXUseZoomForSlice">
-       <property name="geometry">
-        <rect>
-         <x>520</x>
-         <y>50</y>
-         <width>61</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Sets start / stop slice indexes based on the current zoom.</string>
-       </property>
-       <property name="text">
-        <string>Use Zoom</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="cmdYUseZoomForSlice">
-       <property name="geometry">
-        <rect>
-         <x>520</x>
-         <y>90</y>
-         <width>61</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Sets start / stop slice indexes based on the current zoom.</string>
-       </property>
-       <property name="text">
-        <string>Use Zoom</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="txtAvgAmount">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>180</y>
-         <width>113</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Specifies the average amount. Must be between 0 and 1.
-The closer the value is to 1, the more averaging will be performed.</string>
-       </property>
-       <property name="text">
-        <string>0.98</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblAvgAmount">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>160</y>
-         <width>131</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Average Amount (0 - 1)</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chkWindow">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>180</y>
-         <width>111</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Use Blackman-Harris windowing.</string>
-       </property>
-       <property name="text">
-        <string>Window FFT Data</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbChildMathOperators">
-       <property name="geometry">
-        <rect>
-         <x>240</x>
-         <y>10</y>
-         <width>101</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <item>
-        <property name="text">
-         <string>Add</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Subtract</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Multiply</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Divide</string>
-        </property>
-       </item>
-      </widget>
-      <widget class="QCheckBox" name="chkScaleFftWindow">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>200</y>
-         <width>171</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Windowing has loss. This will add gain to compensate for the loss.
+                      </property>
+                      <property name="minimum">
+                       <number>-9</number>
+                      </property>
+                      <property name="maximum">
+                       <number>9</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="cmdYUseZoomForSlice">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>Sets start / stop slice indexes based on the current zoom.</string>
+                      </property>
+                      <property name="text">
+                       <string>Use Zoom</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="0" rowspan="2">
+               <layout class="QVBoxLayout" name="verticalLayout_5">
+                <item>
+                 <widget class="QLabel" name="lblXAxisSrc">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>X</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="lblYAxisSrc">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Y</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="4" rowspan="2">
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_10">
+                  <item>
+                   <widget class="QLabel" name="lblFftMeasChildPlotSize">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Child Size</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="spnFFtMeasChildPlotSize">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>1000000</number>
+                    </property>
+                    <property name="value">
+                     <number>100</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="1" rowspan="2">
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <item>
+                   <widget class="QComboBox" name="cmbXAxisSrc"/>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="cmbXAxisSrc_fftMeasurement"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmbYAxisSrc"/>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="2" rowspan="2">
+               <widget class="Line" name="lineChildSrcVirtSep">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_21">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Child Name</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_31">
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblDestCurveName">
+                <property name="text">
+                 <string>Curve Name</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cmbDestPlotName">
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="txtDestCurveName"/>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblDestPlotName">
+                <property name="text">
+                 <string>Plot Name</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_9">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="0" column="1">
+          <layout class="QGridLayout" name="gridLayout_28">
+           <item row="3" column="0">
+            <widget class="QGroupBox" name="grpFftOptions">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>FFT Options</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_29">
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="chkWindow">
+                <property name="toolTip">
+                 <string>Use Blackman-Harris windowing.</string>
+                </property>
+                <property name="text">
+                 <string>Window FFT Data</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QCheckBox" name="chkScaleFftWindow">
+                <property name="toolTip">
+                 <string>Windowing has loss. This will add gain to compensate for the loss.
 (This isn't perfect, but it gets the values pretty close.)</string>
-       </property>
-       <property name="text">
-        <string>Compensate for Window Loss</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chkFftSrcContiguous">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>220</y>
-         <width>141</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Discontinuities in the parent data can cause problems for the FFT.
+                </property>
+                <property name="text">
+                 <string>Compensate for Window Loss</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="chkFftSrcContiguous">
+                <property name="toolTip">
+                 <string>Discontinuities in the parent data can cause problems for the FFT.
 If checked, this will force the parent data to be contiguous.
 Basically, this does scroll mode on the parent even if it isn't actually in scroll mode.</string>
-       </property>
-       <property name="text">
-        <string>Force Source Contiguous</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbXAxisSrc">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>50</y>
-         <width>251</width>
-         <height>21</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lblFftMeasChildPlotSize">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>50</y>
-         <width>71</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Child Plot Size</string>
-       </property>
-      </widget>
-      <widget class="QSpinBox" name="spnFFtMeasChildPlotSize">
-       <property name="geometry">
-        <rect>
-         <x>440</x>
-         <y>50</y>
-         <width>71</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>1000000</number>
-       </property>
-       <property name="value">
-        <number>100</number>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chkMatchParentScroll">
-       <property name="geometry">
-        <rect>
-         <x>360</x>
-         <y>30</y>
-         <width>211</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>If checked, this will make the child match the parents scoll mode settings.
+                </property>
+                <property name="text">
+                 <string>Force Source Contiguous</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QGroupBox" name="grpScrollModeOptions">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Scroll Mode Options</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_27">
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="chkMatchParentScroll">
+                <property name="toolTip">
+                 <string>If checked, this will make the child match the parents scoll mode settings.
 If unchecked, the child will match the non-scroll mode version of the parent.</string>
-       </property>
-       <property name="text">
-        <string>Match Parent Scroll Mode</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cmbChildStatsTypes">
-       <property name="geometry">
-        <rect>
-         <x>240</x>
-         <y>10</y>
-         <width>101</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <item>
-        <property name="text">
-         <string>Num Samples</string>
-        </property>
+                </property>
+                <property name="text">
+                 <string>Match Parent Scroll Mode</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="grpSlicingOptions">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Slicing Options</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_26">
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="chkSrcSlice">
+                <property name="toolTip">
+                 <string>Allows the ability to only use a subset of the parents samples in the child plot.</string>
+                </property>
+                <property name="text">
+                 <string>Source Slice</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="grpAvgOptions">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Average Options</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_32">
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="txtAvgAmount">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Specifies the average amount. Must be between 0 and 1.
+The closer the value is to 1, the more averaging will be performed.</string>
+                </property>
+                <property name="text">
+                 <string>0.98</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblAvgAmount">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Amount (0 - 1)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <spacer name="verticalSpacer_11">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
-       <item>
-        <property name="text">
-         <string>X Min</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>X Max</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Y Min</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Y Max</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Sample Rate</string>
-        </property>
-       </item>
-      </widget>
-      <zorder>lblFftMeasChildPlotSize</zorder>
-      <zorder>spnFFtMeasChildPlotSize</zorder>
-      <zorder>cmbPlotType</zorder>
-      <zorder>lblPlotType</zorder>
-      <zorder>cmbXAxisSrc_fftMeasurement</zorder>
-      <zorder>lblXAxisSrc</zorder>
-      <zorder>cmbYAxisSrc</zorder>
-      <zorder>lblYAxisSrc</zorder>
-      <zorder>lblDestPlotName</zorder>
-      <zorder>cmbDestPlotName</zorder>
-      <zorder>lblDestCurveName</zorder>
-      <zorder>txtDestCurveName</zorder>
-      <zorder>chkSrcSlice</zorder>
-      <zorder>spnXSrcStart</zorder>
-      <zorder>spnXSrcStop</zorder>
-      <zorder>spnYSrcStart</zorder>
-      <zorder>spnYSrcStop</zorder>
-      <zorder>cmdXUseZoomForSlice</zorder>
-      <zorder>cmdYUseZoomForSlice</zorder>
-      <zorder>txtAvgAmount</zorder>
-      <zorder>lblAvgAmount</zorder>
-      <zorder>chkWindow</zorder>
-      <zorder>cmbChildMathOperators</zorder>
-      <zorder>chkScaleFftWindow</zorder>
-      <zorder>chkFftSrcContiguous</zorder>
-      <zorder>cmbXAxisSrc</zorder>
-      <zorder>chkMatchParentScroll</zorder>
-      <zorder>cmbChildStatsTypes</zorder>
+      </layout>
      </widget>
      <widget class="QWidget" name="tabCurveMath">
       <attribute name="title">

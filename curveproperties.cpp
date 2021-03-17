@@ -237,6 +237,17 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    if(persistentParam_getParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, chkBoxVal))
       ui->chkMatchParentScroll->setChecked(chkBoxVal != 0.0); // Restore value from Persistent Parameters.
    setMatchParentScrollChkBoxVisible();
+
+   // Set some GUI elements that were modified to make the GUI editing easier.
+   int sliceMinMax = 99999999;
+   ui->spnXSrcStart->setMinimum(-sliceMinMax);
+   ui->spnXSrcStart->setMaximum(sliceMinMax);
+   ui->spnYSrcStart->setMinimum(-sliceMinMax);
+   ui->spnYSrcStart->setMaximum(sliceMinMax);
+   ui->spnXSrcStop->setMinimum(-sliceMinMax);
+   ui->spnXSrcStop->setMaximum(sliceMinMax);
+   ui->spnYSrcStop->setMinimum(-sliceMinMax);
+   ui->spnYSrcStop->setMaximum(sliceMinMax);
 }
 
 curveProperties::~curveProperties()
@@ -652,28 +663,30 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->cmbXAxisSrc_fftMeasurement->setVisible(fftMeasureVis);
 
    ui->lblXAxisSrc->setVisible(xVis || fftMeasureVis);
-   ui->spnXSrcStart->setVisible(xVis && slice);
-   ui->spnXSrcStop->setVisible(xVis && slice);
-   ui->cmdXUseZoomForSlice->setVisible(xVis && slice);
-
    ui->lblYAxisSrc->setVisible(yVis);
-   ui->chkSrcSlice->setVisible(sliceVis);
-   ui->spnYSrcStart->setVisible(yVis && slice);
-   ui->spnYSrcStop->setVisible(yVis && slice);
-   ui->cmdYUseZoomForSlice->setVisible(yVis && slice);
 
-   ui->lblAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
-   ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
+   ui->grpSlicingOptions->setVisible(sliceVis);
 
-   ui->chkWindow->setVisible(fftCheckBoxVisible);
-   ui->chkScaleFftWindow->setVisible(fftCheckBoxVisible);
-   ui->chkFftSrcContiguous->setVisible(fftCheckBoxVisible);
+   ui->spnXSrcStart->setVisible(xVis && slice && sliceVis);
+   ui->spnXSrcStop->setVisible(xVis && slice && sliceVis);
+   ui->cmdXUseZoomForSlice->setVisible(xVis && slice && sliceVis);
+
+   ui->spnYSrcStart->setVisible(yVis && slice && sliceVis);
+   ui->spnYSrcStop->setVisible(yVis && slice && sliceVis);
+   ui->cmdYUseZoomForSlice->setVisible(yVis && slice && sliceVis);
+
+   ui->grpAvgOptions->setVisible(index == E_PLOT_TYPE_AVERAGE);
+
+   ui->grpFftOptions->setVisible(fftCheckBoxVisible);
+
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
    ui->cmbChildStatsTypes->setVisible(childStatsCmbVis);
 
    ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
    ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
+
+   ui->lineChildSrcVirtSep->setVisible(fftMeasureVis || childStatsCmbVis || (slice && sliceVis));
 
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();
@@ -2317,7 +2330,7 @@ void curveProperties::setMatchParentScrollChkBoxVisible()
       }
    }
 
-   ui->chkMatchParentScroll->setVisible(isVisible);
+   ui->grpScrollModeOptions->setVisible(isVisible);
 }
 
 void curveProperties::on_chkMatchParentScroll_clicked()
