@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>175</width>
-    <height>89</height>
+    <width>181</width>
+    <height>98</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -27,8 +27,14 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLabel" name="lblPortLable">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
-           <string>TCP Server Port</string>
+           <string>TCP Port</string>
           </property>
          </widget>
         </item>
@@ -75,8 +81,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>175</width>
-     <height>21</height>
+     <width>181</width>
+     <height>23</height>
     </rect>
    </property>
   </widget>

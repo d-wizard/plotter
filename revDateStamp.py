@@ -1,4 +1,4 @@
-# Copyright 2015, 2019 Dan Williams. All Rights Reserved.
+# Copyright 2015, 2019, 2021 Dan Williams. All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -17,12 +17,13 @@
 # DEALINGS IN THE SOFTWARE.
 # 
 import os
+import sys
 import string
 import time
 
 scriptDir = os.path.dirname(os.path.realpath(__file__))
 
-SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"'
+SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"' if sys.platform == 'win32' else 'svn'
 
 REV_DELIM = 'Revision: '
 

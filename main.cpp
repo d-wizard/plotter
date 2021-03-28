@@ -32,6 +32,10 @@
 #include "pthread.h"
 #include "spectrumAnalyzerModeTypes.h"
 
+#ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
+#define PLOTTER_WINDOWS_BUILD
+#endif
+
 // Local Variables.
 static bool g_portsSpecifiedViaCmdLine = false;
 static std::vector<unsigned short> g_ports;
@@ -43,7 +47,7 @@ bool default2dPlotStyleIsLines = false; // true = Lines, false = Dots
 bool inSpectrumAnalyzerMode = false;
 tSpecAnModeParam spectrumAnalyzerParams;
 
-
+#ifdef PLOTTER_WINDOWS_BUILD
 // Local Functions
 static QString getEnvVar(QString envVarNam)
 {
@@ -58,6 +62,7 @@ static QString getEnvVar(QString envVarNam)
    }
    return "";
 }
+#endif
 
 static int connectToExistingAppInstance(unsigned short port)
 {
@@ -289,13 +294,13 @@ static void processIniFile(int argc, char *argv[])
 
 static void setPersistentParamPath()
 {
-#ifdef Q_OS_WIN32 // Q_OS_LINUX // http://stackoverflow.com/a/8556254
+#ifdef PLOTTER_WINDOWS_BUILD
    std::string appDataPath = getEnvVar("APPDATA").toStdString() +
          fso::dirSep() + "plotter";
 
    persistentParam_setPath(appDataPath);
 #else
-   persistentParam_setPath(argv[0]);
+   persistentParam_setPath("~/.plotter");
 #endif
 }
 
@@ -306,7 +311,7 @@ static int startGuiApp()
 
    a.setQuitOnLastWindowClosed(false);
 
-#if (defined(_WIN32) || defined(__WIN32__))
+#ifdef PLOTTER_WINDOWS_BUILD
    plotGuiMain pgm(NULL, g_ports, true);
 #else
    // Linux doesn't seem to have a tray, so show the GUI with similar functions
@@ -334,7 +339,7 @@ void* sendRestorePathThread(void*)
       while(exitLoop == false)
       {
          // Need to wait for the Main GUI object to start and create the TCP server that is needed to process the plot to restore.
-#ifdef Q_OS_WIN
+#ifdef PLOTTER_WINDOWS_BUILD
          Sleep(100);
 #else
          struct timespec ts = {0,100*1000*1000};
