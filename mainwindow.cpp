@@ -880,6 +880,23 @@ void MainWindow::setCurveProperties_allAxes(QString curveName, double sampleRate
    }
 }
 
+void MainWindow::setSampleRate_allCurves(double sampleRate)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   for(int curveIndex = 0; curveIndex < m_qwtCurves.size(); ++curveIndex)
+   {
+      bool curveChanged = m_qwtCurves[curveIndex]->setSampleRate(sampleRate, true);
+      if(curveChanged)
+      {
+         int modifiedCurveIndex = getCurveIndex(m_qwtCurves[curveIndex]->getCurveTitle());
+         if(modifiedCurveIndex >= 0)
+         {
+            handleCurveDataChange(modifiedCurveIndex);
+         }
+      }
+   }
+}
 
 void MainWindow::setCurveVisibleHidden(QString curveName, bool visible, bool hidden)
 {

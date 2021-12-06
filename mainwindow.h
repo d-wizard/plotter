@@ -151,6 +151,7 @@ public:
     void setCurveProperties(QString curveName, eAxis axis, double sampleRate, tMathOpList& mathOps);
     void setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
     void setCurveProperties_allAxes(QString curveName, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
+    void setSampleRate_allCurves(double sampleRate);
 
     void setCurveVisibleHidden(QString curveName, bool visible, bool hidden);
 

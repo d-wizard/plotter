@@ -962,6 +962,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
 
       case TAB_CREATE_MATH:
       {
+         ui->chkSampRateAllCurves->setChecked(false); // Always reset when switching to the Math tab.
          fillInMathTab();
          showApplyButton = true;
       }
@@ -1035,6 +1036,11 @@ void curveProperties::fillInMathTab()
          CurveData* firstCurveInList = m_curveCmdr->getCurveData(curveInfo.plotName, allCurveName[0]);
          setMathSampleRate(firstCurveInList);
       }
+      else
+      {
+         ui->txtSampleRate->setText("");
+         ui->chkSampRateAllCurves->setChecked(false);
+      }
    }
    else
    {
@@ -1077,7 +1083,13 @@ void curveProperties::mathTabApply()
    if(parentPlotGui != NULL)
    {
       if(applyToOnlyOneCurveAxis)
+      {
          parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps);
+         if(ui->chkSampRateAllCurves->isChecked())
+         {
+            parentPlotGui->setSampleRate_allCurves(sampleRate);
+         }
+      }
       else if(applyToAllCurves)
          parentPlotGui->setCurveProperties_allCurves(sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
       else
@@ -1087,6 +1099,7 @@ void curveProperties::mathTabApply()
       fillInMathTab();
    }
 
+   ui->chkSampRateAllCurves->setChecked(false); // Uncheck whenever Apply is clicked.
 }
 
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
@@ -2405,4 +2418,54 @@ double curveProperties::getPropTabCurveWidth()
 void curveProperties::setPropTabCurveWidth(double width)
 {
    ui->spnWidth->setValue(width);
+}
+
+void curveProperties::on_cmdAutoSetSampRate_clicked()
+{
+   // Fill in the sample rate based on the rate that the plot data is getting plotted at.
+   tPlotCurveAxis curve = m_cmbSrcCurve_math->getPlotCurveAxis();
+   CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
+   if(parentCurve != NULL)
+   {
+      const double calcSampRate = parentCurve->getCalculatedSampleRateFromPlotMsgs();
+      if(calcSampRate > 0.0)
+      {
+         // The calculated sample rate will have some error. Keep reducing significant figures and rounding
+         // to find the closest match with the least amount of significant figures.
+         static const double HOW_CLOSE_FOR_MATCH = 0.01; // 1.0 %
+         static const int MAX_NUM_SIG_FIGS = 4;
+
+         int exponent = (int)(log10(calcSampRate));
+         double sampRateToUse = 0.0;
+         bool found = false;
+         for(int sigFig = MAX_NUM_SIG_FIGS; sigFig >= 1; --sigFig)
+         {
+            double divisor = pow(10, exponent - sigFig + 1);
+            int sigFigRateInt = (int)(calcSampRate / divisor); // Make sure to round down.
+            double sigFigRateLo = (double)sigFigRateInt * divisor;
+            double sigFigRateHi = (double)(sigFigRateInt+1) * divisor;
+
+            double loError = std::min(abs(1.0 - (sigFigRateLo/calcSampRate)), abs(1.0 - (calcSampRate/sigFigRateLo)));
+            double hiError = std::min(abs(1.0 - (sigFigRateHi/calcSampRate)), abs(1.0 - (calcSampRate/sigFigRateHi)));
+
+            if(loError < hiError && loError <= HOW_CLOSE_FOR_MATCH)
+            {
+               sampRateToUse = sigFigRateLo;
+               found = true;
+            }
+            else if(hiError < loError && hiError <= HOW_CLOSE_FOR_MATCH)
+            {
+               sampRateToUse = sigFigRateHi;
+               found = true;
+            }
+         }
+
+         if(found)
+         {
+            std::stringstream calcSampRateStr;
+            calcSampRateStr << std::setprecision(3) << std::fixed << sampRateToUse;
+            ui->txtSampleRate->setText(calcSampRateStr.str().c_str());
+         }
+      }
+   }
 }
