@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -127,6 +127,23 @@ void ChildCurve::getParentUpdateInfo( tParentCurveInfo &parentInfo,
       startIndex += parentNumPoints;
    if(stopIndex <= 0)
       stopIndex += parentNumPoints;
+
+   // Bound.
+   if(startIndex < 0)
+      startIndex = 0;
+   else if(startIndex > parentNumPoints)
+      startIndex = parentNumPoints;
+   if(stopIndex < 0)
+      stopIndex = 0;
+   else if(stopIndex > parentNumPoints)
+      stopIndex = parentNumPoints;
+
+   if((stopIndex - startIndex) <= 0)
+   {
+      // Invalid indexes, just do the whole parent plot.
+      startIndex = 0;
+      stopIndex = parentNumPoints;
+   }
 
    // When in Scroll Mode, check for situation where we need to limit the parent samples to
    // use the most recent samples in the curve. This way the child plot can have the same plot
