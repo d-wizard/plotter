@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1628,7 +1628,8 @@ void MainWindow::pointSelected(const QPointF &pos)
 
          bool validPointSelected = true;
 
-         if(m_cursorCanSelectAnyCurve)
+         bool anyCurve = m_cursorCanSelectAnyCurve && m_toggleCursorCanSelectAnyCurveAction.isVisible(); // If action is invisible, there is only 1 curve. So no need for Any Curve logic.
+         if(anyCurve)
          {
             // Find the closest point amoung all the curves.
             unsigned int selectedCurvePointIndex = 0;
@@ -2635,7 +2636,8 @@ void MainWindow::setSelectedCurveIndex(int index)
       m_qwtSelectedSample->setCurve(m_qwtCurves[index]);
 
       // If any curve selection is in use, the delta sample curve might not match the selected curve. In that case do not change the delta sample curve.
-      bool deltaCouldBeDifferentCurve = m_cursorCanSelectAnyCurve && m_qwtSelectedSampleDelta->isAttached;
+      bool anyCurve = m_cursorCanSelectAnyCurve && m_toggleCursorCanSelectAnyCurveAction.isVisible(); // If action is invisible, there is only 1 curve. So no need for Any Curve logic.
+      bool deltaCouldBeDifferentCurve = anyCurve && m_qwtSelectedSampleDelta->isAttached;
       if(!deltaCouldBeDifferentCurve || getCurveIndex(m_qwtSelectedSampleDelta->getCurve()) < 0) // Also change it if the curve is no longer valid.
       {
          m_qwtSelectedSampleDelta->setCurve(m_qwtCurves[index]);
@@ -2713,12 +2715,6 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
    // The "Cursor Can Select Any Curve" action only needs to be selectable if there are more than 1 displayed curves.
    bool cursorCanSelectAnyCurveVisible = numDisplayedCurves > 1;
    m_toggleCursorCanSelectAnyCurveAction.setVisible(cursorCanSelectAnyCurveVisible);
-
-   if(!cursorCanSelectAnyCurveVisible && m_cursorCanSelectAnyCurve)
-   {
-      // Not enough curves to all for "Cursor Can Select Any Curve" mode, but we are in that mode. Toggle out of the mode.
-      toggleCursorCanSelectAnyCurveAction();
-   }
 
    m_qwtPlot->replot();
 }
