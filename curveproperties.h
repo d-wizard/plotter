@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -214,6 +214,7 @@ private:
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
+   void childCurveTabApply();
    void fillInMathTab();
    void mathTabApply();
    void setMathSampleRate(CurveData *curve);
@@ -223,6 +224,8 @@ private:
    QVector<QString> getAllCurveNamesInPlot(QString plotName);
 
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
+
+   bool validateSlice(tParentCurveInfo& sliceInfo);
 
    void fillInPropTab(bool userChangedPropertiesGuiSettings = false);
    void fillInPropTab_childCurveParents(tPlotCurveAxis& plotCurveInfo);

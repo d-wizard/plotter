@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -692,137 +692,177 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    setMatchParentScrollChkBoxVisible();
 }
 
-void curveProperties::on_cmdApply_clicked()
+bool curveProperties::validateSlice(tParentCurveInfo& sliceInfo)
 {
-   int tab = ui->tabWidget->currentIndex();
-   if(tab == TAB_CREATE_CHILD_CURVE)
+   CurveData* parentCurve = m_curveCmdr->getCurveData(sliceInfo.dataSrc.plotName, sliceInfo.dataSrc.curveName);
+   int numParentPoints = (int)parentCurve->getNumPoints();
+
+   // Start Index is inclusive. Stop Index is exclusive.
+   int start = sliceInfo.startIndex;
+   if(start < 0)
+      start += numParentPoints;
+   int stop = sliceInfo.stopIndex;
+   if(stop <= 0)
+      stop += numParentPoints;
+
+   return (start >= 0 && start < numParentPoints) && (stop > 0 && stop <= numParentPoints) && (stop > start);
+}
+
+void curveProperties::childCurveTabApply()
+{
+   QString newChildPlotName = m_cmbDestPlotName->currentText();
+   QString newChildCurveName = ui->txtDestCurveName->text();
+
+   bool validChildPlotCurveNames = (newChildPlotName != "" && newChildCurveName != "");
+   bool curveExists = validChildPlotCurveNames && m_curveCmdr->validCurve(newChildPlotName, newChildCurveName);
+   bool createTheChildPlot = validChildPlotCurveNames && !curveExists;
+   bool invalidSrcSlice = false; // Assume false for now. Could be changed later.
+
+   if(createTheChildPlot)
    {
-      QString newChildPlotName = m_cmbDestPlotName->currentText();
-      QString newChildCurveName = ui->txtDestCurveName->text();
+      bool forceContiguousParentPoints = ui->chkFftSrcContiguous->isVisible() && ui->chkFftSrcContiguous->isChecked();
+      bool matchParentScrollMode = ui->chkMatchParentScroll->isVisible() && ui->chkMatchParentScroll->isChecked();
 
-      if(newChildPlotName != "" && newChildCurveName != "")
+      // New Child plot->curve does not exist, continue creating the child curve.
+      ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+      if( plotTypeHas2DInput(plotType) == false )
       {
-         bool forceContiguousParentPoints = ui->chkFftSrcContiguous->isVisible() && ui->chkFftSrcContiguous->isChecked();
-         bool matchParentScrollMode = ui->chkMatchParentScroll->isVisible() && ui->chkMatchParentScroll->isChecked();
-         if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
+         tParentCurveInfo axisParent;
+         axisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
+         if(ui->chkSrcSlice->checkState() == Qt::Checked)
          {
-            // New Child plot->curve does not exist, continue creating the child curve.
-            ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
-            if( plotTypeHas2DInput(plotType) == false )
-            {
-               tParentCurveInfo axisParent;
-               axisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
-               if(ui->chkSrcSlice->checkState() == Qt::Checked)
-               {
-                  axisParent.startIndex = ui->spnXSrcStart->value();
-                  axisParent.stopIndex = ui->spnXSrcStop->value();
-               }
-               else
-               {
-                  axisParent.startIndex = 0;
-                  axisParent.stopIndex = 0;
-               }
+            axisParent.startIndex = ui->spnXSrcStart->value();
+            axisParent.stopIndex = ui->spnXSrcStop->value();
 
-               axisParent.windowFFT = ui->chkWindow->isChecked();
-               axisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
-               axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
-
-               // Determine FFT Measurement type (only valid for E_PLOT_TYPE_FFT_MEASUREMENT plot types).
-               axisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               axisParent.curveStatType = E_CURVE_STATS__NO_CURVE_STAT;
-               axisParent.curveStatstPlotSize = -1;
-               bool createTheChildPlot = true; // Normally there are no conditions that would keep us from creating the child plot.
-               if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
-               {
-                  // FFT Measurement Child Plots are done a little differently. Use the return value to ensure we should actually create the Child Plot.
-                  createTheChildPlot = determineChildFftMeasurementAxisValues(axisParent);
-
-                  // Store off the value of the FFT Measurement Child Curve.
-                  if(createTheChildPlot)
-                  {
-                     persistentParam_setParam_f64(PERSIST_PARAM_FFT_MEAS_CHILD_SIZE, ui->spnFFtMeasChildPlotSize->value());
-                  }
-               }
-               else if(plotType == E_PLOT_TYPE_CURVE_STATS)
-               {
-                  axisParent.curveStatType = (eCurveStats)(ui->cmbChildStatsTypes->currentIndex());
-                  axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
-               }
-
-               if(createTheChildPlot)
-               {
-                  m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
-                  m_curveCmdr->createChildCurve( newChildPlotName,
-                                                 newChildCurveName,
-                                                 plotType,
-                                                 forceContiguousParentPoints,
-                                                 matchParentScrollMode,
-                                                 axisParent);
-                  setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == axisParent.dataSrc.plotName);
-               }
-            }
-            else
-            {
-               tParentCurveInfo xAxisParent;
-               xAxisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
-
-               tParentCurveInfo yAxisParent;
-               yAxisParent.dataSrc = m_cmbYAxisSrc->getPlotCurveAxis();
-
-
-               if(ui->chkSrcSlice->checkState() == Qt::Checked)
-               {
-                  xAxisParent.startIndex = ui->spnXSrcStart->value();
-                  xAxisParent.stopIndex = ui->spnXSrcStop->value();
-                  yAxisParent.startIndex = ui->spnYSrcStart->value();
-                  yAxisParent.stopIndex = ui->spnYSrcStop->value();
-               }
-               else
-               {
-                  xAxisParent.startIndex = 0;
-                  xAxisParent.stopIndex = 0;
-                  yAxisParent.startIndex = 0;
-                  yAxisParent.stopIndex = 0;
-               }
-
-               // Read values from GUI.
-               xAxisParent.windowFFT = ui->chkWindow->isChecked();
-               xAxisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
-               xAxisParent.mathBetweenCurvesOperator =
-                  (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
-               xAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               xAxisParent.curveStatstPlotSize = -1;
-
-               // Y Axis values need to match X Axis value.
-               yAxisParent.windowFFT = xAxisParent.windowFFT;
-               yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
-               yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
-               yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
-               yAxisParent.curveStatstPlotSize = -1;
-
-               m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
-               m_cmbYAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
-               m_curveCmdr->createChildCurve( newChildPlotName,
-                                              newChildCurveName,
-                                              plotType,
-                                              forceContiguousParentPoints,
-                                              matchParentScrollMode,
-                                              xAxisParent,
-                                              yAxisParent);
-               setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == xAxisParent.dataSrc.plotName || newChildPlotName == yAxisParent.dataSrc.plotName);
-            }
+            invalidSrcSlice = !validateSlice(axisParent);
+            createTheChildPlot = createTheChildPlot && !invalidSrcSlice; // Update createTheChildPlot with source slice validity
          }
          else
          {
-            QMessageBox msgBox;
-            msgBox.setWindowTitle("Curve Already Exists");
-            msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another plot->curve name.");
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
+            axisParent.startIndex = 0;
+            axisParent.stopIndex = 0;
          }
-      } // End if(newChildPlotName != "" && newChildCurveName != "")
 
+         axisParent.windowFFT = ui->chkWindow->isChecked();
+         axisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
+         axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
+
+         // Determine FFT Measurement type (only valid for E_PLOT_TYPE_FFT_MEASUREMENT plot types).
+         axisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+         axisParent.curveStatType = E_CURVE_STATS__NO_CURVE_STAT;
+         axisParent.curveStatstPlotSize = -1;
+         if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+         {
+            // FFT Measurement Child Plots are done a little differently. Use the return value to ensure we should actually create the Child Plot.
+            createTheChildPlot = createTheChildPlot && determineChildFftMeasurementAxisValues(axisParent);
+
+            // Store off the value of the FFT Measurement Child Curve.
+            if(createTheChildPlot)
+            {
+               persistentParam_setParam_f64(PERSIST_PARAM_FFT_MEAS_CHILD_SIZE, ui->spnFFtMeasChildPlotSize->value());
+            }
+         }
+         else if(plotType == E_PLOT_TYPE_CURVE_STATS)
+         {
+            axisParent.curveStatType = (eCurveStats)(ui->cmbChildStatsTypes->currentIndex());
+            axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
+         }
+
+         if(createTheChildPlot)
+         {
+            m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+            m_curveCmdr->createChildCurve( newChildPlotName,
+                                           newChildCurveName,
+                                           plotType,
+                                           forceContiguousParentPoints,
+                                           matchParentScrollMode,
+                                           axisParent);
+            setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == axisParent.dataSrc.plotName);
+         }
+      }
+      else
+      {
+         tParentCurveInfo xAxisParent;
+         xAxisParent.dataSrc = m_cmbXAxisSrc->getPlotCurveAxis();
+
+         tParentCurveInfo yAxisParent;
+         yAxisParent.dataSrc = m_cmbYAxisSrc->getPlotCurveAxis();
+
+
+         if(ui->chkSrcSlice->checkState() == Qt::Checked)
+         {
+            xAxisParent.startIndex = ui->spnXSrcStart->value();
+            xAxisParent.stopIndex = ui->spnXSrcStop->value();
+            yAxisParent.startIndex = ui->spnYSrcStart->value();
+            yAxisParent.stopIndex = ui->spnYSrcStop->value();
+
+            invalidSrcSlice = !validateSlice(xAxisParent) || !validateSlice(yAxisParent);
+            createTheChildPlot = createTheChildPlot && !invalidSrcSlice; // Update createTheChildPlot with source slice validity
+         }
+         else
+         {
+            xAxisParent.startIndex = 0;
+            xAxisParent.stopIndex = 0;
+            yAxisParent.startIndex = 0;
+            yAxisParent.stopIndex = 0;
+         }
+
+         // Read values from GUI.
+         xAxisParent.windowFFT = ui->chkWindow->isChecked();
+         xAxisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
+         xAxisParent.mathBetweenCurvesOperator =
+            (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
+         xAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+         xAxisParent.curveStatstPlotSize = -1;
+
+         // Y Axis values need to match X Axis value.
+         yAxisParent.windowFFT = xAxisParent.windowFFT;
+         yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
+         yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
+         yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+         yAxisParent.curveStatstPlotSize = -1;
+
+         if(createTheChildPlot)
+         {
+            m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+            m_cmbYAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+            m_curveCmdr->createChildCurve( newChildPlotName,
+                                           newChildCurveName,
+                                           plotType,
+                                           forceContiguousParentPoints,
+                                           matchParentScrollMode,
+                                           xAxisParent,
+                                           yAxisParent);
+            setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == xAxisParent.dataSrc.plotName || newChildPlotName == yAxisParent.dataSrc.plotName);
+         }
+      }
+   } // End if(createTheChildPlot)
+
+   // After all that was done, see if a child curve was actually created.
+   if(!createTheChildPlot)
+   {
+      // Create pop ups for certian errors.
+      if(curveExists)
+      {
+         QMessageBox msgBox;
+         msgBox.setWindowTitle("Curve Already Exists");
+         msgBox.setText(newChildPlotName + PLOT_CURVE_SEP + newChildCurveName + " already exists. Choose another plot->curve name.");
+         msgBox.setStandardButtons(QMessageBox::Ok);
+         msgBox.setDefaultButton(QMessageBox::Ok);
+         msgBox.exec();
+      }
+      else if(invalidSrcSlice)
+      {
+         QMessageBox msgBox;
+         msgBox.setWindowTitle("Source Slice Values Are Invalid");
+         msgBox.setText("Please update the slice values and try again.");
+         msgBox.setStandardButtons(QMessageBox::Ok);
+         msgBox.setDefaultButton(QMessageBox::Ok);
+         msgBox.exec();
+      }
+   }
+   else
+   {
       // Child curve has been created. Clear user input of plot / curve name.
       m_childCurveNewPlotNameUser = "";
       m_childCurveNewCurveNameUser = "";
@@ -840,7 +880,15 @@ void curveProperties::on_cmdApply_clicked()
          // Save the stats type used to persistent memory.
          persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_STAT_TYPE, ui->cmbChildStatsTypes->currentIndex());
       }
+   }
+}
 
+void curveProperties::on_cmdApply_clicked()
+{
+   int tab = ui->tabWidget->currentIndex();
+   if(tab == TAB_CREATE_CHILD_CURVE)
+   {
+      childCurveTabApply();
    }
    else if(tab == TAB_CREATE_MATH)
    {
