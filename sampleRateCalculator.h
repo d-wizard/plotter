@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -32,32 +32,35 @@
 class sampleRateCalc
 {
    typedef struct TimeNumSampPair
-	{
-		double time;
-		long numSamp;
+   {
+      double time;
+      long numSamp;
       TimeNumSampPair(): time(0), numSamp(0){}
-	}tTimeNumSampPair;
+   }tTimeNumSampPair;
 
 public:
-	sampleRateCalc();
-	~sampleRateCalc();
+   sampleRateCalc();
+   ~sampleRateCalc();
 
    void newSamples(long numSamp);
 
    double getSampleRate();
 private:
 
-	double m_sampleRate;
+   double m_sampleRate;
 
-	double m_averageTimeBetweenSampleMessages;
+   double m_averageTimeBetweenSampleMessages;
 
    double m_minTimeToStore;
    long m_minMsgsToStore;
 
-	QMutex m_mutex;
+   int m_numFirstTimesToRemove;
+
+   QMutex m_mutex;
 
 
    QList<tTimeNumSampPair> m_sampleMsgList;
+   long m_totalSamplesInMsgList;
 
 
    double getTimeOfLastMsg();

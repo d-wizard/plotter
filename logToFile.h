@@ -1,4 +1,4 @@
-/* Copyright 2015, 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2015, 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -51,7 +51,8 @@ static inline void logLineLoad(std::string logFileName, std::string srcFileName,
 
 #define LOG_LINE(extraPrint) logLine("LogLine.log", __FILE__, __func__, __LINE__, extraPrint);
 
-#define LOG_LINE_LOAD_START static QElapsedTimer llTimer; llTimer.start();
+#define LOG_LINE_LOAD_INIT static QElapsedTimer llTimer;
+#define LOG_LINE_LOAD_START llTimer.start();
 #define LOG_LINE_LOAD_STOP(extraPrint) logLineLoad("LogLine.log", __FILE__, __func__, __LINE__, extraPrint, llTimer.nsecsElapsed());
 
 #endif // LOGTOFILE_H

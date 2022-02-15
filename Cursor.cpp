@@ -92,6 +92,11 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    // delta calculation to make the x and y delta ratio 1:1
    double width = (maxMin.maxX - maxMin.minX);
    double height = (maxMin.maxY - maxMin.minY) * displayRatio;
+
+   // Avoid divide by zero (also negative width/height don't make any sense).
+   if(width <= 0.0) width = 1.0;
+   if(height <= 0.0) height = 1.0;
+
    double inverseWidth = 1.0/width;
    double inverseHeight = 1.0/height;
 
@@ -113,15 +118,20 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
 
    double xDelta = fabs(xPoints[minPointIndex] - xPos)*inverseWidth;
    double yDelta = fabs(yPoints[minPointIndex] - yPos)*inverseHeight;
-   double minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta));
+   double minDist = std::numeric_limits<double>::max(); // Initialize to maximum possible double value.
+   bool validMinDist = isDoubleValid(xDelta) && isDoubleValid(yDelta);
+
+   if(validMinDist)
+   {
+      minDist = sqrt((xDelta*xDelta) + (yDelta*yDelta)); // Only set the actual vaulue if both x and y points are valid.
+   }
 
    // Initialize for 2D plot
-   int startIndex = 1; // Since minDist was calculated from minPointIndex (i.e. index 0), we can just start from sample index 1. (this comment only applies to 2D, 1D does its own thing).
+   int startIndex = validMinDist ? 1 : 0;
    int endIndex = m_parentCurve->getNumPoints();
 
-
    // For 1D curves, we can reduce the number of points to search over.
-   if(useFast1dSearch)
+   if(useFast1dSearch && validMinDist)
    {
       int roundDownMinDist = (int)(minDist * width * m_parentCurve->getLinearXAxisCorrection().m) + 1;
       startIndex = minPointIndex - roundDownMinDist;
@@ -174,6 +184,46 @@ double Cursor::determineClosestPointIndex(QPointF pos, maxMinXY maxMin, double d
    m_pointIndex = minPointIndex;
 
    return minDist;
+}
+
+bool Cursor::peakSearch(maxMinXY searchWindow)
+{
+   bool validPeakFound = false;
+   int peakIndex = -1;
+   double maxValue = 0;
+
+   if(m_parentCurve != NULL)
+   {
+      const double* xPoints = m_parentCurve->isXNormalized() ? m_parentCurve->getNormXPoints() : m_parentCurve->getXPoints();
+      const double* yPoints = m_parentCurve->isYNormalized() ? m_parentCurve->getNormYPoints() : m_parentCurve->getYPoints();
+      int numPoints = (int)m_parentCurve->getNumPoints();
+
+      for(int i = 0; i < numPoints; ++i)
+      {
+         // Check if the point is within the search window (search window is probably the current zoom).
+         if( yPoints[i] <= searchWindow.maxY && yPoints[i] >= searchWindow.minY &&
+             xPoints[i] <= searchWindow.maxX && xPoints[i] >= searchWindow.minX )
+         {
+            if(!validPeakFound)
+            {
+               validPeakFound = true;
+               peakIndex = i;
+               maxValue = yPoints[i];
+            }
+            else if(yPoints[i] > maxValue)
+            {
+               peakIndex = i;
+               maxValue = yPoints[i];
+            }
+         }
+      }
+   }
+
+   if(validPeakFound)
+   {
+      m_pointIndex = peakIndex;
+   }
+   return validPeakFound;
 }
 
 void Cursor::showCursor()

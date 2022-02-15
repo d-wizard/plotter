@@ -1,4 +1,4 @@
-/* Copyright 2014, 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2016, 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -31,16 +31,47 @@ class ChildCurve : public QWidget
 {
    Q_OBJECT
 public:
-   ChildCurve(CurveCommander* curveCmdr, QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo yAxis);
-   ChildCurve(CurveCommander* curveCmdr,  QString plotName, QString curveName, ePlotType plotType, tParentCurveInfo xAxis, tParentCurveInfo yAxis);
+   ChildCurve( CurveCommander* curveCmdr,
+               QString plotName,
+               QString curveName,
+               ePlotType plotType,
+               bool forceContiguousParentPoints,
+               bool startChildInScrollMode,
+               tParentCurveInfo yAxis);
 
-   void anotherCurveChanged(QString plotName, QString curveName, unsigned int parentStartIndex, unsigned int parentNumPoints, PlotMsgIdType parentMsgId);
+   ChildCurve( CurveCommander* curveCmdr,
+               QString plotName,
+               QString curveName,
+               ePlotType plotType,
+               bool forceContiguousParentPoints,
+               bool startChildInScrollMode,
+               tParentCurveInfo xAxis,
+               tParentCurveInfo yAxis);
+
+   void anotherCurveChanged( QString plotName,
+                             QString curveName,
+                             unsigned int parentStartIndex,
+                             unsigned int parentNumPoints,
+                             PlotMsgIdType parentGroupMsgId,
+                             PlotMsgIdType parentCurveMsgId );
+
    void setToParentsSampleRate();
    QVector<tPlotCurveAxis> getParents();
 
    QString getPlotName(){return m_plotName;}
    QString getCurveName(){return m_curveName;}
+
 private:
+
+   // Types
+   typedef struct
+   {
+      bool xParentChanged;
+      bool yParentChanged;
+      unsigned int parentStartIndex;
+      unsigned int parentStopIndex;
+   }tParentUpdateChunk;
+
    // Eliminate default, copy, assign
    ChildCurve();
    ChildCurve(ChildCurve const&);
@@ -53,7 +84,8 @@ private:
                              CurveData*& parentCurve,
                              int& origStartIndex,
                              int& startIndex,
-                             int& stopIndex);
+                             int& stopIndex,
+                             int& scrollModeShift);
 
    unsigned int getDataFromParent1D( unsigned int parentStartIndex = 0,
                                      unsigned int parentStopIndex = 0);
@@ -63,11 +95,29 @@ private:
                                      unsigned int parentStartIndex = 0,
                                      unsigned int parentStopIndex = 0);
 
+   void getDataForFft( ePlotType fftType, 
+                       PlotMsgIdType parentGroupMsgId,
+                       bool xParentChanged,
+                       bool yParentChanged,
+                       unsigned int parentStartIndex,
+                       unsigned int parentStopIndex );
+
+   bool handleDuplicate2DParentChunks( PlotMsgIdType parentGroupMsgId,
+                                       bool xParentChanged,
+                                       bool yParentChanged,
+                                       unsigned int parentStartIndex,
+                                       unsigned int parentStopIndex,
+                                       bool childIsInScrollMode = false );
+
    ePlotType determineChildPlotTypeFor1D(tParentCurveInfo &parentInfo, ePlotType origChildPlotType);
-   
+
+   void update1dChildCurve(QString curveName, ePlotType plotType, unsigned int sampleStartIndex, dubVect& yPoints, PlotMsgIdType parentMsgId);
+   void update2dChildCurve(unsigned int sampleStartIndex, dubVect& xPoints, dubVect& yPoints, PlotMsgIdType parentMsgId);
+
    void updateCurve( bool xParentChanged,
                      bool yParentChanged,
-                     PlotMsgIdType parentMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                     PlotMsgIdType parentGroupMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                     PlotMsgIdType parentCurveMsgId = PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
                      unsigned int parentStartIndex = 0,
                      unsigned int parentStopIndex = 0);
 
@@ -75,13 +125,22 @@ private:
    QString m_plotName;
    QString m_curveName;
    ePlotType m_plotType;
+   bool m_plotIsFft;
    tParentCurveInfo m_xAxis;
    tParentCurveInfo m_yAxis;
+   bool m_forceContiguousParentPoints;
+   bool m_startChildInScrollMode;
 
    dubVect m_xSrcData;
    dubVect m_ySrcData;
 
-   dubVect m_prevInfo; // Used to store previous information needed to create some child curves.
+   dubVect m_prevInfo; // Used to store previous information needed to create some child curves / window coef's for FFTs.
+
+   PlotMsgIdType m_lastGroupMsgId;
+   QVector<tParentUpdateChunk> m_fft_parentChunksProcessedInCurGroupMsg;
+
+   int m_curveStatsChildSize;
+   int m_curveStatsChildPointIndex;
 };
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -21,7 +21,9 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QSpinBox>
 #include <QVector>
+#include <QSharedPointer>
 #include <list>
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
@@ -49,7 +51,8 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAxesSeparate):
@@ -58,7 +61,8 @@ public:
       displayAxesSeparately(displayAxesSeparate),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, ePreferredAxis preferredAxisIn):
@@ -67,7 +71,8 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(false),
       displayAllAxes(false),
-      preferredAxis(preferredAxisIn)
+      preferredAxis(preferredAxisIn),
+      m_userSpecified(false)
    {}
 
    tCmbBoxAndValue(tPltCrvCmbBoxPtr cmbBoxPtrIn, bool displayAllCurvesIn, bool displayAllAxesIn):
@@ -76,8 +81,27 @@ public:
       displayAxesSeparately(true),
       displayAllCurves(displayAllCurvesIn),
       displayAllAxes(displayAllAxesIn),
-      preferredAxis(E_PREFERRED_AXIS_DONT_CARE)
+      preferredAxis(E_PREFERRED_AXIS_DONT_CARE),
+      m_userSpecified(false)
    {}
+
+   // tPltCrvCmbBoxPtr functions (i.e. abstraction functions for cmbBoxPtr)
+   void setVisible(bool vis) {cmbBoxPtr->setVisible(vis);}
+   bool isVisible() {return cmbBoxPtr->isVisible();}
+   QString currentText() {return cmbBoxPtr->currentText();}
+   void setText(QString text) {cmbBoxPtr->setText(text);}
+   tPlotCurveAxis getPlotCurveAxis() {return cmbBoxPtr->getPlotCurveAxis();}
+   tPlotCurveComboBox::eCmbBoxCurveType getElementType() {return cmbBoxPtr->getElementType();}
+
+   // User Specified Functions
+   void userSpecified(bool usrSpecified, bool blocked = false)
+   {
+      if(!blocked)
+      {
+         m_userSpecified = usrSpecified;
+      }
+   }
+   bool userSpecified(){return m_userSpecified;}
 
    tPltCrvCmbBoxPtr cmbBoxPtr;
    QString          cmbBoxVal;
@@ -85,7 +109,11 @@ public:
    bool             displayAllCurves;
    bool             displayAllAxes;
    ePreferredAxis   preferredAxis;
+
+private:
+   bool             m_userSpecified;
 };
+typedef QSharedPointer<tCmbBoxAndValue> tCmbBoxValPtr;
 
 class CurveCommander;
 
@@ -166,11 +194,21 @@ private slots:
 
    void on_cmdCreateFromData_clicked();
 
+   void on_chkPropHide_clicked();
+
+   void on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int index);
+
+   void on_chkMatchParentScroll_clicked();
+
+   void on_cmdPropColor_clicked();
+
+   void on_cmbChildStatsTypes_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 
    void setCombosToPrevValues();
-   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst);
+   void setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool restoreUserSpecifed);
    void findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName);
    bool trySetComboItemIndex(tPltCrvCmbBoxPtr cmbBox, QString text);
 
@@ -185,8 +223,11 @@ private:
    bool validateNewPlotCurveName(QString& plotName, QString& curveName);
 
    void fillInPropTab(bool userChangedPropertiesGuiSettings = false);
+   void fillInPropTab_childCurveParents(tPlotCurveAxis& plotCurveInfo);
    void propTabApply();
 
+   void setPersistentSuggestChildOnParentPlot(ePlotType plotType, bool childOnParentPlot);
+   bool getPersistentSuggestChildOnParentPlot(ePlotType plotType, bool& childOnParentPlot);
    void getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName);
 
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
@@ -210,6 +251,17 @@ private:
    void fillInIpBlockTab(bool useLastIpAddr = false);
 
    void initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, const std::string persistParamName);
+   void initSpnBoxValueFromPersistParam(QSpinBox*  spnBoxPtr, const std::string persistParamName);
+
+   bool determineChildFftMeasurementAxisValues(tParentCurveInfo& axisParent);
+
+   void setMatchParentScrollChkBoxVisible();
+
+   void useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnStart, QSpinBox* spnStop);
+
+   // Properties Tab - Curve Color Setter/Getter
+   QColor getPropTabCurveColor();
+   void setPropTabCurveColor(QColor color);
 
    Ui::curveProperties *ui;
 
@@ -222,19 +274,20 @@ private:
    int m_numMathOpsReadFromSrc;
 
    // Plot / Curve Combo boxes
-   tPltCrvCmbBoxPtr m_cmbXAxisSrc;
-   tPltCrvCmbBoxPtr m_cmbYAxisSrc;
-   tPltCrvCmbBoxPtr m_cmbSrcCurve_math;
-   tPltCrvCmbBoxPtr m_cmbCurveToSave;
-   tPltCrvCmbBoxPtr m_cmbPropPlotCurveName;
-   tPltCrvCmbBoxPtr m_cmbDestPlotName;
-   tPltCrvCmbBoxPtr m_cmbOpenCurvePlotName;
-   tPltCrvCmbBoxPtr m_cmbPlotToSave;
-   tPltCrvCmbBoxPtr m_cmbIpBlockPlotNames;
+   tCmbBoxValPtr m_cmbXAxisSrc;
+   tCmbBoxValPtr m_cmbYAxisSrc;
+   tCmbBoxValPtr m_cmbSrcCurve_math;
+   tCmbBoxValPtr m_cmbCurveToSave;
+   tCmbBoxValPtr m_cmbPropPlotCurveName;
+   tCmbBoxValPtr m_cmbDestPlotName;
+   tCmbBoxValPtr m_cmbOpenCurvePlotName;
+   tCmbBoxValPtr m_cmbPlotToSave;
+   tCmbBoxValPtr m_cmbIpBlockPlotNames;
 
 
-   QVector<tCmbBoxAndValue> m_plotCurveCombos;
-   QVector<tCmbBoxAndValue> m_plotNameCombos;
+   QVector<tCmbBoxValPtr> m_plotCurveCombos;
+   QVector<tCmbBoxValPtr> m_plotNameCombos;
+   bool m_guiIsChanging;
 
    QString m_childCurveNewPlotNameUser;
    QString m_childCurveNewCurveNameUser;

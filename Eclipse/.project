@@ -97,6 +97,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/ColorCodes</locationURI>
 		</link>
 		<link>
+			<name>Cursor.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Cursor.cpp</locationURI>
+		</link>
+		<link>
 			<name>Cursor.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Cursor.h</locationURI>
@@ -247,6 +252,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/fftHelper.h</locationURI>
 		</link>
 		<link>
+			<name>fftMeasChildParam.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/fftMeasChildParam.cpp</locationURI>
+		</link>
+		<link>
+			<name>fftMeasChildParam.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/fftMeasChildParam.h</locationURI>
+		</link>
+		<link>
 			<name>fftPlots.cpp</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/fftPlots.cpp</locationURI>
@@ -255,6 +270,16 @@
 			<name>fftPlots.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/fftPlots.h</locationURI>
+		</link>
+		<link>
+			<name>fftSpectrumAnalyzerFunctions.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/fftSpectrumAnalyzerFunctions.cpp</locationURI>
+		</link>
+		<link>
+			<name>fftSpectrumAnalyzerFunctions.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/fftSpectrumAnalyzerFunctions.h</locationURI>
 		</link>
 		<link>
 			<name>localPlotCreate.cpp</name>
@@ -315,6 +340,16 @@
 			<name>plotMsgPack.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/plotMsgPack.h</locationURI>
+		</link>
+		<link>
+			<name>plotSnrCalc.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/plotSnrCalc.cpp</locationURI>
+		</link>
+		<link>
+			<name>plotSnrCalc.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/plotSnrCalc.h</locationURI>
 		</link>
 		<link>
 			<name>plotbar.h</name>

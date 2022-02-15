@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -141,7 +141,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent = 0);
+    explicit MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, bool startInScrollMode = false, QWidget *parent = 0);
     ~MainWindow();
 
     void readPlotMsg(plotMsgGroup* plotMsg);
@@ -152,7 +152,7 @@ public:
     void setCurveProperties_allCurves(double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
     void setCurveProperties_allAxes(QString curveName, double sampleRate, tMathOpList& mathOps, bool overwrite, bool replaceFromTop, int numOpsToReplace);
 
-    void setCurveHidden(QString curveName, bool hidden);
+    void setCurveVisibleHidden(QString curveName, bool visible, bool hidden);
 
     // Return current zoom dimemsions if pointer is value, otherwise return zero values
     maxMinXY getZoomDimensions(){ maxMinXY zeroRetVal = {0,0,0,0,true,true}; return m_plotZoom ? m_plotZoom->getCurZoom() : zeroRetVal; }
@@ -181,6 +181,10 @@ public:
     void setScrollMode(bool newState, int size = 0);
     void externalZoomReset();
     void setSnrBarMode(bool newState);
+
+    double getFftMeasurement(eFftSigNoiseMeasurements type);
+    double getCurveStat(QString& curveName, eCurveStats type);
+    bool areFftMeasurementsVisible();
 
     bool m_spectrumAnalyzerViewSet;
 private:
@@ -220,6 +224,7 @@ private:
 
     int m_selectedCurveIndex;
 
+    bool m_userHasSpecifiedZoomType;
     PlotZoom* m_plotZoom;
     maxMinXY m_maxMin;
 
@@ -231,6 +236,7 @@ private:
 
     bool m_legendDisplayed;
     bool m_calcSnrDisplayed;
+    bool m_specAnFuncDisplayed;
 
     int m_canvasWidth_pixels;
     int m_canvasHeight_pixels;
@@ -261,6 +267,7 @@ private:
     QAction m_normalizeBothAction;
     QAction m_toggleLegendAction;
     QAction m_toggleSnrCalcAction;
+    QAction m_toggleSpecAnAction;
     QAction m_toggleCursorCanSelectAnyCurveAction;
     QMenu m_rightClickMenu;
     QMenu m_normalizeMenu;
@@ -301,6 +308,7 @@ private:
     void resetActivityIndicator();
 
     plotSnrCalc* m_snrCalcBars;
+    QPointF m_snrBarStartPoint;
 
     bool m_dragZoomModeActive;
     QMutex m_dragZoomModeMutex;
@@ -308,6 +316,7 @@ private:
     QPointF m_dragZoomMode_newPoint;
 
     bool m_moveCalcSnrBarActive;
+    bool m_showCalcSnrBarCursor;
 
     bool m_debouncePointSelected;
 
@@ -318,10 +327,14 @@ private:
     void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
 
     void initCursorIndex(int curveIndex);
-    void handleCurveDataChange(int curveIndex);
+    void handleCurveDataChange(int curveIndex, bool onlyPlotSizeChanged = false);
     void updatePlotWithNewCurveData(bool onlyCurveDataChanged);
 
     maxMinXY calcMaxMin();
+
+    void autoZoom();
+    void holdZoom();
+    void maxHoldZoom();
 
     void initDeltaLabels();
     void clearPointLabels();
@@ -382,7 +395,14 @@ private:
 
     int findIndexWithClosestPoint(const QPointF &pos, unsigned int &selectedCurvePointIndex);
 
+    bool isSelectionCloseToBar(const QPointF& pos);
+
     int getCurveIndex(CurveData* ptr);
+
+    void specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType);
+    void setSpecAnGuiVisible(bool visible);
+
+    void silentSavePlotToFile();
 
 private slots:
     void pointSelected(const QPointF &pos);
@@ -396,11 +416,12 @@ private slots:
     // Menu Commands
     void toggleLegend();
     void calcSnrToggle();
+    void specAnFuncToggle();
     void cursorMode();
     void deltaCursorMode();
-    void autoZoom();
-    void holdZoom();
-    void maxHoldZoom();
+    void autoZoom_guiSlot();
+    void holdZoom_guiSlot();
+    void maxHoldZoom_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
     void zoomMode();
@@ -438,7 +459,14 @@ private slots:
 
     void activityIndicatorTimerSlot();
 
-// Functions that could be called from a thread, but modify ui
+    // Spectrum Analyzer Like GUI Element functions.
+    void on_radClearWrite_clicked();
+    void on_radMaxHold_clicked();
+    void on_radAverage_clicked();
+    void on_spnSpecAnAvgAmount_valueChanged(int arg1);
+    void on_cmdPeakSearch_clicked();
+    void on_cmdSpecAnResetZoom_clicked();
+
 public slots:
     void updateCursorMenus();
     void readPlotMsgSlot();

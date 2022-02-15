@@ -1,4 +1,4 @@
-/* Copyright 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2016, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -44,7 +44,7 @@ bool localPlotCreate::validateNewPlotCurveName(CurveCommander* p_curveCmdr, QStr
       {
          overwriteRenameDialog overRenameDlg(NULL);
          ePlotExistsReturn whatToDo = overRenameDlg.askUserAboutExistingPlot(plotName, curveName);
-         if(whatToDo == RENAME)
+         if(whatToDo == RENAME_MANUAL)
          {
             plotCurveNameDialog plotCurveDialog;
 
@@ -69,6 +69,12 @@ bool localPlotCreate::validateNewPlotCurveName(CurveCommander* p_curveCmdr, QStr
                namesAreValid = false;
                finished = true;
             }
+         }
+         else if(whatToDo == RENAME_AUTO)
+         {
+            plotName = getUniquePlotName(p_curveCmdr, plotName);
+            namesAreValid = true;
+            finished = true;
          }
          else if(whatToDo == OVERWRITE)
          {

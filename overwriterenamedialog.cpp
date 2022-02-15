@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -38,7 +38,15 @@ overwriteRenameDialog::~overwriteRenameDialog()
 ePlotExistsReturn overwriteRenameDialog::askUserAboutExistingPlot(QString& plotName, QString& curveName)
 {
    ui->lblExistsMsg->setText(plotName + PLOT_CURVE_SEP + curveName + " exists. What would you like to do?");
+
+   // Make sure the GUI pops up, in front of all the other GUIs.
+   this->show();
+   this->activateWindow();
+   this->raise();
+
+   // Get the user's button press on the GUI.
    this->exec();
+
    return m_return;
 }
 
@@ -48,14 +56,20 @@ void overwriteRenameDialog::on_cmdOverwrite_clicked()
    this->accept(); // Return from exec()
 }
 
-void overwriteRenameDialog::on_cmdRename_clicked()
-{
-   m_return = RENAME;
-   this->accept(); // Return from exec()
-}
-
 void overwriteRenameDialog::on_cmdCancel_clicked()
 {
    m_return = CANCEL;
+   this->accept(); // Return from exec()
+}
+
+void overwriteRenameDialog::on_cmdRenameAuto_clicked()
+{
+   m_return = RENAME_AUTO;
+   this->accept(); // Return from exec()
+}
+
+void overwriteRenameDialog::on_cmdRenameManual_clicked()
+{
+   m_return = RENAME_MANUAL;
    this->accept(); // Return from exec()
 }

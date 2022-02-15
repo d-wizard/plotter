@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -27,6 +27,7 @@
 
 static const std::string EXCEL_LINE_DELIM = "\r\n";
 static const std::string CSV_CELL_DELIM = ",";
+static const char        CSV_CELL_DELIM_CHAR = ',';
 static const std::string CLIPBOARD_EXCEL_CELL_DELIM = "\t";
 
 static const std::string C_HEADER_LINE_DELIM = "\r\n";
@@ -153,7 +154,8 @@ static std::string getCHeaderTypedefStr(QString plotName, QString curveName, std
           "#endif" + C_HEADER_LINE_DELIM;
 }
 
-SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type)
+SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type, bool limitToZoom):
+   m_limitToZoom(limitToZoom)
 {
    switch(type)
    {
@@ -248,36 +250,49 @@ void SaveCurve::SaveRaw(CurveData* curve)
 
 void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim)
 {
-    std::stringstream csvFile;
-    if(curve->getPlotDim() == E_PLOT_DIM_2D)
-    {
-       csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
-       csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
+   std::stringstream csvFile;
+   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   {
+      csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
+      csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
+      
+      for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
+      {
+         plotGui->setDisplayIoMapipXAxis(csvFile, curve);
+         csvFile << curve->getXPoints()[i] << delim;
+         plotGui->setDisplayIoMapipYAxis(csvFile);
+         csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
+      }
+      plotGui->clearDisplayIoMapIp(csvFile);
+   }
+   else
+   {
+      unsigned int startInclusive = 0;
+      unsigned int stopExclusive = curve->getNumPoints();
 
-       for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
-       {
-          plotGui->setDisplayIoMapipXAxis(csvFile, curve);
-          csvFile << curve->getXPoints()[i] << delim;
-          plotGui->setDisplayIoMapipYAxis(csvFile);
-          csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
-       }
-       plotGui->clearDisplayIoMapIp(csvFile);
-    }
-    else
-    {
-        csvFile << curve->getCurveTitle().toStdString() << EXCEL_LINE_DELIM;
+      if(m_limitToZoom)
+      {
+         maxMinXY displayed = curve->get1dDisplayedIndexes();
+         displayed.minX += 1; // Min is the sample before the first sample displayed.
 
-        plotGui->setDisplayIoMapipYAxis(csvFile);
-        for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
-        {
-           csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
-        }
-        plotGui->clearDisplayIoMapIp(csvFile);
-    }
+         if(displayed.minX > startInclusive)
+            startInclusive = displayed.minX;
+         if(displayed.maxX < stopExclusive)
+            stopExclusive = displayed.maxX;
+      }
+      
+      csvFile << curve->getCurveTitle().toStdString() << EXCEL_LINE_DELIM;
 
+      plotGui->setDisplayIoMapipYAxis(csvFile);
+      for(unsigned int i = startInclusive; i < stopExclusive; ++i)
+      {
+         csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
+      }
+      plotGui->clearDisplayIoMapIp(csvFile);
+   }
 
-    packedCurveData.resize(csvFile.str().size());
-    memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
+   packedCurveData.resize(csvFile.str().size());
+   memcpy(&packedCurveData[0], csvFile.str().c_str(), csvFile.str().size());
 }
 
 void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type)
@@ -503,7 +518,8 @@ void RestoreCurve::unpack(void* toUnpack, size_t unpackSize)
 }
 
 
-SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type)
+SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type, bool limitToZoom):
+   m_limitToZoom(limitToZoom)
 {
    switch(type)
    {
@@ -512,10 +528,8 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
          SaveRaw(plotGui, plotName, plotInfo);
       break;
       case E_SAVE_RESTORE_CSV:
-         SaveExcel(plotGui, plotInfo, CSV_CELL_DELIM);
-      break;
       case E_SAVE_RESTORE_CLIPBOARD_EXCEL:
-         SaveExcel(plotGui, plotInfo, CLIPBOARD_EXCEL_CELL_DELIM);
+         SaveExcel(plotGui, plotInfo, type);
       break;
       case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
       case E_SAVE_RESTORE_C_HEADER_INT:
@@ -538,7 +552,7 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
    UINT_32 fileSize = 0;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_RAW);
+      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_RAW, m_limitToZoom);
       curveRawFiles.push_back(curveFile.packedCurveData);
       fileSize += curveFile.packedCurveData.size();
    }
@@ -576,12 +590,13 @@ void SavePlot::SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*
 
 }
 
-void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, std::string delim)
+void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSaveRestorePlotCurveType type)
 {
+   std::string delim = type == E_SAVE_RESTORE_CLIPBOARD_EXCEL ? CLIPBOARD_EXCEL_CELL_DELIM : CSV_CELL_DELIM;
    QVector<QStringList> curveCsvFiles;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], E_SAVE_RESTORE_CSV);
+      SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
       curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), QString::SkipEmptyParts));
    }
@@ -624,7 +639,7 @@ void SavePlot::SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, e
 {
    for(int i = 0; i < plotInfo.size(); ++i)
    {
-      SaveCurve curveFile(plotGui, plotInfo[i], type);
+      SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       packedCurveHead.insert(packedCurveHead.end(), curveFile.packedCurveHead.begin(), curveFile.packedCurveHead.end());
       packedCurveData.insert(packedCurveData.end(), curveFile.packedCurveData.begin(), curveFile.packedCurveData.end());
    }
@@ -723,7 +738,6 @@ RestorePlot::RestorePlot(PackedCurveData &packedPlot)
 RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 {
    isValid = false;
-   hasBadCells = false;
 
    UINT_32 totalSamplesInCsv = 0;
 
@@ -732,13 +746,44 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
    std::string csvFile(&packedPlot[0], packedPlot.size());
 
-   csvFile = dString::ConvertLineEndingToUnix(csvFile);
+   // Determine the line ending
+   std::string lineEnding;
+   int numDosEnd, numUnxEnd;
 
-   std::vector<std::string> csvRows = dString::SplitV(csvFile, "\n");
+   // Limit the number of characters to search over.
+   if(csvFile.size() <= 500000)
+   {
+      numDosEnd = dString::Count(csvFile, "\r\n");
+      numUnxEnd = dString::Count(csvFile, "\n");
+   }
+   else
+   {
+      std::string csvFileSmall = csvFile.substr(0, 500000);
+      numDosEnd = dString::Count(csvFileSmall, "\r\n");
+      numUnxEnd = dString::Count(csvFileSmall, "\n");
+   }
+
+   if(numDosEnd == 0 || numUnxEnd > (2*numDosEnd))
+   {
+      lineEnding = "\n";
+   }
+   else
+   {
+      lineEnding = "\r\n";
+   }
+
+   // Split file into rows.
+   std::vector<std::string> csvRows;
+   dString::SplitV(csvFile, lineEnding, csvRows);
+   while(csvRows[csvRows.size()-1] == "") // Remove empty lines from the bottom.
+   {
+      csvRows.pop_back();
+   }
 
    try
    {
-      std::vector<std::string> csvCells = dString::SplitV(csvRows[0], CSV_CELL_DELIM);
+      std::vector<std::string> csvCells;
+      dString::SplitV(csvRows[0], CSV_CELL_DELIM, csvCells);
 
       // Determine if the first row is a header row.
       bool firstRowIsAllNums = true;
@@ -757,31 +802,38 @@ RestoreCsv::RestoreCsv(PackedCurveData &packedPlot)
 
       // Fill in the values from the CSV File.
       int rowStart = firstRowIsAllNums ? 0 : 1;
-      for(int i = rowStart; i < (int)csvRows.size(); ++i)
+      int numRows = (int)csvRows.size();
+
+      for(int rowIndex = rowStart; rowIndex < numRows; ++rowIndex)
       {
-         csvCells = dString::SplitV(csvRows[i], CSV_CELL_DELIM);
-         for(int j = 0; j < (int)csvCells.size(); ++j)
+         int colIndex = 0;
+         const char* colPtr = csvRows[rowIndex].c_str();
+         const char* endPtr = colPtr + csvRows[rowIndex].size();
+         const char* delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR); // Returns NULL if no match is found.
+
+         // Keep looping until Num Columns is hit or no more delimiters exist.
+         while(colIndex < numCol && delimPos)
          {
-            if(j < numCol && csvCells[j] != "")
-            {
-               double testDoub = 0.0;
-               if(dString::strTo(csvCells[j], testDoub))
-               {
-                  params[j].yOrigPoints.push_back(testDoub);
-               }
-               else
-               {
-                  hasBadCells = true;
-                  params[j].yOrigPoints.push_back(testDoub);
-               }
-            }
+            double newValue = colPtr != delimPos ? strtod(colPtr, NULL) : NAN; // If cell is empty, set point to "Not A Number"
+            params[colIndex].yOrigPoints.push_back(newValue);
+
+            colPtr = delimPos + 1;
+            delimPos = strchr(colPtr, CSV_CELL_DELIM_CHAR);
+            ++colIndex;
+         }
+
+         // Handle last column that has no delmiter after it.
+         if(colIndex < numCol)
+         {
+            double newValue = colPtr != endPtr ? strtod(colPtr, NULL) : NAN; // If cell is empty, set point to "Not A Number"
+            params[colIndex].yOrigPoints.push_back(newValue);
          }
       }
 
       // Get curve names from first row.
       if(firstRowIsAllNums == false)
       {
-         csvCells = dString::SplitV(csvRows[0], CSV_CELL_DELIM);
+         dString::SplitV(csvRows[0], CSV_CELL_DELIM, csvCells);
          for(int i = 0; i < numCol; ++i)
          {
             params[i].curveName = csvCells[i].c_str();

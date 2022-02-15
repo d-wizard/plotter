@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -28,7 +28,9 @@ smartMaxMin::smartMaxMin(const dubVect *srcVect, unsigned int minSegSize, unsign
    m_srcVect(srcVect),
    m_curMax(0.0),
    m_curMin(0.0),
-   m_curMaxMinHasRealPoints(false)
+   m_curMaxMinHasRealPoints(false),
+   m_firstRealPointIndex(-1),
+   m_lastRealPointIndex(-1)
 {
 }
 
@@ -62,7 +64,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
 
          lastSegEndIndex = iter->startIndex + iter->numPoints;
 
-         if( (startIndex >= iter->startIndex) && (startIndex < lastSegEndIndex) )
+         if( ((int)startIndex >= iter->startIndex) && (startIndex < lastSegEndIndex) )
          {
             overlapFound = true;
             newSegStartIndex = iter->startIndex;
@@ -75,7 +77,7 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       }
       else
       {
-         if(iter->startIndex >= (startIndex + numPoints))
+         if(iter->startIndex >= (int)(startIndex + numPoints))
          {
             newSegNumPoints = iter->startIndex - newSegStartIndex;
 
@@ -113,11 +115,13 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
       newSeg.maxIndex = newSeg.startIndex;
       newSeg.minIndex = newSeg.startIndex;
       newSeg.realPoints = true;
+      newSeg.firstRealPointIndex = newSeg.startIndex;
+      newSeg.lastRealPointIndex = newSeg.startIndex + newSeg.numPoints - 1;
       m_segList.push_back(newSeg);
    }
 
-   unsigned int nextSegStartIndex = newSegStartIndex;
-   unsigned int pointsRemaining = newSegNumPoints;
+   int nextSegStartIndex = newSegStartIndex;
+   int pointsRemaining = newSegNumPoints;
    while(pointsRemaining > 0)
    {
       tMaxMinSegment newSeg;
@@ -155,15 +159,26 @@ void smartMaxMin::scrollModeShift(unsigned int shiftAmount)
       }
       else if(startIndex < shiftAmount)
       {
+         // Part of the segment has been shifted out. Re-calc min/max on the remaining points.
          calcMaxMinOfSeg(0, numPoints + numPointsErased - shiftAmount, *iter);
          ++iter;
       }
       else
       {
+         // All of the samples in this segment will remain. Just need to shift all the indexes
+         // into the curve data.
          iter->startIndex -= shiftAmount;
+         iter->maxIndex -= shiftAmount;
+         iter->minIndex -= shiftAmount;
+         iter->firstRealPointIndex -= shiftAmount;
+         iter->lastRealPointIndex  -= shiftAmount;
+
          ++iter;
       }
    }
+
+   // Segments might have changed, update min / max.
+   calcTotalMaxMin();
 
    //debug_verifySegmentsAreContiguous();
 }
@@ -175,9 +190,15 @@ void smartMaxMin::getMaxMin(double &retMax, double &retMin, bool& retReal)
    retReal = m_curMaxMinHasRealPoints;
 }
 
+void smartMaxMin::getFirstLastReal(int& firstRealPointIndex, int& lastRealPointIndex)
+{
+   firstRealPointIndex = m_firstRealPointIndex;
+   lastRealPointIndex  = m_lastRealPointIndex;
+}
+
 void smartMaxMin::handleShortenedNumPoints()
 {
-   unsigned int srcVectSize = m_srcVect->size();
+   int srcVectSize = m_srcVect->size();
    tSegList::iterator iter = m_segList.begin();
    while(iter != m_segList.end())
    {
@@ -194,6 +215,80 @@ void smartMaxMin::handleShortenedNumPoints()
          iter++;
       }
    }
+
+   // Segments might have changed, update min / max.
+   calcTotalMaxMin();
+}
+
+tMaxMinSegment smartMaxMin::getMinMaxOfSubrange(unsigned int start, unsigned int numPoints)
+{
+   tSegList::iterator iter = m_segList.begin();
+   return getMinMaxOfSubrange(start, numPoints, iter);
+}
+
+tMaxMinSegment smartMaxMin::getMinMaxOfSubrange(unsigned int start, unsigned int numPoints, tSegList::iterator& iterInOut)
+{
+   tMaxMinSegment retVal;
+   retVal.startIndex = 0;
+   retVal.numPoints = 0;
+
+   bool segFound = false;
+
+   int stop = start + numPoints;
+   tSegList::iterator iter = iterInOut;
+   if(iter != m_segList.end())
+   {
+      while(iter != m_segList.end())
+      {
+         int segStop = iter->startIndex + iter->numPoints;
+         if(iter->startIndex >= (int)start)
+         {
+            if(segStop <= stop)
+            {
+               // Segment is fully contained in the input range. Add it to the retVal.
+               if(!segFound)
+               {
+                  segFound = true;
+                  retVal = *iter;
+               }
+               else
+               {
+                  retVal.numPoints += iter->numPoints;
+
+                  if(iter->maxValue > retVal.maxValue)
+                  {
+                     retVal.maxValue = iter->maxValue;
+                     retVal.maxIndex = iter->maxIndex;
+                  }
+                  if(iter->minValue < retVal.minValue)
+                  {
+                     retVal.minValue = iter->minValue;
+                     retVal.minIndex = iter->minIndex;
+                  }
+
+                  if(!retVal.realPoints && iter->realPoints)
+                  {
+                     // New segment has first real points.
+                     retVal.realPoints = true;
+                     retVal.firstRealPointIndex = iter->firstRealPointIndex;
+                     retVal.lastRealPointIndex = iter->lastRealPointIndex;
+                  }
+                  else if(iter->realPoints)
+                  {
+                     retVal.lastRealPointIndex = iter->lastRealPointIndex;
+                  }
+               }
+            }
+            else
+            {
+               break;
+            }
+         }
+         iterInOut = iter;
+         ++iter;
+      }
+   }
+   return retVal;
 }
 
 void smartMaxMin::calcTotalMaxMin()
@@ -204,6 +299,9 @@ void smartMaxMin::calcTotalMaxMin()
       double newMax = iter->maxValue;
       double newMin = iter->minValue;
       bool maxMinIsRealValue = iter->realPoints;
+      int firstRealPointIndex = iter->firstRealPointIndex;
+      int lastRealPointIndex  = iter->lastRealPointIndex;
+
       ++iter;
 
       while(iter != m_segList.end())
@@ -229,6 +327,13 @@ void smartMaxMin::calcTotalMaxMin()
                }
             }
             maxMinIsRealValue = true;
+
+            // Determine first / last real point index.
+            if(firstRealPointIndex < 0)
+            {
+               firstRealPointIndex = iter->firstRealPointIndex;
+            }
+            lastRealPointIndex = iter->lastRealPointIndex;
          }
 
          ++iter;
@@ -237,6 +342,8 @@ void smartMaxMin::calcTotalMaxMin()
       m_curMax = newMax;
       m_curMin = newMin;
       m_curMaxMinHasRealPoints = maxMinIsRealValue;
+      m_firstRealPointIndex = firstRealPointIndex;
+      m_lastRealPointIndex = lastRealPointIndex;
    }
 }
 
@@ -254,6 +361,8 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
    seg.startIndex = startIndex;
    seg.numPoints = numPoints;
    seg.realPoints = false;
+   seg.firstRealPointIndex = -1;
+   seg.lastRealPointIndex  = -1;
 
    const double* srcPoints = &((*m_srcVect)[0]);
    unsigned int stopIndex = startIndex + numPoints;
@@ -268,6 +377,8 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
          seg.maxIndex = i;
          seg.minIndex = i;
          seg.realPoints = true;
+         seg.firstRealPointIndex = i;
+         seg.lastRealPointIndex  = i;  // This will get updated if a subsequent point is valid.
          startIndex = i+1;
          break;
       }
@@ -288,6 +399,7 @@ void smartMaxMin::calcMaxMinOfSeg(unsigned int startIndex, unsigned int numPoint
             seg.maxValue = srcPoints[i];
             seg.maxIndex = i;
          }
+         seg.lastRealPointIndex = i;
       }
    }
 }
@@ -325,6 +437,7 @@ void smartMaxMin::combineSegments()
                   cur->minValue = next->minValue;
                   cur->minIndex = next->minIndex;
                }
+               cur->lastRealPointIndex = next->lastRealPointIndex; // Next is getting erased.
             }
             else if(next->realPoints)
             {
@@ -333,6 +446,8 @@ void smartMaxMin::combineSegments()
                cur->maxIndex = next->maxIndex;
                cur->minValue = next->minValue;
                cur->minIndex = next->minIndex;
+               cur->firstRealPointIndex = next->firstRealPointIndex;
+               cur->lastRealPointIndex  = next->lastRealPointIndex;
             }
             // else cur is real and next isn't (thus keep cur the same) or both are not real (also keep cur the same)
 
@@ -367,7 +482,7 @@ void smartMaxMin::combineSegments()
 
 void smartMaxMin::debug_verifySegmentsAreContiguous()
 {
-   unsigned int nextSegExpectedStart = 0;
+   int nextSegExpectedStart = 0;
    tSegList::iterator iter = m_segList.begin();
    while(iter != m_segList.end())
    {
@@ -410,3 +525,78 @@ void smartMaxMin::debug_verifyAllPointsAreInList()
       }
    }
 }
+
+
+fastMonotonicMaxMin::fastMonotonicMaxMin(smartMaxMin& parent):
+   m_parent(parent),
+   m_parentIter(m_parent.getBeginIter())
+{
+
+}
+
+maxMinXY fastMonotonicMaxMin::getMinMaxInRange(unsigned int start, unsigned int len)
+{
+   tMaxMinSegment seg = m_parent.getMinMaxOfSubrange(start, len, m_parentIter);
+   const dubVect& in = *m_parent.getSrcVect();
+   maxMinXY retValSeg; // minX / maxX are the positions of the min and max. minY / maxY are the values of the min and max.
+
+   if(seg.numPoints > 0)
+   {
+      // Got some points from smartMaxMin. Include the samples before and after the points from smartMaxMin.
+      retValSeg.minY = seg.minValue;
+      retValSeg.maxY = seg.maxValue;
+      retValSeg.minX = seg.minIndex;
+      retValSeg.maxX = seg.maxIndex;
+
+      for(int i = start; i < seg.startIndex; ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+      for(unsigned int i = (seg.startIndex+seg.numPoints); i < (start+len); ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+   }
+   else
+   {
+      // No segments in smartMaxMin were fully contained in the desire range. Manually do the min/max measurement.
+      retValSeg.minY = in[start];
+      retValSeg.maxY = in[start];
+      retValSeg.minX = start;
+      retValSeg.maxX = start;
+      for(unsigned int i = start+1; i < (start+len); ++i)
+      {
+         if(in[i] > retValSeg.maxY)
+         {
+            retValSeg.maxX = i;
+            retValSeg.maxY = in[i];
+         }
+         if(in[i] < retValSeg.minY)
+         {
+            retValSeg.minX = i;
+            retValSeg.minY = in[i];
+         }
+      }
+   }
+
+   return retValSeg;
+}
+

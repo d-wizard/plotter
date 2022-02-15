@@ -1,4 +1,4 @@
-/* Copyright 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -459,14 +459,26 @@ std::string dString::DontEndWithThis(const std::string& t_inputString, const std
 int dString::Count(const std::string& t_inputString, const std::string& t_searchString)
 {
    int i_retVal = 0;
-   std::string t_inStr = t_inputString;
-   
-   if(t_searchString != "")
+   int i_inSize = (int)t_inputString.size();
+   int i_searchSize = (int)t_searchString.size();
+
+   const char* pc_inStr = t_inputString.c_str();
+   const char* pc_searchStr = t_searchString.c_str();
+
+   while(i_inSize >= i_searchSize)
    {
-      while(t_inStr != "" && InStr(t_inStr, t_searchString) >= 0)
+      if(memcmp(pc_inStr, pc_searchStr, i_searchSize) == 0)
       {
-         Split(&t_inStr, t_searchString);
+         // Match
          ++i_retVal;
+         pc_inStr += i_searchSize;
+         i_inSize -= i_searchSize;
+      }
+      else
+      {
+         // Just move 1 char
+         ++pc_inStr;
+         --i_inSize;
       }
    }
 
@@ -530,16 +542,33 @@ std::string dString::Slice(const std::string& t_inputString, int sliceRHS, int s
 
 std::vector<std::string> dString::SplitV(const std::string& t_input, const std::string& t_delimiter)
 {
-   std::string in = t_input;
-   std::vector<std::string> retVal;
-   
-   while(InStr(in, t_delimiter) >= 0)
+   std::vector<std::string> t_retVal;
+   SplitV(t_input, t_delimiter, t_retVal);
+   return t_retVal;
+}
+
+
+void dString::SplitV(const std::string& t_input, const std::string& t_delimiter, std::vector<std::string>& t_retVal)
+{
+   int i_delimCount = Count(t_input, t_delimiter);
+   t_retVal.resize(i_delimCount+1); // Add 1 for text after the last delimiter.
+
+   const char* pc_inStr = t_input.c_str();
+   const char* pc_searchStr = t_delimiter.c_str();
+   int i_delimLen = (int)t_delimiter.size();
+
+   for(int i = 0; i < i_delimCount; ++i)
    {
-      retVal.push_back(Split(&in, t_delimiter));
+      const char* pc_newLinePos = strstr(pc_inStr, pc_searchStr); // Don't do NULL check, Count verified that something will be found.
+
+      int i_numCharInNewStr = (int)pc_newLinePos - (int)pc_inStr;
+
+      t_retVal[i] = std::string(pc_inStr, i_numCharInNewStr);
+
+      pc_inStr += (i_numCharInNewStr+i_delimLen);
    }
-   retVal.push_back(in);
-   
-   return retVal;
+
+   t_retVal[i_delimCount] = std::string(pc_inStr); // Add the text after the last delimiter.
 }
 
 std::string dString::JoinV(const std::vector<std::string>& t_input, const std::string& t_delimiter)
@@ -557,19 +586,34 @@ std::string dString::JoinV(const std::vector<std::string>& t_input, const std::s
    return retVal;
 }
 
-
 std::list<std::string> dString::SplitL(const std::string& t_input, const std::string& t_delimiter)
 {
-   std::string in = t_input;
-   std::list<std::string> retVal;
-   
-   while(InStr(in, t_delimiter) >= 0)
+   std::list<std::string> t_retVal;
+   SplitL(t_input, t_delimiter, t_retVal);
+   return t_retVal;
+}
+
+void dString::SplitL(const std::string& t_input, const std::string& t_delimiter, std::list<std::string>& t_retVal)
+{
+   int i_delimCount = Count(t_input, t_delimiter);
+   t_retVal.clear();
+
+   const char* pc_inStr = t_input.c_str();
+   const char* pc_searchStr = t_delimiter.c_str();
+   int i_delimLen = (int)t_delimiter.size();
+
+   for(int i = 0; i < i_delimCount; ++i)
    {
-      retVal.push_back(Split(&in, t_delimiter));
+      const char* pc_newLinePos = strstr(pc_inStr, pc_searchStr); // Don't do NULL check, Count verified that something will be found.
+
+      int i_numCharInNewStr = (int)pc_newLinePos - (int)pc_inStr;
+
+      t_retVal.push_back(std::string(pc_inStr, i_numCharInNewStr));
+
+      pc_inStr += (i_numCharInNewStr+i_delimLen);
    }
-   retVal.push_back(in);
-   
-   return retVal;
+
+   t_retVal.push_back(std::string(pc_inStr)); // Add the text after the last delimiter.
 }
 
 std::string dString::JoinL(const std::list<std::string>& t_input, const std::string& t_delimiter)

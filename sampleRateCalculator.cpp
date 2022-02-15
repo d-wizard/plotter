@@ -1,4 +1,4 @@
-/* Copyright 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2020 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,13 +29,16 @@
 #define DEFAULT_MIN_TIME_TO_STORE (1.0)
 #define DEFAULT_MIN_MSGS_TO_STORE (10)
 
+#define NUM_FIRST_PACKETS_TO_REMOVE (2)
 
 sampleRateCalc::sampleRateCalc():
    m_sampleRate(0),
    m_averageTimeBetweenSampleMessages(1000000000), // Initialize to really big number of seconds
    m_minTimeToStore(DEFAULT_MIN_TIME_TO_STORE),
    m_minMsgsToStore(DEFAULT_MIN_MSGS_TO_STORE),
-   m_mutex(QMutex::Recursive)
+   m_numFirstTimesToRemove(NUM_FIRST_PACKETS_TO_REMOVE),
+   m_mutex(QMutex::Recursive),
+   m_totalSamplesInMsgList(0)
 {
 
 }
@@ -60,6 +63,7 @@ void sampleRateCalc::newSamples(long numSamp)
    QMutexLocker lock(&m_mutex);
    double lastMsgTime = getTimeOfLastMsg();
    m_sampleMsgList.push_back(pair);
+   m_totalSamplesInMsgList += numSamp;
    determineSampleRate(lastMsgTime);
 }
 
@@ -85,10 +89,7 @@ sampleRateCalc::tTimeNumSampPair sampleRateCalc::getSampleMsgListAvg()
    if(listSize > 1)
    {
       // Don't take the last packet's number of samples into account. (If we did, the sample rate would be too large)
-      for(int i = 0; i < listSize-1; ++i)
-      {
-         retVal.numSamp += m_sampleMsgList[i].numSamp;
-      }
+      retVal.numSamp = m_totalSamplesInMsgList - m_sampleMsgList[listSize-1].numSamp;
       retVal.time = m_sampleMsgList[listSize-1].time - m_sampleMsgList[0].time;
    }
 
@@ -103,6 +104,7 @@ void sampleRateCalc::removeOldSampleMsgsFromList(double timeThreshold)
    {
       if(m_sampleMsgList[i].time < timeThreshold)
       {
+         m_totalSamplesInMsgList -= m_sampleMsgList[i].numSamp;
          m_sampleMsgList.removeFirst();
          --i;
       }
@@ -120,15 +122,27 @@ void sampleRateCalc::determineSampleRate(double timeOfSecondToLastMsg)
    {
       double lastMsgTime = getTimeOfLastMsg();
 
+      // If the time between this new message and the last message is really big, clear out the averager list.
       if( (lastMsgTime - timeOfSecondToLastMsg) > (m_averageTimeBetweenSampleMessages * 4) )
       {
          removeOldSampleMsgsFromList(lastMsgTime);
+         m_numFirstTimesToRemove = NUM_FIRST_PACKETS_TO_REMOVE;
       }
       else
       {
+         // Keep the last 100 or so messages in the averager list.
          removeOldSampleMsgsFromList(lastMsgTime - m_averageTimeBetweenSampleMessages * 100);
       }
 
+      // The first message times can be kinda wonky (a lot is going on when a plot is first being created).
+      // When there are enough messages in the averager list, remove the first X number of messages.
+      if(m_numFirstTimesToRemove > 0 && m_sampleMsgList.size() > (m_numFirstTimesToRemove*3))
+      {
+         removeOldSampleMsgsFromList(m_sampleMsgList[m_numFirstTimesToRemove].time);
+         m_numFirstTimesToRemove = 0;
+      }
+
+      // Compute the sample rate.
       if(m_sampleMsgList.size() > 1)
       {
          tTimeNumSampPair sampleAverage = getSampleMsgListAvg();
@@ -140,6 +154,7 @@ void sampleRateCalc::determineSampleRate(double timeOfSecondToLastMsg)
       {
          m_sampleRate = 0;
          m_averageTimeBetweenSampleMessages = 1000000000; // Initialize to really big number of seconds
+         m_numFirstTimesToRemove = NUM_FIRST_PACKETS_TO_REMOVE;
       }
    }
 }

@@ -20,6 +20,8 @@ import os
 import string
 import time
 
+scriptDir = os.path.dirname(os.path.realpath(__file__))
+
 SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"'
 
 REV_DELIM = 'Revision: '
@@ -29,9 +31,12 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 FILE_PATH = SCRIPT_DIR + os.sep + 'revDateStamp.h'
 
 def readWholeFile(path):
-   fileId = open(path, 'r')
-   retVal = fileId.read()
-   fileId.close()
+   try:
+      fileId = open(path, 'r')
+      retVal = fileId.read()
+      fileId.close()
+   except:
+      retVal = ""
    return retVal
    
 def writeWholeFile(path, fileText):
@@ -44,8 +49,14 @@ def getSvnVersion():
    os.chdir(SCRIPT_DIR)
 
    retVal = 0
+   
+   # Set CWD to the path this script is in
+   origCwd = os.getcwd()
+   os.chdir(scriptDir)
+   
    svnVersionCmd = SVN_PATH + ' info'
 
+   # Run the 'info' command and loop over the results until the revision information line is found.
    p = os.popen(svnVersionCmd, "r")
    while 1:
       line = p.readline()

@@ -408,6 +408,7 @@ int main(int argc, char *argv[])
    }
    else
    {
+      printf("No TCP Server Ports specified. Is the .ini file missing?\n");
       return stopGuiApp();
    }
 

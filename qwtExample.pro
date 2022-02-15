@@ -7,9 +7,8 @@
 # Run pre-build python script to generate revDateStamp.h
 revDateStampTarget.target = ./revDateStamp.h
 revDateStampTarget.depends = FORCE
-win32: revDateStampTarget.commands = python $$PWD/revDateStamp.py # Windows version
+win32: revDateStampTarget.commands = cd $$PWD & python ./revDateStamp.py # Windows version
 else:  revDateStampTarget.commands = cd $$PWD;  python ./revDateStamp.py  # Unix version
-PRE_TARGETDEPS += ./revDateStamp.h
 QMAKE_EXTRA_TARGETS += revDateStampTarget
 
 RC_FILE = mainwindow.rc
@@ -50,7 +49,9 @@ SOURCES += main.cpp\
     sampleRateCalculator.cpp \
     createplotfromdata.cpp \
     AutoDelimiter.cpp \
-    Cursor.cpp
+    Cursor.cpp \
+    fftSpectrumAnalyzerFunctions.cpp \
+    curveStatsChildParam.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -89,7 +90,9 @@ HEADERS  += mainwindow.h \
     createplotfromdata.h \
     AutoDelimiter.h \
     hist.h \
-    spectrumAnalyzerModeTypes.h
+    spectrumAnalyzerModeTypes.h \
+    fftSpectrumAnalyzerFunctions.h \
+    curveStatsChildParam.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \

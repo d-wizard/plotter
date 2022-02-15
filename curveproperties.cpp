@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -25,8 +25,10 @@
 #include <algorithm>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QColorDialog>
 #include <fstream>
 #include <iomanip>
+#include <assert.h>
 #include "overwriterenamedialog.h"
 #include "saveRestoreCurve.h"
 #include "FileSystemOperations.h"
@@ -62,12 +64,14 @@ const QString mathOpsStr[] = {
 "SHIFT UP",
 "SHIFT DOWN",
 "POWER",
-"LOG()",
-"MOD()",
-"ABS()",
-"ROUND()",
-"ROUNDUP()",
-"ROUNDDOWN()"
+"LOG",
+"MOD",
+"ABS",
+"ROUND",
+"ROUND UP",
+"ROUND DOWN",
+"LIMIT UPPER",
+"LIMIT LOWER"
 };
 
 const QString mathOpsSymbol[] = {
@@ -82,7 +86,9 @@ const QString mathOpsSymbol[] = {
 "abs",
 "round",
 "round up",
-"round down"
+"round down",
+"limit upper",
+"limit lower"
 };
 
 
@@ -98,7 +104,9 @@ const QString mathOpsValueLabel[] = {
 "", // ABS has no value, so set the text to nothing.
 "Decimal Point to Round",
 "Decimal Point to Round Up",
-"Decimal Point to Round Down"
+"Decimal Point to Round Down",
+"Upper Hard Limit Vaue",
+"Lower Hard Limit Vaue"
 };
 
 const QString plotTypeNames[] = {
@@ -114,10 +122,33 @@ const QString plotTypeNames[] = {
    "FFT",
    "Delta",
    "Sum",
-   "Math"
+   "Math",
+   "FFT Measurement",
+   "Curve Stats"
 };
 
+const QString fftMeasureNames[] = {
+   "Signal Power",
+   "Signal BW",
+   "Noise Power",
+   "Noise BW",
+   "Noise Per Hz",
+   "SNR",
+   "SNR dB Hz",
+   "No Measurement"
+};
 
+const QString childStatsNames[] = {
+   "Num Samples",
+   "X Min",
+   "X Max",
+   "Y Min",
+   "Y Max",
+   "Sample Rate"
+};
+
+// This is persistent only while the executable is running.
+static QMap<ePlotType, bool> gSuggestChildOnParentPlot;
 
 curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QString curveName, QWidget *parent) :
    QWidget(parent),
@@ -127,6 +158,7 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_selectedMathOpLeft(0),
    m_selectedMathOpRight(0),
    m_numMathOpsReadFromSrc(0),
+   m_guiIsChanging(false),
    m_childCurveNewPlotNameUser(""),
    m_childCurveNewCurveNameUser(""),
    m_prevChildCurvePlotTypeIndex(-1)
@@ -142,31 +174,44 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    ui->availableOps->setCurrentRow(initialAvailableMathOpSelectionIndex);
    ui->lblMapOpValueLabel->setText(mathOpsValueLabel[initialAvailableMathOpSelectionIndex]);
 
-   m_cmbXAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbXAxisSrc         ));
-   m_cmbYAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbYAxisSrc         ));
-   m_cmbSrcCurve_math     = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbSrcCurve_math    ));
-   m_cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
-   m_cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
-   m_cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
-   m_cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
-   m_cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
-   m_cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
+   // Create Combo Box Pointers (tPltCrvCmbBoxPtr).
+   tPltCrvCmbBoxPtr cmbXAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbXAxisSrc         ));
+   tPltCrvCmbBoxPtr cmbYAxisSrc          = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbYAxisSrc         ));
+   tPltCrvCmbBoxPtr cmbSrcCurve_math     = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbSrcCurve_math    ));
+   tPltCrvCmbBoxPtr cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
+   tPltCrvCmbBoxPtr cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
+   tPltCrvCmbBoxPtr cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
+   tPltCrvCmbBoxPtr cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
+   tPltCrvCmbBoxPtr cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
+   tPltCrvCmbBoxPtr cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
+
+   // Set tCmbBoxAndValue
+   m_cmbXAxisSrc          = tCmbBoxValPtr(new tCmbBoxAndValue(cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
+   m_cmbYAxisSrc          = tCmbBoxValPtr(new tCmbBoxAndValue(cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
+   m_cmbSrcCurve_math     = tCmbBoxValPtr(new tCmbBoxAndValue(cmbSrcCurve_math, true, true));
+   m_cmbCurveToSave       = tCmbBoxValPtr(new tCmbBoxAndValue(cmbCurveToSave));
+   m_cmbPropPlotCurveName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPropPlotCurveName, false));
+
+   m_cmbDestPlotName      = tCmbBoxValPtr(new tCmbBoxAndValue(cmbDestPlotName));
+   m_cmbOpenCurvePlotName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbOpenCurvePlotName));
+   m_cmbPlotToSave        = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPlotToSave));
+   m_cmbIpBlockPlotNames  = tCmbBoxValPtr(new tCmbBoxAndValue(cmbIpBlockPlotNames));
 
 
    // Initialize the list of all the combo boxes that display PlotName->CurveName
    m_plotCurveCombos.clear();
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbXAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_X));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbYAxisSrc, tCmbBoxAndValue::E_PREFERRED_AXIS_Y));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbSrcCurve_math, true, true));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbCurveToSave));
-   m_plotCurveCombos.append(tCmbBoxAndValue(m_cmbPropPlotCurveName, false));
+   m_plotCurveCombos.append(m_cmbXAxisSrc);
+   m_plotCurveCombos.append(m_cmbYAxisSrc);
+   m_plotCurveCombos.append(m_cmbSrcCurve_math);
+   m_plotCurveCombos.append(m_cmbCurveToSave);
+   m_plotCurveCombos.append(m_cmbPropPlotCurveName);
 
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbDestPlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbOpenCurvePlotName));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbPlotToSave));
-   m_plotNameCombos.append(tCmbBoxAndValue(m_cmbIpBlockPlotNames));
+   m_plotNameCombos.append(m_cmbDestPlotName);
+   m_plotNameCombos.append(m_cmbOpenCurvePlotName);
+   m_plotNameCombos.append(m_cmbPlotToSave);
+   m_plotNameCombos.append(m_cmbIpBlockPlotNames);
 
    // Set current tab index.
    ui->tabWidget->setCurrentIndex(TAB_CREATE_CHILD_CURVE);
@@ -181,6 +226,14 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Attempt to restore the Child Curve combo box values from persistent memory.
    initCmbBoxValueFromPersistParam(ui->cmbPlotType, PERSIST_PARAM_CHILD_CURVE_PLOT_TYPE);
    initCmbBoxValueFromPersistParam(ui->cmbChildMathOperators, PERSIST_PARAM_CHILD_CURVE_MATH_TYPE);
+   initCmbBoxValueFromPersistParam(ui->cmbChildStatsTypes, PERSIST_PARAM_CHILD_CURVE_STAT_TYPE);
+   initSpnBoxValueFromPersistParam(ui->spnFFtMeasChildPlotSize, PERSIST_PARAM_FFT_MEAS_CHILD_SIZE);
+
+   // Set "Match Parent Scroll" Check Box.
+   double chkBoxVal = 0.0;
+   if(persistentParam_getParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, chkBoxVal))
+      ui->chkMatchParentScroll->setChecked(chkBoxVal != 0.0); // Restore value from Persistent Parameters.
+   setMatchParentScrollChkBoxVisible();
 }
 
 curveProperties::~curveProperties()
@@ -198,19 +251,25 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
 
    tCurveCommanderInfo allCurves = m_curveCmdr->getCurveCommanderInfo();
 
+   m_guiIsChanging = true; // Set to true to keep GUI change functions (e.g. currentIndexChanged) from marking Combo Boxes as 'User Specified'
+
    // Save current values of the GUI elements. Clear the combo box members.
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
    {
-      m_plotCurveCombos[i].cmbBoxVal = m_plotCurveCombos[i].cmbBoxPtr->currentText();
-      m_plotCurveCombos[i].cmbBoxPtr->clear();
+      m_plotCurveCombos[i]->cmbBoxVal = m_plotCurveCombos[i]->cmbBoxPtr->currentText();
+      m_plotCurveCombos[i]->cmbBoxPtr->clear();
    }
 
    // Save current values of the GUI elements. Clear Plot Name combo boxes.
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
-      m_plotNameCombos[i].cmbBoxVal = m_plotNameCombos[i].cmbBoxPtr->currentText();
-      m_plotNameCombos[i].cmbBoxPtr->clear();
+      m_plotNameCombos[i]->cmbBoxVal = m_plotNameCombos[i]->cmbBoxPtr->currentText();
+      m_plotNameCombos[i]->cmbBoxPtr->clear();
    }
+
+   // Save and clear FFT Measurement Parent Combo
+   QString fftMeasureComboVal = ui->cmbXAxisSrc_fftMeasurement->currentText();
+   ui->cmbXAxisSrc_fftMeasurement->clear();
 
    QList<QString> curveNames; // All the curve names in the default plot (either the plot specified by plotName or firstPlotName)
 
@@ -219,16 +278,26 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       // Add to dest plot name combo box
       for(int i = 0; i < m_plotNameCombos.size(); ++i)
       {
-         m_plotNameCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
+         m_plotNameCombos[i]->cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_PLOT_NAME_ONLY);
       }
 
       // Add the "All Curves" curve name to the drop down box.
       for(int i = 0; i < m_plotCurveCombos.size(); ++i)
       {
-         if(m_plotCurveCombos[i].displayAllCurves)
+         if(m_plotCurveCombos[i]->displayAllCurves)
          {
-            m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
+            m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES);
          }
+      }
+
+      // Add the Parent FFT Measurement Sources
+      if(allCurves[curPlotName].plotGui->areFftMeasurementsVisible())
+      {
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SIG_POWER]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__NOISE_POWER]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__NOISE_PER_HZ]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SNR]);
+         ui->cmbXAxisSrc_fftMeasurement->addItem(curPlotName + PLOT_CURVE_SEP + fftMeasureNames[E_FFT_MEASURE__SNR_PER_HZ]);
       }
 
       tCurveDataInfo* curves = &(allCurves[curPlotName].curves);
@@ -258,7 +327,7 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
          {
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
-               m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
+               m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
             }
          }
          else
@@ -266,19 +335,19 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
             for(int i = 0; i < m_plotCurveCombos.size(); ++i)
             {
                // Add the "All Axes" plot/curve name to the drop down box.
-               if(m_plotCurveCombos[i].displayAllAxes)
+               if(m_plotCurveCombos[i]->displayAllAxes)
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_ALL);
                }
 
-               if(m_plotCurveCombos[i].displayAxesSeparately)
+               if(m_plotCurveCombos[i]->displayAxesSeparately)
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_Y);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_X);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_AXIS_Y);
                }
                else
                {
-                  m_plotCurveCombos[i].cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
+                  m_plotCurveCombos[i]->cmbBoxPtr->addItem(curPlotName, curveName, tPlotCurveComboBox::E_COMBOBOX_CURVE_ENTIRE_CURVE);
                }
             }
          }
@@ -315,18 +384,33 @@ void curveProperties::updateGuiPlotCurveInfo(QString plotName, QString curveName
       }
    }
 
+   // Set FFT Measurement Combo Box back
+   for(int i = 0; i < ui->cmbXAxisSrc_fftMeasurement->count(); ++i)
+   {
+      if(ui->cmbXAxisSrc_fftMeasurement->itemText(i) == fftMeasureComboVal)
+      {
+         ui->cmbXAxisSrc_fftMeasurement->setCurrentIndex(i);
+         break;
+      }
+   }
+
    if(ui->tabWidget->currentIndex() == TAB_PROPERTIES)
    {
       fillInPropTab();
    }
 
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 
    if(userSpecifiedPlotCurveName)
    {
       // Store off the IP Address of the last message from the plot / curve that was selected when this function was called.
       m_lastUpdatedPlotIpAddr = m_curveCmdr->getCurveData(plotName, curveName)->getLastMsgIpAddr().m_ipV4Addr;
    }
+
+   // Done Modifying the GUI.
+   m_guiIsChanging = false;
+
 }
 
 void curveProperties::findRealImagCurveNames(QList<QString>& curveNameList, const QString& defaultCurveName, QString& realCurveName, QString& imagCurveName)
@@ -397,6 +481,7 @@ void curveProperties::existingPlotsChanged()
    {
       fillInPropTab();
    }
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::setCombosToPrevValues()
@@ -404,17 +489,17 @@ void curveProperties::setCombosToPrevValues()
    // Set Plot/Curve Name Combos to previous values
    for(int i = 0; i < m_plotCurveCombos.size(); ++i)
    {
-      trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+      trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, m_plotCurveCombos[i]->cmbBoxVal);
    }
 
    // Set Plot Name Combos to previous values
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
-      trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
+      trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, m_plotNameCombos[i]->cmbBoxVal);
    }
 }
 
-void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool tryToRestoreFirst)
+void curveProperties::setCombosToPlotCurve(const QString& plotName, const QString& curveName, const QString& realCurveName, const QString& imagCurveName, bool restoreUserSpecifed)
 {
    QString plotCurveName1D_real = plotName + PLOT_CURVE_SEP + realCurveName;
    QString plotCurveName1D_imag = plotName + PLOT_CURVE_SEP + imagCurveName;
@@ -427,20 +512,22 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    {
       bool updateComboSuccess = false;
 
-      if(tryToRestoreFirst)
+      // Only "Try to Restore" if there is something to restore from.
+      if(restoreUserSpecifed && m_plotCurveCombos[i]->userSpecified())
       {
-         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, m_plotCurveCombos[i].cmbBoxVal);
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, m_plotCurveCombos[i]->cmbBoxVal);
+         m_plotCurveCombos[i]->userSpecified(updateComboSuccess); // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
 
-      if(updateComboSuccess == false && m_plotCurveCombos[i].preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
+      if(updateComboSuccess == false && m_plotCurveCombos[i]->preferredAxis != tCmbBoxAndValue::E_PREFERRED_AXIS_DONT_CARE)
       {
-         if( m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_X &&
-             trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D_real) )
+         if( m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_X &&
+             trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D_real) )
          {
             updateComboSuccess = true;
          }
-         else if( m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y &&
-                  trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D_imag) )
+         else if( m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y &&
+                  trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D_imag) )
          {
             updateComboSuccess = true;
          }
@@ -449,14 +536,21 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
       // Try to set to 1D Curve Name.
       if(updateComboSuccess == false)
       {
-         if(trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName1D) == false)
+         updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName1D);
+         if(updateComboSuccess == false)
          {
             // 1D Curve Name doesn't exists, must be 2D. Set to 2D Curve Name.
-            if(m_plotCurveCombos[i].preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y)
-               trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dy);
+            if(m_plotCurveCombos[i]->preferredAxis == tCmbBoxAndValue::E_PREFERRED_AXIS_Y)
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName2Dy);
             else
-               trySetComboItemIndex(m_plotCurveCombos[i].cmbBoxPtr, plotCurveName2Dx);
+               updateComboSuccess = trySetComboItemIndex(m_plotCurveCombos[i]->cmbBoxPtr, plotCurveName2Dx);
          }
+      }
+
+      // If updating with user specifed values (i.e. restoreUserSpecifed is false), mark this combo box as user specified.
+      if(!restoreUserSpecifed && updateComboSuccess)
+      {
+         m_plotCurveCombos[i]->userSpecified(true);
       }
    }
 
@@ -464,13 +558,23 @@ void curveProperties::setCombosToPlotCurve(const QString& plotName, const QStrin
    for(int i = 0; i < m_plotNameCombos.size(); ++i)
    {
       bool updateComboSuccess = false;
-      if(tryToRestoreFirst)
+
+      // Only "Try to Restore" if there is something to restore from.
+      if(restoreUserSpecifed && m_plotNameCombos[i]->userSpecified())
       {
-         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, m_plotNameCombos[i].cmbBoxVal);
+         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, m_plotNameCombos[i]->cmbBoxVal);
+         m_plotNameCombos[i]->userSpecified(updateComboSuccess); // If trySetComboItemIndex failed, then user specified value is no longer valid.
       }
+
       if(updateComboSuccess == false)
       {
-         trySetComboItemIndex(m_plotNameCombos[i].cmbBoxPtr, plotName);
+         updateComboSuccess = trySetComboItemIndex(m_plotNameCombos[i]->cmbBoxPtr, plotName);
+      }
+
+      // If updating with user specifed values (i.e. restoreUserSpecifed is false), mark this combo box as user specified.
+      if(!restoreUserSpecifed && updateComboSuccess)
+      {
+         m_plotNameCombos[i]->userSpecified(true);
       }
    }
 
@@ -485,9 +589,12 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
 {
    bool xVis = true;
    bool yVis = plotTypeHas2DInput((ePlotType)index);
-   bool windowChkVis = false;
+   bool fftCheckBoxVisible = false;
    bool slice = ui->chkSrcSlice->checkState() == Qt::Checked;
+   bool sliceVis = true;
    bool mathCmbVis = false;
+   bool childStatsCmbVis = false;
+   bool fftMeasureVis = false;
 
    storeUserChildPlotNames((ePlotType)m_prevChildCurvePlotTypeIndex);
    m_prevChildCurvePlotTypeIndex = index;
@@ -500,6 +607,11 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_SUM:
          ui->lblXAxisSrc->setText("Source");
       break;
+      case E_PLOT_TYPE_CURVE_STATS:
+         ui->lblXAxisSrc->setText("Source");
+         childStatsCmbVis = true;
+         sliceVis = false;
+      break;
       case E_PLOT_TYPE_2D:
          ui->lblXAxisSrc->setText("X Axis Source");
          ui->lblYAxisSrc->setText("Y Axis Source");
@@ -507,11 +619,12 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
       case E_PLOT_TYPE_REAL_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_REAL:
          ui->lblXAxisSrc->setText("Real Source");
-         windowChkVis = true;
+         fftCheckBoxVisible = true;
       break;
       case E_PLOT_TYPE_COMPLEX_FFT:
       case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
-         windowChkVis = true;
+         fftCheckBoxVisible = true;
+         /* no break */
       case E_PLOT_TYPE_AM_DEMOD:
       case E_PLOT_TYPE_FM_DEMOD:
       case E_PLOT_TYPE_PM_DEMOD:
@@ -523,18 +636,25 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          ui->lblYAxisSrc->setText("Math RHS");
          mathCmbVis = true;
       break;
-
+      case E_PLOT_TYPE_FFT_MEASUREMENT:
+         ui->lblXAxisSrc->setText("Measurement");
+         xVis = false;
+         sliceVis = false;
+         fftMeasureVis = true;
+      break;
    }
 
    m_cmbXAxisSrc->setVisible(xVis);
    m_cmbYAxisSrc->setVisible(yVis);
+   ui->cmbXAxisSrc_fftMeasurement->setVisible(fftMeasureVis);
 
-   ui->lblXAxisSrc->setVisible(xVis);
+   ui->lblXAxisSrc->setVisible(xVis || fftMeasureVis);
    ui->spnXSrcStart->setVisible(xVis && slice);
    ui->spnXSrcStop->setVisible(xVis && slice);
    ui->cmdXUseZoomForSlice->setVisible(xVis && slice);
 
    ui->lblYAxisSrc->setVisible(yVis);
+   ui->chkSrcSlice->setVisible(sliceVis);
    ui->spnYSrcStart->setVisible(yVis && slice);
    ui->spnYSrcStop->setVisible(yVis && slice);
    ui->cmdYUseZoomForSlice->setVisible(yVis && slice);
@@ -542,11 +662,18 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
    ui->lblAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
    ui->txtAvgAmount->setVisible(index == E_PLOT_TYPE_AVERAGE);
 
-   ui->chkWindow->setVisible(windowChkVis);
-   ui->chkScaleFftWindow->setVisible(windowChkVis);
+   ui->chkWindow->setVisible(fftCheckBoxVisible);
+   ui->chkScaleFftWindow->setVisible(fftCheckBoxVisible);
+   ui->chkFftSrcContiguous->setVisible(fftCheckBoxVisible);
    ui->cmbChildMathOperators->setVisible(mathCmbVis);
 
+   ui->cmbChildStatsTypes->setVisible(childStatsCmbVis);
+
+   ui->lblFftMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
+   ui->spnFFtMeasChildPlotSize->setVisible(fftMeasureVis || childStatsCmbVis);
+
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::on_cmdApply_clicked()
@@ -559,6 +686,8 @@ void curveProperties::on_cmdApply_clicked()
 
       if(newChildPlotName != "" && newChildCurveName != "")
       {
+         bool forceContiguousParentPoints = ui->chkFftSrcContiguous->isVisible() && ui->chkFftSrcContiguous->isChecked();
+         bool matchParentScrollMode = ui->chkMatchParentScroll->isVisible() && ui->chkMatchParentScroll->isChecked();
          if(m_curveCmdr->validCurve(newChildPlotName, newChildCurveName) == false)
          {
             // New Child plot->curve does not exist, continue creating the child curve.
@@ -582,10 +711,39 @@ void curveProperties::on_cmdApply_clicked()
                axisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                axisParent.avgAmount = atof(ui->txtAvgAmount->text().toStdString().c_str());
 
-               m_curveCmdr->createChildCurve( newChildPlotName,
-                                              newChildCurveName,
-                                              plotType,
-                                              axisParent);
+               // Determine FFT Measurement type (only valid for E_PLOT_TYPE_FFT_MEASUREMENT plot types).
+               axisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               axisParent.curveStatType = E_CURVE_STATS__NO_CURVE_STAT;
+               axisParent.curveStatstPlotSize = -1;
+               bool createTheChildPlot = true; // Normally there are no conditions that would keep us from creating the child plot.
+               if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
+               {
+                  // FFT Measurement Child Plots are done a little differently. Use the return value to ensure we should actually create the Child Plot.
+                  createTheChildPlot = determineChildFftMeasurementAxisValues(axisParent);
+
+                  // Store off the value of the FFT Measurement Child Curve.
+                  if(createTheChildPlot)
+                  {
+                     persistentParam_setParam_f64(PERSIST_PARAM_FFT_MEAS_CHILD_SIZE, ui->spnFFtMeasChildPlotSize->value());
+                  }
+               }
+               else if(plotType == E_PLOT_TYPE_CURVE_STATS)
+               {
+                  axisParent.curveStatType = (eCurveStats)(ui->cmbChildStatsTypes->currentIndex());
+                  axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
+               }
+
+               if(createTheChildPlot)
+               {
+                  m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+                  m_curveCmdr->createChildCurve( newChildPlotName,
+                                                 newChildCurveName,
+                                                 plotType,
+                                                 forceContiguousParentPoints,
+                                                 matchParentScrollMode,
+                                                 axisParent);
+                  setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == axisParent.dataSrc.plotName);
+               }
             }
             else
             {
@@ -616,17 +774,26 @@ void curveProperties::on_cmdApply_clicked()
                xAxisParent.scaleFftWindow = ui->chkScaleFftWindow->isChecked();
                xAxisParent.mathBetweenCurvesOperator =
                   (eMathBetweenCurves_operators)ui->cmbChildMathOperators->currentIndex();
+               xAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               xAxisParent.curveStatstPlotSize = -1;
 
                // Y Axis values need to match X Axis value.
                yAxisParent.windowFFT = xAxisParent.windowFFT;
                yAxisParent.scaleFftWindow = xAxisParent.scaleFftWindow;
                yAxisParent.mathBetweenCurvesOperator = xAxisParent.mathBetweenCurvesOperator;
+               yAxisParent.fftMeasurementType = E_FFT_MEASURE__NO_FFT_MEASUREMENT;
+               yAxisParent.curveStatstPlotSize = -1;
 
+               m_cmbXAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
+               m_cmbYAxisSrc->userSpecified(true); // User hit the Apply button, i.e. user specified.
                m_curveCmdr->createChildCurve( newChildPlotName,
                                               newChildCurveName,
                                               plotType,
+                                              forceContiguousParentPoints,
+                                              matchParentScrollMode,
                                               xAxisParent,
                                               yAxisParent);
+               setPersistentSuggestChildOnParentPlot(plotType, newChildPlotName == xAxisParent.dataSrc.plotName || newChildPlotName == yAxisParent.dataSrc.plotName);
             }
          }
          else
@@ -651,6 +818,11 @@ void curveProperties::on_cmdApply_clicked()
       {
          // Save the math type used to persistent memory.
          persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_MATH_TYPE, ui->cmbChildMathOperators->currentIndex());
+      }
+      else if(ui->cmbPlotType->currentIndex() == E_PLOT_TYPE_CURVE_STATS)
+      {
+         // Save the stats type used to persistent memory.
+         persistentParam_setParam_f64(PERSIST_PARAM_CHILD_CURVE_STAT_TYPE, ui->cmbChildStatsTypes->currentIndex());
       }
 
    }
@@ -768,6 +940,7 @@ void curveProperties::on_tabWidget_currentChanged(int index)
       {
          showApplyButton = true;
          setUserChildPlotNames();
+         setMatchParentScrollChkBoxVisible();
       }
       break;
 
@@ -894,6 +1067,7 @@ void curveProperties::mathTabApply()
       else
          parentPlotGui->setCurveProperties_allAxes(curve.curveName, sampleRate, m_mathOps, overwriteAllCurOps, replaceFromTop, m_numMathOpsReadFromSrc);
 
+      m_cmbSrcCurve_math->userSpecified(true); // User hit the Apply button, i.e. user specified.
       fillInMathTab();
    }
 
@@ -902,6 +1076,8 @@ void curveProperties::mathTabApply()
 void curveProperties::on_cmbSrcCurve_math_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   m_cmbSrcCurve_math->userSpecified(true, m_guiIsChanging);
 
    fillInMathTab();
 }
@@ -1284,48 +1460,19 @@ void curveProperties::on_cmbRestoreCurveNameFilter_currentIndexChanged(int index
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdXUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
-   CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
-   if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
-   {
-      // Valid 1D parent, continue
-      MainWindow* mainPlot = m_curveCmdr->getMainPlot(curve.plotName);
-      if(mainPlot != NULL)
-      {
-         // Get zoom dimensions.
-         maxMinXY dim = mainPlot->getZoomDimensions();
-
-         // Use sample rate to convert back to start/stop indexes of source data.
-         double sampleRate = parentCurve->getSampleRate();
-         if(sampleRate != 0.0)
-         {
-            dim.minX *= sampleRate;
-            dim.maxX *= sampleRate;
-         }
-
-         // Bound.
-         if(dim.minX < 0)
-            dim.minX = 0;
-         if(dim.maxX >= parentCurve->getNumPoints())
-            dim.maxX = parentCurve->getNumPoints() - 1;
-
-         // Set GUI elements.
-         ui->spnXSrcStart->setValue(dim.minX);
-         ui->spnXSrcStop->setValue(dim.maxX);
-      }
-   }
-   else
-   {
-      ui->spnXSrcStart->setValue(0);
-      ui->spnXSrcStop->setValue(0);
-   }
+   useZoomForSlice(m_cmbXAxisSrc, ui->spnXSrcStart, ui->spnXSrcStop);
 }
 
 // Get source curve start and stop indexes from the current zoom
 // This will only work if the source curve is 1D
 void curveProperties::on_cmdYUseZoomForSlice_clicked()
 {
-   tPlotCurveAxis curve = m_cmbYAxisSrc->getPlotCurveAxis();
+   useZoomForSlice(m_cmbYAxisSrc, ui->spnYSrcStart, ui->spnYSrcStop);
+}
+
+void curveProperties::useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnStart, QSpinBox* spnStop)
+{
+   tPlotCurveAxis curve = cmbAxisSrc->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
    if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_1D)
    {
@@ -1333,32 +1480,28 @@ void curveProperties::on_cmdYUseZoomForSlice_clicked()
       MainWindow* mainPlot = m_curveCmdr->getMainPlot(curve.plotName);
       if(mainPlot != NULL)
       {
-         // Get zoom dimensions.
-         maxMinXY dim = mainPlot->getZoomDimensions();
+         maxMinXY dim = parentCurve->get1dDisplayedIndexes();
 
-         // Use sample rate to convert back to start/stop indexes of source data.
-         double sampleRate = parentCurve->getSampleRate();
-         if(sampleRate != 0.0)
-         {
-            dim.minX *= sampleRate;
-            dim.maxX *= sampleRate;
-         }
+         dim.minX += 1; // Min is the sample before the first sample displayed.
 
          // Bound.
-         if(dim.minX < 0)
+         if(dim.minX < 0 || dim.minX >= parentCurve->getNumPoints())
             dim.minX = 0;
-         if(dim.maxX >= parentCurve->getNumPoints())
-            dim.maxX = parentCurve->getNumPoints() - 1;
+         if(dim.maxX < 0 || dim.maxX >= parentCurve->getNumPoints())
+            dim.maxX = 0;
 
          // Set GUI elements.
-         ui->spnYSrcStart->setValue(dim.minX);
-         ui->spnYSrcStop->setValue(dim.maxX);
+         spnStart->setValue(dim.minX);
+         spnStop->setValue(dim.maxX);
+
+         // User hit a button, i.e. user specified.
+         cmbAxisSrc->userSpecified(true);
       }
    }
    else
    {
-      ui->spnYSrcStart->setValue(0);
-      ui->spnYSrcStop->setValue(0);
+      spnStart->setValue(0);
+      spnStop->setValue(0);
    }
 }
 
@@ -1374,7 +1517,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(toSave.curveName);
 
       // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_STR;
       std::string persistentReadValue;
       persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
 
@@ -1397,9 +1540,6 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
                                                        suggestedSavePath,
                                                        filterString,
                                                        &selectedFilter);
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
       eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
       if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
@@ -1413,12 +1553,20 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
 
+      // Write user selections to persisent memory.
+      setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+      persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
+
       if(saveType != E_SAVE_RESTORE_INVALID)
       {
          SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
          PackedCurveData dataToWriteToFile;
          packedCurve.getPackedData(dataToWriteToFile);
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+         // User hit a button, i.e. user specified.
+         m_cmbCurveToSave->userSpecified(true);
       }
    }
 
@@ -1436,7 +1584,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       QString suggestedSavePath = getOpenSavePath(plotName);
 
       // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION;
+      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_STR;
       std::string persistentReadValue;
       persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
 
@@ -1459,9 +1607,6 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
                                                        suggestedSavePath,
                                                        filterString,
                                                        &selectedFilter);
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
       // Fill in vector of curve data in the correct order.
       QVector<CurveData*> curves;
@@ -1484,23 +1629,46 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
          saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
 
+      // Write user selections to persisent memory.
+      setOpenSavePath(fileName);
+      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+      persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
+
       if(saveType != E_SAVE_RESTORE_INVALID)
       {
          SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
          PackedCurveData dataToWriteToFile;
          savePlot.getPackedData(dataToWriteToFile);
          fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+         // User hit the button, i.e. user specified.
+         m_cmbPlotToSave->userSpecified(true);
       }
    }
 }
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
+   QString fileTypeFilterList = tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)");
+
+   // Read the last used filter from persistent memory.
+   std::string persistentSaveStr = PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION;
+   std::string persistentReadValue;
+   persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
+
+   // Initialize selection with stored value (if there was one).
+   QString selectedFilter;
+   if(fileTypeFilterList.contains(persistentReadValue.c_str()))
+      selectedFilter = persistentReadValue.c_str();
+
    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                    getOpenSaveDir(),
-                                                   tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)"));
+                                                   fileTypeFilterList,
+                                                   &selectedFilter);
 
+   // Write user selections to persisent memory.
    setOpenSavePath(fileName);
+   persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
    localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText());
 
@@ -1514,6 +1682,8 @@ bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curve
 void curveProperties::on_cmbPropPlotCurveName_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   m_cmbPropPlotCurveName->userSpecified(true, m_guiIsChanging);
 
    fillInPropTab(true);
 }
@@ -1542,12 +1712,8 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
       calcSampRateStr << std::setprecision(3) << std::fixed << parentCurve->getCalculatedSampleRateFromPlotMsgs();
       ui->txtCalcSampleRate->setText(calcSampRateStr.str().c_str());
 
-      ui->propParentCurves->clear();
-      QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
-      for(int i = 0; i < parent.size(); ++i)
-      {
-         ui->propParentCurves->addItem(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
-      }
+      // Fill in the Child Curve Parents GUI elements.
+      fillInPropTab_childCurveParents(plotCurveInfo);
 
       // Fill in Last Msg Ip Addr field.
       ui->txtLastIp->setText(tPlotterIpAddr::convert(parentCurve->getLastMsgIpAddr().m_ipV4Addr));
@@ -1560,7 +1726,14 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
          // These are writable values.
          ui->spnPropCurvePos->setValue(parentPlot->getCurveIndex(plotCurveInfo.curveName));
          ui->chkPropHide->setChecked(parentCurve->getHidden());
-         ui->chkPropVisable->setChecked(parentCurve->isDisplayed());
+         ui->chkPropVisable->setChecked(parentCurve->getVisible());
+
+         // If hidden is checked, don't bother the user with the state of visible.
+         ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
+
+         // Set the Curve Color button to the color of the curve.
+         QColor curveColor = parentCurve->getCurveAppearance().color;
+         setPropTabCurveColor(curveColor);
       }
    }
    else
@@ -1578,6 +1751,47 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
        ui->txtPropYMax->setText("");
        ui->propParentCurves->clear();
        ui->txtLastIp->setText("");
+       setPropTabCurveColor(Qt::black);
+   }
+}
+
+void curveProperties::fillInPropTab_childCurveParents(tPlotCurveAxis &plotCurveInfo)
+{
+   QVector<tPlotCurveAxis> parent = m_curveCmdr->getCurveParents(plotCurveInfo.plotName, plotCurveInfo.curveName);
+   int numNewItems = parent.size();
+   int numCurrentGuiItems = ui->propParentCurves->count();
+
+   // Store off the values that need be to written to the GUI.
+   QVector<QString> newItems;
+   for(int i = 0; i < numNewItems; ++i)
+   {
+      newItems.push_back(parent[i].plotName + PLOT_CURVE_SEP + parent[i].curveName);
+   }
+
+   // Check if the GUI values need to be changed.
+   bool updateGui = true;
+   if(numNewItems == numCurrentGuiItems)
+   {
+      // Check if all items match.
+      updateGui = false;
+      for(int i = 0; i < numNewItems; ++i)
+      {
+         if(ui->propParentCurves->item(i)->text() != newItems[i])
+         {
+            updateGui = true; // Mismatch detected, need to update GUI.
+            break;
+         }
+      }
+   }
+
+   // Update the GUI values (only if a change is needed).
+   if(updateGui)
+   {
+      ui->propParentCurves->clear();
+      for(int i = 0; i < numNewItems; ++i)
+      {
+         ui->propParentCurves->addItem(newItems[i]);
+      }
    }
 }
 
@@ -1588,21 +1802,28 @@ void curveProperties::propTabApply()
    MainWindow* parentPlot = m_curveCmdr->getMainPlot(plotCurveInfo.plotName);
    if(parentCurve != NULL && parentPlot != NULL)
    {
-      // If curve visability has changed, update.
-      if(parentCurve->isDisplayed() != ui->chkPropVisable->isChecked())
-      {
-         parentPlot->toggleCurveVisability(plotCurveInfo.curveName);
-      }
-
-      // Set Curve Hidden Status.
-      parentPlot->setCurveHidden(plotCurveInfo.curveName, ui->chkPropHide->isChecked());
+      // Set Curve Visible / Hidden State.
+      parentPlot->setCurveVisibleHidden(plotCurveInfo.curveName, ui->chkPropVisable->isChecked(), ui->chkPropHide->isChecked());
 
       // Check for change of Curve Display Index
       if(parentPlot->getCurveIndex(plotCurveInfo.curveName) != ui->spnPropCurvePos->value())
       {
          parentPlot->setCurveIndex(plotCurveInfo.curveName, ui->spnPropCurvePos->value());
       }
+
+      // Check for curve color change.
+      QColor newColor = getPropTabCurveColor();
+      QColor oldColor = parentCurve->getCurveAppearance().color;
+      if(newColor != oldColor)
+      {
+         // Update the color of the curve.
+         CurveAppearance appearance = parentCurve->getCurveAppearance();
+         appearance.color = newColor;
+         parentCurve->setCurveAppearance(appearance);
+      }
+
    }
+   fillInPropTab(true);
 }
 
 void curveProperties::on_cmdUnlinkParent_clicked()
@@ -1628,6 +1849,22 @@ void curveProperties::on_cmdRemoveCurve_clicked()
    }
 }
 
+void curveProperties::setPersistentSuggestChildOnParentPlot(ePlotType plotType, bool childOnParentPlot)
+{
+   gSuggestChildOnParentPlot[plotType] = childOnParentPlot;
+}
+
+bool curveProperties::getPersistentSuggestChildOnParentPlot(ePlotType plotType, bool& childOnParentPlot)
+{
+   bool exists = gSuggestChildOnParentPlot.find(plotType) != gSuggestChildOnParentPlot.end();
+   if(exists)
+   {
+      childOnParentPlot = gSuggestChildOnParentPlot[plotType];
+   }
+
+   return exists;
+}
+
 void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString& plotName, QString& curveName)
 {
    plotName = "";
@@ -1648,62 +1885,84 @@ void curveProperties::getSuggestedChildPlotCurveName(ePlotType plotType, QString
 
    twoDInput = plotTypeHas2DInput(plotType);
 
-   if(plotType != E_PLOT_TYPE_AVERAGE && plotType != E_PLOT_TYPE_DELTA && plotType != E_PLOT_TYPE_SUM)
+   if(plotType == E_PLOT_TYPE_FFT_MEASUREMENT)
    {
       QString plotPrefix = plotTypeNames[plotType] + " of ";
-      QString plotSuffix = "";
-      QString plotMid = "";
-
-      if(twoDInput)
+      QStringList split = ui->cmbXAxisSrc_fftMeasurement->currentText().split(PLOT_CURVE_SEP); // Get Parent Plot Name and Suggested Curve Name for combo box.
+      if(split.size() == 2)
       {
-         if(xSrc.plotName == ySrc.plotName)
+         // Generate the plot / curve names.
+         plotName = plotPrefix + split[0]; // Use the Parent Plot Name.
+         curveName = split[1]; // Set the suggested Child Curve Name to the FFT Measurement String.
+         plotNameMustBeUnique = false;
+      }
+      else
+      {
+         // Generate the plot / curve names.
+         plotName = plotPrefix + xSrc.plotName;
+         curveName = xSrc.curveName;
+         plotNameMustBeUnique = true;
+      }
+   }
+   else if(plotType == E_PLOT_TYPE_CURVE_STATS)
+   {
+      unsigned childStatsIndex = ((unsigned)ui->cmbChildStatsTypes->currentIndex()) % ARRAY_SIZE(childStatsNames);
+      plotName = plotTypeNames[plotType] + " of " + xSrc.curveName;
+      curveName = childStatsNames[childStatsIndex];
+   }
+   else
+   {
+      // Determine if a previous child plot with the same plot type was generated on its parent plot.
+      bool prevWasOnParent = false;
+      bool validSuggestPrevOnParent = getPersistentSuggestChildOnParentPlot(plotType, prevWasOnParent);
+
+      if( (validSuggestPrevOnParent && !prevWasOnParent) ||
+          (!validSuggestPrevOnParent && plotType != E_PLOT_TYPE_AVERAGE) )
+      {
+         // Suggest Child on its own plot.
+         QString plotPrefix = plotTypeNames[plotType] + " of ";
+         QString plotMid = "";
+
+         if(twoDInput)
          {
-            if(xSrc.curveName == ySrc.curveName)
+            if(xSrc.plotName == ySrc.plotName)
             {
-               // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
-               // Use the Curve Name.
-               plotMid = ySrc.curveName;
+               if(xSrc.curveName == ySrc.curveName)
+               {
+                  // Both inputs are the same curve (presumably one is the X and one is the Y axis of a 2D plot)
+                  // Use the Curve Name.
+                  plotMid = ySrc.curveName;
+               }
+               else
+               {
+                  // Use the Plot Name.
+                  plotMid = ySrc.plotName;
+               }
             }
             else
             {
-               // Use the Plot Name.
-               plotMid = ySrc.plotName;
+               // Use both Curve Names.
+               plotMid = xSrc.curveName + " - " + ySrc.curveName;
             }
          }
          else
          {
-            // Use both Curve Names.
-            plotMid = xSrc.curveName + " - " + ySrc.curveName;
+            plotMid = xSrc.curveName;
          }
-      }
-      else
-      {
-         plotMid = xSrc.curveName;
-      }
 
-      // Generate the plot name.
-      if(plotPrefix != "")
-      {
+         // Generate the plot / curve names.
          plotName = plotPrefix + plotMid;
+         curveName = plotMid;
+
+         plotNameMustBeUnique = true;
       }
       else
       {
-         plotName = plotMid;
+         // This defaults to remain on the same plot as the parent.
+         plotName = xSrc.plotName;
+         plotNameMustBeUnique = false; // Plot Name should be the same.
+         curveName = plotTypeNames[plotType] + " of " + xSrc.curveName;
       }
-      if(plotSuffix != "")
-      {
-         plotName = plotName + plotSuffix;
-      }
-
-      curveName = plotMid;
-      plotNameMustBeUnique = true;
-   }
-   else
-   {
-      // This defaults to remain on the same plot as the parent.
-      plotName = xSrc.plotName;
-      plotNameMustBeUnique = false; // Plot Name should be the same.
-      curveName = plotTypeNames[plotType] + " of " + xSrc.curveName;
    }
 
    if(plotNameMustBeUnique && m_curveCmdr->validPlot(plotName))
@@ -1784,14 +2043,24 @@ void curveProperties::on_cmbXAxisSrc_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
+   m_cmbXAxisSrc->userSpecified(true, m_guiIsChanging);
+   if(m_cmbYAxisSrc->isVisible())
+   {
+      m_cmbYAxisSrc->userSpecified(true, m_guiIsChanging); // Lock the matching Y Axis value.
+   }
+
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 {
    (void)index; // Tell the compiler not to warn that this variable is unused.
 
+   m_cmbYAxisSrc->userSpecified(true, m_guiIsChanging);
+
    setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }
 
 QString curveProperties::getOpenSaveDir()
@@ -1961,4 +2230,123 @@ void curveProperties::initCmbBoxValueFromPersistParam(QComboBox* cmbBoxPtr, cons
          cmbBoxPtr->setCurrentIndex(index_int);
       }
    }
+}
+
+void curveProperties::initSpnBoxValueFromPersistParam(QSpinBox* spnBoxPtr, const std::string persistParamName)
+{
+   // Attempt to restore the spin box value from persistent memory.
+   double value_f64 = -1; // Init to invalid index.
+   bool restoreSuccess = persistentParam_getParam_f64(persistParamName, value_f64);
+   if(restoreSuccess)
+   {
+      int value_int = value_f64; // Double float to int.
+      spnBoxPtr->setValue(value_int);
+   }
+}
+
+void curveProperties::on_chkPropHide_clicked()
+{
+   // If hidden is checked, don't bother the user with the state of visible.
+   ui->chkPropVisable->setVisible(!ui->chkPropHide->isChecked());
+}
+
+void curveProperties::on_cmbXAxisSrc_fftMeasurement_currentIndexChanged(int index)
+{
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
+}
+
+// FFT Measurement Child Plots use a different Combo Box than the rest of the Child Curve Plot
+// Types. Also, they do not reference a 'Curve Name'. Instead the Curve Name indicates which
+// FFT Measurement to plot.
+bool curveProperties::determineChildFftMeasurementAxisValues(tParentCurveInfo& axisParent)
+{
+   bool validMatchFound = false;
+   // Need to update dataSrc to get the plot / curve names from the correct combo box.
+   QStringList split = ui->cmbXAxisSrc_fftMeasurement->currentText().split(PLOT_CURVE_SEP);
+   if(split.size() == 2) // Make sure the FFT Measurement Combo Box text is valid
+   {
+      axisParent.dataSrc.plotName = split[0];
+      axisParent.dataSrc.curveName = split[1];
+      axisParent.dataSrc.axis = E_Y_AXIS;
+
+      for(int i = 0; i < E_FFT_MEASURE__NO_FFT_MEASUREMENT; ++i)
+      {
+         if(axisParent.dataSrc.curveName == fftMeasureNames[i])
+         {
+            axisParent.fftMeasurementType = (eFftSigNoiseMeasurements)i;
+            axisParent.curveStatstPlotSize = ui->spnFFtMeasChildPlotSize->value();
+            validMatchFound = true;
+            break;
+         }
+      }
+   }
+   return validMatchFound;
+}
+
+void curveProperties::setMatchParentScrollChkBoxVisible()
+{
+   // All Child Plots will use m_cmbXAxisSrc. So, if the curve defined in that GUI dropdown box
+   // is in scroll mode and the plot type isn't FFT, show the "Match Parent Scroll Mode" check box.
+   bool isVisible = false;
+
+   ePlotType plotType = (ePlotType)ui->cmbPlotType->currentIndex();
+
+   // FFT child plots handle scroll mode in their own way, also plots based on FFT measurements shouldn't inherit parent's scroll mode.
+   if(plotTypeIsFft(plotType) == false && plotType != E_PLOT_TYPE_FFT_MEASUREMENT && plotType != E_PLOT_TYPE_CURVE_STATS)
+   {
+      tPlotCurveAxis curve = m_cmbXAxisSrc->getPlotCurveAxis();
+      CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
+      if(parentCurve != NULL && parentCurve->getScrollMode())
+      {
+         isVisible = true;
+      }
+   }
+
+   ui->chkMatchParentScroll->setVisible(isVisible);
+}
+
+void curveProperties::on_chkMatchParentScroll_clicked()
+{
+   persistentParam_setParam_f64(PERSIST_PARAM_MATCH_PARENT_SCROLL, ui->chkMatchParentScroll->isChecked() ? 1.0 : 0.0); // Store off check box state.
+}
+
+QColor curveProperties::getPropTabCurveColor()
+{
+   return ui->cmdPropColor->palette().color(QPalette::ButtonText);
+}
+
+void curveProperties::setPropTabCurveColor(QColor color)
+{
+   if(color.isValid())
+   {
+      QPalette colorButtonPalette = ui->cmdPropColor->palette();
+      colorButtonPalette.setColor(QPalette::ButtonText, color);
+      ui->cmdPropColor->setPalette(colorButtonPalette);
+   }
+   else
+   {
+      assert(0);
+   }
+}
+
+
+void curveProperties::on_cmdPropColor_clicked()
+{
+   QColor newColor = QColorDialog::getColor(getPropTabCurveColor(), this);
+
+   if(newColor.isValid())
+   {
+      setPropTabCurveColor(newColor);
+   }
+}
+
+void curveProperties::on_cmbChildStatsTypes_currentIndexChanged(int index)
+{
+   (void)index; // Tell the compiler not to warn that this variable is unused.
+
+   setUserChildPlotNames();
+   setMatchParentScrollChkBoxVisible();
 }

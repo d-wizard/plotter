@@ -541,7 +541,7 @@ void PlotZoom::SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput,
 
       ResetPlotAxisScale();
 
-      UpdateScrollBars();
+      UpdateScrollBars(changeCausedByUserGuiInput);
 
       // Remove any saved next zooms and store the current zoom and the new zoom.
       if(saveZoom == true)
@@ -616,7 +616,7 @@ void PlotZoom::moveZoom(double deltaX, double deltaY, bool changeCausedByUserGui
    }
 }
 
-void PlotZoom::UpdateScrollBars()
+void PlotZoom::UpdateScrollBars(bool changeCausedByUserGuiInput)
 {
    // Update Scroll Bar variables.
    m_xAxisM = (double)(m_scrollBarResXAxis-1)/ (m_plotWidth - m_zoomWidth);
@@ -627,11 +627,19 @@ void PlotZoom::UpdateScrollBars()
    m_curXScrollPos = (int)((m_zoomDimensions.minX * m_xAxisM) + m_xAxisB);
    m_curYScrollPos = (int)((m_zoomDimensions.minY * m_yAxisM) + m_yAxisB);
 
-   // Check if zoom and plot are the same, take into account rounding error
-   bool areTheyClose_minX = areTheyClose(m_zoomDimensions.minX, m_plotDimensions.minX);
-   bool areTheyClose_maxX = areTheyClose(m_zoomDimensions.maxX, m_plotDimensions.maxX);
-   bool areTheyClose_minY = areTheyClose(m_zoomDimensions.minY, m_plotDimensions.minY);
-   bool areTheyClose_maxY = areTheyClose(m_zoomDimensions.maxY, m_plotDimensions.maxY);
+
+   // Normalize to -1 to 1 before checking if they are close (calculate m & b from the plot dimensions)
+   double mX = 2.0 / (m_plotDimensions.maxX -  m_plotDimensions.minX);
+   double mY = 2.0 / (m_plotDimensions.maxY -  m_plotDimensions.minY);
+   double bX = 1.0 - mX * m_plotDimensions.maxX;
+   double bY = 1.0 - mY * m_plotDimensions.maxY;
+
+
+   // Check if zoom and plot are the same, take into account rounding error by comparing normalized versions of zoom and plot.
+   bool areTheyClose_minX = areTheyClose(m_zoomDimensions.minX*mX+bX, -1);
+   bool areTheyClose_maxX = areTheyClose(m_zoomDimensions.maxX*mX+bX,  1);
+   bool areTheyClose_minY = areTheyClose(m_zoomDimensions.minY*mY+bY, -1);
+   bool areTheyClose_maxY = areTheyClose(m_zoomDimensions.maxY*mY+bY,  1);
 
    bool setXScrollBars = false;
    bool setYScrollBars = false;
@@ -680,7 +688,9 @@ void PlotZoom::UpdateScrollBars()
       setYScrollBars = true;
    }
 
-   if(setXScrollBars == false)
+   // Make sure not to flicker the scroll bar on and off when the plot data is changing.
+   // So only turn it off if a change was made by user GUI input.
+   if(setXScrollBars == false && (changeCausedByUserGuiInput || !m_horzScroll->isVisible()))
    {
       m_horzScroll->setRange(0, 0);
       m_horzScroll->setVisible(false);
@@ -694,7 +704,9 @@ void PlotZoom::UpdateScrollBars()
       m_horzScroll->setSliderPosition(m_curXScrollPos);
    }
 
-   if(setYScrollBars == false)
+   // Make sure not to flicker the scroll bar on and off when the plot data is changing.
+   // So only turn it off if a change was made by user GUI input.
+   if(setYScrollBars == false && (changeCausedByUserGuiInput || !m_vertScroll->isVisible()))
    {
       m_vertScroll->setRange(0, 0);
       m_vertScroll->setVisible(false);

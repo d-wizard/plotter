@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -111,7 +111,7 @@ private:
 
    void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 
-   void UpdateScrollBars();
+   void UpdateScrollBars(bool changeCausedByUserGuiInput);
 
    bool areTheyClose(double val1, double val2);
 

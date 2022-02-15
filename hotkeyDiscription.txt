@@ -12,20 +12,32 @@
    ctrl + y | Restore reverted zoom window
 
    -----------------------------------------------------------------
-   | Scroll Mode Settings
+   | Delta Cursor
    -----------------------------------------------------------------
-   ctrl + s | Toggle Scroll Mode
-   ctrl + x | Set to Scroll Mode and open dialog to set the scroll 
-              mode plot size
-   ctrl + 1 | Set to Scroll Mode and set the plot size to 10x of its
-              current value
+   ctrl + d | Set new Delta Cursor point
 
    -----------------------------------------------------------------
    | Enable / Disable New Curves Settings
    -----------------------------------------------------------------
-   ctrl + e | Enable New Curves
-   ctrl + d | Disable New Curves
    ctrl + t | Toggle Enable / Disable New Curves
+   alt + e | Enable New Curves
+   alt + d | Disable New Curves
+
+   -----------------------------------------------------------------
+   | Copy / Paste Curves
+   -----------------------------------------------------------------
+   ctrl + c | Copies all displayed plot data to the clipboard
+              (can be pasted into Excel)
+   ctrl + v | Create a new curve from the data in the clipboard
+
+   -----------------------------------------------------------------
+   | Scroll Mode Settings
+   -----------------------------------------------------------------
+   ctrl + s | Toggle Scroll Mode
+   ctrl + x | Set to Scroll Mode and open dialog to set the scroll
+              mode plot size
+   ctrl + 1 | Set to Scroll Mode and set the plot size to 10x of its
+              current value
 
    -----------------------------------------------------------------
    | Any Curve Cursor Mode Settings
@@ -33,11 +45,11 @@
    ctrl + a | Toggle Any Curve Cursor mode
 
    -----------------------------------------------------------------
-   | Create / Save Curves
+   | Hide the Selected Point
    -----------------------------------------------------------------
-   ctrl + c | Copies all displayed plot data to the clipboard 
-              (can be pasted into Excel)
-   ctrl + v | Create a new curve from the data in the clipboard
+   ctrl + h | Makes the selected point not display on the Plot
+              Window (the point will be set to "Not A Number").
+              This is useful to eliminate outlier points.
 
 
 --------------------------------------------------------------------
@@ -60,7 +72,7 @@
 
 
 --------------------------------------------------------------------
-| Move Zoom
+| Mouse Drag
 --------------------------------------------------------------------
    ctrl + left mouse button | Move the zoom window
    middle mouse button      | Move the zoom window

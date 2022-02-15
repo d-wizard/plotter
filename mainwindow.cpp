@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -24,6 +24,7 @@
 #include <QClipboard>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QElapsedTimer>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -34,6 +35,8 @@
 #include "dString.h"
 #include "saveRestoreCurve.h"
 #include "persistentPlotParameters.h"
+#include "persistentParameters.h"
+#include "FileSystemOperations.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -58,7 +61,7 @@ QString activityIndicatorStr = QChar(0xCF, 0x25); // Black Circle Character.
 // plot name is created.
 static tPersistentPlotParamMap g_persistentPlotParams;
 
-MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, QWidget *parent) :
+MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString plotName, bool startInScrollMode, QWidget *parent) :
    QMainWindow(parent),
    m_spectrumAnalyzerViewSet(false),
    ui(new Ui::MainWindow),
@@ -75,6 +78,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_qwtGrid(NULL),
    m_selectMode(E_CURSOR),
    m_selectedCurveIndex(0),
+   m_userHasSpecifiedZoomType(false),
    m_plotZoom(NULL),
    m_checkedIcon(":/check.png"),
    m_zoomCursor(NULL),
@@ -82,6 +86,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_normalizeCurves_yAxis(false),
    m_legendDisplayed(false),
    m_calcSnrDisplayed(false),
+   m_specAnFuncDisplayed(false),
    m_canvasWidth_pixels(1),
    m_canvasHeight_pixels(1),
    m_canvasXOverYRatio(1.0),
@@ -104,6 +109,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_normalizeBothAction("Both Axes", this),
    m_toggleLegendAction("Legend", this),
    m_toggleSnrCalcAction("Calculate SNR", this),
+   m_toggleSpecAnAction("FFT Functions", this),
    m_toggleCursorCanSelectAnyCurveAction("Any Curve Cursor", this),
    m_normalizeMenu("Normalize Curves"),
    m_zoomSettingsMenu("Zoom Settings"),
@@ -128,8 +134,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
    m_snrCalcBars(NULL),
+   m_snrBarStartPoint(NAN, NAN),
    m_dragZoomModeActive(false),
    m_moveCalcSnrBarActive(false),
+   m_showCalcSnrBarCursor(false),
    m_debouncePointSelected(false)
 {
     ui->setupUi(this);
@@ -166,9 +174,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_cursorAction, SIGNAL(triggered(bool)), this, SLOT(cursorMode()));
     connect(&m_resetZoomAction, SIGNAL(triggered(bool)), this, SLOT(resetZoom()));
     connect(&m_deltaCursorAction, SIGNAL(triggered(bool)), this, SLOT(deltaCursorMode()));
-    connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom()));
-    connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom()));
-    connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom()));
+    connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom_guiSlot()));
+    connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom_guiSlot()));
+    connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_normalizeNoneAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesNone()));
@@ -177,6 +185,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_normalizeBothAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesBoth()));
     connect(&m_toggleLegendAction, SIGNAL(triggered(bool)), this, SLOT(toggleLegend()));
     connect(&m_toggleSnrCalcAction, SIGNAL(triggered(bool)), this, SLOT(calcSnrToggle()));
+    connect(&m_toggleSpecAnAction, SIGNAL(triggered(bool)), this, SLOT(specAnFuncToggle()));
     connect(&m_toggleCursorCanSelectAnyCurveAction, SIGNAL(triggered(bool)), this, SLOT(toggleCursorCanSelectAnyCurveAction()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
@@ -214,6 +223,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_toggleSnrCalcAction);
+    m_rightClickMenu.addAction(&m_toggleSpecAnAction);
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addMenu(&m_stylesCurvesMenu);
 
@@ -277,16 +287,25 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     // Disable SNR Calc Action by default. It will be activated (i.e. made visable) if there is a curve
     // that is an FFT curve.
     m_toggleSnrCalcAction.setVisible(false);
+    m_toggleSpecAnAction.setVisible(false);
     m_snrCalcBars = new plotSnrCalc(m_qwtPlot, ui->snrLabel);
 
     m_toggleCursorCanSelectAnyCurveAction.setVisible(false); // Set to Invisible until more than 1 curve is displayed
 
     restorePersistentPlotParams();
+
+    setSpecAnGuiVisible(false);
+
+    if(startInScrollMode)
+    {
+       scrollModeToggle(); // Toggle scroll mode to On.
+    }
 }
 
 MainWindow::~MainWindow()
 {
     delete m_snrCalcBars;
+    m_snrCalcBars = NULL;
 
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
@@ -437,7 +456,6 @@ void MainWindow::resetPlot()
     m_qwtMainPicker->setStateMachine(new QwtPickerDragRectMachine());//QwtPickerDragPointMachine());//
 
     m_qwtMainPicker->setRubberBandPen( QColor( Qt::green ) );
-    m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
     m_qwtMainPicker->setTrackerPen( QColor( Qt::white ) );
 
 
@@ -621,11 +639,11 @@ void MainWindow::readPlotMsg(plotMsgGroup* plotMsg)
       // Inform parent that new curve data has been completely processed (in this case, no processing was needed).
       for(UnpackPlotMsgPtrList::iterator iter = plotMsg->m_plotMsgs.begin(); iter != plotMsg->m_plotMsgs.end(); ++iter)
       {
-         UnpackPlotMsg* plotMsg = (*iter);
-         QString curveName( plotMsg->m_curveName.c_str() );
+         UnpackPlotMsg* subPlotMsg = (*iter);
+         QString curveName( subPlotMsg->m_curveName.c_str() );
          int curveIndex = getCurveIndex(curveName);
          CurveData* curveDataPtr = curveIndex >= 0 ? m_qwtCurves[curveIndex] : NULL;
-         m_curveCommander->curveUpdated(plotMsg, curveDataPtr, false);
+         m_curveCommander->curveUpdated(plotMsg, subPlotMsg, curveDataPtr, false);
       }
       // Done with new plot messages.
       delete plotMsg;
@@ -680,7 +698,7 @@ void MainWindow::readPlotMsgSlot()
             UnpackPlotMsg* plotMsg = (*iter);
             QString curveName( plotMsg->m_curveName.c_str() );
             int curveIndex = getCurveIndex(curveName);
-            m_curveCommander->curveUpdated(plotMsg, m_qwtCurves[curveIndex], true);
+            m_curveCommander->curveUpdated(multiPlotMsg, plotMsg, m_qwtCurves[curveIndex], true);
 
             // Make sure the SNR Calc bars are updated. If a new curve is plotted that is a
             // valid SNR curve, make sure the SNR Calc action is made visable.
@@ -688,12 +706,18 @@ void MainWindow::readPlotMsgSlot()
             if(validSnrCurve && m_toggleSnrCalcAction.isVisible() == false)
             {
                m_toggleSnrCalcAction.setVisible(true);
+
+               // Don't allow Specturm Analyzer Functions for Complex FFTs (they can have negative values, which don't make sense in that case)
+               if(m_qwtCurves[curveIndex]->getPlotType() != E_PLOT_TYPE_COMPLEX_FFT)
+               {
+                  m_toggleSpecAnAction.setVisible(true);
+               }
             }
 
             // If this is a new FFT plot / curve, initialize to Max Hold Zoom mode. This is because
             // the max / min of the Y axis can jitter around in FFT plots (especially the min of
             // the Y axis).
-            if(validSnrCurve && newCurveAdded && firstCurve && !m_plotZoom->m_maxHoldZoom)
+            if(validSnrCurve && newCurveAdded && firstCurve && !m_userHasSpecifiedZoomType && !m_plotZoom->m_maxHoldZoom)
             {
                maxHoldZoom();
             }
@@ -856,18 +880,19 @@ void MainWindow::setCurveProperties_allAxes(QString curveName, double sampleRate
 }
 
 
-void MainWindow::setCurveHidden(QString curveName, bool hidden)
+void MainWindow::setCurveVisibleHidden(QString curveName, bool visible, bool hidden)
 {
     QMutexLocker lock(&m_qwtCurvesMutex);
 
     int curveIndex = getCurveIndex(curveName);
     if(curveIndex >= 0)
     {
-       bool curveChanged = m_qwtCurves[curveIndex]->setHidden(hidden);
+       bool curveChanged = m_qwtCurves[curveIndex]->setVisibleHidden(visible, hidden);
 
        if(curveChanged)
        {
           handleCurveDataChange(curveIndex);
+          updateCurveOrder();
        }
     }
 }
@@ -909,7 +934,7 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       }
       else
       {
-         m_qwtCurves[curveIndex]->UpdateCurveSamples(unpackPlotMsg, m_scrollMode);
+         m_qwtCurves[curveIndex]->UpdateCurveSamples(unpackPlotMsg);
       }
    }
    else
@@ -923,20 +948,31 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
          // New curve, but starting in the middle.
          if(plotDim == E_PLOT_DIM_1D)
          {
-            // For 1D, prepend vector with zeros.
-            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, 0.0);
+            // For 1D, prepend vector with 'Fill in Point' values.
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_1D);
          }
          else
          {
-            // For 2D, prepend vector with 'Not a Number' values (i.e. values that won't show up on the plot).
-            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
-            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, NAN);
+            // For 2D, prepend vector with 'Fill in Point' values (i.e. values that won't show up on the plot).
+            unpackPlotMsg->m_xAxisValues.insert(unpackPlotMsg->m_xAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_2D);
+            unpackPlotMsg->m_yAxisValues.insert(unpackPlotMsg->m_yAxisValues.begin(), unpackPlotMsg->m_sampleStartIndex, FILL_IN_POINT_2D);
          }
       }
 
       CurveAppearance newCurveAppearance(curveColors[colorLookupIndex], m_defaultCurveStyle);
 
-      m_qwtCurves.push_back(new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg));
+      // Create the new curve.
+      CurveData* newCurve = new CurveData(m_qwtPlot, newCurveAppearance, unpackPlotMsg);
+      m_qwtCurves.push_back(newCurve);
+      if(m_scrollMode)
+      {
+         // Set new curve to scroll mode and make its size match the selected curve's size.
+         newCurve->handleScrollModeTransitions(m_scrollMode);
+         if(m_qwtCurves.size() > 1 && m_selectedCurveIndex >= 0)
+         {
+            newCurve->setNumPoints(m_qwtCurves[m_selectedCurveIndex]->getNumPoints());
+         }
+      }
 
       m_plotZoom->m_plotIs1D = areAllCurves1D(); // The Zoom class needs to know if there are non-1D plots for the Max Hold functionality.
 
@@ -948,6 +984,20 @@ void MainWindow::createUpdateCurve(UnpackPlotMsg* unpackPlotMsg)
       {
          setNew2dPlotStyle(name);
       }
+   }
+
+   // If the FFT Functions GUI stuff is visible, update the FFT Average Count.
+   if(ui->lblSpecAnAvgCntLabel->isVisible())
+   {
+      QString avgCountStr = "---"; // Default Value.
+
+      // When in average mode, set the value to the number of FFTs that have been averaged.
+      if(ui->radAverage->isChecked() && m_selectedCurveIndex >= 0 && m_selectedCurveIndex < m_qwtCurves.size())
+      {
+         avgCountStr = QString::number(m_qwtCurves[m_selectedCurveIndex]->specAn_getAvgCount());
+      }
+
+      ui->lblSpecAnAvgCntLabel->setText("Avg Count: " + avgCountStr);
    }
 
    initCursorIndex(curveIndex);
@@ -992,18 +1042,20 @@ void MainWindow::initCursorIndex(int curveIndex)
    }
 }
 
-void MainWindow::handleCurveDataChange(int curveIndex)
+void MainWindow::handleCurveDataChange(int curveIndex, bool onlyPlotSizeChanged)
 {
    initCursorIndex(curveIndex);
 
    updatePlotWithNewCurveData(false);
 
-   // inform parent that a curve has been added / changed
+   // inform children that a curve has been added / changed
    m_curveCommander->curveUpdated( this->getPlotName(),
                                    m_qwtCurves[curveIndex]->getCurveTitle(),
                                    m_qwtCurves[curveIndex],
                                    0,
-                                   m_qwtCurves[curveIndex]->getNumPoints() );
+                                   onlyPlotSizeChanged ? 0 : m_qwtCurves[curveIndex]->getNumPoints(), // If only the plot size changed, don't inform the child plots of the change.
+                                   PLOT_MSG_ID_TYPE_NO_PARENT_MSG,
+                                   PLOT_MSG_ID_TYPE_NO_PARENT_MSG );
 }
 
 void MainWindow::updatePlotWithNewCurveData(bool onlyCurveDataChanged)
@@ -1077,7 +1129,26 @@ void MainWindow::calcSnrToggle()
       m_toggleSnrCalcAction.setIcon(QIcon());
       m_snrCalcBars->hide();
    }
+
+   m_curveCommander->curvePropertyChanged(); // Inform Curve Commander (useful for FFT Measurement Child Plots)
+
    m_qwtPlot->replot();
+}
+
+void MainWindow::specAnFuncToggle()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   m_specAnFuncDisplayed = !m_specAnFuncDisplayed;
+   if(m_specAnFuncDisplayed)
+   {
+      m_toggleSpecAnAction.setIcon(m_checkedIcon);
+   }
+   else
+   {
+      m_toggleSpecAnAction.setIcon(QIcon());
+   }
+   setSpecAnGuiVisible(m_specAnFuncDisplayed);
 }
 
 void MainWindow::setLegendState(bool showLegend)
@@ -1099,7 +1170,6 @@ void MainWindow::cursorMode()
    m_deltaCursorAction.setIcon(QIcon());
    m_qwtMainPicker->setStateMachine( new QwtPickerDragRectMachine() );
    m_qwtSelectedSampleDelta->hideCursor();
-   m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
    setCursor();
    updatePointDisplay();
    replotMainPlot(true, true);
@@ -1137,7 +1207,6 @@ void MainWindow::deltaCursorMode()
             m_canvasXOverYRatio);
         m_qwtSelectedSampleDelta->showCursor();
 
-        m_qwtMainPicker->setRubberBand( QwtPicker::CrossRubberBand );
         m_qwtSelectedSample->hideCursor();
     }
     setCursor();
@@ -1152,8 +1221,25 @@ void MainWindow::zoomMode()
     m_zoomAction.setIcon(m_checkedIcon);
     m_cursorAction.setIcon(QIcon());
     m_deltaCursorAction.setIcon(QIcon());
-    m_qwtMainPicker->setRubberBand( QwtPicker::RectRubberBand);
     setCursor();
+}
+
+void MainWindow::autoZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   autoZoom();
+}
+
+void MainWindow::holdZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   holdZoom();
+}
+
+void MainWindow::maxHoldZoom_guiSlot()
+{
+   m_userHasSpecifiedZoomType = true;
+   maxHoldZoom();
 }
 
 void MainWindow::autoZoom()
@@ -1205,6 +1291,15 @@ void MainWindow::scrollModeToggle()
       m_scrollModeAction.setIcon(QIcon());
       m_scrollModeChangePlotSizeAction.setVisible(false);
    }
+
+   // Inform all the Child Curves of the new Scroll Mode state.
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->handleScrollModeTransitions(m_scrollMode);
+   }
+   updatePlotWithNewCurveData(true);
+   m_curveCommander->curvePropertyChanged(); // Inform Properies GUI that scroll mode has changed.
 }
 
 void MainWindow::scrollModeChangePlotSize()
@@ -1233,8 +1328,8 @@ void MainWindow::scrollModeSetPlotSize(int newPlotSize)
    size_t numCurves = m_qwtCurves.size();
    for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
    {
-      m_qwtCurves[curveIndex]->setNumPoints(newPlotSize, true);
-      handleCurveDataChange(curveIndex);
+      m_qwtCurves[curveIndex]->setNumPoints(newPlotSize);
+      handleCurveDataChange(curveIndex, true);
    }
 }
 
@@ -1327,19 +1422,13 @@ void MainWindow::toggleCursorCanSelectAnyCurveAction()
 
 void MainWindow::visibleCursorMenuSelect(int index)
 {
-    QMutexLocker lock(&m_qwtCurvesMutex);
+   QMutexLocker lock(&m_qwtCurvesMutex);
 
-    // Toggle the curve that was clicked.
-    if(m_qwtCurves[index]->isDisplayed())
-    {
-        m_qwtCurves[index]->detach();
-    }
-    else
-    {
-        m_qwtCurves[index]->attach();
-    }
-    updateCurveOrder();
-    m_curveCommander->curvePropertyChanged();
+   // Toggle the curve that was clicked.
+   m_qwtCurves[index]->setVisible(!m_qwtCurves[index]->isDisplayed());
+
+   updateCurveOrder();
+   m_curveCommander->curvePropertyChanged();
 }
 
 void MainWindow::selectedCursorMenuSelect(int index)
@@ -1478,16 +1567,24 @@ int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& sele
    return selectCurveIndex;
 }
 
+bool MainWindow::isSelectionCloseToBar(const QPointF& pos)
+{
+   return m_snrCalcBars->isSelectionCloseToBar( pos,
+                                                m_plotZoom->getCurZoom(),
+                                                m_canvasWidth_pixels,
+                                                m_canvasHeight_pixels );
+}
+
+
 
 void MainWindow::pointSelected(const QPointF &pos)
 {
    // Check if we should switch to dragging SNR Calc Bar mode.
-   if( m_selectMode == E_CURSOR && m_snrCalcBars->isVisable() &&
-       m_snrCalcBars->isSelectionCloseToBar(pos, m_plotZoom->getCurZoom(),
-                                       m_canvasWidth_pixels, m_canvasHeight_pixels))
+   if( m_showCalcSnrBarCursor || (m_selectMode != E_ZOOM && m_snrCalcBars->isVisable() && isSelectionCloseToBar(pos)) )
    {
       // The user clicked on a SNR Calc Bar. Activate the slot that tracks the cursor
       // movement while the left mouse button is held down.
+      m_snrBarStartPoint = m_snrCalcBars->selectedBarPos();
       m_moveCalcSnrBarActive = true;
       connect(m_qwtMainPicker, SIGNAL(moved(QPointF)), this, SLOT(pickerMoved_calcSnr(QPointF)));
       setCursor(); // Set the cursor for moving a Calc SNR Bar.
@@ -1552,7 +1649,13 @@ void MainWindow::pointSelected(const QPointF &pos)
 
 void MainWindow::rectSelected(const QRectF &pos)
 {
-   if(m_selectMode == E_ZOOM)
+   // This function is called when the user unclicks the left mouse button. Reset the state if a Calc SNR was being moved.
+   if(m_moveCalcSnrBarActive)
+   {
+      m_moveCalcSnrBarActive = false;
+      setCursor(); // Set the cursor back to normal.
+   }
+   else if(m_selectMode == E_ZOOM)
    {
       QRectF rectCopy = pos;
       maxMinXY zoomDim;
@@ -1560,14 +1663,6 @@ void MainWindow::rectSelected(const QRectF &pos)
       rectCopy.getCoords(&zoomDim.minX, &zoomDim.minY, &zoomDim.maxX, &zoomDim.maxY);
 
       m_plotZoom->SetZoom(zoomDim);
-
-   }
-
-   // This function is called when the user unclicks the left mouse button. Reset the state if a Calc SNR was being moved.
-   if(m_moveCalcSnrBarActive)
-   {
-      m_moveCalcSnrBarActive = false;
-      setCursor(); // Set the cursor back to normal.
    }
 }
 
@@ -2058,7 +2153,31 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
         {
             QKeyEvent *KeyEvent = (QKeyEvent*)event;
 
-            if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            if(KeyEvent->key() == Qt::Key_Enter || KeyEvent->key() == Qt::Key_Return)
+            {
+                // Pressing the Enter key can cause some weird behavoir (I think this is due to the QwtPlotPicker)
+                // So, capture all Enter/Return key presses before they can be handled and drop them on the ground.
+            }
+            else if(KeyEvent->key() == Qt::Key_Escape)
+            {
+               // Escape can be used if a mouse selection was accidentally clicked.
+               if(m_moveCalcSnrBarActive)
+               {
+                  // Move the calc bar back to where it was before the user started to move it.
+                  m_snrCalcBars->selectedBarPos(m_snrBarStartPoint);
+                  m_qwtPlot->replot();
+
+                  m_showCalcSnrBarCursor = false;
+               }
+
+               // Turn off all the modifiers. This way the cursor will be set back to it's default.
+               m_dragZoomModeActive = false;
+               m_moveCalcSnrBarActive = false;
+               setCursor();
+
+               usedEvent = false; // Use default Escape button behavoir.
+            }
+            else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                 m_plotZoom->changeZoomFromSavedZooms(-1);
             }
@@ -2105,12 +2224,12 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                resetZoom();
             }
-            else if(KeyEvent->key() == Qt::Key_E && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !m_allowNewCurves)
+            else if(KeyEvent->key() == Qt::Key_E && KeyEvent->modifiers().testFlag(Qt::AltModifier) && !m_allowNewCurves)
             {
                // Enable new plot messages.
                togglePlotUpdateAbility();
             }
-            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && m_allowNewCurves)
+            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::AltModifier) && m_allowNewCurves)
             {
                // Disable new plot messages.
                togglePlotUpdateAbility();
@@ -2119,6 +2238,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                // Toggle new plot messages.
                togglePlotUpdateAbility();
+            }
+            else if(KeyEvent->key() == Qt::Key_D && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               deltaCursorMode();
             }
             else if(KeyEvent->key() == Qt::Key_L && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
@@ -2129,6 +2252,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                // Toggle
                toggleCursorCanSelectAnyCurveAction();
+            }
+            else if(KeyEvent->key() == Qt::Key_P && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               silentSavePlotToFile();
             }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
@@ -2141,7 +2268,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                      curveVect.push_back(m_qwtCurves[i]);
                   }
                }
-               SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL);
+               SavePlot savePlot(this, getPlotName(), curveVect, E_SAVE_RESTORE_CLIPBOARD_EXCEL, true);
                PackedCurveData clipboardDataString;
                savePlot.getPackedData(clipboardDataString);
 
@@ -2252,6 +2379,26 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                 usedEvent = false;
             }
 
+        }
+        else if(event->type() == QEvent::MouseMove)
+        {
+           // For now this is only keeping track of the Calc SNR Bars. No need to do anything if those are not visible.
+           if(m_snrCalcBars != NULL && m_snrCalcBars->isVisable())
+           {
+              QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+
+              // Convert mouse point on the canvis to the point on the plot GUI element.
+              QPointF plotPoint;
+              plotPoint.setX(m_qwtPlot->canvasMap(QwtPlot::xBottom).invTransform(mouseEvent->pos().x()));
+              plotPoint.setY(m_qwtPlot->canvasMap(QwtPlot::yLeft).invTransform(mouseEvent->pos().y()));
+
+              if(!m_moveCalcSnrBarActive) // Calling isSelectionCloseToBar when m_moveCalcSnrBarActive is true will screw up the bar that is being moved.
+              {
+                 m_showCalcSnrBarCursor = isSelectionCloseToBar(plotPoint);
+                 setCursor(); // Update Cursor in case Calc SNR Bar cursor changed.
+              }
+           }
+           usedEvent = false; // Never block default functionality for mouse movement.
         }
         else
         {
@@ -2624,6 +2771,13 @@ void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
   else
   {
       QCoreApplication::instance()->removeEventFilter(this);
+
+      // Make sure the drag Calc SNR Bar cursor isn't shown when this plot window isn't in focus any more.
+      if(m_showCalcSnrBarCursor)
+      {
+         m_showCalcSnrBarCursor = false;
+         setCursor(); // Update Cursor in case Calc SNR Bar cursor changed.
+      }
   }
 }
 
@@ -2862,15 +3016,15 @@ void MainWindow::updateCurveOrder()
    QList<CurveData*> visableCurves;
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
-       if(m_qwtCurves[i]->isDisplayed() == true)
-       {
-           visableCurves.push_back(m_qwtCurves[i]);
-           m_qwtCurves[i]->detach();
-       }
+      if(m_qwtCurves[i]->isDisplayed() == true)
+      {
+         visableCurves.push_back(m_qwtCurves[i]);
+         m_qwtCurves[i]->setVisible(false); // Detach curve from this plot window.
+      }
    }
    for(int i = 0; i < visableCurves.size(); ++i)
    {
-       visableCurves[i]->attach();
+      visableCurves[i]->setVisible(true); // Re-attach curve to this plot window.
    }
 
    // Make sure the selected point index is still valid.
@@ -2881,8 +3035,19 @@ void MainWindow::updateCurveOrder()
       setSelectedCurveIndex(boundedSelectedCurveIndex);
    }
 
+   // Make sure cursors are in front of curve data.
+   if(m_qwtSelectedSample != NULL && m_qwtSelectedSample->isAttached == true)
+   {
+      m_qwtSelectedSample->showCursor();
+   }
+   if(m_qwtSelectedSampleDelta != NULL && m_qwtSelectedSampleDelta->isAttached == true)
+   {
+      m_qwtSelectedSampleDelta->showCursor();
+   }
+
    updatePointDisplay();
    m_snrCalcBars->moveToFront();
+
    replotMainPlot();
    maxMinXY maxMin = calcMaxMin();
    m_plotZoom->SetPlotDimensions(maxMin, true);
@@ -3123,20 +3288,257 @@ void MainWindow::setCurveStyleForCurve(int curveIndex, QwtPlotCurve::CurveStyle 
 
 void MainWindow::setCursor()
 {
+   QwtPicker::RubberBand pickerRubberBand = QwtPicker::CrossRubberBand; // Default picker.
    if(m_dragZoomModeActive)
    {
       m_qwtPlot->canvas()->setCursor(Qt::OpenHandCursor);
    }
-   else if(m_moveCalcSnrBarActive)
+   else if(m_moveCalcSnrBarActive || m_showCalcSnrBarCursor)
    {
       m_qwtPlot->canvas()->setCursor(Qt::SizeHorCursor);
    }
    else if(m_selectMode == E_ZOOM)
    {
       m_qwtPlot->canvas()->setCursor(*m_zoomCursor);
+      pickerRubberBand = QwtPicker::RectRubberBand; // When in zoom mode, draw a rectangle to show the user the new zoom area.
    }
    else
    {
       m_qwtPlot->canvas()->setCursor(Qt::CrossCursor);
+   }
+   m_qwtMainPicker->setRubberBand(pickerRubberBand);
+}
+
+void MainWindow::on_radClearWrite_clicked()
+{
+   if(ui->radClearWrite->isChecked())
+   {
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+   }
+}
+
+void MainWindow::on_radMaxHold_clicked()
+{
+   // If the Max Hold Radio Button has been double clicked, do a Clear Write to reset the Max Hold values.
+   static QElapsedTimer doubleClickTimer;
+   qint64 timeSinceLastClick_ms = doubleClickTimer.elapsed();
+   doubleClickTimer.start();
+   if(timeSinceLastClick_ms < 500)
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+
+   // Set to Max Hold.
+   if(ui->radMaxHold->isChecked())
+   {
+      specAn_setTraceType(fftSpecAnFunc::E_MAX_HOLD);
+   }
+}
+
+void MainWindow::on_radAverage_clicked()
+{
+   // If the Average Radio Button has been double clicked, do a Clear Write to reset the Average.
+   static QElapsedTimer doubleClickTimer;
+   qint64 timeSinceLastClick_ms = doubleClickTimer.elapsed();
+   doubleClickTimer.start();
+   if(timeSinceLastClick_ms < 500)
+      specAn_setTraceType(fftSpecAnFunc::E_CLEAR_WRITE);
+
+   // Set to Average.
+   if(ui->radAverage->isChecked())
+   {
+      on_spnSpecAnAvgAmount_valueChanged(ui->spnSpecAnAvgAmount->value()); // Make sure the current GUI average amount is used.
+      specAn_setTraceType(fftSpecAnFunc::E_AVERAGE);
+   }
+}
+
+void MainWindow::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->specAn_setTraceType(newTraceType);
+   }
+}
+
+void MainWindow::setSpecAnGuiVisible(bool visible)
+{
+   // The default plotter Palette has a black background. This can cause some issues with
+   // certain GUI elements in different Windows theme styles. The 'Standard Palette' seems
+   // to work best in all situations.
+   QPalette stdPalette = this->style()->standardPalette();
+   ui->spnSpecAnAvgAmount->setPalette(stdPalette);
+   ui->cmdPeakSearch->setPalette(stdPalette);
+
+   // Radio buttons can use the 'Standard Palette', but they need to have their text
+   // set to white to be readable against the black background.
+   QPalette whiteTextPalette = stdPalette;
+   whiteTextPalette.setColor(QPalette::WindowText, Qt::white);
+   ui->radClearWrite->setPalette(whiteTextPalette);
+   ui->radMaxHold->setPalette(whiteTextPalette);
+   ui->radAverage->setPalette(whiteTextPalette);
+   ui->groupSpecAnTrace->setPalette(whiteTextPalette);
+   ui->groupSpecAnMarker->setPalette(whiteTextPalette);
+
+   ui->groupSpecAnTrace->setVisible(visible);
+   ui->groupSpecAnMarker->setVisible(visible);
+}
+
+void MainWindow::on_spnSpecAnAvgAmount_valueChanged(int arg1)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      m_qwtCurves[i]->specAn_setAvgSize(arg1);
+   }
+}
+
+void MainWindow::on_cmdPeakSearch_clicked()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   bool validPointSelected = false;
+   if(m_qwtSelectedSample != NULL)
+   {
+      validPointSelected = m_qwtSelectedSample->peakSearch(m_plotZoom->getCurZoom());
+   }
+
+   if(validPointSelected)
+   {
+      m_qwtSelectedSample->showCursor();
+      updatePointDisplay();
+      replotMainPlot(true, true);
+   }
+}
+
+void MainWindow::on_cmdSpecAnResetZoom_clicked()
+{
+   resetZoom();
+}
+
+double MainWindow::getFftMeasurement(eFftSigNoiseMeasurements type)
+{
+   double retVal = NAN;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+   if(m_snrCalcBars != NULL)
+   {
+      retVal = m_snrCalcBars->getMeasurement(type);
+   }
+   return retVal;
+}
+
+double MainWindow::getCurveStat(QString& curveName, eCurveStats type)
+{
+   double retVal = 0.0;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   int curveIndex = getCurveIndex(curveName);
+   if(curveIndex >= 0 && curveIndex < m_qwtCurves.size())
+   {
+      CurveData* curve = m_qwtCurves[curveIndex];
+      switch(type)
+      {
+         case E_CURVE_STATS__NUM_SAMP:
+            retVal = curve->getNumPoints();
+         break;
+         case E_CURVE_STATS__X_MIN:
+            retVal = curve->getMaxMinXYOfData().minX;
+         break;
+         case E_CURVE_STATS__X_MAX:
+            retVal = curve->getMaxMinXYOfData().maxX;
+         break;
+         case E_CURVE_STATS__Y_MIN:
+            retVal = curve->getMaxMinXYOfData().minY;
+         break;
+         case E_CURVE_STATS__Y_MAX:
+            retVal = curve->getMaxMinXYOfData().maxY;
+         break;
+         case E_CURVE_STATS__SAMP_RATE:
+            retVal = curve->getCalculatedSampleRateFromPlotMsgs();
+         break;
+         default:
+         case E_CURVE_STATS__NO_CURVE_STAT:
+            // Do Nothing, just return 0.
+         break;
+      }
+   }
+   return retVal;
+}
+
+bool MainWindow::areFftMeasurementsVisible()
+{
+   bool retVal = false;
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+   if(m_snrCalcBars != NULL)
+   {
+      retVal = m_snrCalcBars->isVisable();
+   }
+   return retVal;
+}
+
+
+void MainWindow::silentSavePlotToFile()
+{
+   std::string saveDir;
+   if(persistentParam_getParam_str(PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR, saveDir))
+   {
+      if(fso::DirExists(saveDir))
+      {
+         double dubSaveType;
+         if(persistentParam_getParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, dubSaveType))
+         {
+            QString plotName = getPlotName();
+            eSaveRestorePlotCurveType saveType = (eSaveRestorePlotCurveType)((int)dubSaveType);
+            std::string fileName = plotName.toStdString();
+
+            // Determine Ext from Save Type
+            std::string ext;
+            switch(saveType)
+            {
+               case E_SAVE_RESTORE_CSV:
+                  ext = ".csv";
+               break;
+               // Fall through on all header types.
+               case E_SAVE_RESTORE_C_HEADER_AUTO_TYPE:
+               case E_SAVE_RESTORE_C_HEADER_INT:
+               case E_SAVE_RESTORE_C_HEADER_FLOAT:
+                  ext = ".h";
+               break;
+               default:
+                  ext = ".plot";
+               break;
+            }
+
+            int fileNameAppendNum = 0;
+            std::string fullPath = saveDir + fso::dirSep() + fileName + ext;
+            while(fso::FileExists(fullPath))
+            {
+               fileNameAppendNum++;
+               fullPath = saveDir + fso::dirSep() + fileName + "_" + QString::number(fileNameAppendNum).toStdString() + ext;
+            }
+
+            // Fill in vector of curve data in the correct order.
+            tCurveCommanderInfo allPlots = m_curveCommander->getCurveCommanderInfo();
+            QVector<CurveData*> curves;
+            curves.resize(allPlots[plotName].curves.size());
+            foreach( QString key, allPlots[plotName].curves.keys() )
+            {
+               int index = allPlots[plotName].plotGui->getCurveIndex(key);
+               curves[index] = allPlots[plotName].curves[key];
+            }
+
+            // Save the plot data.
+            SavePlot savePlot(this, plotName, curves, saveType);
+            PackedCurveData dataToWriteToFile;
+            savePlot.getPackedData(dataToWriteToFile);
+            fso::WriteFile(fullPath, &dataToWriteToFile[0], dataToWriteToFile.size());
+         }
+         else
+         {
+            // TODO?
+         }
+      }
+      else
+      {
+         // TODO?
+      }
    }
 }

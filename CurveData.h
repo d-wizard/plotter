@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -34,6 +34,8 @@
 #include "smartMaxMin.h"
 #include "sampleRateCalculator.h"
 
+#include "fftSpectrumAnalyzerFunctions.h"
+
 class CurveAppearance
 {
 public:
@@ -47,6 +49,19 @@ public:
    QColor color;
    QwtPlotCurve::CurveStyle style;
    qreal width;
+
+   // Operators
+   bool operator==(const CurveAppearance& rhs)
+   {
+       return (color == rhs.color) &&
+              (style == rhs.style) &&
+              (width == rhs.width);
+   }
+
+   bool operator!=(const CurveAppearance& rhs)
+   {
+       return !(*this == rhs);
+   }
 };
 
 class CurveData
@@ -78,15 +93,12 @@ public:
    ePlotDim getPlotDim();
    ePlotType getPlotType(){ return plotType;}
    unsigned int getNumPoints();
-   void setNumPoints(unsigned int newNumPointsSize, bool scrollMode);
+   void setNumPoints(unsigned int newNumPointsSize);
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
    QString getCurveTitle();
    tLinearXYAxis getNormFactor();
    bool isDisplayed();
-
-   void attach();
-   void detach();
 
    void setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis);
    void resetNormalizeFactor();
@@ -94,7 +106,7 @@ public:
    void setCurveDataGuiPoints(bool onlyNeedToUpdate1D);
 
    void ResetCurveSamples(const UnpackPlotMsg* data);
-   void UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode);
+   void UpdateCurveSamples(const UnpackPlotMsg* data);
 
    bool setSampleRate(double inSampleRate, bool userSpecified = true);
    double getSampleRate(){return sampleRate;}
@@ -107,10 +119,20 @@ public:
 
    tLinear getLinearXAxisCorrection(){return linearXAxisCorrection;}
 
+   bool getVisible(){return visible;}
    bool getHidden(){return hidden;}
+
+   bool setVisible(bool isVisible);
    bool setHidden(bool isHidden);
+   bool setVisibleHidden(bool isVisible, bool isHidden);
+
+   bool getScrollMode(){return scrollMode;}
+   void handleScrollModeTransitions(bool plotScrollMode);
+   unsigned int getOldestPoint_nonScrollModeVersion(){return oldestPoint_nonScrollModeVersion;}
+   unsigned int getPlotSize_nonScrollModeVersion(){return plotSize_nonScrollModeVersion;}
 
    void setCurveAppearance(CurveAppearance curveAppearance);
+   CurveAppearance getCurveAppearance();
 
    tPlotterIpAddr getLastMsgIpAddr(){return lastMsgIpAddr;}
    ePlotDataTypes getLastMsgDataType(eAxis axis){return axis == E_X_AXIS ? lastMsgXAxisType : lastMsgYAxisType;}
@@ -125,6 +147,12 @@ public:
    void setPointValue(unsigned int index, double value);
    void setPointValue(unsigned int index, double xValue, double yValue);
 
+   void specAn_reset();
+   void specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType);
+   void specAn_setAvgSize(int newAvgSize);
+   int specAn_getAvgCount(){return fftSpecAn.getAvgCount();}
+
+   maxMinXY get1dDisplayedIndexes();
 private:
    CurveData();
    void init();
@@ -139,13 +167,14 @@ private:
    void doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int sampleStartIndex, unsigned int numSamples);
    unsigned int removeInvalidPoints();
 
-   void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
-   void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode);
+   void swapSamples(dubVect& samples, int swapIndex);
+
+   void UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints);
+   void UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints);
 
    void storeLastMsgStats(const UnpackPlotMsg* data);
 
-   maxMinXY getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len);
-   void getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel);
+   void getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel, bool addMargin);
    int findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue);
 
    void handleNewSampleMsg(unsigned int sampleStartIndex, unsigned int numSamples);
@@ -163,12 +192,16 @@ private:
    CurveAppearance appearance;
    QwtPlotCurve* curve;
    unsigned int numPoints;
-   bool displayed; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
+   bool attached; // Used to keep track of whether the curve is currently attached to the parent plot or not.
+
+   bool visible; // Indicates whether the user wants the curve to be displayed on the plot at the present time.
 
    // Indicates whether the curve is avaiable to be displayed.
    // If true, it is probably some other curve's parent.
    // If a plot has no non-hidden curves, its GUI window will not be displayed.
    bool hidden;
+
+   bool scrollMode;
 
    // Normalize parameters
    tLinearXYAxis normFactor;
@@ -181,6 +214,13 @@ private:
    dubVect yPoints;
    dubVect normX;
    dubVect normY;
+
+   // Reducing the number of points sent to the plot algorithm helps speed things up.
+   dubVect reducedXPoints;
+   dubVect reducedYPoints;
+
+   unsigned int oldestPoint_nonScrollModeVersion; // This can equal numPoints. In that case the newest sample is the last point.
+   unsigned int plotSize_nonScrollModeVersion;
 
    double sampleRate;
    double samplePeriod;
@@ -199,6 +239,8 @@ private:
    unsigned int maxNumPointsFromPlotMsg;
    sampleRateCalc sampleRateCalculator;
 
+   fftSpecAnFunc::eFftSpecAnTraceType fftSpecAnTraceType;
+   fftSpecAnFunc fftSpecAn;
 };
 
 #endif

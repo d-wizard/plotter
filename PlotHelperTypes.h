@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -40,6 +40,9 @@ const QString Y_AXIS_APPEND = ".yAxis";
 const QString COMPLEX_FFT_REAL_APPEND = ".real";
 const QString COMPLEX_FFT_IMAG_APPEND = ".imag";
 
+// Define values that will be used to fill in points in situations where something should be there, but what the point values should be is unknown.
+static const double FILL_IN_POINT_1D = NAN;
+static const double FILL_IN_POINT_2D = NAN;
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
@@ -140,6 +143,8 @@ typedef enum
    E_PLOT_TYPE_DELTA,
    E_PLOT_TYPE_SUM,
    E_PLOT_TYPE_MATH_BETWEEN_CURVES,
+   E_PLOT_TYPE_FFT_MEASUREMENT,
+   E_PLOT_TYPE_CURVE_STATS,
 
    // The following values are not represented in the GUI. Since these value
    // don't need to match a GUI value, enumerate from the end.
@@ -172,6 +177,8 @@ inline bool valid_ePlotType(ePlotType in)
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
    case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+   case E_PLOT_TYPE_FFT_MEASUREMENT:
+   case E_PLOT_TYPE_CURVE_STATS:
    case E_PLOT_TYPE_RESTORE_PLOT_FROM_FILE:
       return true;
       break;
@@ -200,11 +207,31 @@ inline bool plotTypeHas2DInput(ePlotType in)
    case E_PLOT_TYPE_DB_POWER_FFT_REAL:
    case E_PLOT_TYPE_DELTA:
    case E_PLOT_TYPE_SUM:
+   case E_PLOT_TYPE_FFT_MEASUREMENT:
+   case E_PLOT_TYPE_CURVE_STATS:
    default:
       twoDInput = false;
       break;
    }
    return twoDInput;
+}
+
+inline bool plotTypeIsFft(ePlotType in)
+{
+   bool isFft = false;
+   switch(in)
+   {
+   case E_PLOT_TYPE_REAL_FFT:
+   case E_PLOT_TYPE_COMPLEX_FFT:
+   case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+   case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+      isFft = true;
+      break;
+   default:
+      isFft = false;
+      break;
+   }
+   return isFft;
 }
 
 typedef struct
@@ -248,6 +275,29 @@ typedef struct
     eAxis   srcImAxis;
 }tFFTCurve;
 
+typedef enum
+{
+   E_FFT_MEASURE__SIG_POWER,
+   E_FFT_MEASURE__SIG_BW,
+   E_FFT_MEASURE__NOISE_POWER,
+   E_FFT_MEASURE__NOISE_BW,
+   E_FFT_MEASURE__NOISE_PER_HZ,
+   E_FFT_MEASURE__SNR,
+   E_FFT_MEASURE__SNR_PER_HZ,
+   E_FFT_MEASURE__NO_FFT_MEASUREMENT
+}eFftSigNoiseMeasurements;
+
+typedef enum
+{
+   E_CURVE_STATS__NUM_SAMP,
+   E_CURVE_STATS__X_MIN,
+   E_CURVE_STATS__X_MAX,
+   E_CURVE_STATS__Y_MIN,
+   E_CURVE_STATS__Y_MAX,
+   E_CURVE_STATS__SAMP_RATE,
+   E_CURVE_STATS__NO_CURVE_STAT
+}eCurveStats;
+
 typedef struct
 {
    QString plotName;
@@ -264,6 +314,11 @@ typedef struct
    bool windowFFT;
    bool scaleFftWindow;
    eMathBetweenCurves_operators mathBetweenCurvesOperator;
+
+   // Curve Stats Child Plot Parameters.
+   eFftSigNoiseMeasurements fftMeasurementType;
+   eCurveStats curveStatType;
+   int curveStatstPlotSize;
 }tParentCurveInfo;
 
 typedef enum
@@ -279,7 +334,9 @@ typedef enum
    E_ABS,
    E_ROUND,
    E_ROUND_UP,
-   E_ROUND_DOWN
+   E_ROUND_DOWN,
+   E_LIMIT_UPPER,
+   E_LIMIT_LOWER
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -297,6 +354,8 @@ inline bool valid_eMathOp(eMathOp in)
    case E_ROUND:
    case E_ROUND_UP:
    case E_ROUND_DOWN:
+   case E_LIMIT_UPPER:
+   case E_LIMIT_LOWER:
       return true;
       break;
    }
@@ -317,6 +376,8 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_ROUND:
    case E_ROUND_UP:
    case E_ROUND_DOWN:
+   case E_LIMIT_UPPER:
+   case E_LIMIT_LOWER:
       return true;
       break;
    case E_ABS:

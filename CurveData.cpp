@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2018 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -50,7 +50,9 @@ CurveData::CurveData( QwtPlot* parentPlot,
    lastMsgIpAddr(0),
    lastMsgXAxisType(E_INVALID_DATA_TYPE),
    lastMsgYAxisType(E_INVALID_DATA_TYPE),
-   maxNumPointsFromPlotMsg(0)
+   maxNumPointsFromPlotMsg(0),
+   fftSpecAnTraceType(fftSpecAnFunc::E_CLEAR_WRITE),
+   fftSpecAn(data->m_plotType)
 {
    init();
    if(plotDim != E_PLOT_DIM_1D)
@@ -72,8 +74,12 @@ CurveData::CurveData( QwtPlot* parentPlot,
 
    performMathOnPoints();
    initCurve();
-   attach();
+   setVisible(true); // Display the curve on the parent plot.
    storeLastMsgStats(data);
+
+   // Init parameters that are used to de-mangled values when scroll mode is applied.
+   oldestPoint_nonScrollModeVersion = numPoints; // Note data->m_sampleStartIndex is not used in the constructor. All the initial points need to be specified.
+   plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
 }
 
 CurveData::~CurveData()
@@ -107,8 +113,13 @@ void CurveData::init()
    pointLabel = NULL;
    curveAction = NULL;
    mapper = NULL;
-   displayed = false;
+   attached = false;
+   visible = false;
    hidden = false;
+   scrollMode = false;
+
+   oldestPoint_nonScrollModeVersion = 0;
+   plotSize_nonScrollModeVersion = 0;
 
    samplePeriod = 0.0;
    sampleRate = 0.0;
@@ -140,6 +151,8 @@ void CurveData::fill1DxPoints()
       case E_PLOT_TYPE_DELTA:
       case E_PLOT_TYPE_SUM:
       case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
+      case E_PLOT_TYPE_FFT_MEASUREMENT:
+      case E_PLOT_TYPE_CURVE_STATS:
       {
          unsigned int xPointSize = xOrigPoints.size();
          if(samplePeriod == 0.0 || samplePeriod == 1.0)
@@ -267,7 +280,7 @@ unsigned int CurveData::getNumPoints()
    return numPoints;
 }
 
-void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
+void CurveData::setNumPoints(unsigned int newNumPointsSize)
 {
    bool addingPoints = numPoints < newNumPointsSize;
    if(scrollMode)
@@ -277,17 +290,23 @@ void CurveData::setNumPoints(unsigned int newNumPointsSize, bool scrollMode)
       numPoints = newNumPointsSize;
       if(addingPoints)
       {
-         // Increasing curve size, add zero's to beginning.
-         yOrigPoints.insert(yOrigPoints.begin(), delta, 0);
+         // Increasing curve size, add "Fill in Point" values to beginning.
          if(plotDim == E_PLOT_DIM_2D)
-            xOrigPoints.insert(xOrigPoints.begin(), delta, 0);
+         {
+            yOrigPoints.insert(yOrigPoints.begin(), delta, FILL_IN_POINT_2D);
+            xOrigPoints.insert(xOrigPoints.begin(), delta, FILL_IN_POINT_2D);
+         }
+         else
+         {
+            yOrigPoints.insert(yOrigPoints.begin(), delta, FILL_IN_POINT_1D);
+         }
       }
       else
       {
          // Decreasing curve size, remove samples from beginning.
          yOrigPoints.erase(yOrigPoints.begin(), yOrigPoints.begin()+delta);
          if(plotDim == E_PLOT_DIM_2D)
-            xOrigPoints.erase(yOrigPoints.begin(), xOrigPoints.begin()+delta);
+            xOrigPoints.erase(xOrigPoints.begin(), xOrigPoints.begin()+delta);
       }
    }
    else
@@ -385,25 +404,7 @@ QString CurveData::getCurveTitle()
 
 bool CurveData::isDisplayed()
 {
-   return displayed == true && hidden == false;
-}
-
-void CurveData::attach()
-{
-   if(displayed == false)
-   {
-      curve->attach(m_parentPlot);
-      displayed = true;
-   }
-}
-
-void CurveData::detach()
-{
-   if(displayed == true)
-   {
-      curve->detach();
-      displayed = false;
-   }
+   return attached;
 }
 
 void CurveData::findMaxMin()
@@ -451,6 +452,17 @@ void CurveData::findMaxMin()
 
 void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool normYAxis)
 {
+   if(desiredScale.maxX == desiredScale.minX) // Max sure desired scale height /width isn't zero.
+   {
+      desiredScale.maxX += 1.0;
+      desiredScale.minX -= 1.0;
+   }
+   if(desiredScale.maxY == desiredScale.minY)
+   {
+      desiredScale.maxY += 1.0;
+      desiredScale.minY -= 1.0;
+   }
+
    if(!normXAxis || (desiredScale.maxX == maxMin_beforeScale.maxX && desiredScale.minX == maxMin_beforeScale.minX))
    {
       normFactor.xAxis.m = 1.0;
@@ -459,10 +471,20 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool n
    }
    else
    {
-      normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
-      normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
+      if( (maxMin_beforeScale.maxX - maxMin_beforeScale.minX) > 0)
+      {
+         normFactor.xAxis.m = (desiredScale.maxX - desiredScale.minX) / (maxMin_beforeScale.maxX - maxMin_beforeScale.minX);
+         normFactor.xAxis.b = desiredScale.maxX - (normFactor.xAxis.m * maxMin_beforeScale.maxX);
+      }
+      else
+      {
+         // No width. Don't change the scale. Just move to middle.
+         normFactor.xAxis.m = 1.0;
+         normFactor.xAxis.b = (desiredScale.maxX - desiredScale.minX) / 2.0 + desiredScale.minX - maxMin_beforeScale.minX;
+      }
       xNormalized = true;
    }
+
    if(!normYAxis || (desiredScale.maxY == maxMin_beforeScale.maxY && desiredScale.minY == maxMin_beforeScale.minY))
    {
       normFactor.yAxis.m = 1.0;
@@ -471,8 +493,17 @@ void CurveData::setNormalizeFactor(maxMinXY desiredScale, bool normXAxis, bool n
    }
    else
    {
-      normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin_beforeScale.maxY - maxMin_beforeScale.minY);
-      normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin_beforeScale.maxY);
+      if( (maxMin_beforeScale.maxY - maxMin_beforeScale.minY) > 0)
+      {
+         normFactor.yAxis.m = (desiredScale.maxY - desiredScale.minY) / (maxMin_beforeScale.maxY - maxMin_beforeScale.minY);
+         normFactor.yAxis.b = desiredScale.maxY - (normFactor.yAxis.m * maxMin_beforeScale.maxY);
+      }
+      else
+      {
+         // No height. Don't change the scale. Just move to middle.
+         normFactor.yAxis.m = 1.0;
+         normFactor.yAxis.b = (desiredScale.maxY - desiredScale.minY) / 2.0 + desiredScale.minY - maxMin_beforeScale.minY;
+      }
       yNormalized = true;
    }
 
@@ -490,36 +521,11 @@ void CurveData::resetNormalizeFactor()
 }
 
 
-maxMinXY CurveData::getMinMaxInRange(const dubVect& in, unsigned int start, unsigned int len)
-{
-   maxMinXY retVal;
-   retVal.minY = in[start];
-   retVal.maxY = in[start];
-   retVal.minX = start;
-   retVal.maxX = start;
-
-   for(unsigned int i = start+1; i < (start+len); ++i)
-   {
-      if(in[i] > retVal.maxY)
-      {
-         retVal.maxX = i;
-         retVal.maxY = in[i];
-      }
-      if(in[i] < retVal.minY)
-      {
-         retVal.minX = i;
-         retVal.minY = in[i];
-      }
-   }
-
-   return retVal;
-}
-
 // xStartIndex is a return value, inclusive.
 // xEndIndex is a return value, exclusive.
 // sampPerPixel is a return value.
 // The member variable numPoints must be 2 or greater.
-void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel)
+void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartIndex, int& xEndIndex, unsigned int& sampPerPixel, bool addMargin)
 {
    xStartIndex = 0;
    xEndIndex = numPoints;
@@ -546,14 +552,18 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
       double xStartIndex_float = findFirstSampleGreaterThan(xPointsForGui, xStartIndex_guess, zoomMin) - 1;
       double xEndIndex_float = findFirstSampleGreaterThan(xPointsForGui, xEndIndex_guess, zoomMax);
 
-      // Add some margin so we plot a little before / after the zoom coordinates.
-      double margin = sampPerPixel_float > 0 ? 2.0*sampPerPixel_float: 2.0;
-      xStartIndex_float -= margin;
-      xEndIndex_float   += margin;
+      if(addMargin)
+      {
+         // Add some margin so we plot a little before / after the zoom coordinates.
+         double margin = sampPerPixel_float > 0 ? 2.0*sampPerPixel_float : 2.0;
+         xStartIndex_float -= margin;
+         xEndIndex_float   += margin;
+      }
 
       // Bound float based index when converting to integer (just in case the floating point version is bad... avoid overflow)
-      if(xStartIndex_float < 0)
-         xStartIndex = 0;
+      double limitBasedOnMargin = addMargin ? 0 : -1; // If we are not adding any margin, need to use -1 to indicate the first sample is included.
+      if(xStartIndex_float < limitBasedOnMargin)
+         xStartIndex = limitBasedOnMargin;
       else if(xStartIndex_float >= (double)numPoints)
          xStartIndex = numPoints-1;
       else
@@ -564,7 +574,7 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
       else if(xEndIndex_float >= (double)numPoints)
          xEndIndex = numPoints;
       else
-         xEndIndex   = (int)std::ceil(xEndIndex_float);
+         xEndIndex = (int)std::ceil(xEndIndex_float);
 
       if(xEndIndex <= xStartIndex)
       {
@@ -590,6 +600,30 @@ void CurveData::getSamplesToSendToGui_1D(dubVect* xPointsForGui, int& xStartInde
          sampPerPixel = sampPerPixel_float; // Convert from float to int (round down).
       }
    }
+}
+
+
+maxMinXY CurveData::get1dDisplayedIndexes()
+{
+   maxMinXY retVal;
+   retVal.minX = -1;
+   retVal.maxX = -1;
+
+   if(plotDim == E_PLOT_DIM_1D && numPoints > 1)
+   {
+      dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
+
+      unsigned int sampPerPixel = 0;
+      int xStartIndex = 0;
+      int xEndIndex = numPoints;
+
+      getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel, false);
+
+      retVal.minX = xStartIndex;
+      retVal.maxX = xEndIndex;
+   }
+
+   return retVal;
 }
 
 int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue)
@@ -657,7 +691,7 @@ int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSe
 void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
 {
    dubVect* xPointsForGui = xNormalized ? &normX : &xPoints;
-   dubVect* yPointsForGui = yNormalized ? &normY : &yPoints;
+   dubVect* yPointsForGui = yNormalized ? &normY : &yPoints; // fastMonotonicMaxMin works today because it uses yPoints for max/min then redoes the normalization. If a change brings in more difference between yPoints and yPointsForGui that might break fastMonotonicMaxMin.
 
    if(numPoints <= 0)
    {
@@ -688,7 +722,21 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
    int xEndIndex = numPoints;
 
    // Calculate xStartIndex, xEndIndex, sampPerPixel values.
-   getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel);
+   getSamplesToSendToGui_1D(xPointsForGui, xStartIndex, xEndIndex, sampPerPixel, true);
+
+   // Don't plot NAN points at the beginning / end of curve data.
+   {
+      int xStartIndexLimit, xEndIndexLimit;
+      smartMaxMinYPoints.getFirstLastReal(xStartIndexLimit, xEndIndexLimit);
+      xEndIndexLimit++; // Convert inclusive to exclusive.
+
+      // Update indexes to avoid plotting NAN point at the beginning / end,
+      // but only if they don't cause the indexes to get out of order.
+      if(xStartIndexLimit > xStartIndex && xStartIndexLimit < xEndIndex)
+         xStartIndex = xStartIndexLimit;
+      if(xEndIndexLimit < xEndIndex && xEndIndexLimit > xStartIndex)
+         xEndIndex = xEndIndexLimit;
+   }
 
    if( (sampPerPixel <= 3) ||
        (numPoints < (sampPerPixel+2)) )
@@ -699,55 +747,59 @@ void CurveData::setCurveDataGuiPoints(bool onlyNeedToUpdate1D)
    }
    else
    {
-      dubVect guiXPoint;
-      dubVect guiYPoint;
-
       // TODO should be able to predict how large this needs to be, rather than just setting it to the max.
-      guiXPoint.resize(xPointsForGui->size());
-      guiYPoint.resize(yPointsForGui->size());
+      reducedXPoints.resize(xPointsForGui->size());
+      reducedYPoints.resize(yPointsForGui->size());
+      fastMonotonicMaxMin fastMinMax(smartMaxMinYPoints);
 
       unsigned int sampCount = 0;
 
-      guiXPoint[sampCount] = (*xPointsForGui)[xStartIndex];
-      guiYPoint[sampCount] = (*yPointsForGui)[xStartIndex];
+      reducedXPoints[sampCount] = (*xPointsForGui)[xStartIndex];
+      reducedYPoints[sampCount] = (*yPointsForGui)[xStartIndex];
       sampCount++;
 
       for(int i = (xStartIndex+1); i < (xEndIndex-1); i += sampPerPixel)
       {
          unsigned int sampToProcess = std::min((int)sampPerPixel, (xEndIndex-1) - i);
-         maxMinXY maxMin = getMinMaxInRange((*yPointsForGui), i, sampToProcess);
+         maxMinXY maxMin = fastMinMax.getMinMaxInRange(i, sampToProcess);
+         if(yNormalized)
+         {
+            maxMin.maxY = (normFactor.yAxis.m * maxMin.maxY) + normFactor.yAxis.b;
+            maxMin.minY = (normFactor.yAxis.m * maxMin.minY) + normFactor.yAxis.b;
+         }
+
          if(maxMin.minX < maxMin.maxX)
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
-            guiYPoint[sampCount] = maxMin.minY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
+            reducedYPoints[sampCount] = maxMin.minY;
             sampCount++;
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
          }
          else if(maxMin.minX > maxMin.maxX)
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.minX];
-            guiYPoint[sampCount] = maxMin.minY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.minX];
+            reducedYPoints[sampCount] = maxMin.minY;
             sampCount++;
          }
          else
          {
-            guiXPoint[sampCount] = (*xPointsForGui)[maxMin.maxX];
-            guiYPoint[sampCount] = maxMin.maxY;
+            reducedXPoints[sampCount] = (*xPointsForGui)[maxMin.maxX];
+            reducedYPoints[sampCount] = maxMin.maxY;
             sampCount++;
          }
       }
 
-      guiXPoint[sampCount] = (*xPointsForGui)[xEndIndex-1];
-      guiYPoint[sampCount] = (*yPointsForGui)[xEndIndex-1];
+      reducedXPoints[sampCount] = (*xPointsForGui)[xEndIndex-1];
+      reducedYPoints[sampCount] = (*yPointsForGui)[xEndIndex-1];
       sampCount++;
 
-      curve->setSamples( &guiXPoint[0],
-                         &guiYPoint[0],
+      curve->setSamples( &reducedXPoints[0],
+                         &reducedYPoints[0],
                          sampCount);
    }
 }
@@ -830,33 +882,106 @@ void CurveData::ResetCurveSamples(const UnpackPlotMsg* data)
    storeLastMsgStats(data);
 }
 
-void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data, bool scrollMode)
+
+void CurveData::swapSamples(dubVect& samples, int swapIndex)
+{
+   int numPointsAtEnd = numPoints - swapIndex;
+   int numPointsAtBeg = numPoints - numPointsAtEnd;
+   size_t pointSize = sizeof(samples[0]);
+
+   if(numPointsAtEnd > 0 && numPointsAtBeg > 0)
+   {
+      dubVect tempPoints;
+      
+      // Swap Beginning / End Points.
+      tempPoints.resize(numPointsAtBeg);
+      memcpy(&tempPoints[0], &samples[0], pointSize * numPointsAtBeg); // Store off the Beginning Points.
+      
+      memmove(&samples[0], &samples[numPointsAtBeg], pointSize * numPointsAtEnd);   // Move End Points
+      memcpy(&samples[numPointsAtEnd], &tempPoints[0], pointSize * numPointsAtBeg); // Move Beginning Points.
+   }
+}
+
+void CurveData::handleScrollModeTransitions(bool plotScrollMode)
+{
+   if(plotScrollMode != scrollMode)
+   {
+      if(!plotScrollMode)
+      {
+         // Toggling out of scroll mode. If num points has been changed, set it back before reverting out of scroll mode.
+         if(plotSize_nonScrollModeVersion != numPoints && plotSize_nonScrollModeVersion > 0)
+         {
+            setNumPoints(plotSize_nonScrollModeVersion);
+         }
+      }
+
+      int swapPoint = plotScrollMode ? oldestPoint_nonScrollModeVersion : numPoints - oldestPoint_nonScrollModeVersion;
+
+      swapSamples(yOrigPoints, swapPoint);
+      swapSamples(yPoints,     swapPoint);
+      smartMaxMinYPoints.updateMaxMin(0, yOrigPoints.size());
+      if(plotDim == E_PLOT_DIM_2D)
+      {
+         swapSamples(xOrigPoints, swapPoint);
+         swapSamples(xPoints,     swapPoint);
+         smartMaxMinXPoints.updateMaxMin(0, xOrigPoints.size());
+      }
+      scrollMode = plotScrollMode; // Store off Scroll Mode state.
+   }
+}
+
+void CurveData::UpdateCurveSamples(const UnpackPlotMsg* data)
 {
    if(plotDim == plotActionToPlotDim(data->m_plotAction))
    {
       if(plotDim == E_PLOT_DIM_1D)
       {
-         UpdateCurveSamples(data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+         UpdateCurveSamples(data->m_yAxisValues, data->m_sampleStartIndex, false);
       }
       else
       {
-         UpdateCurveSamples(data->m_xAxisValues, data->m_yAxisValues, data->m_sampleStartIndex, scrollMode);
+         UpdateCurveSamples(data->m_xAxisValues, data->m_yAxisValues, data->m_sampleStartIndex, false);
       }
       storeLastMsgStats(data);
    }
 }
 
-void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints)
 {
    if(plotDim == E_PLOT_DIM_1D)
    {
-      int newPointsSize = newYPoints.size();
+      bool updateAsScrollMode = scrollMode && !modifySpecificPoints;
+
+      const dubVect* newPointsToUse = &newYPoints;
+      dubVect fftSpecAnPoints;
+
+      // Check if the input points should be overwritten with values from the FFT Spectrum Analyzer Functionality.
+      if(fftSpecAn.isFftPlot() && !modifySpecificPoints)
+      {
+         fftSpecAn.update(newYPoints, fftSpecAnTraceType);
+         if(fftSpecAnTraceType == fftSpecAnFunc::E_MAX_HOLD)
+         {
+            fftSpecAn.getMaxHoldPoints(fftSpecAnPoints);
+         }
+         else if(fftSpecAnTraceType == fftSpecAnFunc::E_AVERAGE)
+         {
+            fftSpecAn.getAveragePoints(fftSpecAnPoints);
+         }
+
+         // If samples have been written to fftSpecAnPoints, then we should use them.
+         if(fftSpecAnPoints.size() > 0)
+         {
+            newPointsToUse = &fftSpecAnPoints;
+         }
+      }
+      
+      int newPointsSize = newPointsToUse->size();
 
       handleNewSampleMsg(sampleStartIndex, newPointsSize);
 
       bool resized = false;
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          // Check if the current size can handle the new samples.
          if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
@@ -864,7 +989,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             resized = true;
             yOrigPoints.resize(sampleStartIndex + newPointsSize);
          }
-         memcpy(&yOrigPoints[sampleStartIndex], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+         memcpy(&yOrigPoints[sampleStartIndex], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
       }
       else
       {
@@ -876,20 +1001,26 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
             // Current scroll mode curve size is less than the number of samples in this new curve data message.
             // Resize the curve to fit all the new data.
             resized = true;
-            yOrigPoints = newYPoints;
+            yOrigPoints = (*newPointsToUse);
          }
          else
          {
             int numOrigPointsToKeep = yOrigPoints.size() - newPointsSize;
 
             // Move old Y Points to their new position.
-            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
-            memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(newYPoints[0]) * numOrigPointsToKeep);
+            memmove(&yOrigPoints[0], &yOrigPoints[newPointsSize], sizeof(yOrigPoints[0]) * numOrigPointsToKeep);
+            memmove(&yPoints[0], &yPoints[newPointsSize], sizeof(yPoints[0]) * numOrigPointsToKeep);
             smartMaxMinYPoints.scrollModeShift(newPointsSize);
 
             // Copy new Y Points in.
-            memcpy(&yOrigPoints[numOrigPointsToKeep], &newYPoints[0], sizeof(newYPoints[0]) * newPointsSize);
+            memcpy(&yOrigPoints[numOrigPointsToKeep], &(*newPointsToUse)[0], sizeof(yOrigPoints[0]) * newPointsSize);
          }
+      }
+
+      if(modifySpecificPoints == false)
+      {
+         oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+         plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
       }
 
       if(resized == true)
@@ -900,7 +1031,7 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
 
       numPoints = yOrigPoints.size();
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          performMathOnPoints(sampleStartIndex, newPointsSize);
       }
@@ -913,15 +1044,17 @@ void CurveData::UpdateCurveSamples(const dubVect& newYPoints, unsigned int sampl
    }
 }
 
-void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool scrollMode)
+void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& newYPoints, unsigned int sampleStartIndex, bool modifySpecificPoints)
 {
    if(plotDim == E_PLOT_DIM_2D)
    {
+      bool updateAsScrollMode = scrollMode && !modifySpecificPoints;
+
       unsigned int newPointsSize = std::min(newXPoints.size(), newYPoints.size());
 
       handleNewSampleMsg(sampleStartIndex, newPointsSize);
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
@@ -969,10 +1102,15 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
          }
       }
 
+      if(modifySpecificPoints == false)
+      {
+         oldestPoint_nonScrollModeVersion = sampleStartIndex + newPointsSize;
+         plotSize_nonScrollModeVersion = std::max(plotSize_nonScrollModeVersion, oldestPoint_nonScrollModeVersion);
+      }
 
       numPoints = std::min(xOrigPoints.size(), yOrigPoints.size()); // These should never be unequal, but take min anyway.
 
-      if(scrollMode == false)
+      if(updateAsScrollMode == false)
       {
          performMathOnPoints(sampleStartIndex, newPointsSize);
       }
@@ -1241,6 +1379,18 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                      (*dataIter) = floor((*dataIter) * decimal) / decimal;
                   }
                break;
+               case E_LIMIT_UPPER:
+                  if((*dataIter) > mathIter->num)
+                  {
+                     (*dataIter) = mathIter->num;
+                  }
+               break;
+               case E_LIMIT_LOWER:
+                  if((*dataIter) < mathIter->num)
+                  {
+                     (*dataIter) = mathIter->num;
+                  }
+               break;
             }
          }
       }
@@ -1249,21 +1399,41 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
 }
 
 
+bool CurveData::setVisible(bool isVisible)
+{
+   return setVisibleHidden(isVisible, hidden);
+}
+
 bool CurveData::setHidden(bool isHidden)
 {
-   bool changed = false;
-   if(isHidden != hidden)
+   return setVisibleHidden(visible, isHidden);
+}
+
+bool CurveData::setVisibleHidden(bool isVisible, bool isHidden)
+{
+   bool changed = isVisible != visible || isHidden != hidden;
+   if(changed)
    {
-      if(isHidden && displayed)
+      if(isVisible == true && isHidden == false)
       {
-         curve->detach();
-         changed = true;
+         // Display the curve on the parent plot.
+         if(attached == false)
+         {
+            curve->attach(m_parentPlot);
+            attached = true;
+         }
       }
-      else if(!isHidden && displayed)
+      else
       {
-         curve->attach(m_parentPlot);
-         changed = true;
+         // Do not display the curve on the parent plot.
+         if(attached == true)
+         {
+            curve->detach();
+            attached = false;
+         }
       }
+
+      visible = isVisible;
       hidden = isHidden;
    }
    return changed;
@@ -1281,6 +1451,11 @@ void CurveData::setCurveAppearance(CurveAppearance curveAppearance)
    setCurveDataGuiPoints(false);
 
    m_parentPlot->replot();
+}
+
+CurveAppearance CurveData::getCurveAppearance()
+{
+   return appearance;
 }
 
 unsigned int CurveData::removeInvalidPoints()
@@ -1339,7 +1514,7 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
       {
          dubVect yPoints;
          yPoints.push_back(yValue);
-         UpdateCurveSamples(yPoints, index, false);
+         UpdateCurveSamples(yPoints, index, true);
       }
       else
       {
@@ -1347,7 +1522,26 @@ void CurveData::setPointValue(unsigned int index, double xValue, double yValue)
          dubVect yPoints;
          xPoints.push_back(xValue);
          yPoints.push_back(yValue);
-         UpdateCurveSamples(xPoints, yPoints, index, false);
+         UpdateCurveSamples(xPoints, yPoints, index, true);
       }
    }
+}
+
+void CurveData::specAn_reset()
+{
+   fftSpecAn.reset();
+}
+
+void CurveData::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTraceType)
+{
+   if(newTraceType != fftSpecAnTraceType)
+   {
+      specAn_reset();
+   }
+   fftSpecAnTraceType = newTraceType;
+}
+
+void CurveData::specAn_setAvgSize(int newAvgSize)
+{
+   fftSpecAn.setAvgSize(newAvgSize);
 }
