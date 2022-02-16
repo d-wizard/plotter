@@ -19,8 +19,8 @@ contains(QT_ARCH, i386) {
     ARCHDIR = 64
 }
 
-QWTDIR = ../../qwt_sources_and_bin/latest6.1_myMods/qwt-6.1
-FFTWDIR = ../fftw-dll
+QWTDIR = ../PlotterDependencies/prebuilt/qwt_sources_and_bin/latest6.1_myMods/qwt-6.1
+FFTWDIR = ../PlotterDependencies/prebuilt/fftw-dll
 include ( $${QWTDIR}/qwt.prf )
 
 QT       += core gui
