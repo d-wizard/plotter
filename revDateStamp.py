@@ -1,4 +1,4 @@
-# Copyright 2015, 2019, 2021 Dan Williams. All Rights Reserved.
+# Copyright 2015, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -23,9 +23,9 @@ import time
 
 scriptDir = os.path.dirname(os.path.realpath(__file__))
 
-SVN_PATH = '"c:/Program Files/TortoiseSVN/bin/svn.exe"' if sys.platform == 'win32' else 'svn'
+GIT_PATH = '"C:/Program Files/Git/bin/git.exe"' if sys.platform == 'win32' else 'git'
 
-REV_DELIM = 'Revision: '
+COMMIT_DELIM = 'commit '
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -45,7 +45,7 @@ def writeWholeFile(path, fileText):
    fileId.write(fileText)
    fileId.close()
 
-def getSvnVersion():
+def getGitCommit():
    cwd = os.getcwd()
    os.chdir(SCRIPT_DIR)
 
@@ -55,27 +55,31 @@ def getSvnVersion():
    origCwd = os.getcwd()
    os.chdir(scriptDir)
    
-   svnVersionCmd = SVN_PATH + ' info'
+   gitVersionCmd = GIT_PATH + ' log -1'
 
    # Run the 'info' command and loop over the results until the revision information line is found.
-   p = os.popen(svnVersionCmd, "r")
+   p = os.popen(gitVersionCmd, "r")
    while 1:
       line = p.readline()
 
       if not line: break
       
-      if line.find(REV_DELIM) >= 0:
-         retVal = int(line.split(REV_DELIM)[1])
+      if line.find(COMMIT_DELIM) >= 0:
+         retVal = line.split(COMMIT_DELIM)[1]
+         if retVal.find(' ') > 0:
+            retVal = retVal.split(' ')[0]
+         if len(retVal) > 7: # 7 characters of the hash seems to be enough
+            retVal = retVal[:7]
          break
 
    os.chdir(cwd)
    return retVal
        
-svnRev = getSvnVersion()
+gitCommit = getGitCommit()
 time.ctime()
 dateStamp = time.strftime('%m/%d/%y')
 
-revDateInfo = 'Rev: ' + str(svnRev) + " - Date: " + dateStamp
+revDateInfo = 'Date: ' + dateStamp + " - Commit: " + gitCommit
 
 fileText = '#define REV_DATE_STAMP "' + revDateInfo + '"'
 
