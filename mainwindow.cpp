@@ -103,6 +103,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_maxHoldZoomAction("Max Hold", this),
    m_scrollModeAction("Scroll Mode", this),
    m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
+   m_scrollModeClearAllAction("Clear All Samples", this),
    m_resetZoomAction("Reset Zoom", this),
    m_normalizeNoneAction("Disable", this),
    m_normalizeYOnlyAction("Y Axis Only", this),
@@ -180,6 +181,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
+    connect(&m_scrollModeClearAllAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeClearAllSlot()));
     connect(&m_normalizeNoneAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesNone()));
     connect(&m_normalizeYOnlyAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesYOnly()));
     connect(&m_normalizeXOnlyAction, SIGNAL(triggered(bool)), this, SLOT(normalizeCurvesXOnly()));
@@ -203,6 +205,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     // This should only be visable when Scroll Mode is active. Since Scroll Mode
     // is defaulted to be not active, default this to be not visable.
     m_scrollModeChangePlotSizeAction.setVisible(false);
+    m_scrollModeClearAllAction.setVisible(false);
 
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
       this, SLOT(onApplicationFocusChanged(QWidget*,QWidget*)));
@@ -231,6 +234,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_scrollModeAction);
     m_rightClickMenu.addAction(&m_scrollModeChangePlotSizeAction);
+    m_rightClickMenu.addAction(&m_scrollModeClearAllAction);
 
     m_rightClickMenu.addSeparator();
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
@@ -1303,13 +1307,13 @@ void MainWindow::scrollModeToggle()
    if(m_scrollMode)
    {
       m_scrollModeAction.setIcon(m_checkedIcon);
-      m_scrollModeChangePlotSizeAction.setVisible(true);
    }
    else
    {
       m_scrollModeAction.setIcon(QIcon());
-      m_scrollModeChangePlotSizeAction.setVisible(false);
    }
+   m_scrollModeChangePlotSizeAction.setVisible(m_scrollMode);
+   m_scrollModeClearAllAction.setVisible(m_scrollMode);
 
    // Inform all the Child Curves of the new Scroll Mode state.
    QMutexLocker lock(&m_qwtCurvesMutex);
@@ -1339,6 +1343,42 @@ void MainWindow::scrollModeChangePlotSize()
       scrollModeSetPlotSize(newPlotSize);
    }
 
+}
+
+void MainWindow::scrollModeClearAllSlot()
+{
+   scrollModeClearAll(true); // Clear all the samples, but ask the user for confirmation before doing so.
+}
+
+void MainWindow::scrollModeClearAll(bool askUserViaMsgBox)
+{
+   if(!m_scrollMode) // Only applies if we are in scroll mode.
+      return;
+
+   bool doClearAll = true;
+   if(askUserViaMsgBox)
+   {
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question(this, "Clear All Samples?", "Are you sure you want to clear all samples in this curve?",
+                                    QMessageBox::Yes | QMessageBox::No);
+      doClearAll = (reply == QMessageBox::Yes);
+   }
+
+   if(doClearAll)
+   {
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      size_t numCurves = m_qwtCurves.size();
+      for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
+      {
+         // Kinda hacky way to 'clear' samples. Set the number of samples to 1, set that
+         // sample to not-a-number, then set the number of samples back to the orginal value.
+         unsigned int origNumPoints = m_qwtCurves[curveIndex]->getNumPoints();
+         m_qwtCurves[curveIndex]->setNumPoints(1);
+         m_qwtCurves[curveIndex]->setPointValue(0, NAN);
+         m_qwtCurves[curveIndex]->setNumPoints(origNumPoints);
+         handleCurveDataChange(curveIndex, true);
+      }
+   }
 }
 
 void MainWindow::scrollModeSetPlotSize(int newPlotSize)
@@ -2325,6 +2365,11 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                      updatePlotWithNewCurveData(true);
                   }
                }
+            }
+            else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Clear samples in scroll mode plot.
+               scrollModeClearAll(false);
             }
             else
             {

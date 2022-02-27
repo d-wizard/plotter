@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -263,6 +263,7 @@ private:
     QAction m_maxHoldZoomAction;
     QAction m_scrollModeAction;
     QAction m_scrollModeChangePlotSizeAction;
+    QAction m_scrollModeClearAllAction;
     QAction m_resetZoomAction;
     QAction m_normalizeNoneAction;
     QAction m_normalizeYOnlyAction;
@@ -385,6 +386,7 @@ private:
     void restorePersistentPlotParams();
 
     void scrollModeSetPlotSize(int newPlotSize);
+    void scrollModeClearAll(bool askUserViaMsgBox);
 
     bool areAllCurves1D();
 
@@ -429,6 +431,7 @@ private slots:
     void maxHoldZoom_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
+    void scrollModeClearAllSlot();
     void zoomMode();
     void resetZoom();
     void normalizeCurvesNone();
