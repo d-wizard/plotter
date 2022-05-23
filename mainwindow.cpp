@@ -1868,18 +1868,26 @@ QPalette MainWindow::labelColorToPalette(QColor color)
    return palette;
 }
 
-void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex)
+void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex)
 {
+   CurveData* curve = m_qwtCurves[curveIndex];
+   bool isSelectedCurve = ((int)curveIndex == m_selectedCurveIndex);
    bool displayFormatSet = setDisplayIoMapipXAxis(lblText, curve);
-   lblText << DISPLAY_POINT_START << curve->getXPoints()[cursorIndex] << DISPLAY_POINT_MID;
+
+   if(isSelectedCurve)
+      lblText << "<b>"; // Make Bold
+
+   lblText << DISPLAY_POINT_START << curve->getXPoints()[curvePointIndex] << DISPLAY_POINT_MID;
 
    if(displayFormatSet == false)
    {
        setDisplayIoMapipYAxis(lblText);
        displayFormatSet = true;
    }
-   lblText << curve->getYPoints()[cursorIndex] << DISPLAY_POINT_STOP;
+   lblText << curve->getYPoints()[curvePointIndex] << DISPLAY_POINT_STOP;
 
+   if(isSelectedCurve)
+      lblText << "</b>"; // Make Not Bold Anymore
 }
 
 void MainWindow::displayPointLabels_clean()
@@ -1894,7 +1902,7 @@ void MainWindow::displayPointLabels_clean()
          m_qwtCurves[i]->pointLabel = new QLabel("");
 
          std::stringstream lblText;
-         displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
+         displayPointLabels_getLabelText(lblText, i, m_qwtSelectedSample->m_pointIndex);
 
          m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
@@ -1919,8 +1927,8 @@ void MainWindow::displayPointLabels_update()
          if(m_qwtCurves[i]->pointLabel != NULL)
          {
             std::stringstream lblText;
-            displayPointLabels_getLabelText(lblText, m_qwtCurves[i], m_qwtSelectedSample->m_pointIndex);
-            
+            displayPointLabels_getLabelText(lblText, i, m_qwtSelectedSample->m_pointIndex);
+
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          }
          else

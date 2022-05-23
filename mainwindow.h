@@ -343,7 +343,7 @@ private:
     void initDeltaLabels();
     void clearPointLabels();
     QPalette labelColorToPalette(QColor color);
-    void displayPointLabels_getLabelText(std::stringstream& lblText, CurveData* curve, unsigned int cursorIndex);
+    void displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex);
     void displayPointLabels_clean();
     void displayPointLabels_update();
     void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
