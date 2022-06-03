@@ -1906,6 +1906,7 @@ void MainWindow::displayPointLabels_clean()
 
          m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
+         m_qwtCurves[i]->pointLabel->setToolTip(m_qwtCurves[i]->getCurveTitle());
 
          ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
 
@@ -1930,6 +1931,7 @@ void MainWindow::displayPointLabels_update()
             displayPointLabels_getLabelText(lblText, i, m_qwtSelectedSample->m_pointIndex);
 
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
+            m_qwtCurves[i]->pointLabel->setToolTip(m_qwtCurves[i]->getCurveTitle());
          }
          else
          {
