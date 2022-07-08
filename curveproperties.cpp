@@ -1580,6 +1580,70 @@ void curveProperties::useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnSta
          cmbAxisSrc->userSpecified(true);
       }
    }
+   else if(parentCurve != NULL && parentCurve->getPlotDim() == E_PLOT_DIM_2D)
+   {
+      // Valid 2D parent, continue
+      MainWindow* mainPlot = m_curveCmdr->getMainPlot(curve.plotName);
+      if(mainPlot != NULL)
+      {
+         unsigned numNonContiguousSamples = 0;
+         maxMinXY dim = parentCurve->get2dDisplayedIndexes(numNonContiguousSamples);
+         bool noPointsInZoomWindow = dim.minX < 0 || dim.maxX < 0; // Negative values mean no samples were in the zoom window.
+         bool updateSlices = false;
+
+         if(noPointsInZoomWindow)
+         {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("No Samples in Zoom");
+            msgBox.setText("There are no samples in the zoom window.");
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
+         }
+         else
+         {
+            if(numNonContiguousSamples == 0)
+            {
+               updateSlices = true;
+            }
+            else
+            {
+               // Not contigous, ask user.
+               unsigned totalNumSamp = dim.maxX - dim.minX + 1;
+               unsigned numInZoomWindow = totalNumSamp - numNonContiguousSamples;
+               QMessageBox::StandardButton reply;
+               reply = QMessageBox::question( this,
+                                              "Extra Samples Will Be Plotted",
+                                              QString::number(numInZoomWindow) + " samples are within the current zoom window,"
+                                              "but there are " + QString::number(numNonContiguousSamples) + " non-contiguous samples mixed in.\n\n"
+                                              "Update Source Slice indexes even though some samples outside the current zoom window will get plotted?",
+                                              QMessageBox::Yes|QMessageBox::No );
+               if (reply == QMessageBox::Yes)
+               {
+                  updateSlices = true;
+               }
+            }
+         }
+
+         if(updateSlices)
+         {
+            dim.maxX += 1; // dim.maxX is inclusive but spnStop is exclusive. Add 1 to make it exclusive
+
+            // Bound.
+            if(dim.minX < 0 || dim.minX >= parentCurve->getNumPoints())
+               dim.minX = 0;
+            if(dim.maxX < 0 || dim.maxX >= parentCurve->getNumPoints())
+               dim.maxX = 0;
+
+            // Set GUI elements.
+            spnStart->setValue(dim.minX);
+            spnStop->setValue(dim.maxX);
+
+            // User hit a button, i.e. user specified.
+            cmbAxisSrc->userSpecified(true);
+         }
+      }
+   }
    else
    {
       spnStart->setValue(0);

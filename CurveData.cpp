@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -623,6 +623,57 @@ maxMinXY CurveData::get1dDisplayedIndexes()
       retVal.maxX = xEndIndex;
    }
 
+   return retVal;
+}
+
+maxMinXY CurveData::get2dDisplayedIndexes(unsigned &numNonContiguousSamples)
+{
+   numNonContiguousSamples = 0;
+   int minIndex = -1;
+   int maxIndex = -1;
+
+   if(plotDim == E_PLOT_DIM_2D && numPoints > 1)
+   {
+      dubVect& xPointsForGui = xNormalized ? normX : xPoints;
+      dubVect& yPointsForGui = yNormalized ? normY : yPoints;
+
+      maxMinXY zoomDim;
+      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      QwtScaleDiv plotZoomHeightDim = m_parentPlot->axisScaleDiv(QwtPlot::yLeft); // Get plot zoom dimensions.
+      zoomDim.minX = plotZoomWidthDim.lowerBound();
+      zoomDim.maxX = plotZoomWidthDim.upperBound();
+      zoomDim.minY = plotZoomHeightDim.lowerBound();
+      zoomDim.maxY = plotZoomHeightDim.upperBound();
+
+      bool pointInZoomWindowFound = false;
+      for(unsigned i = 0; i < numPoints; ++i)
+      {
+         if( (xPointsForGui[i] >= zoomDim.minX && xPointsForGui[i] <= zoomDim.maxX) &&
+             (yPointsForGui[i] >= zoomDim.minY && yPointsForGui[i] <= zoomDim.maxY) )
+         {
+            // The point is being displayed.
+            if(!pointInZoomWindowFound)
+            {
+               // First point found. Set min/max to this point
+               minIndex = i;
+               maxIndex = i;
+               pointInZoomWindowFound = true;
+            }
+            else
+            {
+               // Already have found some points.
+               unsigned sampleDelta = i - (unsigned)maxIndex;
+               numNonContiguousSamples += (sampleDelta - 1); // sampleDelta should be 1 if the samples are contiguous
+               maxIndex = i;
+            }
+         }
+      }
+   }
+
+   // The return value type is maxMinXY, but really only the minX / minY values are used to specify the indexes.
+   maxMinXY retVal;
+   retVal.minX = minIndex;
+   retVal.maxX = maxIndex;
    return retVal;
 }
 
