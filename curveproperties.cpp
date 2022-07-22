@@ -1074,6 +1074,7 @@ void curveProperties::fillInMathTab()
                            type == tPlotCurveComboBox::E_COMBOBOX_CURVE_ALL_CURVES;
 
    ui->grpMultCurve->setVisible(multCurveVisable);
+   ui->chkSampRateAllCurves->setVisible(!multCurveVisable); // No need to allow user to set whether this applys to all curves when the curve selected is * (i.e. all curves)
 
    if(curve == NULL)
    {
@@ -1133,7 +1134,7 @@ void curveProperties::mathTabApply()
       if(applyToOnlyOneCurveAxis)
       {
          parentPlotGui->setCurveProperties(curve.curveName, curve.axis, sampleRate, m_mathOps);
-         if(ui->chkSampRateAllCurves->isChecked())
+         if(ui->chkSampRateAllCurves->isChecked() || !ui->chkSampRateAllCurves->isVisible()) // If chkSampRateAllCurves is invisible, then it is implied that the sample rate will be set for all curves.
          {
             parentPlotGui->setSampleRate_allCurves(sampleRate);
          }
@@ -2537,6 +2538,17 @@ void curveProperties::on_cmdAutoSetSampRate_clicked()
    // Fill in the sample rate based on the rate that the plot data is getting plotted at.
    tPlotCurveAxis curve = m_cmbSrcCurve_math->getPlotCurveAxis();
    CurveData* parentCurve = m_curveCmdr->getCurveData(curve.plotName, curve.curveName);
+
+   // If all curves are selected (via the * curve name), just use the first curve name in the plot.
+   if(parentCurve == NULL && curve.curveName == "")
+   {
+      auto allCurveName = getAllCurveNamesInPlot(curve.plotName);
+      if(allCurveName.size() > 0)
+      {
+         parentCurve = m_curveCmdr->getCurveData(curve.plotName, allCurveName[0]);
+      }
+   }
+
    if(parentCurve != NULL)
    {
       const double calcSampRate = parentCurve->getCalculatedSampleRateFromPlotMsgs();
