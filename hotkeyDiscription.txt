@@ -10,6 +10,9 @@
    ctrl + m | Set to Max Zoom
    ctrl + z | Restore previous zoom window
    ctrl + y | Restore reverted zoom window
+   ctrl + i | Opens a dialog that sets the maximum width to display
+              for this plot (0 means no limit). This is useful
+              for multi-curve plots with the x-axis being time.
 
    -----------------------------------------------------------------
    | Delta Cursor
@@ -38,6 +41,10 @@
               mode plot size
    ctrl + 1 | Set to Scroll Mode and set the plot size to 10x of its
               current value
+   ctrl + 0 | Removes all the currently displayed points without 
+              changing scroll mode plot size settings. This can 
+              be helpful for removing old values on 2D plots with
+              time as the X Axis.
 
    -----------------------------------------------------------------
    | Any Curve Cursor Mode Settings

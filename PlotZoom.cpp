@@ -785,4 +785,21 @@ bool PlotZoom::areTheyClose(double val1, double val2)
 }
 
 
+void PlotZoom::SetPlotLimit(eAxis axis, double limitValue)
+{
+   if(axis == E_X_AXIS)
+   {
+      m_xWidthLimit = limitValue;
+   }
+   else if(axis == E_Y_AXIS)
+   {
+      m_yHeightLimit = limitValue;
+   }
+}
+
+void PlotZoom::ResetPlotLimits()
+{
+   m_xWidthLimit = 0.0;
+   m_yHeightLimit = 0.0; 
+}
 

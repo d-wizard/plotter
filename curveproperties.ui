@@ -1415,6 +1415,9 @@ Set to 0 for default behavoir.</string>
    ctrl + m | Set to Max Zoom
    ctrl + z | Restore previous zoom window
    ctrl + y | Restore reverted zoom window
+   ctrl + i | Opens a dialog that sets the maximum width to display
+              for this plot (0 means no limit). This is useful
+              for multi-curve plots with the x-axis being time.
 
    -----------------------------------------------------------------
    | Delta Cursor

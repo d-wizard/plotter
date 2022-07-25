@@ -2327,6 +2327,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                silentSavePlotToFile();
             }
+            else if(KeyEvent->key() == Qt::Key_I && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               setMaxPlotWidth_fromMax();
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
@@ -3634,5 +3638,22 @@ void MainWindow::fillWithSavedAppearance(QString& curveName, CurveAppearance& ap
       {
          appearance = map[curveName];
       }
+   }
+}
+
+void MainWindow::setMaxPlotWidth_fromMax()
+{
+   auto curPlotZoom = m_plotZoom->getCurPlotDim();
+   double curWidth = curPlotZoom.maxX - curPlotZoom.maxY;
+
+   bool ok;
+   QString dialogTitle = "Set Max Plot Width";
+   double newMaxWidth = QInputDialog::getDouble(this, dialogTitle, tr("Max Plot Width"), curWidth, 0, 0x7FFFFFFF, 1, &ok);
+
+   if(ok && newMaxWidth >= 0)
+   {
+      m_plotZoom->SetPlotLimit(E_X_AXIS, newMaxWidth);
+      maxMinXY maxMin = calcMaxMin();
+      m_plotZoom->SetPlotDimensions(maxMin, true);
    }
 }

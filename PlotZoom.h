@@ -74,6 +74,9 @@ public:
 
    void moveZoom(double deltaX, double deltaY, bool changeCausedByUserGuiInput);
 
+   void SetPlotLimit(eAxis axis, double limitValue); // limitValue of 0 means no limit, positive means limit from max, negative means limit from min
+   void ResetPlotLimits();
+
    bool m_holdZoom;
    bool m_maxHoldZoom;
 
@@ -110,8 +113,8 @@ private:
    unsigned int m_zoomDimIndex;
 
    // Plot Dimension Limits
-   double m_xWidthLimit = 0.0; // 0 means on limit, positive means limit from max, negative means limit from min
-   double m_yHeightLimit = 0.0; // 0 means on limit, positive means limit from max, negative means limit from min
+   double m_xWidthLimit = 0.0; // 0 means no limit, positive means limit from max, negative means limit from min
+   double m_yHeightLimit = 0.0; // 0 means no limit, positive means limit from max, negative means limit from min
 
    void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 

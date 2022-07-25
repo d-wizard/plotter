@@ -475,6 +475,7 @@ private slots:
     void on_cmdPeakSearch_clicked();
     void on_cmdSpecAnResetZoom_clicked();
 
+    void setMaxPlotWidth_fromMax();
 public slots:
     void updateCursorMenus();
     void readPlotMsgSlot();
