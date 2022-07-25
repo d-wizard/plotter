@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -108,6 +108,10 @@ private:
 
    QVector<maxMinXY> m_zoomDimSave;
    unsigned int m_zoomDimIndex;
+
+   // Plot Dimension Limits
+   double m_xWidthLimit = 0.0; // 0 means on limit, positive means limit from max, negative means limit from min
+   double m_yHeightLimit = 0.0; // 0 means on limit, positive means limit from max, negative means limit from min
 
    void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 

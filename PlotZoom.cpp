@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -59,6 +59,42 @@ PlotZoom::PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScr
 
 void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput)
 {
+   // Apply Limits to Width
+   if(m_xWidthLimit > 0.0) 
+   {
+      double xRange = plotDimensions.maxX - plotDimensions.minX;
+      if(xRange > m_xWidthLimit)
+      {
+         plotDimensions.minX = plotDimensions.maxX - m_xWidthLimit;
+      }
+   }
+   else if(m_xWidthLimit < 0.0)
+   {
+      double xRange = plotDimensions.maxX - plotDimensions.minX;
+      if(xRange > -m_xWidthLimit)
+      {
+         plotDimensions.maxX = plotDimensions.minX - m_xWidthLimit;
+      }
+   }
+   // Apply Limits to Height
+   if(m_yHeightLimit > 0.0)
+   {
+      double yRange = plotDimensions.maxY - plotDimensions.minY;
+      if(yRange > m_yHeightLimit)
+      {
+         plotDimensions.minY = plotDimensions.maxY - m_yHeightLimit;
+      }
+   }
+   else if(m_yHeightLimit < 0.0)
+   {
+      double yRange = plotDimensions.maxY - plotDimensions.minY;
+      if(yRange > -m_yHeightLimit)
+      {
+         plotDimensions.maxY = plotDimensions.minY - m_yHeightLimit;
+      }
+   }
+
+
    // Make sure min and max values are not the same (i.e. do not set the
    // plot width/height to 0).
    if(plotDimensions.maxX == plotDimensions.minX)
