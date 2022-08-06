@@ -18,6 +18,7 @@
  */
 #include "zoomlimitsdialog.h"
 #include "ui_zoomlimitsdialog.h"
+#include "dString.h"
 
 zoomLimitsDialog::zoomLimitsDialog(QWidget *parent) :
    QDialog(parent),
@@ -52,13 +53,26 @@ bool zoomLimitsDialog::getZoomLimits(PlotZoom* plotZoom)
    // Show the Dialog. This function returns when OK, Cancel or Close (X) is pressed.
    this->exec();
 
+   if(m_applySelected)
+   {
+      m_plotZoom->SetPlotLimits(E_X_AXIS, m_widthZoomInfo);
+      m_plotZoom->SetPlotLimits(E_Y_AXIS, m_heightZoomInfo);
+   }
+
    return m_applySelected;
 }
 
 void zoomLimitsDialog::on_cmdApply_clicked()
 {
-   m_applySelected = true;
-   this->accept(); // Return from exec()
+   bool success = true;
+   success = fillStructFromGui(E_X_AXIS) && success;
+   success = fillStructFromGui(E_Y_AXIS) && success;
+
+   if(success)
+   {
+      m_applySelected = true;
+      this->accept(); // Return from exec()
+   }
 }
 
 void zoomLimitsDialog::on_cmdCancel_clicked()
@@ -138,5 +152,92 @@ void zoomLimitsDialog::fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
          text1->setText(QString::number(limits.fromMinMaxVal));
       break;
    }
-
 }
+
+bool zoomLimitsDialog::getValueFromTextBox(QLineEdit* textBox, double& value)
+{
+   std::string txt = textBox->text().toStdString();
+   return dString::strTo(txt, value);
+}
+
+bool zoomLimitsDialog::fillStructFromGui(eAxis axis)
+{
+   bool success = false;
+   if(axis == E_Y_AXIS)
+      success = fillStructFromGui(m_heightZoomInfo, ui->cmbHeightTypes, ui->txtY1st, ui->txtY2nd);
+   else
+      success = fillStructFromGui(m_widthZoomInfo,  ui->cmbWidthTypes,  ui->txtX1st, ui->txtX2nd);
+   return success;
+}
+
+bool zoomLimitsDialog::fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
+                                          QComboBox* combo,
+                                          QLineEdit* text1,
+                                          QLineEdit* text2 )
+{
+   if(limits.limitType >= 0 && limits.limitType < PlotZoom::E_ZOOM_LIMIT__INVALID)
+      combo->setCurrentIndex(limits.limitType);
+
+   bool success = true; // true until proven otherwise.
+   double textToNumber;
+   switch(limits.limitType)
+   {
+      default:
+      case PlotZoom::E_ZOOM_LIMIT__NONE:
+         // Nothing to do.
+      break;
+      case PlotZoom::E_ZOOM_LIMIT__ABSOLUTE:
+         if(getValueFromTextBox(text1, textToNumber))
+         {
+            limits.absMin = textToNumber;
+         }
+         else
+         {
+            success = false;
+         }
+         if(getValueFromTextBox(text2, textToNumber))
+         {
+            limits.absMax = textToNumber;
+         }
+         else
+         {
+            success = false;
+         }
+         if(limits.absMin >= limits.absMax)
+         {
+            success = false;
+         }
+      break;
+      case PlotZoom::E_ZOOM_LIMIT__FROM_MIN:
+         if(getValueFromTextBox(text1, textToNumber))
+         {
+            limits.fromMinMaxVal = textToNumber;
+         }
+         else
+         {
+            success = false;
+         }
+         if(limits.fromMinMaxVal <= 0)
+         {
+            success = false;
+         }
+      break;
+      case PlotZoom::E_ZOOM_LIMIT__FROM_MAX:
+         if(getValueFromTextBox(text1, textToNumber))
+         {
+            limits.fromMinMaxVal = textToNumber;
+         }
+         else
+         {
+            success = false;
+         }
+         if(limits.fromMinMaxVal <= 0)
+         {
+            success = false;
+         }
+      break;
+   }
+
+   return success;
+}
+

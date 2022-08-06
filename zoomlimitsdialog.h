@@ -62,7 +62,14 @@ private:
                      QLabel* label1,
                      QLineEdit* text1,
                      QLabel* label2,
-                     QLineEdit* text2);
+                     QLineEdit* text2 );
+
+   bool getValueFromTextBox(QLineEdit* textBox, double& value);
+   bool fillStructFromGui(eAxis axis);
+   bool fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
+                           QComboBox* combo,
+                           QLineEdit* text1,
+                           QLineEdit* text2 );
 };
 
 #endif // zoomLimitsDialog_H
