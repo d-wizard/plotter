@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -76,6 +76,9 @@ public:
 
    static void calcMaxMinOfSeg(const double* srcPoints, unsigned int startIndex, unsigned int numPoints, tMaxMinSegment& seg);
    static void combineSegments(tMaxMinSegment& seg1, const tMaxMinSegment& seg2); // seg1 is input and the return value (i.e. the combined version)
+
+   void getSegmentsInRange(double start, double stop, tSegList& full, std::vector<unsigned int>& partial);
+   void getMaxMinFromSegments(tSegList& fullIn, std::vector<unsigned int>& partial, double& retMax, double& retMin, bool& retReal);
 
 private:
    smartMaxMin();

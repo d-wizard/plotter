@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -534,6 +534,146 @@ void smartMaxMin::debug_verifyAllPointsAreInList()
       }
    }
 }
+
+void smartMaxMin::getSegmentsInRange(double start, double stop, tSegList& full, std::vector<unsigned int>& partial)
+{
+   full.clear();
+   partial.clear();
+   tSegList::iterator iter = m_segList.begin();
+   while(iter != m_segList.end())
+   {
+      if(iter->realPoints)
+      {
+         bool minInRange = (iter->minValue >= start && iter->minValue < stop);
+         bool maxInRange = (iter->maxValue >= start && iter->maxValue < stop);
+         if(minInRange && maxInRange)
+         {
+            full.push_back(*iter); // The whole segment is in range.
+         }
+         else if(minInRange || maxInRange)
+         {
+            // Only some points are in range. Store off the points that are in range.
+            for(int i = iter->firstRealPointIndex; i <= iter->lastRealPointIndex; ++i)
+            {
+               double point = (*m_srcVect)[i];
+               if(point >= start && point < stop)
+               {
+                  partial.push_back(i);
+               }
+            }
+         }
+      }
+      ++iter;
+   }
+}
+
+void smartMaxMin::getMaxMinFromSegments(tSegList& fullIn, std::vector<unsigned int>& partial, double &retMax, double &retMin, bool& retReal)
+{
+   retReal = false;
+   retMax = 0;
+   retMin = 0;
+   
+   // First deal with the full matching ranges.
+   tSegList::iterator fullIter = fullIn.begin();
+   while(fullIter != fullIn.end())
+   {
+      tSegList::iterator thisIter = m_segList.begin();
+      int matchingMinIndex = -1;
+      int matchingMaxIndex = 0;
+      while(thisIter != m_segList.end())
+      {
+         bool startInRange = thisIter->startIndex >= fullIter->startIndex;
+         bool stopInRange  = (thisIter->startIndex+thisIter->numPoints) <= (fullIter->startIndex+fullIter->numPoints);
+
+         if(startInRange && stopInRange)
+         {
+            // The entire input segment is contained within this segment.
+            if(thisIter->realPoints)
+            {
+               if(!retReal)
+               {
+                  retReal = true;
+                  retMax = thisIter->maxValue;
+                  retMin = thisIter->minValue;
+               }
+               else
+               {
+                  retMax = std::max(retMax, thisIter->maxValue);
+                  retMin = std::min(retMin, thisIter->minValue);
+               }
+            }
+
+            if(matchingMinIndex < 0)
+               matchingMinIndex = thisIter->minIndex;
+            matchingMaxIndex = thisIter->maxIndex;
+         }
+         ++thisIter;
+      }
+
+      // Grab points that weren't whole segments.
+      for(int i = fullIter->minIndex; i < matchingMinIndex; ++i)
+      {
+         double point = (*m_srcVect)[i];
+         if(isDoubleValid(point))
+         {
+            if(!retReal)
+            {
+               retReal = true;
+               retMax = point;
+               retMin = point;
+            }
+            else
+            {
+               retMax = std::max(retMax, point);
+               retMin = std::min(retMin, point);
+            }
+         }
+      }
+      for(int i = matchingMaxIndex+1; i < fullIter->maxIndex; ++i)
+      {
+         double point = (*m_srcVect)[i];
+         if(isDoubleValid(point))
+         {
+            if(!retReal)
+            {
+               retReal = true;
+               retMax = point;
+               retMin = point;
+            }
+            else
+            {
+               retMax = std::max(retMax, point);
+               retMin = std::min(retMin, point);
+            }
+         }
+      }
+
+      ++fullIter;
+   } // End while(fullIter != fullIn.end())
+
+   // Account for the parial points.
+   size_t numPartial = partial.size();
+   unsigned int* partialIndex = partial.data();
+   for(size_t i = 0; i < numPartial; ++i)
+   {
+      double point = (*m_srcVect)[partialIndex[i]];
+      if(isDoubleValid(point))
+      {
+         if(!retReal)
+         {
+            retReal = true;
+            retMax = point;
+            retMin = point;
+         }
+         else
+         {
+            retMax = std::max(retMax, point);
+            retMin = std::min(retMin, point);
+         }
+      }
+   }
+}
+
 
 
 fastMonotonicMaxMin::fastMonotonicMaxMin(smartMaxMin& parent):
