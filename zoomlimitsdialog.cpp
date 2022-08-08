@@ -20,6 +20,68 @@
 #include "ui_zoomlimitsdialog.h"
 #include "dString.h"
 
+ZoomLimits::ZoomLimits()
+{
+}
+
+ZoomLimits::~ZoomLimits()
+{
+}
+
+ZoomLimits::tZoomLimitInfo ZoomLimits::GetPlotLimits(eAxis axis)
+{
+   if(axis == E_Y_AXIS)
+      return m_heightLimit;
+   return m_widthLimit;
+}
+
+void ZoomLimits::SetPlotLimits(eAxis axis, tZoomLimitInfo& limits)
+{
+   if(axis == E_Y_AXIS)
+      m_heightLimit = limits;
+   else
+      m_widthLimit = limits;
+}
+
+void ZoomLimits::ApplyLimits(maxMinXY &plotDimensions)
+{
+   // Apply Limits to Width
+   double xRange = plotDimensions.maxX - plotDimensions.minX;
+   if(m_widthLimit.limitType == E_ZOOM_LIMIT__FROM_MAX && xRange > m_widthLimit.fromMinMaxVal)
+   {
+      plotDimensions.minX = plotDimensions.maxX - m_widthLimit.fromMinMaxVal;
+   }
+   else if(m_widthLimit.limitType == E_ZOOM_LIMIT__FROM_MIN && xRange > m_widthLimit.fromMinMaxVal)
+   {
+      plotDimensions.maxX = plotDimensions.minX + m_widthLimit.fromMinMaxVal;
+   }
+
+   // Apply Limits to Height
+   double yRange = plotDimensions.maxY - plotDimensions.minY;
+   if(m_heightLimit.limitType == E_ZOOM_LIMIT__FROM_MAX && yRange > m_heightLimit.fromMinMaxVal)
+   {
+      plotDimensions.minY = plotDimensions.maxY - m_heightLimit.fromMinMaxVal;
+   }
+   else if(m_heightLimit.limitType == E_ZOOM_LIMIT__FROM_MIN && yRange > m_heightLimit.fromMinMaxVal)
+   {
+      plotDimensions.maxY = plotDimensions.minY + m_heightLimit.fromMinMaxVal;
+   }
+
+   // Apply Absolute Limits
+   if(m_widthLimit.limitType == E_ZOOM_LIMIT__ABSOLUTE)
+   {
+      plotDimensions.minX = m_widthLimit.absMin;
+      plotDimensions.maxX = m_widthLimit.absMax;
+   }
+   if(m_heightLimit.limitType == E_ZOOM_LIMIT__ABSOLUTE)
+   {
+      plotDimensions.minY = m_heightLimit.absMin;
+      plotDimensions.maxY = m_heightLimit.absMax;
+   }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 zoomLimitsDialog::zoomLimitsDialog(QWidget *parent) :
    QDialog(parent),
    ui(new Ui::zoomLimitsDialog)
@@ -40,7 +102,7 @@ zoomLimitsDialog::~zoomLimitsDialog()
    delete ui;
 }
 
-bool zoomLimitsDialog::getZoomLimits(PlotZoom* plotZoom)
+bool zoomLimitsDialog::getZoomLimits(ZoomLimits* plotZoom)
 {
    m_plotZoom = plotZoom;
 
@@ -83,13 +145,13 @@ void zoomLimitsDialog::on_cmdCancel_clicked()
 
 void zoomLimitsDialog::on_cmbWidthTypes_currentIndexChanged(int index)
 {
-   m_widthZoomInfo.limitType = static_cast<PlotZoom::eZoomLimitType>(index);
+   m_widthZoomInfo.limitType = static_cast<ZoomLimits::eZoomLimitType>(index);
    fillAxisGui(E_X_AXIS);
 }
 
 void zoomLimitsDialog::on_cmbHeightTypes_currentIndexChanged(int index)
 {
-   m_heightZoomInfo.limitType = static_cast<PlotZoom::eZoomLimitType>(index);
+   m_heightZoomInfo.limitType = static_cast<ZoomLimits::eZoomLimitType>(index);
    fillAxisGui(E_Y_AXIS);
 }
 
@@ -103,14 +165,14 @@ void zoomLimitsDialog::fillAxisGui(eAxis axis)
 
 }
 
-void zoomLimitsDialog::fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
+void zoomLimitsDialog::fillAxisGui( ZoomLimits::tZoomLimitInfo& limits,
                                     QComboBox* combo,
                                     QLabel* label1,
                                     QLineEdit* text1,
                                     QLabel* label2,
                                     QLineEdit* text2)
 {
-   if(limits.limitType >= 0 && limits.limitType < PlotZoom::E_ZOOM_LIMIT__INVALID)
+   if(limits.limitType >= 0 && limits.limitType < ZoomLimits::E_ZOOM_LIMIT__INVALID)
    {
       combo->setCurrentIndex(limits.limitType);
    }
@@ -118,13 +180,13 @@ void zoomLimitsDialog::fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
    switch(limits.limitType)
    {
       default:
-      case PlotZoom::E_ZOOM_LIMIT__NONE:
+      case ZoomLimits::E_ZOOM_LIMIT__NONE:
          label1->setVisible(false);
          label2->setVisible(false);
          text1->setVisible(false);
          text2->setVisible(false);
       break;
-      case PlotZoom::E_ZOOM_LIMIT__ABSOLUTE:
+      case ZoomLimits::E_ZOOM_LIMIT__ABSOLUTE:
          label1->setVisible(true);
          label2->setVisible(true);
          text1->setVisible(true);
@@ -135,7 +197,7 @@ void zoomLimitsDialog::fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
          text1->setText(QString::number(limits.absMin));
          text2->setText(QString::number(limits.absMax));
       break;
-      case PlotZoom::E_ZOOM_LIMIT__FROM_MIN:
+      case ZoomLimits::E_ZOOM_LIMIT__FROM_MIN:
          label1->setVisible(false);
          label2->setVisible(false);
          text1->setVisible(true);
@@ -143,7 +205,7 @@ void zoomLimitsDialog::fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
 
          text1->setText(QString::number(limits.fromMinMaxVal));
       break;
-      case PlotZoom::E_ZOOM_LIMIT__FROM_MAX:
+      case ZoomLimits::E_ZOOM_LIMIT__FROM_MAX:
          label1->setVisible(false);
          label2->setVisible(false);
          text1->setVisible(true);
@@ -170,12 +232,12 @@ bool zoomLimitsDialog::fillStructFromGui(eAxis axis)
    return success;
 }
 
-bool zoomLimitsDialog::fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
+bool zoomLimitsDialog::fillStructFromGui( ZoomLimits::tZoomLimitInfo& limits,
                                           QComboBox* combo,
                                           QLineEdit* text1,
                                           QLineEdit* text2 )
 {
-   if(limits.limitType >= 0 && limits.limitType < PlotZoom::E_ZOOM_LIMIT__INVALID)
+   if(limits.limitType >= 0 && limits.limitType < ZoomLimits::E_ZOOM_LIMIT__INVALID)
       combo->setCurrentIndex(limits.limitType);
 
    bool success = true; // true until proven otherwise.
@@ -183,10 +245,10 @@ bool zoomLimitsDialog::fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
    switch(limits.limitType)
    {
       default:
-      case PlotZoom::E_ZOOM_LIMIT__NONE:
+      case ZoomLimits::E_ZOOM_LIMIT__NONE:
          // Nothing to do.
       break;
-      case PlotZoom::E_ZOOM_LIMIT__ABSOLUTE:
+      case ZoomLimits::E_ZOOM_LIMIT__ABSOLUTE:
          if(getValueFromTextBox(text1, textToNumber))
          {
             limits.absMin = textToNumber;
@@ -208,7 +270,7 @@ bool zoomLimitsDialog::fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
             success = false;
          }
       break;
-      case PlotZoom::E_ZOOM_LIMIT__FROM_MIN:
+      case ZoomLimits::E_ZOOM_LIMIT__FROM_MIN:
          if(getValueFromTextBox(text1, textToNumber))
          {
             limits.fromMinMaxVal = textToNumber;
@@ -222,7 +284,7 @@ bool zoomLimitsDialog::fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
             success = false;
          }
       break;
-      case PlotZoom::E_ZOOM_LIMIT__FROM_MAX:
+      case ZoomLimits::E_ZOOM_LIMIT__FROM_MAX:
          if(getValueFromTextBox(text1, textToNumber))
          {
             limits.fromMinMaxVal = textToNumber;

@@ -40,24 +40,6 @@ class MainWindow;
 class PlotZoom
 {
 public:
-   typedef enum
-   {
-      E_ZOOM_LIMIT__NONE,
-      E_ZOOM_LIMIT__ABSOLUTE,
-      E_ZOOM_LIMIT__FROM_MIN,
-      E_ZOOM_LIMIT__FROM_MAX,
-      E_ZOOM_LIMIT__INVALID
-   }eZoomLimitType;
-
-   typedef struct
-   {
-      eZoomLimitType limitType = E_ZOOM_LIMIT__NONE;
-      double absMin = 0.0;
-      double absMax = 0.0;
-      double fromMinMaxVal = 0.0;
-   }tZoomLimitInfo;
-
-public:
    PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScroll, QScrollBar* horzScroll);
 
    void SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput);
@@ -91,12 +73,6 @@ public:
    maxMinXY getCurPlotDim();
 
    void moveZoom(double deltaX, double deltaY, bool changeCausedByUserGuiInput);
-
-   void SetPlotLimit(eAxis axis, double limitValue); // limitValue of 0 means no limit, positive means limit from max, negative means limit from min
-   void ResetPlotLimits();
-
-   tZoomLimitInfo GetPlotLimits(eAxis axis);
-   void SetPlotLimits(eAxis axis, tZoomLimitInfo& limits);
 
    bool m_holdZoom;
    bool m_maxHoldZoom;
@@ -133,20 +109,11 @@ private:
    QVector<maxMinXY> m_zoomDimSave;
    unsigned int m_zoomDimIndex;
 
-   // Plot Dimension Limits
-   tZoomLimitInfo m_widthLimit;
-   tZoomLimitInfo m_heightLimit;
-
-   double m_xWidthLimit = 0.0; // 0 means no limit, positive means limit from max, negative means limit from min
-   double m_yHeightLimit = 0.0; // 0 means no limit, positive means limit from max, negative means limit from min
-
    void SetZoom(maxMinXY zoomDimensions, bool changeCausedByUserGuiInput, bool saveZoom);
 
    void UpdateScrollBars(bool changeCausedByUserGuiInput);
 
    bool areTheyClose(double val1, double val2);
-
-   void ApplyLimits(maxMinXY &plotDimensions);
 
    PlotZoom();
 };

@@ -52,6 +52,7 @@
 #include "Cursor.h"
 #include "CurveData.h"
 #include "plotSnrCalc.h"
+#include "zoomlimitsdialog.h"
 
 #define PLOT_CANVAS_OFFSET (6)
 
@@ -326,6 +327,11 @@ private:
 
     QLabel* m_deltaLabels[DELTA_LABEL_NUM_LABELS];
 
+    // Zoom Limit Stuff
+    zoomLimitsDialog* m_zoomLimitDialog;
+    ZoomLimits m_zoomLimits;
+    QMutex m_zoomLimitMutex;
+
     void resetPlot();
 
     void createUpdateCurve(UnpackPlotMsg* unpackPlotMsg);
@@ -334,7 +340,8 @@ private:
     void handleCurveDataChange(int curveIndex, bool onlyPlotSizeChanged = false);
     void updatePlotWithNewCurveData(bool onlyCurveDataChanged);
 
-    maxMinXY calcMaxMin();
+    maxMinXY calcMaxMin(bool limitedZoom = false, eAxis limitedAxis = E_X_AXIS, double startValue = 0, double stopValue = 0);
+    void SetZoomPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput);
 
     void autoZoom();
     void holdZoom();
@@ -475,7 +482,6 @@ private slots:
     void on_cmdPeakSearch_clicked();
     void on_cmdSpecAnResetZoom_clicked();
 
-    void setMaxPlotWidth_fromMax();
 public slots:
     void updateCursorMenus();
     void readPlotMsgSlot();

@@ -1275,7 +1275,7 @@ void MainWindow::autoZoom()
    m_zoomAction.setEnabled(true);
 
    maxMinXY maxMin = calcMaxMin();
-   m_plotZoom->SetPlotDimensions(maxMin, true);
+   SetZoomPlotDimensions(maxMin, true);
    m_plotZoom->ResetZoom();
 }
 
@@ -1295,7 +1295,7 @@ void MainWindow::maxHoldZoom()
    m_maxHoldZoomAction.setIcon(m_checkedIcon);
 
    maxMinXY maxMin = calcMaxMin();
-   m_plotZoom->SetPlotDimensions(maxMin, true);
+   SetZoomPlotDimensions(maxMin, true);
    m_plotZoom->ResetZoom();
    m_plotZoom->m_maxHoldZoom = true;
    m_plotZoom->m_holdZoom = false;
@@ -1519,7 +1519,7 @@ void MainWindow::togglePlotUpdateAbility()
    }
 }
 
-maxMinXY MainWindow::calcMaxMin()
+maxMinXY MainWindow::calcMaxMin(bool limitedZoom, eAxis limitedAxis, double startValue, double stopValue)
 {
    QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify m_maxMin at the same time.
    
@@ -1530,12 +1530,12 @@ maxMinXY MainWindow::calcMaxMin()
    }
    if(i < m_qwtCurves.size())
    {
-      m_maxMin = m_qwtCurves[i]->getMaxMinXYOfCurve();
+      m_maxMin = limitedZoom ? m_qwtCurves[i]->getMaxMinXYOfLimitedCurve(limitedAxis, startValue, stopValue) : m_qwtCurves[i]->getMaxMinXYOfCurve();
       while(i < m_qwtCurves.size())
       {
          if(m_qwtCurves[i]->isDisplayed())
          {
-            maxMinXY curveMaxMinXY = m_qwtCurves[i]->getMaxMinXYOfCurve();
+            maxMinXY curveMaxMinXY = limitedZoom ? m_qwtCurves[i]->getMaxMinXYOfLimitedCurve(limitedAxis, startValue, stopValue) : m_qwtCurves[i]->getMaxMinXYOfCurve();
 
             if(curveMaxMinXY.realX)
             {
@@ -1589,7 +1589,40 @@ maxMinXY MainWindow::calcMaxMin()
    return m_maxMin;
 }
 
+void MainWindow::SetZoomPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput)
+{
+   ZoomLimits::tZoomLimitInfo xLimits = m_zoomLimits.GetPlotLimits(E_X_AXIS);
+   ZoomLimits::tZoomLimitInfo yLimits = m_zoomLimits.GetPlotLimits(E_Y_AXIS);
 
+   m_zoomLimits.ApplyLimits(plotDimensions);
+
+   bool needToLimit = false;
+   eAxis axisToLimit;
+   double limitStart, limitStop;
+   if(xLimits.limitType != ZoomLimits::E_ZOOM_LIMIT__NONE && yLimits.limitType == ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      // X Axis is limited, but Y Axis isn't. Reduce Y zoom to just the points that will show up.
+      needToLimit = true;
+      axisToLimit = E_X_AXIS;
+      limitStart = plotDimensions.minX;
+      limitStop  = plotDimensions.maxX;
+   }
+   else if(yLimits.limitType != ZoomLimits::E_ZOOM_LIMIT__NONE && xLimits.limitType == ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      // Y Axis is limited, but X Axis isn't. Reduce X zoom to just the points that will show up.
+      needToLimit = true;
+      axisToLimit = E_Y_AXIS;
+      limitStart = plotDimensions.minY;
+      limitStop  = plotDimensions.maxY;
+   }
+   if(needToLimit)
+   {
+      plotDimensions = calcMaxMin(true, axisToLimit, limitStart, limitStop);
+   }
+
+   // Actually Set the Plot Dimensions.
+   m_plotZoom->SetPlotDimensions(plotDimensions, changeCausedByUserGuiInput);
+}
 
 int MainWindow::findIndexWithClosestPoint(const QPointF &pos, unsigned int& selectedCurvePointIndex)
 {
@@ -2329,7 +2362,16 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
             else if(KeyEvent->key() == Qt::Key_I && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
-               setMaxPlotWidth_fromMax();
+               QMutexLocker lock(&m_zoomLimitMutex);
+               m_zoomLimitDialog = new zoomLimitsDialog(this);
+
+               bool changeMade = m_zoomLimitDialog->getZoomLimits(&m_zoomLimits);
+               if(changeMade)
+               {
+                  maxMinXY maxMin = calcMaxMin();
+                  SetZoomPlotDimensions(maxMin, true);
+               }
+               delete m_zoomLimitDialog;
             }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
@@ -2717,7 +2759,7 @@ void MainWindow::setSelectedCurveIndex(int index)
             newZoom.maxY = (oldMaxMinXY.maxY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
             newZoom.minY = (oldMaxMinXY.minY - newCursorScale.yAxis.b) / newCursorScale.yAxis.m;
 
-            m_plotZoom->SetPlotDimensions(getPlotDimWithNormalization(), true);
+            SetZoomPlotDimensions(getPlotDimWithNormalization(), true);
             m_plotZoom->SetZoom(newZoom);
          }
          else
@@ -2755,7 +2797,7 @@ void MainWindow::replotMainPlot(bool changeCausedByUserGuiInput, bool cursorChan
    // If just the cursor point changed, there is no need to update plot dimesions.
    if(cursorChanged == false)
    {
-      m_plotZoom->SetPlotDimensions(getPlotDimWithNormalization(), changeCausedByUserGuiInput);
+      SetZoomPlotDimensions(getPlotDimWithNormalization(), changeCausedByUserGuiInput);
    }
 
    if(m_snrCalcBars != NULL)
@@ -3126,7 +3168,7 @@ void MainWindow::updateCurveOrder()
 
    replotMainPlot();
    maxMinXY maxMin = calcMaxMin();
-   m_plotZoom->SetPlotDimensions(maxMin, true);
+   SetZoomPlotDimensions(maxMin, true);
    emit updateCursorMenusSignal();
 }
 
@@ -3641,19 +3683,3 @@ void MainWindow::fillWithSavedAppearance(QString& curveName, CurveAppearance& ap
    }
 }
 
-void MainWindow::setMaxPlotWidth_fromMax()
-{
-   auto curPlotZoom = m_plotZoom->getCurPlotDim();
-   double curWidth = curPlotZoom.maxX - curPlotZoom.maxY;
-
-   bool ok;
-   QString dialogTitle = "Set Max Plot Width";
-   double newMaxWidth = QInputDialog::getDouble(this, dialogTitle, tr("Max Plot Width"), curWidth, 0, 0x7FFFFFFF, 1, &ok);
-
-   if(ok && newMaxWidth >= 0)
-   {
-      m_plotZoom->SetPlotLimit(E_X_AXIS, newMaxWidth);
-      maxMinXY maxMin = calcMaxMin();
-      m_plotZoom->SetPlotDimensions(maxMin, true);
-   }
-}

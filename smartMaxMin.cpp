@@ -544,19 +544,20 @@ void smartMaxMin::getSegmentsInRange(double start, double stop, tSegList& full, 
    {
       if(iter->realPoints)
       {
-         bool minInRange = (iter->minValue >= start && iter->minValue < stop);
-         bool maxInRange = (iter->maxValue >= start && iter->maxValue < stop);
+         bool minInRange = (iter->minValue >= start && iter->minValue <= stop);
+         bool maxInRange = (iter->maxValue >= start && iter->maxValue <= stop);
+         bool rangeContainedInThisSeg = (iter->maxValue >= stop && iter->minValue <= start);
          if(minInRange && maxInRange)
          {
             full.push_back(*iter); // The whole segment is in range.
          }
-         else if(minInRange || maxInRange)
+         else if(minInRange || maxInRange || rangeContainedInThisSeg)
          {
             // Only some points are in range. Store off the points that are in range.
             for(int i = iter->firstRealPointIndex; i <= iter->lastRealPointIndex; ++i)
             {
                double point = (*m_srcVect)[i];
-               if(point >= start && point < stop)
+               if(point >= start && point <= stop)
                {
                   partial.push_back(i);
                }

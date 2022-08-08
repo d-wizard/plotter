@@ -397,6 +397,65 @@ maxMinXY CurveData::getMaxMinXYOfData()
    return maxMin_beforeScale;
 }
 
+// Determines the min/max that will be displayed if one axis has it's range limited.
+maxMinXY CurveData::getMaxMinXYOfLimitedCurve(eAxis limitedAxis, double startValue, double stopValue)
+{
+   maxMinXY retVal = maxMin_beforeScale;
+   tSegList fullSegs;
+   std::vector<unsigned int> partialPoints;
+   if(limitedAxis == E_X_AXIS)
+   {
+      retVal.maxX = stopValue;
+      retVal.minX = startValue;
+      retVal.realX = true;
+      if(xNormalized)
+      {
+         startValue = (startValue - normFactor.xAxis.b) / normFactor.xAxis.m;
+         stopValue  = (stopValue  - normFactor.xAxis.b) / normFactor.xAxis.m;
+      }
+      if(plotDim == E_PLOT_DIM_1D)
+      {
+         // There is no smart min/max for X axis. TODO
+      }
+      else
+      {
+         smartMaxMinXPoints.getSegmentsInRange(startValue, stopValue, fullSegs, partialPoints);
+         smartMaxMinYPoints.getMaxMinFromSegments(fullSegs, partialPoints, retVal.maxY, retVal.minY, retVal.realY);
+      }
+      if(yNormalized)
+      {
+         retVal.maxY = retVal.maxY * normFactor.yAxis.m + normFactor.yAxis.b;
+         retVal.minY = retVal.minY * normFactor.yAxis.m + normFactor.yAxis.b;
+      }
+   }
+   else // limitedAxis = E_Y_AXIS
+   {
+      retVal.maxY = stopValue;
+      retVal.minY = startValue;
+      retVal.realY = true;
+      if(yNormalized)
+      {
+         startValue = (startValue - normFactor.yAxis.b) / normFactor.yAxis.m;
+         stopValue  = (stopValue  - normFactor.yAxis.b) / normFactor.yAxis.m;
+      }
+      if(plotDim == E_PLOT_DIM_1D)
+      {
+         // There is no smart min/max for X axis. TODO
+      }
+      else
+      {
+         smartMaxMinYPoints.getSegmentsInRange(startValue, stopValue, fullSegs, partialPoints);
+         smartMaxMinXPoints.getMaxMinFromSegments(fullSegs, partialPoints, retVal.maxX, retVal.minX, retVal.realX);
+      }
+      if(xNormalized)
+      {
+         retVal.maxX = retVal.maxX * normFactor.xAxis.m + normFactor.xAxis.b;
+         retVal.minX = retVal.minX * normFactor.xAxis.m + normFactor.xAxis.b;
+      }
+   }
+   return retVal;
+}
+
 QString CurveData::getCurveTitle()
 {
    return curve->title().text();

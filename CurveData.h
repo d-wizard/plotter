@@ -103,6 +103,7 @@ public:
    void setNumPoints(unsigned int newNumPointsSize);
    maxMinXY getMaxMinXYOfCurve();
    maxMinXY getMaxMinXYOfData();
+   maxMinXY getMaxMinXYOfLimitedCurve(eAxis limitedAxis, double startValue, double stopValue);
    QString getCurveTitle();
    tLinearXYAxis getNormFactor();
    bool isDisplayed();

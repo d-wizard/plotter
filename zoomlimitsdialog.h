@@ -29,6 +29,40 @@ namespace Ui {
 class zoomLimitsDialog;
 }
 
+class ZoomLimits
+{
+public:
+   typedef enum
+   {
+      E_ZOOM_LIMIT__NONE,
+      E_ZOOM_LIMIT__ABSOLUTE,
+      E_ZOOM_LIMIT__FROM_MIN,
+      E_ZOOM_LIMIT__FROM_MAX,
+      E_ZOOM_LIMIT__INVALID
+   }eZoomLimitType;
+
+   typedef struct
+   {
+      eZoomLimitType limitType = E_ZOOM_LIMIT__NONE;
+      double absMin = 0.0;
+      double absMax = 0.0;
+      double fromMinMaxVal = 0.0;
+   }tZoomLimitInfo;
+
+   ZoomLimits();
+   virtual ~ZoomLimits();
+
+   tZoomLimitInfo GetPlotLimits(eAxis axis);
+   void SetPlotLimits(eAxis axis, tZoomLimitInfo& limits);
+
+   void ApplyLimits(maxMinXY &plotDimensions);
+
+private:
+   // Plot Dimension Limits
+   tZoomLimitInfo m_widthLimit;
+   tZoomLimitInfo m_heightLimit;
+};
+
 class zoomLimitsDialog : public QDialog
 {
    Q_OBJECT
@@ -37,7 +71,7 @@ public:
    explicit zoomLimitsDialog(QWidget *parent = 0);
    ~zoomLimitsDialog();
 
-   bool getZoomLimits(PlotZoom* plotZoom);
+   bool getZoomLimits(ZoomLimits* plotZoom);
 
 private slots:
    void on_cmdApply_clicked();
@@ -51,13 +85,13 @@ private slots:
 private:
    Ui::zoomLimitsDialog *ui;
    bool m_applySelected = false;
-   PlotZoom* m_plotZoom;
+   ZoomLimits* m_plotZoom;
 
-   PlotZoom::tZoomLimitInfo m_widthZoomInfo;
-   PlotZoom::tZoomLimitInfo m_heightZoomInfo;
+   ZoomLimits::tZoomLimitInfo m_widthZoomInfo;
+   ZoomLimits::tZoomLimitInfo m_heightZoomInfo;
 
    void fillAxisGui(eAxis axis);
-   void fillAxisGui( PlotZoom::tZoomLimitInfo& limits,
+   void fillAxisGui( ZoomLimits::tZoomLimitInfo& limits,
                      QComboBox* combo,
                      QLabel* label1,
                      QLineEdit* text1,
@@ -66,7 +100,7 @@ private:
 
    bool getValueFromTextBox(QLineEdit* textBox, double& value);
    bool fillStructFromGui(eAxis axis);
-   bool fillStructFromGui( PlotZoom::tZoomLimitInfo& limits,
+   bool fillStructFromGui( ZoomLimits::tZoomLimitInfo& limits,
                            QComboBox* combo,
                            QLineEdit* text1,
                            QLineEdit* text2 );

@@ -59,10 +59,6 @@ PlotZoom::PlotZoom(MainWindow* mainWindow, QwtPlot* qwtPlot, QScrollBar* vertScr
 
 void PlotZoom::SetPlotDimensions(maxMinXY plotDimensions, bool changeCausedByUserGuiInput)
 {
-   // If any zoom limits are specified, apply them here.
-   ApplyLimits(plotDimensions);
-
-
    // Make sure min and max values are not the same (i.e. do not set the
    // plot width/height to 0).
    if(plotDimensions.maxX == plotDimensions.minX)
@@ -750,76 +746,4 @@ bool PlotZoom::areTheyClose(double val1, double val2)
    }
 
    return close;
-}
-
-
-void PlotZoom::SetPlotLimit(eAxis axis, double limitValue)
-{
-   if(axis == E_X_AXIS)
-   {
-      m_xWidthLimit = limitValue;
-   }
-   else if(axis == E_Y_AXIS)
-   {
-      m_yHeightLimit = limitValue;
-   }
-}
-
-void PlotZoom::ResetPlotLimits()
-{
-   m_xWidthLimit = 0.0;
-   m_yHeightLimit = 0.0; 
-}
-
-
-PlotZoom::tZoomLimitInfo PlotZoom::GetPlotLimits(eAxis axis)
-{
-   if(axis == E_Y_AXIS)
-      return m_heightLimit;
-   return m_widthLimit;
-}
-
-void PlotZoom::SetPlotLimits(eAxis axis, tZoomLimitInfo& limits)
-{
-   if(axis == E_Y_AXIS)
-      m_heightLimit = limits;
-   else
-      m_widthLimit = limits;
-}
-
-void PlotZoom::ApplyLimits(maxMinXY& plotDimensions)
-{
-   // Apply Limits to Width
-   double xRange = plotDimensions.maxX - plotDimensions.minX;
-   if(m_widthLimit.limitType == E_ZOOM_LIMIT__FROM_MAX && xRange > m_widthLimit.fromMinMaxVal)
-   {
-      plotDimensions.minX = plotDimensions.maxX - m_widthLimit.fromMinMaxVal;
-   }
-   else if(m_widthLimit.limitType == E_ZOOM_LIMIT__FROM_MIN && xRange > m_widthLimit.fromMinMaxVal)
-   {
-      plotDimensions.maxX = plotDimensions.minX + m_widthLimit.fromMinMaxVal;
-   }
-
-   // Apply Limits to Height
-   double yRange = plotDimensions.maxY - plotDimensions.minY;
-   if(m_heightLimit.limitType == E_ZOOM_LIMIT__FROM_MAX && yRange > m_heightLimit.fromMinMaxVal)
-   {
-      plotDimensions.minY = plotDimensions.maxY - m_heightLimit.fromMinMaxVal;
-   }
-   else if(m_heightLimit.limitType == E_ZOOM_LIMIT__FROM_MIN && yRange > m_heightLimit.fromMinMaxVal)
-   {
-      plotDimensions.maxY = plotDimensions.minY + m_heightLimit.fromMinMaxVal;
-   }
-
-   // Apply Absolute Limits
-   if(m_widthLimit.limitType == E_ZOOM_LIMIT__ABSOLUTE)
-   {
-      plotDimensions.minX = m_widthLimit.absMin;
-      plotDimensions.maxX = m_widthLimit.absMax;
-   }
-   if(m_heightLimit.limitType == E_ZOOM_LIMIT__ABSOLUTE)
-   {
-      plotDimensions.minY = m_heightLimit.absMin;
-      plotDimensions.maxY = m_heightLimit.absMax;
-   }
 }
