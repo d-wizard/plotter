@@ -58,7 +58,8 @@ SOURCES += main.cpp\
     AutoDelimiter.cpp \
     Cursor.cpp \
     fftSpectrumAnalyzerFunctions.cpp \
-    curveStatsChildParam.cpp
+    curveStatsChildParam.cpp \
+    zoomlimitsdialog.cpp
 
 HEADERS  += mainwindow.h \
     TCPThreads.h \
@@ -99,14 +100,16 @@ HEADERS  += mainwindow.h \
     hist.h \
     spectrumAnalyzerModeTypes.h \
     fftSpectrumAnalyzerFunctions.h \
-    curveStatsChildParam.h
+    curveStatsChildParam.h \
+    zoomlimitsdialog.h
 
 FORMS    += mainwindow.ui \
     plotguimain.ui \
     curveproperties.ui \
     plotcurvenamedialog.ui \
     overwriterenamedialog.ui \
-    createplotfromdata.ui
+    createplotfromdata.ui \
+    zoomlimitsdialog.ui
 
 INCLUDEPATH += $$QWTDIR/src
 INCLUDEPATH += $$FFTWDIR
