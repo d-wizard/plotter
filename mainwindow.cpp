@@ -1681,6 +1681,7 @@ void MainWindow::pointSelected(const QPointF &pos)
             {
                // Update the selected curve index.
                setSelectedCurveIndex(selectCurveIndex);
+               updateCursorMenus(); // Make sure menus are updated with the new selected curve.
                m_qwtSelectedSample->m_pointIndex = selectedCurvePointIndex; // Set to the point index that was determined by findIndexWithClosestPoint
             }
          }
