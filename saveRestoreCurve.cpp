@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -253,7 +253,7 @@ void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string del
    std::stringstream csvFile;
    if(curve->getPlotDim() == E_PLOT_DIM_2D)
    {
-      csvFile << curve->getCurveTitle().toStdString() << " - X Axis,";
+      csvFile << curve->getCurveTitle().toStdString() << " - X Axis" << delim;
       csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
       
       for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
