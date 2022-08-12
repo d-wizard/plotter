@@ -303,6 +303,7 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
     tQMenuActionMapper m_displayPointsCopyToClipboard;
 
+    QMenu m_displayPointsHexMenu;
     tQMenuActionMapper m_displayPointsHexOffX;
     tQMenuActionMapper m_displayPointsHexUnsignedX;
     tQMenuActionMapper m_displayPointsHexSignedX;

@@ -134,6 +134,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_displayPointsPrecisionUpBigAction("Precision +3", this),
    m_displayPointsPrecisionDownBigAction("Precision -3", this),
    m_displayPointsCopyToClipboard("Copy to Clipboard", this),
+   m_displayPointsHexMenu("Hex/Dec"),
    m_displayPointsHexOffX("X Axis Dec", this),
    m_displayPointsHexUnsignedX("X Axis Unsigned Hex", this),
    m_displayPointsHexSignedX("X Axis Signed Hex", this),
@@ -277,13 +278,14 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
 
     m_displayPointsMenu.addSeparator();
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexOffX,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexX);
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexUnsignedX,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexX);
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexSignedX,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexX);
-    m_displayPointsMenu.addSeparator();
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexOffY,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexY);
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexUnsignedY,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexY);
-    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexSignedY,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexY);
+    m_displayPointsMenu.addMenu(&m_displayPointsHexMenu);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexOffX,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexX);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexUnsignedX,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexX);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexSignedX,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexX);
+    m_displayPointsHexMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexOffY,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexY);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexUnsignedY,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexY);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexSignedY,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexY);
 
     m_displayPointsMenu.addSeparator();
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsCopyToClipboard,     0, displayPointsCopyToClipboard);
