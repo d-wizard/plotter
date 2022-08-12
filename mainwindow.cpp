@@ -123,6 +123,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_defaultCurveStyle(QwtPlotCurve::Lines),
    m_displayType(E_DISPLAY_POINT_AUTO),
    m_displayPrecision(8),
+   m_displayDecHexX(E_DISPLAY_POINT_DEC),
+   m_displayDecHexY(E_DISPLAY_POINT_DEC),
    m_displayPointsAutoAction("Auto", this),
    m_displayPointsFixedAction("Decimal", this),
    m_displayPointsScientificAction("Scientific", this),
@@ -132,6 +134,12 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_displayPointsPrecisionUpBigAction("Precision +3", this),
    m_displayPointsPrecisionDownBigAction("Precision -3", this),
    m_displayPointsCopyToClipboard("Copy to Clipboard", this),
+   m_displayPointsHexOffX("X Axis Dec", this),
+   m_displayPointsHexUnsignedX("X Axis Unsigned Hex", this),
+   m_displayPointsHexSignedX("X Axis Signed Hex", this),
+   m_displayPointsHexOffY("Y Axis Dec", this),
+   m_displayPointsHexUnsignedY("Y Axis Unsigned Hex", this),
+   m_displayPointsHexSignedY("Y Axis Signed Hex", this),
    m_activityIndicator_plotIsActive(true),
    m_activityIndicator_indicatorState(true),
    m_activityIndicator_inactiveCount(0),
@@ -267,6 +275,15 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownAction,    -1, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionDownBigAction, -3, displayPointsChangePrecision);
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsPrecisionAutoAction,     0, displayPointsChangePrecision);
+
+    m_displayPointsMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexOffX,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexX);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexUnsignedX,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexX);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexSignedX,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexX);
+    m_displayPointsMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexOffY,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexY);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexUnsignedY,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexY);
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsHexSignedY,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexY);
 
     m_displayPointsMenu.addSeparator();
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsCopyToClipboard,     0, displayPointsCopyToClipboard);
@@ -1869,6 +1886,47 @@ QPalette MainWindow::labelColorToPalette(QColor color)
    return palette;
 }
 
+void MainWindow::displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis)
+{
+   eDisplayPointHexDec displayDecHex = (axis == E_X_AXIS) ? m_displayDecHexX : m_displayDecHexY;
+   bool hex = (displayDecHex == E_DISPLAY_POINT_UNSIGNED_HEX || displayDecHex == E_DISPLAY_POINT_SIGNED_HEX);
+
+   if(hex)
+   {
+      int64_t intVal = static_cast<int64_t>(number);
+      if( double(intVal) != number )
+         hex = false;
+   }
+
+   if(hex)
+   {
+      std::stringstream ss;
+      int64_t intVal = static_cast<int64_t>(number);
+      if(displayDecHex == E_DISPLAY_POINT_UNSIGNED_HEX)
+      {
+         // Do 32 bit or 64 bit
+         uint64_t uintVal = (uint64_t)intVal;
+         if((uintVal >> 32) == 0xFFFFFFFF)
+            uintVal &= 0xFFFFFFFF;
+         ss << "0x" << std::hex << uintVal;
+      }
+      else if(number < 0.0)
+      {
+         ss << "-0x" << std::hex << -intVal;
+      }
+      else
+      {
+         ss << "0x" << std::hex << intVal;
+      }
+      lblText << ss.str();
+   }
+   else
+   {
+      lblText << number;
+   }
+
+}
+
 void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex)
 {
    CurveData* curve = m_qwtCurves[curveIndex];
@@ -1878,14 +1936,18 @@ void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, uns
    if(isSelectedCurve)
       lblText << "<b>"; // Make Bold
 
-   lblText << DISPLAY_POINT_START << curve->getXPoints()[curvePointIndex] << DISPLAY_POINT_MID;
+   lblText << DISPLAY_POINT_START;
+   displayLabelAddNum(lblText, curve->getXPoints()[curvePointIndex], E_X_AXIS);
+   lblText << DISPLAY_POINT_MID;
 
    if(displayFormatSet == false)
    {
        setDisplayIoMapipYAxis(lblText);
        displayFormatSet = true;
    }
-   lblText << curve->getYPoints()[curvePointIndex] << DISPLAY_POINT_STOP;
+
+   displayLabelAddNum(lblText, curve->getYPoints()[curvePointIndex], E_Y_AXIS);
+   lblText << DISPLAY_POINT_STOP;
 
    if(isSelectedCurve)
       lblText << "</b>"; // Make Not Bold Anymore
@@ -1966,27 +2028,33 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    lblText.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << m_qwtSelectedSampleDelta->m_xPoint << DISPLAY_POINT_MID;
+   displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_xPoint, E_X_AXIS);
+   lblText << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSampleDelta->m_yPoint << DISPLAY_POINT_STOP;
+   displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_yPoint, E_Y_AXIS);
+   lblText << DISPLAY_POINT_STOP;
    anchored = QString(lblText.str().c_str());
 
    // Get Current text.
    lblText.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << m_qwtSelectedSample->m_xPoint << DISPLAY_POINT_MID;
+   displayLabelAddNum(lblText, m_qwtSelectedSample->m_xPoint, E_X_AXIS);
+   lblText << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << m_qwtSelectedSample->m_yPoint << DISPLAY_POINT_STOP;
+   displayLabelAddNum(lblText, m_qwtSelectedSample->m_yPoint, E_Y_AXIS);
+   lblText << DISPLAY_POINT_STOP;
    current = QString(lblText.str().c_str());
 
    // Get Delta text.
    lblText.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
-   lblText << (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint) << DISPLAY_POINT_MID;
+   displayLabelAddNum(lblText, (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint), E_X_AXIS);
+   lblText << DISPLAY_POINT_MID;
    setDisplayIoMapipYAxis(lblText);
-   lblText << (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint) << DISPLAY_POINT_STOP;
+   displayLabelAddNum(lblText, (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint), E_Y_AXIS);
+   lblText << DISPLAY_POINT_STOP;
    delta = QString(lblText.str().c_str());
 }
 
@@ -2108,6 +2176,46 @@ void MainWindow::setDisplayRightClickIcons()
         m_displayPointsScientificAction.m_action.setIcon(QIcon());
     break;
     }
+
+    switch(m_displayDecHexX)
+    {
+    default:
+    case E_DISPLAY_POINT_DEC:
+       m_displayPointsHexOffX.m_action.setIcon(m_checkedIcon);
+       m_displayPointsHexUnsignedX.m_action.setIcon(QIcon());
+       m_displayPointsHexSignedX.m_action.setIcon(QIcon());
+    break;
+    case E_DISPLAY_POINT_UNSIGNED_HEX:
+       m_displayPointsHexOffX.m_action.setIcon(QIcon());
+       m_displayPointsHexUnsignedX.m_action.setIcon(m_checkedIcon);
+       m_displayPointsHexSignedX.m_action.setIcon(QIcon());
+    break;
+    case E_DISPLAY_POINT_SIGNED_HEX:
+       m_displayPointsHexOffX.m_action.setIcon(QIcon());
+       m_displayPointsHexUnsignedX.m_action.setIcon(QIcon());
+       m_displayPointsHexSignedX.m_action.setIcon(m_checkedIcon);
+    break;
+    }
+
+    switch(m_displayDecHexY)
+    {
+    default:
+    case E_DISPLAY_POINT_DEC:
+       m_displayPointsHexOffY.m_action.setIcon(m_checkedIcon);
+       m_displayPointsHexUnsignedY.m_action.setIcon(QIcon());
+       m_displayPointsHexSignedY.m_action.setIcon(QIcon());
+    break;
+    case E_DISPLAY_POINT_UNSIGNED_HEX:
+       m_displayPointsHexOffY.m_action.setIcon(QIcon());
+       m_displayPointsHexUnsignedY.m_action.setIcon(m_checkedIcon);
+       m_displayPointsHexSignedY.m_action.setIcon(QIcon());
+    break;
+    case E_DISPLAY_POINT_SIGNED_HEX:
+       m_displayPointsHexOffY.m_action.setIcon(QIcon());
+       m_displayPointsHexUnsignedY.m_action.setIcon(QIcon());
+       m_displayPointsHexSignedY.m_action.setIcon(m_checkedIcon);
+    break;
+    }
 }
 
 void MainWindow::displayPointsChangeType(int type) // This is a SLOT
@@ -2142,6 +2250,20 @@ void MainWindow::displayPointsChangePrecision(int precision) // This is a SLOT
 
     // If the plot window is closed, the next time a plot with the same name is created, it will initialize to use this value.
     persistentPlotParam_get(g_persistentPlotParams, m_plotName)->m_displayPrecision.set(m_displayPrecision);
+}
+
+void MainWindow::displayPointsChangeDecHexX(int type)
+{
+   m_displayDecHexX = (eDisplayPointHexDec)type;
+   setDisplayRightClickIcons();
+   updatePointDisplay();
+}
+
+void MainWindow::displayPointsChangeDecHexY(int type)
+{
+   m_displayDecHexY = (eDisplayPointHexDec)type;
+   setDisplayRightClickIcons();
+   updatePointDisplay();
 }
 
 void MainWindow::displayPointsCopyToClipboard(int dummy)
