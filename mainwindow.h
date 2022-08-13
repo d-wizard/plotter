@@ -290,6 +290,8 @@ private:
 
     eDisplayPointType m_displayType;
     int m_displayPrecision;
+    eDisplayPointHexDec m_displayDecHexX;
+    eDisplayPointHexDec m_displayDecHexY;
     QMenu m_displayPointsMenu;
     tQMenuActionMapper m_displayPointsAutoAction;
     tQMenuActionMapper m_displayPointsFixedAction;
@@ -301,6 +303,14 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
     tQMenuActionMapper m_displayPointsCopyToClipboard;
+
+    QMenu m_displayPointsHexMenu;
+    tQMenuActionMapper m_displayPointsHexOffX;
+    tQMenuActionMapper m_displayPointsHexUnsignedX;
+    tQMenuActionMapper m_displayPointsHexSignedX;
+    tQMenuActionMapper m_displayPointsHexOffY;
+    tQMenuActionMapper m_displayPointsHexUnsignedY;
+    tQMenuActionMapper m_displayPointsHexSignedY;
 
     QTimer m_activityIndicator_timer;
     bool m_activityIndicator_plotIsActive;
@@ -350,6 +360,7 @@ private:
     void initDeltaLabels();
     void clearPointLabels();
     QPalette labelColorToPalette(QColor color);
+    void displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis);
     void displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex);
     void displayPointLabels_clean();
     void displayPointLabels_update();
@@ -468,6 +479,8 @@ private slots:
 
     void displayPointsChangeType(int type);
     void displayPointsChangePrecision(int precision);
+    void displayPointsChangeDecHexX(int type);
+    void displayPointsChangeDecHexY(int type);
     void displayPointsCopyToClipboard(int dummy);
 
     void updateCurveOrder();

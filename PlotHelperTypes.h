@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -416,6 +416,13 @@ typedef enum
     E_DISPLAY_POINT_FIXED,
     E_DISPLAY_POINT_SCIENTIFIC
 }eDisplayPointType;
+
+typedef enum
+{
+   E_DISPLAY_POINT_DEC,
+   E_DISPLAY_POINT_UNSIGNED_HEX,
+   E_DISPLAY_POINT_SIGNED_HEX,
+}eDisplayPointHexDec;
 
 typedef struct
 {
