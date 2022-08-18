@@ -101,6 +101,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_autoZoomAction("Auto", this),
    m_holdZoomAction("Freeze", this),
    m_maxHoldZoomAction("Max Hold", this),
+   m_setZoomLimitsAction("Set Zoom Limits", this),
    m_scrollModeAction("Scroll Mode", this),
    m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
    m_scrollModeClearAllAction("Clear All Samples", this),
@@ -188,6 +189,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_autoZoomAction, SIGNAL(triggered(bool)), this, SLOT(autoZoom_guiSlot()));
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom_guiSlot()));
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
+    connect(&m_setZoomLimitsAction, SIGNAL(triggered(bool)), this, SLOT(setZoomLimits_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_scrollModeClearAllAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeClearAllSlot()));
@@ -262,6 +264,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_zoomSettingsMenu.addAction(&m_autoZoomAction);
     m_zoomSettingsMenu.addAction(&m_holdZoomAction);
     m_zoomSettingsMenu.addAction(&m_maxHoldZoomAction);
+    m_zoomSettingsMenu.addSeparator();
+    m_zoomSettingsMenu.addAction(&m_setZoomLimitsAction);
     m_autoZoomAction.setIcon(m_checkedIcon);
     setDisplayRightClickIcons();
 
@@ -1282,6 +1286,21 @@ void MainWindow::maxHoldZoom_guiSlot()
 {
    m_userHasSpecifiedZoomType = true;
    maxHoldZoom();
+}
+
+void MainWindow::setZoomLimits_guiSlot()
+{
+   QMutexLocker lock(&m_zoomLimitMutex);
+   m_zoomLimitDialog = new zoomLimitsDialog(this);
+
+   bool changeMade = m_zoomLimitDialog->getZoomLimits(&m_zoomLimits);
+   if(changeMade)
+   {
+      maxMinXY maxMin = calcMaxMin();
+      SetZoomPlotDimensions(maxMin, true);
+   }
+   delete m_zoomLimitDialog;
+   m_zoomLimitDialog = NULL;
 }
 
 void MainWindow::autoZoom()
@@ -2487,16 +2506,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
             else if(KeyEvent->key() == Qt::Key_I && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
-               QMutexLocker lock(&m_zoomLimitMutex);
-               m_zoomLimitDialog = new zoomLimitsDialog(this);
-
-               bool changeMade = m_zoomLimitDialog->getZoomLimits(&m_zoomLimits);
-               if(changeMade)
-               {
-                  maxMinXY maxMin = calcMaxMin();
-                  SetZoomPlotDimensions(maxMin, true);
-               }
-               delete m_zoomLimitDialog;
+               setZoomLimits_guiSlot();
             }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {

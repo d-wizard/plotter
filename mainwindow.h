@@ -262,6 +262,7 @@ private:
     QAction m_autoZoomAction;
     QAction m_holdZoomAction;
     QAction m_maxHoldZoomAction;
+    QAction m_setZoomLimitsAction;
     QAction m_scrollModeAction;
     QAction m_scrollModeChangePlotSizeAction;
     QAction m_scrollModeClearAllAction;
@@ -447,6 +448,7 @@ private slots:
     void autoZoom_guiSlot();
     void holdZoom_guiSlot();
     void maxHoldZoom_guiSlot();
+    void setZoomLimits_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
     void scrollModeClearAllSlot();
