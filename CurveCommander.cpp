@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -154,6 +154,7 @@ void CurveCommander::plotRemoved(QString plotName)
    tCurveCommanderInfo::iterator iter = m_allCurves.find(plotName);
    if(iter != m_allCurves.end())
    {
+      iter.value().plotGui->closeSubWindows();
       delete iter.value().plotGui;
       m_allCurves.erase(iter);
       plotWasRemoved = true;

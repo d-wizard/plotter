@@ -43,6 +43,7 @@
 #include <QSharedPointer>
 #include <QMutex>
 #include <QTimer>
+#include <QSemaphore>
 
 #include <queue>
 
@@ -189,6 +190,8 @@ public:
     bool areFftMeasurementsVisible();
 
     void saveCurveAppearance(QString curveName, CurveAppearance& appearance);
+
+    bool closeSubWindows(); // Returns true if sub-windows were closed.
 
     bool m_spectrumAnalyzerViewSet;
 private:
@@ -339,9 +342,11 @@ private:
     QLabel* m_deltaLabels[DELTA_LABEL_NUM_LABELS];
 
     // Zoom Limit Stuff
-    zoomLimitsDialog* m_zoomLimitDialog;
+    zoomLimitsDialog* m_zoomLimitDialog = NULL;
     ZoomLimits m_zoomLimits;
     QMutex m_zoomLimitMutex;
+    QSemaphore m_zoomLimitSem;
+
 
     void resetPlot();
 

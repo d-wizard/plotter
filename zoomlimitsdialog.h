@@ -72,6 +72,7 @@ public:
    ~zoomLimitsDialog();
 
    bool getZoomLimits(ZoomLimits* plotZoom);
+   void cancel(){on_cmdCancel_clicked();}
 
 private slots:
    void on_cmdApply_clicked();

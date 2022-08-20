@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 #include <string>
 #include <QProcess>
 #include <QMessageBox>
+#include <thread>
 #include "FileSystemOperations.h"
 #include "revDateStamp.h"
 #include "PlotHelperTypes.h"
@@ -147,8 +148,13 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
 
 void plotGuiMain::closeAllPlotsSlot()
 {
-   m_curveCommander.destroyAllPlots();
-   m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
+   // Run on a background thread instead of on the GUI thread. This allows us to switch back to any block threads
+   // on the plot's main window.
+   std::thread t([this](){
+      m_curveCommander.destroyAllPlots();
+      m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
+   });
+   t.detach();
 }
 
 void plotGuiMain::restorePlotFilesInListSlot()

@@ -1293,7 +1293,10 @@ void MainWindow::setZoomLimits_guiSlot()
    QMutexLocker lock(&m_zoomLimitMutex);
    m_zoomLimitDialog = new zoomLimitsDialog(this);
 
+   lock.unlock();
    bool changeMade = m_zoomLimitDialog->getZoomLimits(&m_zoomLimits);
+   lock.relock();
+
    if(changeMade)
    {
       maxMinXY maxMin = calcMaxMin();
@@ -1301,6 +1304,8 @@ void MainWindow::setZoomLimits_guiSlot()
    }
    delete m_zoomLimitDialog;
    m_zoomLimitDialog = NULL;
+
+   m_zoomLimitSem.release();
 }
 
 void MainWindow::autoZoom()
@@ -3816,5 +3821,26 @@ void MainWindow::fillWithSavedAppearance(QString& curveName, CurveAppearance& ap
          appearance = map[curveName];
       }
    }
+}
+
+bool MainWindow::closeSubWindows()
+{
+   bool subWindowClosed = false;
+
+   // Handle Zoom Limit Dialog Window.
+   {
+      QMutexLocker lock(&m_zoomLimitMutex);
+      if(m_zoomLimitDialog != NULL)
+      {
+         m_zoomLimitDialog->cancel();
+         subWindowClosed = true;
+
+         lock.unlock();
+         m_zoomLimitSem.acquire();
+      }
+   }
+
+
+   return subWindowClosed;
 }
 
