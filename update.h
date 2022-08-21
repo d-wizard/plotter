@@ -1,4 +1,4 @@
-/* Copyright 2017, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2017, 2021 - 2022 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,7 +22,7 @@
 #include <vector>
 
 
-bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string plotterCmdLine);
+bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string& plotterCmdLine);
 
 void cleanupAfterUpdate();
 

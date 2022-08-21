@@ -119,7 +119,7 @@ static bool copyFile(std::string srcPath, std::string destPath)
 }
 #endif
 
-bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string plotterCmdLine)
+bool updatePlotter(std::string pathToThisBinary, std::string& plotterUpdatePath, std::vector<std::string>& plotterUpdateArgs, std::string& plotterCmdLine)
 {
    std::string updateBinaryFileName = UPDATE_FILES[UPDATE_FILES_UPDATE_EXE_INDEX];
 
