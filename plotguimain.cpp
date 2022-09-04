@@ -61,6 +61,9 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     QObject::connect(this, SIGNAL(restorePlotFilesInListSignal()),
                      this, SLOT(restorePlotFilesInListSlot()), Qt::QueuedConnection);
 
+    QObject::connect(this, SIGNAL(closeAllPlotsSafeRetrySignal()),
+                     this, SLOT(closeAllPlotsSafeRetrySlot()), Qt::QueuedConnection);
+
     if(tcpPorts.size() > 0)
     {
        for(size_t i = 0; i < tcpPorts.size(); ++i)
@@ -81,7 +84,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
-    connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSlot()));
+    connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSafeSlot()));
     connect(&m_updateBinaryAction, SIGNAL(triggered(bool)), this, SLOT(updateBinarySlot()));
 
     m_trayMenu = new QMenu("Plot", this);
@@ -146,10 +149,23 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
    m_sem.release();
 }
 
-void plotGuiMain::closeAllPlotsSlot()
+void plotGuiMain::closeAllPlotsSafeSlot()
 {
-   m_curveCommander.destroyAllPlots();
+   bool allPlotsDestroyed = m_curveCommander.destroyAllPlotsSafe();
    m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
+
+   // If not successful, that means some more GUI works needs to be done before the windows can be closed.
+   // Use emit to run this again after this call stack returns and the other GUI call stacks return.
+   if(!allPlotsDestroyed)
+   {
+      emit closeAllPlotsSafeRetrySignal();
+   }
+}
+
+void plotGuiMain::closeAllPlotsSafeRetrySlot()
+{
+   // Try the destroy one more time.
+   m_curveCommander.destroyAllPlotsSafe();
 }
 
 void plotGuiMain::restorePlotFilesInListSlot()

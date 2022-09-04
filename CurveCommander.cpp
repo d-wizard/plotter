@@ -148,15 +148,20 @@ void CurveCommander::curvePropertyChanged()
    }
 }
 
-void CurveCommander::plotRemoved(QString plotName)
+bool CurveCommander::removePlot(QString plotName, bool safeRemove)
 {
    bool plotWasRemoved = false;
    tCurveCommanderInfo::iterator iter = m_allCurves.find(plotName);
    if(iter != m_allCurves.end())
    {
-      delete iter.value().plotGui;
-      m_allCurves.erase(iter);
-      plotWasRemoved = true;
+      bool subWindowClosed = iter.value().plotGui->closeSubWindows();
+      bool dontDelete = safeRemove && subWindowClosed; // The GUI thread will be busy closing the sub-window. Don't delete yet.
+      if(!dontDelete)
+      {
+         delete iter.value().plotGui;
+         m_allCurves.erase(iter);
+         plotWasRemoved = true;
+      }
    }
    if(plotWasRemoved)
    {
@@ -173,6 +178,7 @@ void CurveCommander::plotRemoved(QString plotName)
          m_createPlotFromDataGui->updateGuiPlotCurveInfo();
       }
    }
+   return plotWasRemoved;
 }
 
 
@@ -238,6 +244,29 @@ void CurveCommander::destroyAllPlots()
       plotWindowCloseSlot(iter.key()); // Cleans everything up and removes the instance from m_allCurves.
       iter = m_allCurves.begin(); // Set iter to the next plot to destroy.
    }
+}
+
+bool CurveCommander::destroyAllPlotsSafe()
+{
+   // Since some plots may not close due to the safe mode of this function,
+   // just grab all the plot names first before calling a function that might
+   // modifiy the m_allCurves map.
+   QVector<QString> plotNames;
+   tCurveCommanderInfo::iterator iter = m_allCurves.begin();
+   while(iter != m_allCurves.end())
+   {
+      plotNames.push_back(iter.key());
+      ++iter;
+   }
+
+   // Attempt to remove the plots.
+   bool success = true;
+   for(int i = 0; i < plotNames.size(); ++i)
+   {
+      success = removePlot(plotNames[i], true) && success;
+   }
+
+   return success;
 }
 
 void CurveCommander::readPlotMsg(UnpackMultiPlotMsg* plotMsg)
@@ -389,7 +418,7 @@ void CurveCommander::update2dChildCurve( QString& plotName,
 
 void CurveCommander::plotWindowCloseSlot(QString plotName)
 {
-    plotRemoved(plotName);
+    removePlot(plotName);
 }
 
 void CurveCommander::showHidePlotGui(QString plotName)

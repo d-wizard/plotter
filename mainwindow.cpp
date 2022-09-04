@@ -1304,8 +1304,6 @@ void MainWindow::setZoomLimits_guiSlot()
    }
    delete m_zoomLimitDialog;
    m_zoomLimitDialog = NULL;
-
-   m_zoomLimitSem.release();
 }
 
 void MainWindow::autoZoom()
@@ -3845,12 +3843,8 @@ bool MainWindow::closeSubWindows()
       {
          m_zoomLimitDialog->cancel();
          subWindowClosed = true;
-
-         lock.unlock();
-         m_zoomLimitSem.acquire();
       }
    }
-
 
    return subWindowClosed;
 }

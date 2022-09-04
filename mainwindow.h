@@ -345,7 +345,6 @@ private:
     zoomLimitsDialog* m_zoomLimitDialog = NULL;
     ZoomLimits m_zoomLimits;
     QMutex m_zoomLimitMutex;
-    QSemaphore m_zoomLimitSem;
 
 
     void resetPlot();
