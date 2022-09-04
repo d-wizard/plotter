@@ -148,13 +148,8 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
 
 void plotGuiMain::closeAllPlotsSlot()
 {
-   // Run on a background thread instead of on the GUI thread. This allows us to switch back to any block threads
-   // on the plot's main window.
-   std::thread t([this](){
-      m_curveCommander.destroyAllPlots();
-      m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
-   });
-   t.detach();
+   m_curveCommander.destroyAllPlots();
+   m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
 }
 
 void plotGuiMain::restorePlotFilesInListSlot()

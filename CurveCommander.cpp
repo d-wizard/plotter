@@ -154,7 +154,6 @@ void CurveCommander::plotRemoved(QString plotName)
    tCurveCommanderInfo::iterator iter = m_allCurves.find(plotName);
    if(iter != m_allCurves.end())
    {
-      iter.value().plotGui->closeSubWindows();
       delete iter.value().plotGui;
       m_allCurves.erase(iter);
       plotWasRemoved = true;
