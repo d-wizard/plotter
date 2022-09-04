@@ -3087,7 +3087,18 @@ void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
 
       if(curIndex != newIndex)
       {
+         // Get title of the selected curve.
+         QString selectedCurveTitle = (m_selectedCurveIndex >= 0 && m_selectedCurveIndex < m_qwtCurves.size()) ?
+            m_qwtCurves[m_selectedCurveIndex]->getCurveTitle() : "";
+
+         // Move the curve its new position.
          m_qwtCurves.move(curIndex, newIndex);
+
+         // Update the selected curve index for its new position.
+         if(selectedCurveTitle != "")
+            m_selectedCurveIndex = getCurveIndex(selectedCurveTitle);
+
+         // Update the GUI.
          updateCurveOrder();
       }
       // Else new and cur index are the same, nothing to do.
