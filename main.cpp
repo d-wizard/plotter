@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021, 2023 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -47,7 +47,6 @@ bool default2dPlotStyleIsLines = false; // true = Lines, false = Dots
 bool inSpectrumAnalyzerMode = false;
 tSpecAnModeParam spectrumAnalyzerParams;
 
-#ifdef PLOTTER_WINDOWS_BUILD
 // Local Functions
 static QString getEnvVar(QString envVarNam)
 {
@@ -62,7 +61,6 @@ static QString getEnvVar(QString envVarNam)
    }
    return "";
 }
-#endif
 
 static int connectToExistingAppInstance(unsigned short port)
 {
@@ -300,7 +298,9 @@ static void setPersistentParamPath()
 
    persistentParam_setPath(appDataPath);
 #else
-   persistentParam_setPath("~/.plotter");
+    std::string homePlotter = getEnvVar("HOME").toStdString() +
+          fso::dirSep() + ".plotter";
+   persistentParam_setPath(homePlotter);
 #endif
 }
 
@@ -380,6 +380,10 @@ int main(int argc, char *argv[])
    processCmdLineArgs(argc, argv);
    processIniFile(argc, argv);
 
+   if(g_ports.size() == 0)
+   {
+       g_ports.push_back(2000);
+   }
    if(g_ports.size() > 0)
    {
       int connectionToExistingAppInstance = -1;
