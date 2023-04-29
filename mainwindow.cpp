@@ -3628,7 +3628,7 @@ void MainWindow::specAn_setTraceType(fftSpecAnFunc::eFftSpecAnTraceType newTrace
 
 void MainWindow::setSpecAnGuiVisible(bool visible)
 {
-#if 0
+#ifdef Q_OS_LINUX // Windows 10 seems to override all the black on black nonsense by itself. Linux doesn't.
    // The default plotter Palette has a black background. This can cause some issues with
    // certain GUI elements in different Windows theme styles. The 'Standard Palette' seems
    // to work best in all situations.
