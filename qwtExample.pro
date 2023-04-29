@@ -23,7 +23,8 @@ QWTDIR = ../PlotterDependencies/prebuilt/qwt_sources_and_bin/latest6.1_myMods/qw
 FFTWDIR = ../PlotterDependencies/prebuilt/fftw-dll
 include ( $${QWTDIR}/qwt.prf )
 
-QT       += core gui
+QT += core gui
+QT += widgets
 
 TARGET = qwtExample
 TEMPLATE = app
