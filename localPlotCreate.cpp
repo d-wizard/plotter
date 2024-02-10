@@ -1,4 +1,4 @@
-/* Copyright 2016, 2020 Dan Williams. All Rights Reserved.
+/* Copyright 2016, 2020, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +23,7 @@
 #include "saveRestoreCurve.h"
 #include "overwriterenamedialog.h"
 #include "plotcurvenamedialog.h"
+#include "openrawdialog.h"
 
 
 
@@ -96,7 +97,7 @@ bool localPlotCreate::validateNewPlotCurveName(CurveCommander* p_curveCmdr, QStr
 }
 
 
-void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString fileName, QString plotName)
+void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString fileName, QString plotName, bool rawFile)
 {
    std::vector<char> curveFile;
    fso::ReadBinaryFile(fileName.toStdString(), curveFile);
@@ -143,6 +144,13 @@ void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString f
       {
          restoreMultipleCurves(p_curveCmdr, plotName, restoreCsv.params);
       }
+   }
+   
+   if(inputIsValid == false && rawFile == true)
+   {
+      // File isn't a valid plot/curve/csv, but raw mode is selected, so interpret as raw bytes.
+      openRawDialog openRaw;
+      openRaw.deterimineRawType(p_curveCmdr);
    }
 
    if(inputIsValid == false)

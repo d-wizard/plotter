@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1796,7 +1796,10 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
-   QString fileTypeFilterList = tr("Plot/Curve Files (*.plot *.curve);;CSV File (*.csv)");
+   QString plotCurveFilesMask = "Plot/Curve Files (*.plot *.curve)";
+   QString csvFilesMask = "CSV File (*.csv)";
+   QString rawFilesMask = "Raw File(*)";
+   QString fileTypeFilterList = plotCurveFilesMask + ";;" + csvFilesMask + ";;" + rawFilesMask;
 
    // Read the last used filter from persistent memory.
    std::string persistentSaveStr = PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION;
@@ -1817,7 +1820,8 @@ void curveProperties::on_cmdOpenCurveFromFile_clicked()
    setOpenSavePath(fileName);
    persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
 
-   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText());
+   bool rawFile = (selectedFilter == rawFilesMask);
+   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText(), rawFile);
 
 }
 

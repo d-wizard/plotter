@@ -35,6 +35,7 @@ SOURCES += main.cpp\
     TCPThreads.cpp \
     TCPMsgReader.cpp \
     PackUnpackPlotMsg.cpp \
+    openrawdialog.cpp \
     plotguimain.cpp \
     dString.cpp \
     FileSystemOperations.cpp \
@@ -71,6 +72,7 @@ HEADERS  += mainwindow.h \
     PlotHelperTypes.h \
     Cursor.h \
     CurveData.h \
+    openrawdialog.h \
     plotguimain.h \
     dString.h \
     FileSystemOperations.h \
@@ -105,6 +107,7 @@ HEADERS  += mainwindow.h \
     zoomlimitsdialog.h
 
 FORMS    += mainwindow.ui \
+    openrawdialog.ui \
     plotguimain.ui \
     curveproperties.ui \
     plotcurvenamedialog.ui \
