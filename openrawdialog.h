@@ -18,6 +18,7 @@
  */
 #pragma once
 
+#include <QString>
 #include <QDialog>
 #include <QComboBox>
 #include "CurveCommander.h"
@@ -34,16 +35,23 @@ public:
    explicit openRawDialog(QWidget *parent = 0);
    ~openRawDialog();
 
-   bool deterimineRawType(CurveCommander* curveCmdr);
+   bool deterimineRawType(CurveCommander* curveCmdr, const QString& filePath, const QString& suggestedPlotName);
 
 private slots:
    void on_buttonBox_accepted();
 
    void on_buttonBox_rejected();
 
+   void on_cmbRawType_currentIndexChanged(int index);
+
 private:
    Ui::openRawDialog *ui;
 
    bool m_okSelected = false;
+   bool m_cancelSelected = false;
+
+   void setPlotComboBox(CurveCommander* curveCmdr, const QString& plotName);
+   void setCurveNames();
+   bool isInterleaved();
 
 };

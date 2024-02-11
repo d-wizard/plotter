@@ -150,7 +150,7 @@ void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString f
    {
       // File isn't a valid plot/curve/csv, but raw mode is selected, so interpret as raw bytes.
       openRawDialog openRaw;
-      openRaw.deterimineRawType(p_curveCmdr);
+      openRaw.deterimineRawType(p_curveCmdr, fileName, plotName);
    }
 
    if(inputIsValid == false)

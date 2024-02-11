@@ -24,56 +24,6 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <item>
-        <property name="text">
-         <string>signed int 8 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>signed int 16 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>signed int 32 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>signed int 64 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>unsigned int 8 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>unsigned int 16 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>unsigned int 32 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>unsigned int 64 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>float 32 bit</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>float 64 bit</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
@@ -109,7 +59,11 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="cmbPlotName"/>
+      <widget class="QComboBox" name="cmbPlotName">
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
      <item row="1" column="1">
       <widget class="QLineEdit" name="txtCurveName"/>
