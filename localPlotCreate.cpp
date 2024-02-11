@@ -153,7 +153,7 @@ void localPlotCreate::restorePlotFromFile(CurveCommander* p_curveCmdr, QString f
       openRaw.deterimineRawType(p_curveCmdr, fileName, plotName);
    }
 
-   if(inputIsValid == false)
+   if(inputIsValid == false && rawFile == false)
    {
       QString msgBoxFileName(fso::dirSepToOS(fileName.toStdString()).c_str());
       QMessageBox::question( NULL,

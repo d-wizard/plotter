@@ -18,6 +18,7 @@
  */
 #pragma once
 
+#include <vector>
 #include <QString>
 #include <QDialog>
 #include <QComboBox>
@@ -53,5 +54,10 @@ private:
    void setPlotComboBox(CurveCommander* curveCmdr, const QString& plotName);
    void setCurveNames();
    bool isInterleaved();
+
+   void plotTheFile(CurveCommander* curveCmdr, const QString& filePath);
+
+   template <typename tRawFileType>
+   void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
 
 };

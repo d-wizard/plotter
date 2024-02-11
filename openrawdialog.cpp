@@ -16,9 +16,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <assert.h>
 #include "openrawdialog.h"
 #include "ui_openrawdialog.h"
 #include "localPlotCreate.h"
+#include "FileSystemOperations.h"
 
 typedef enum
 {
@@ -87,9 +89,6 @@ openRawDialog::~openRawDialog()
 
 bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& filePath, const QString& suggestedPlotName)
 {
-   (void)curveCmdr;
-   (void)filePath;
-   
    // Fill in plot name combo box
    setPlotComboBox(curveCmdr, suggestedPlotName);
 
@@ -105,6 +104,7 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
       m_okSelected = false;
       this->exec();
 
+      // Grab values from UI.
       plotName = ui->cmbPlotName->currentText();
       curveName1 = ui->txtCurveName->text();
       curveName2 = ui->txtCurveName2->text();
@@ -121,6 +121,11 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
             done = true;
             openTheFile = true;
          }
+
+         // Update the GUI with any changes made. The GUI values are what will be used if plots do get generated (i.e. if openTheFile == true)
+         setPlotComboBox(curveCmdr, plotName);
+         ui->txtCurveName->setText(curveName1);
+         ui->txtCurveName2->setText(curveName2);
       }
       else
       {
@@ -128,7 +133,12 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
       }
    }
 
-   return m_okSelected;
+   if(openTheFile)
+   {
+      plotTheFile(curveCmdr, filePath);
+   }
+
+   return openTheFile;
 }
 
 void openRawDialog::on_buttonBox_accepted()
@@ -214,4 +224,71 @@ bool openRawDialog::isInterleaved()
 void openRawDialog::on_cmbRawType_currentIndexChanged(int /*index*/)
 {
    setCurveNames();
+}
+
+void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePath)
+{
+   QString plotName = ui->cmbPlotName->currentText();
+   QString curveName1 = ui->txtCurveName->text();
+   QString curveName2 = ui->txtCurveName2->text();
+
+   std::vector<char> inputFileBytes;
+   fso::ReadBinaryFile(filePath.toStdString(), inputFileBytes);
+   dubVect curveValues1;
+   dubVect curveValues2;
+
+   auto openRawType = (eRawTypes)ui->cmbRawType->currentIndex();
+   switch(openRawType)
+   {
+      case E_RAW_TYPE_SIGNED_INT_8:    { fillFromRaw<int8_t  >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_SIGNED_INT_16:   { fillFromRaw<int16_t >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_SIGNED_INT_32:   { fillFromRaw<int32_t >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_SIGNED_INT_64:   { fillFromRaw<int64_t >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_UNSIGNED_INT_8:  { fillFromRaw<uint8_t >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_UNSIGNED_INT_16: { fillFromRaw<uint16_t>(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_UNSIGNED_INT_32: { fillFromRaw<uint32_t>(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_UNSIGNED_INT_64: { fillFromRaw<uint64_t>(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_FLOAT_32:        { fillFromRaw<float   >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_FLOAT_64:        { fillFromRaw<double  >(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8:    { fillFromRaw<int8_t  >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<int8_t  >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_SIGNED_INT_16:   { fillFromRaw<int16_t >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<int16_t >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_SIGNED_INT_32:   { fillFromRaw<int32_t >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<int32_t >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_SIGNED_INT_64:   { fillFromRaw<int64_t >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<int64_t >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_8:  { fillFromRaw<uint8_t >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint8_t >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16: { fillFromRaw<uint16_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint16_t>(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32: { fillFromRaw<uint32_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint32_t>(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64: { fillFromRaw<uint64_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint64_t>(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_FLOAT_32:        { fillFromRaw<float   >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<float   >(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_FLOAT_64:        { fillFromRaw<double  >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<double  >(inputFileBytes, curveValues2, 2, 1);} break;
+   }
+
+   // Finally, this will actually create the plots.
+   if(curveValues1.size() > 0)
+      curveCmdr->create1dCurve(plotName, curveName1, E_PLOT_TYPE_1D, curveValues1);
+   if(curveValues2.size() > 0)
+      curveCmdr->create1dCurve(plotName, curveName2, E_PLOT_TYPE_1D, curveValues2);
+
+}
+
+template <typename tRawFileType>
+void openRawDialog::fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension, int offsetIndex)
+{
+   assert(dimension > 0 && dimension < 3);
+   assert(offsetIndex < dimension);
+
+   // Determine some sizes.
+   constexpr size_t RAW_TYPE_SIZE = sizeof(tRawFileType);
+   const size_t inFileSizeBytes = inFile.size();
+   const size_t blockSizeBytes = RAW_TYPE_SIZE * dimension;
+   const size_t offsetBytes = RAW_TYPE_SIZE * offsetIndex;
+   const char* inFilePtr = inFile.data();
+
+   size_t numLoops = inFileSizeBytes / blockSizeBytes; // round down.
+   result.resize(numLoops);
+   tRawFileType rawVal;
+   for(size_t i = 0; i < numLoops; ++i)
+   {
+      memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
+      result[i] = (double)(rawVal);
+   }
 }
