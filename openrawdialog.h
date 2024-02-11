@@ -51,13 +51,17 @@ private:
    bool m_okSelected = false;
    bool m_cancelSelected = false;
 
+   size_t m_curFileSizeBytes = 0;
+
    void setPlotComboBox(CurveCommander* curveCmdr, const QString& plotName);
    void setCurveNames();
+   void setStatsLabel();
    bool isInterleaved();
 
    void plotTheFile(CurveCommander* curveCmdr, const QString& filePath);
 
    template <typename tRawFileType>
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
+   
 
 };

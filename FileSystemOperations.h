@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <stdint.h>
 
 namespace fso
 {
@@ -51,6 +52,7 @@ namespace fso
    void WriteFile(std::string t_path, std::string t_fileText);
    void WriteFile(std::string t_path, char* pc_fileText, int i_outSizeBytes);
    void AppendFile(std::string t_path, std::string t_fileText);
+   int64_t GetFileSize(std::string t_path); // Returns file size in bytes, -1 means files doesn't exist / can't be read.
    
    bool ComparePath(tDirListing t_comp1, tDirListing t_comp2);
 

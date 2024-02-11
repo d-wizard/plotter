@@ -17,10 +17,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <assert.h>
+#include <string>
 #include "openrawdialog.h"
 #include "ui_openrawdialog.h"
 #include "localPlotCreate.h"
 #include "FileSystemOperations.h"
+#include "persistentParameters.h"
 
 typedef enum
 {
@@ -70,6 +72,30 @@ static const QString RAW_TYPE_DROPDOWN[] =
    "Interleaved Float 64 Bit"
 };
 
+static const size_t BLOCK_SIZE[] =
+{
+    1, //E_RAW_TYPE_SIGNED_INT_8,
+    2, //E_RAW_TYPE_SIGNED_INT_16,
+    4, //E_RAW_TYPE_SIGNED_INT_32,
+    8, //E_RAW_TYPE_SIGNED_INT_64,
+    1, //E_RAW_TYPE_UNSIGNED_INT_8,
+    2, //E_RAW_TYPE_UNSIGNED_INT_16,
+    4, //E_RAW_TYPE_UNSIGNED_INT_32,
+    8, //E_RAW_TYPE_UNSIGNED_INT_64,
+    4, //E_RAW_TYPE_FLOAT_32,
+    8, //E_RAW_TYPE_FLOAT_64,
+    2, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8,
+    4, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_16,
+    8, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_32,
+   16, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_64,
+    2, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_8,
+    4, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16,
+    8, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32,
+   16, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64,
+    8, //E_RAW_TYPE_INTERLEAVED_FLOAT_32,
+   16  //E_RAW_TYPE_INTERLEAVED_FLOAT_64
+};
+
 openRawDialog::openRawDialog(QWidget *parent) :
    QDialog(parent),
    ui(new Ui::openRawDialog)
@@ -80,6 +106,14 @@ openRawDialog::openRawDialog(QWidget *parent) :
    {
       ui->cmbRawType->addItem(RAW_TYPE_DROPDOWN[i]);
    }
+
+   double pppVal = -1;
+   if(persistentParam_getParam_f64(PERSIST_PARAM_OPEN_RAW_TYPE, pppVal))
+   {
+      unsigned index = (unsigned)pppVal;
+      if(index < ARRAY_SIZE(RAW_TYPE_DROPDOWN))
+         ui->cmbRawType->setCurrentIndex(index);
+   }
 }
 
 openRawDialog::~openRawDialog()
@@ -89,11 +123,17 @@ openRawDialog::~openRawDialog()
 
 bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& filePath, const QString& suggestedPlotName)
 {
+   this->setWindowTitle( (std::string("Opening ") + fso::GetFile(filePath.toStdString())).c_str() );
+
+   m_curFileSizeBytes = fso::GetFileSize(filePath.toStdString());
+
    // Fill in plot name combo box
    setPlotComboBox(curveCmdr, suggestedPlotName);
 
    // Fill in the curve names.
    setCurveNames();
+
+   setStatsLabel();
 
    // Show the Dialog. This function returns when OK, Cancel or Close (X) is pressed.
    bool done = false;
@@ -136,6 +176,9 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
    if(openTheFile)
    {
       plotTheFile(curveCmdr, filePath);
+
+      // Save raw type.
+      persistentParam_setParam_f64(PERSIST_PARAM_OPEN_RAW_TYPE, (double)ui->cmbRawType->currentIndex());
    }
 
    return openTheFile;
@@ -196,6 +239,19 @@ void openRawDialog::setCurveNames()
    ui->txtCurveName2->setVisible(showCurve2);
 }
 
+void openRawDialog::setStatsLabel()
+{
+   unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
+   auto blockSize = (curIndex < ARRAY_SIZE(BLOCK_SIZE)) ? BLOCK_SIZE[curIndex] : 0;
+   auto numBlocks = m_curFileSizeBytes / blockSize;
+   auto numLeftOverBytes = m_curFileSizeBytes - (numBlocks*blockSize);
+
+   std::string stats = "File Size: " + std::to_string(m_curFileSizeBytes) + " bytes | Plot Size: "  + std::to_string(numBlocks) +
+      " points | Leftover Data: " + std::to_string(numLeftOverBytes) + " bytes";
+
+   ui->lblStats->setText(stats.c_str());
+}
+
 bool openRawDialog::isInterleaved()
 {
    bool retVal = false;
@@ -224,6 +280,7 @@ bool openRawDialog::isInterleaved()
 void openRawDialog::on_cmbRawType_currentIndexChanged(int /*index*/)
 {
    setCurveNames();
+   setStatsLabel();
 }
 
 void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePath)

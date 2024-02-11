@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -462,6 +462,25 @@ void fso::AppendFile(std::string t_path, std::string t_fileText)
    t_outStream.open(t_path.c_str(), std::ios::binary | std::ios_base::app);
    t_outStream.write(t_fileText.c_str(), dString::Len(t_fileText));
    t_outStream.close();
+}
+
+int64_t fso::GetFileSize(std::string t_path)
+{
+   int64_t retVal = -1;
+   t_path = dirSepToOS(t_path);
+
+   if(FileExists(t_path) == true)
+   {
+      std::ifstream is;
+      is.open(t_path.c_str(), std::ios::binary );
+
+      // get length of file:
+      is.seekg (0, std::ios::end);
+      retVal = is.tellg();
+      is.close();
+   }
+
+   return retVal;
 }
 
 std::string fso::GetDir(std::string t_path)
