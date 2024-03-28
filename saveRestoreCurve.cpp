@@ -594,33 +594,41 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSa
 {
    std::string delim = type == E_SAVE_RESTORE_CLIPBOARD_EXCEL ? CLIPBOARD_EXCEL_CELL_DELIM : CSV_CELL_DELIM;
    QVector<QStringList> curveCsvFiles;
+   QVector<ePlotDim> curvePlotDim;
    for(int i = 0; i < plotInfo.size(); ++i)
    {
       SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
       curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
       curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), Qt::SkipEmptyParts));
+      curvePlotDim.push_back(plotInfo[i]->getPlotDim());
    }
 
    int maxNumLines = 0;
-   for(int i = 0; i < curveCsvFiles.size(); ++i)
+   for(int curveIndex = 0; curveIndex < curveCsvFiles.size(); ++curveIndex)
    {
-      if(curveCsvFiles[i].size() > maxNumLines)
+      if(curveCsvFiles[curveIndex].size() > maxNumLines)
       {
-         maxNumLines = curveCsvFiles[i].size();
+         maxNumLines = curveCsvFiles[curveIndex].size();
       }
    }
 
    QString packed;
-   for(int i = 0; i < maxNumLines; ++i)
+   for(int lineIndex = 0; lineIndex < maxNumLines; ++lineIndex)
    {
       int numCurves = curveCsvFiles.size();
-      for(int j = 0; j < numCurves; ++j)
+      for(int curveIndex = 0; curveIndex < numCurves; ++curveIndex)
       {
-         if(curveCsvFiles[j].size() > i)
+         bool lastColumn = (curveIndex >= (numCurves-1));
+         if(curveCsvFiles[curveIndex].size() > lineIndex)
          {
-            packed.append(curveCsvFiles[j][i]);
+            packed.append(curveCsvFiles[curveIndex][lineIndex]);
          }
-         if(j < (numCurves-1))
+         else if((curvePlotDim[curveIndex] == E_PLOT_DIM_2D) && !lastColumn)
+         {
+            packed.append(delim.c_str()); // No data for this 2D curve, but more curves are available for this row. Add extra demin to make this 2D.
+         }
+
+         if(!lastColumn)
          {
             packed.append(delim.c_str());
          }
