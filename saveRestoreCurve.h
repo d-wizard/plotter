@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -65,6 +65,8 @@ public:
 
    PackedCurveData packedCurveHead;
    PackedCurveData packedCurveData;
+
+   bool hasData() {return m_hasData;}
 private:
 
    SaveCurve();
@@ -76,6 +78,7 @@ private:
    void SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
 
    bool m_limitToZoom;
+   bool m_hasData = false;
 };
 
 class RestoreCurve

@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -199,6 +199,7 @@ void SaveCurve::SaveRaw(CurveData* curve)
 
     unsigned long dataPointsSize1Axis = (params.numPoints * sizeof(double));
     unsigned long dataPointsSize = (params.plotDim == E_PLOT_DIM_2D) ? (2*dataPointsSize1Axis) : dataPointsSize1Axis;
+    m_hasData = (params.numPoints > 0);
 
     if(params.curveName.size() > MAX_STORE_PLOT_CURVE_NAME_SIZE)
     {
@@ -251,21 +252,47 @@ void SaveCurve::SaveRaw(CurveData* curve)
 void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim)
 {
    std::stringstream csvFile;
-   if(curve->getPlotDim() == E_PLOT_DIM_2D)
+   if(curve->getPlotDim() == E_PLOT_DIM_2D) ////// 2D --------------------------
    {
+      // Determine the points to use
+      const double* xPoints = nullptr;
+      const double* yPoints = nullptr;
+      unsigned int numPoints = 0;
+      dubVect xPoints_zoom;
+      dubVect yPoints_zoom;
+      
+      if(!m_limitToZoom)
+      {
+         // Not limiting the points to the zoom, so get all the samples.
+         xPoints = curve->getXPoints();
+         yPoints = curve->getYPoints();
+         numPoints = curve->getNumPoints();
+      }
+      else
+      {
+         // Limit the samples based on the current zoom. 
+         curve->get2dDisplayedPoints(xPoints_zoom, yPoints_zoom);
+         xPoints = xPoints_zoom.data();
+         yPoints = yPoints_zoom.data();
+         numPoints = (unsigned int)std::min(xPoints_zoom.size(), yPoints_zoom.size());
+      }
+
+      // Detemine if this curve has data to save.
+      m_hasData = (numPoints > 0);
+
+      // Build the CSV File
       csvFile << curve->getCurveTitle().toStdString() << " - X Axis" << delim;
       csvFile << curve->getCurveTitle().toStdString() << " - Y Axis\r\n";
-      
-      for(unsigned int i = 0; i < curve->getNumPoints(); ++i)
+      for(unsigned int i = 0; i < numPoints; ++i)
       {
          plotGui->setDisplayIoMapipXAxis(csvFile, curve);
-         csvFile << curve->getXPoints()[i] << delim;
+         csvFile << xPoints[i] << delim;
          plotGui->setDisplayIoMapipYAxis(csvFile);
-         csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
+         csvFile << yPoints[i] << EXCEL_LINE_DELIM;
       }
       plotGui->clearDisplayIoMapIp(csvFile);
    }
-   else
+   else ////// 1D --------------------------
    {
       unsigned int startInclusive = 0;
       unsigned int stopExclusive = curve->getNumPoints();
@@ -289,6 +316,9 @@ void SaveCurve::SaveExcel(MainWindow* plotGui, CurveData* curve, std::string del
          csvFile << curve->getYPoints()[i] << EXCEL_LINE_DELIM;
       }
       plotGui->clearDisplayIoMapIp(csvFile);
+
+      // Detemine if this curve has data to save.
+      m_hasData = (stopExclusive > startInclusive);
    }
 
    packedCurveData.resize(csvFile.str().size());
@@ -303,6 +333,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
    int sampPerLineCount = 0;
 
    unsigned int numSamplesToWrite = curve->getNumPoints();
+   m_hasData = (numSamplesToWrite > 0);
 
    // Determine the data type string (i.e. long, double, unsigned char, etc)
    bool dataType_isInt = false;
@@ -598,9 +629,12 @@ void SavePlot::SaveExcel(MainWindow* plotGui, QVector<CurveData*> &plotInfo, eSa
    for(int i = 0; i < plotInfo.size(); ++i)
    {
       SaveCurve curveFile(plotGui, plotInfo[i], type, m_limitToZoom);
-      curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
-      curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), Qt::SkipEmptyParts));
-      curvePlotDim.push_back(plotInfo[i]->getPlotDim());
+      if(curveFile.hasData())
+      {
+         curveFile.packedCurveData.push_back('\0'); // Null Terminate to make the char array a string.
+         curveCsvFiles.push_back(QString(&curveFile.packedCurveData[0]).split(EXCEL_LINE_DELIM.c_str(), Qt::SkipEmptyParts));
+         curvePlotDim.push_back(plotInfo[i]->getPlotDim());
+      }
    }
 
    int maxNumLines = 0;

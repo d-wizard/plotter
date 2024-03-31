@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -734,6 +734,41 @@ maxMinXY CurveData::get2dDisplayedIndexes(unsigned &numNonContiguousSamples)
    retVal.minX = minIndex;
    retVal.maxX = maxIndex;
    return retVal;
+}
+
+void CurveData::get2dDisplayedPoints(dubVect& xAxis, dubVect& yAxis)
+{
+   xAxis.clear();
+   yAxis.clear();
+
+   if(plotDim == E_PLOT_DIM_2D)
+   {
+      dubVect& xPointsForGui = xNormalized ? normX : xPoints;
+      dubVect& yPointsForGui = yNormalized ? normY : yPoints;
+
+      maxMinXY zoomDim;
+      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      QwtScaleDiv plotZoomHeightDim = m_parentPlot->axisScaleDiv(QwtPlot::yLeft); // Get plot zoom dimensions.
+      zoomDim.minX = plotZoomWidthDim.lowerBound();
+      zoomDim.maxX = plotZoomWidthDim.upperBound();
+      zoomDim.minY = plotZoomHeightDim.lowerBound();
+      zoomDim.maxY = plotZoomHeightDim.upperBound();
+
+      // Make room for all the points to avoid copies being done on each push_back
+      xAxis.reserve(xPoints.size());
+      yAxis.reserve(yPoints.size());
+
+      for(unsigned i = 0; i < numPoints; ++i)
+      {
+         if( (xPointsForGui[i] >= zoomDim.minX && xPointsForGui[i] <= zoomDim.maxX) &&
+             (yPointsForGui[i] >= zoomDim.minY && yPointsForGui[i] <= zoomDim.maxY) )
+         {
+            // The point is being displayed.
+            xAxis.push_back(xPoints[i]);
+            yAxis.push_back(yPoints[i]);
+         }
+      }
+   }
 }
 
 int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue)
