@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2022, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1688,17 +1688,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
                                                        filterString,
                                                        &selectedFilter);
 
-      eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
-      if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
-         saveType = E_SAVE_RESTORE_RAW;
-      else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
-         saveType = E_SAVE_RESTORE_CSV;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_INT;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+      eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
       // Write user selections to persisent memory.
       setOpenSavePath(fileName);
@@ -1764,17 +1754,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          curves[index] = allPlots[plotName].curves[key];
       }
 
-      eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
-      if(selectedFilter == OPEN_SAVE_FILTER_PLOT_STR)
-         saveType = E_SAVE_RESTORE_RAW;
-      else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
-         saveType = E_SAVE_RESTORE_CSV;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_INT;
-      else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
-         saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+      eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
       // Write user selections to persisent memory.
       setOpenSavePath(fileName);
@@ -1792,6 +1772,67 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          m_cmbPlotToSave->userSpecified(true);
       }
    }
+}
+
+eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut, const QString& selectedFilter)
+{
+   // Use selectedFilter to determine the file format to save.
+   eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
+   QString ext = "";
+   if(selectedFilter == OPEN_SAVE_FILTER_PLOT_STR)
+   {
+      saveType = E_SAVE_RESTORE_RAW;
+      ext = ".plot";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
+   {
+      saveType = E_SAVE_RESTORE_RAW;
+      ext = ".curve";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
+   {
+      saveType = E_SAVE_RESTORE_CSV;
+      ext = ".csv";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
+   {
+      saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
+      ext = ".h";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
+   {
+      saveType = E_SAVE_RESTORE_C_HEADER_INT;
+      ext = ".h";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
+   {
+      saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
+      ext = ".h";
+   }
+
+   if(saveType != E_SAVE_RESTORE_INVALID) // Attempt to update pathInOut, but only if saveType is a valid File Format.
+   {
+      // Check if the correct file extension needs to be added to the save path (this seems to be needed in Linux)
+      if(pathInOut.size() < ext.size())
+      {
+         pathInOut += ext; // path is too short to be the extension, so just add the extension to the end
+      }
+      else
+      {
+         // Check if the correct extension is at the end of the save path, if not fix the save path.
+         QString pathEnd = pathInOut.right(ext.size());
+         if(pathEnd != ext)
+         {
+            if(pathEnd.toLower() == ext)
+            {
+               pathInOut = pathInOut.left(pathInOut.size()-ext.size()); // Extension matches but is the wrong case, remove extension (it will be added back in the line below).
+            }
+            pathInOut += ext;
+         }
+      }
+   }
+   
+   return saveType;
 }
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
