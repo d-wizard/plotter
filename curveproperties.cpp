@@ -1686,24 +1686,28 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
                                                        suggestedSavePath,
                                                        filterString,
-                                                       &selectedFilter);
+                                                       &selectedFilter,
+                                                       QFileDialog::DontConfirmOverwrite);
 
       eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
-      persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
-
-      if(saveType != E_SAVE_RESTORE_INVALID)
+      if(fileName != "") // Check for 'Cancel' case.
       {
-         SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
-         PackedCurveData dataToWriteToFile;
-         packedCurve.getPackedData(dataToWriteToFile);
-         fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+         // Write user selections to persisent memory.
+         setOpenSavePath(fileName);
+         persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+         persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
 
-         // User hit a button, i.e. user specified.
-         m_cmbCurveToSave->userSpecified(true);
+         if(saveType != E_SAVE_RESTORE_INVALID)
+         {
+            SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
+            PackedCurveData dataToWriteToFile;
+            packedCurve.getPackedData(dataToWriteToFile);
+            fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+            // User hit a button, i.e. user specified.
+            m_cmbCurveToSave->userSpecified(true);
+         }
       }
    }
 
@@ -1743,39 +1747,47 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       QString fileName = QFileDialog::getSaveFileName(this, tr("Save Plot To File"),
                                                        suggestedSavePath,
                                                        filterString,
-                                                       &selectedFilter);
-
-      // Fill in vector of curve data in the correct order.
-      QVector<CurveData*> curves;
-      curves.resize(allPlots[plotName].curves.size());
-      foreach( QString key, allPlots[plotName].curves.keys() )
-      {
-         int index = allPlots[plotName].plotGui->getCurveIndex(key);
-         curves[index] = allPlots[plotName].curves[key];
-      }
+                                                       &selectedFilter,
+                                                       QFileDialog::DontConfirmOverwrite);
 
       eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
-      // Write user selections to persisent memory.
-      setOpenSavePath(fileName);
-      persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
-      persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
-
-      if(saveType != E_SAVE_RESTORE_INVALID)
+      if(fileName != "") // Check for 'Cancel' case.
       {
-         SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
-         PackedCurveData dataToWriteToFile;
-         savePlot.getPackedData(dataToWriteToFile);
-         fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+         // Fill in vector of curve data in the correct order.
+         QVector<CurveData*> curves;
+         curves.resize(allPlots[plotName].curves.size());
+         foreach( QString key, allPlots[plotName].curves.keys() )
+         {
+            int index = allPlots[plotName].plotGui->getCurveIndex(key);
+            curves[index] = allPlots[plotName].curves[key];
+         }
 
-         // User hit the button, i.e. user specified.
-         m_cmbPlotToSave->userSpecified(true);
+         // Write user selections to persisent memory.
+         setOpenSavePath(fileName);
+         persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+         persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
+
+         if(saveType != E_SAVE_RESTORE_INVALID)
+         {
+            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
+            PackedCurveData dataToWriteToFile;
+            savePlot.getPackedData(dataToWriteToFile);
+            fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
+
+            // User hit the button, i.e. user specified.
+            m_cmbPlotToSave->userSpecified(true);
+         }
       }
    }
 }
 
 eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut, const QString& selectedFilter)
 {
+   // If path is empty, cancel or some equivalent was pressed. Return right away in that case.
+   if(pathInOut == "")
+      return E_SAVE_RESTORE_INVALID;
+
    // Use selectedFilter to determine the file format to save.
    eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
    QString ext = "";
@@ -1832,6 +1844,22 @@ eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut,
       }
    }
    
+   if(fso::FileExists(pathInOut.toStdString()))
+   {
+      // A file with this path name already exists. Ask the user if it should be overwritten.
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question( this,
+                                     "Confirm Save As!",
+                                     pathInOut + " already exists.\nDo you want to replace it?",
+                                     QMessageBox::Yes|QMessageBox::No );
+      if (reply != QMessageBox::Yes)
+      {
+         // User doesn't want to replace the existing file.
+         pathInOut = "";
+         saveType = E_SAVE_RESTORE_INVALID;
+      }
+   }
+
    return saveType;
 }
 
