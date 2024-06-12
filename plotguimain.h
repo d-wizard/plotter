@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -72,6 +72,7 @@ private:
     QSystemTrayIcon* m_trayIcon;
     QAction m_trayExitAction;
     QAction m_trayEnDisNewCurvesAction;
+    QAction m_trayCreateNewPlotAction;
     QAction m_propertiesWindowAction;
     QAction m_closeAllPlotsAction;
     QAction m_revDateStampAction;
@@ -101,6 +102,7 @@ private:
 public slots:
     void readPlotMsgSlot();
     void enDisNewCurves();
+    void createNewPlotSlot();
     void showPropertiesGui();
     void closeAllPlotsFromLibSlot();
     void closeAllPlotsSafeSlot();

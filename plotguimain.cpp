@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -42,6 +42,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
    m_trayIcon(NULL),
    m_trayExitAction("Exit", this),
    m_trayEnDisNewCurvesAction("Disable New Curves", this),
+   m_trayCreateNewPlotAction("Create Plot From Raw Data", this),
    m_propertiesWindowAction("Properties", this),
    m_closeAllPlotsAction("Close All Plots", this),
    m_revDateStampAction(REV_DATE_STAMP, this),
@@ -83,6 +84,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
+    connect(&m_trayCreateNewPlotAction, SIGNAL(triggered(bool)), this, SLOT(createNewPlotSlot()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
     connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSafeSlot()));
     connect(&m_updateBinaryAction, SIGNAL(triggered(bool)), this, SLOT(updateBinarySlot()));
@@ -92,6 +94,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     m_revDateStampAction.setEnabled(false);
     m_trayMenu->addAction(&m_revDateStampAction);
     m_trayMenu->addAction(&m_updateBinaryAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_trayCreateNewPlotAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
@@ -406,6 +410,11 @@ void plotGuiMain::restorePlotFile(std::string plotFilePath)
    m_plotFilesToRestoreMutex.unlock();
 
    emit restorePlotFilesInListSignal();
+}
+
+void plotGuiMain::createNewPlotSlot()
+{
+   m_curveCommander.showCreatePlotFromDataGui("", NULL);
 }
 
 void plotGuiMain::enDisNewCurves()
