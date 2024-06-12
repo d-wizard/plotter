@@ -113,6 +113,10 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
        m_trayIcon->setContextMenu(m_trayMenu);
        m_trayIcon->show();
     }
+    else
+    {
+      setWindowIcon(QIcon(":/Icons/PlotIconBigTrans.png")); // Linux way to set the icon
+    }
 
     QObject::connect(this, SIGNAL(closeAllPlotsFromLibSignal()),
                      this, SLOT(closeAllPlotsFromLibSlot()), Qt::QueuedConnection);

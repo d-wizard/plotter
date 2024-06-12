@@ -11,5 +11,6 @@
         <file>CurveStyleIcons/sticks.png</file>
         <file>CurveStyleIcons/sticks_selected.png</file>
         <file>CurveStyleIcons/dots.png</file>
+        <file>Icons/PlotIconBigTrans.png</file>
     </qresource>
 </RCC>
