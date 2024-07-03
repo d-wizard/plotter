@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -16,6 +16,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <QFileDialog>
 #include "CurveCommander.h"
 #include "plotguimain.h"
 #include "curveproperties.h"
@@ -23,6 +24,9 @@
 #include "ChildCurves.h"
 #include "spectrumAnalyzerModeTypes.h"
 #include "curveStatsChildParam.h"
+#include "persistentParameters.h"
+#include "localPlotCreate.h"
+#include "FileSystemOperations.h"
 
 #define MAX_NUM_STORED_CURVES (1000)
 
@@ -580,6 +584,73 @@ void CurveCommander::showCreatePlotFromDataGui(QString plotName, const char* dat
    }
    m_createPlotFromDataGui->show();
    m_createPlotFromDataGui->raise();
+}
+
+void CurveCommander::showOpenPlotFileDialog()
+{
+   QString plotCurveFilesMask = "Plot/Curve Files (*.plot *.curve)";
+   QString csvFilesMask = "CSV File (*.csv)";
+   QString rawFilesMask = "Raw File(*)";
+   QString fileTypeFilterList = plotCurveFilesMask + ";;" + csvFilesMask + ";;" + rawFilesMask;
+
+   // Read the last used filter from persistent memory.
+   std::string persistentSaveStr = PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION;
+   std::string persistentReadValue;
+   persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
+
+   // Initialize selection with stored value (if there was one).
+   QString selectedFilter;
+   if(fileTypeFilterList.contains(persistentReadValue.c_str()))
+      selectedFilter = persistentReadValue.c_str();
+
+   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                   getOpenSaveDir(),
+                                                   fileTypeFilterList,
+                                                   &selectedFilter);
+
+   // Write user selections to persisent memory.
+   setOpenSavePath(fileName);
+   persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
+
+   bool rawFile = (selectedFilter == rawFilesMask);
+   localPlotCreate::restorePlotFromFile(this, fileName, "", rawFile);
+
+}
+
+QString CurveCommander::getOpenSaveDir()
+{
+   std::string retVal;
+   if(persistentParam_getParam_str(PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR, retVal))
+   {
+      if(fso::DirExists(retVal))
+      {
+         return QString(retVal.c_str());
+      }
+   }
+   return "";
+}
+
+QString CurveCommander::getOpenSavePath(QString fileName)
+{
+   QString suggestedSavePath = getOpenSaveDir();
+   if(suggestedSavePath != "")
+   {
+      suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + fileName;
+   }
+   else
+   {
+      suggestedSavePath = fileName;
+   }
+   return suggestedSavePath;
+}
+
+void CurveCommander::setOpenSavePath(QString path)
+{
+   if(path != "")
+   {
+      persistentParam_setParam_str( PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR,
+                                    fso::GetDir(path.toStdString()) );
+   }
 }
 
 void CurveCommander::createPlotFromDataGuiCloseSlot()

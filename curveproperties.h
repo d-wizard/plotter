@@ -238,9 +238,6 @@ private:
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
    void setUserChildPlotNames();
 
-   QString getOpenSaveDir();
-   QString getOpenSavePath(QString fileName);
-   void setOpenSavePath(QString path);
    eSaveRestorePlotCurveType parseSaveFileName(QString& pathInOut, const QString& selectedFilter);
 
    // Restore Tab Functions / Parameters
@@ -288,7 +285,6 @@ private:
    tCmbBoxValPtr m_cmbCurveToSave;
    tCmbBoxValPtr m_cmbPropPlotCurveName;
    tCmbBoxValPtr m_cmbDestPlotName;
-   tCmbBoxValPtr m_cmbOpenCurvePlotName;
    tCmbBoxValPtr m_cmbPlotToSave;
    tCmbBoxValPtr m_cmbIpBlockPlotNames;
 

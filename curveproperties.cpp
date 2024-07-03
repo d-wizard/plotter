@@ -184,7 +184,6 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    tPltCrvCmbBoxPtr cmbCurveToSave       = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbCurveToSave      ));
    tPltCrvCmbBoxPtr cmbPropPlotCurveName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPropPlotCurveName));
    tPltCrvCmbBoxPtr cmbDestPlotName      = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbDestPlotName     ));
-   tPltCrvCmbBoxPtr cmbOpenCurvePlotName = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbOpenCurvePlotName));
    tPltCrvCmbBoxPtr cmbPlotToSave        = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbPlotToSave       ));
    tPltCrvCmbBoxPtr cmbIpBlockPlotNames  = tPltCrvCmbBoxPtr(new tPlotCurveComboBox(ui->cmbIpBlockPlotNames ));
 
@@ -196,7 +195,6 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    m_cmbPropPlotCurveName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPropPlotCurveName, false));
 
    m_cmbDestPlotName      = tCmbBoxValPtr(new tCmbBoxAndValue(cmbDestPlotName));
-   m_cmbOpenCurvePlotName = tCmbBoxValPtr(new tCmbBoxAndValue(cmbOpenCurvePlotName));
    m_cmbPlotToSave        = tCmbBoxValPtr(new tCmbBoxAndValue(cmbPlotToSave));
    m_cmbIpBlockPlotNames  = tCmbBoxValPtr(new tCmbBoxAndValue(cmbIpBlockPlotNames));
 
@@ -212,7 +210,6 @@ curveProperties::curveProperties(CurveCommander *curveCmdr, QString plotName, QS
    // Initialize the list of all the combo boxes that display all the plot names
    m_plotNameCombos.clear();
    m_plotNameCombos.append(m_cmbDestPlotName);
-   m_plotNameCombos.append(m_cmbOpenCurvePlotName);
    m_plotNameCombos.append(m_cmbPlotToSave);
    m_plotNameCombos.append(m_cmbIpBlockPlotNames);
 
@@ -1661,7 +1658,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
    if(toSaveCurveData != NULL)
    {
       // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = getOpenSavePath(toSave.curveName);
+      QString suggestedSavePath = m_curveCmdr->getOpenSavePath(toSave.curveName);
 
       // Read the last used filter from persistent memory.
       std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_STR;
@@ -1694,7 +1691,7 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       if(fileName != "") // Check for 'Cancel' case.
       {
          // Write user selections to persisent memory.
-         setOpenSavePath(fileName);
+         m_curveCmdr->setOpenSavePath(fileName);
          persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
          persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
 
@@ -1722,7 +1719,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
    if(allPlots.find(plotName) != allPlots.end())
    {
       // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = getOpenSavePath(plotName);
+      QString suggestedSavePath = m_curveCmdr->getOpenSavePath(plotName);
 
       // Read the last used filter from persistent memory.
       std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_STR;
@@ -1764,7 +1761,7 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
          }
 
          // Write user selections to persisent memory.
-         setOpenSavePath(fileName);
+         m_curveCmdr->setOpenSavePath(fileName);
          persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
          persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
 
@@ -1865,33 +1862,7 @@ eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut,
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
 {
-   QString plotCurveFilesMask = "Plot/Curve Files (*.plot *.curve)";
-   QString csvFilesMask = "CSV File (*.csv)";
-   QString rawFilesMask = "Raw File(*)";
-   QString fileTypeFilterList = plotCurveFilesMask + ";;" + csvFilesMask + ";;" + rawFilesMask;
-
-   // Read the last used filter from persistent memory.
-   std::string persistentSaveStr = PERSIST_PARAM_CURVE_OPEN_PREV_TYPE_SELECTION;
-   std::string persistentReadValue;
-   persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
-
-   // Initialize selection with stored value (if there was one).
-   QString selectedFilter;
-   if(fileTypeFilterList.contains(persistentReadValue.c_str()))
-      selectedFilter = persistentReadValue.c_str();
-
-   QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
-                                                   getOpenSaveDir(),
-                                                   fileTypeFilterList,
-                                                   &selectedFilter);
-
-   // Write user selections to persisent memory.
-   setOpenSavePath(fileName);
-   persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
-
-   bool rawFile = (selectedFilter == rawFilesMask);
-   localPlotCreate::restorePlotFromFile(m_curveCmdr, fileName, m_cmbOpenCurvePlotName->currentText(), rawFile);
-
+   m_curveCmdr->showOpenPlotFileDialog();
 }
 
 bool curveProperties::validateNewPlotCurveName(QString& plotName, QString& curveName)
@@ -2285,42 +2256,6 @@ void curveProperties::on_cmbYAxisSrc_currentIndexChanged(int index)
 
    setUserChildPlotNames();
    setMatchParentScrollChkBoxVisible();
-}
-
-QString curveProperties::getOpenSaveDir()
-{
-   std::string retVal;
-   if(persistentParam_getParam_str(PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR, retVal))
-   {
-      if(fso::DirExists(retVal))
-      {
-         return QString(retVal.c_str());
-      }
-   }
-   return "";
-}
-
-QString curveProperties::getOpenSavePath(QString fileName)
-{
-   QString suggestedSavePath = getOpenSaveDir();
-   if(suggestedSavePath != "")
-   {
-      suggestedSavePath = suggestedSavePath + QString(fso::dirSep().c_str()) + fileName;
-   }
-   else
-   {
-      suggestedSavePath = fileName;
-   }
-   return suggestedSavePath;
-}
-
-void curveProperties::setOpenSavePath(QString path)
-{
-   if(path != "")
-   {
-      persistentParam_setParam_str( PERSIST_PARAM_CURVE_SAVE_PREV_DIR_STR,
-                                    fso::GetDir(path.toStdString()) );
-   }
 }
 
 void curveProperties::fillInIpBlockTab(bool useLastIpAddr)

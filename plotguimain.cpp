@@ -43,6 +43,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
    m_trayExitAction("Exit", this),
    m_trayEnDisNewCurvesAction("Disable New Curves", this),
    m_trayCreateNewPlotAction("Create Plot From Raw Data", this),
+   m_trayOpenPlotAction("Open Plot From File", this),
    m_propertiesWindowAction("Properties", this),
    m_closeAllPlotsAction("Close All Plots", this),
    m_revDateStampAction(REV_DATE_STAMP, this),
@@ -85,6 +86,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     connect(&m_trayExitAction, SIGNAL(triggered(bool)), QCoreApplication::instance(), SLOT(quit()));
     connect(&m_trayEnDisNewCurvesAction, SIGNAL(triggered(bool)), this, SLOT(enDisNewCurves()));
     connect(&m_trayCreateNewPlotAction, SIGNAL(triggered(bool)), this, SLOT(createNewPlotSlot()));
+    connect(&m_trayOpenPlotAction, SIGNAL(triggered(bool)), this, SLOT(openPlotSlot()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
     connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSafeSlot()));
     connect(&m_updateBinaryAction, SIGNAL(triggered(bool)), this, SLOT(updateBinarySlot()));
@@ -96,6 +98,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     m_trayMenu->addAction(&m_updateBinaryAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayCreateNewPlotAction);
+    m_trayMenu->addAction(&m_trayOpenPlotAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
@@ -419,6 +422,11 @@ void plotGuiMain::restorePlotFile(std::string plotFilePath)
 void plotGuiMain::createNewPlotSlot()
 {
    m_curveCommander.showCreatePlotFromDataGui("", NULL);
+}
+
+void plotGuiMain::openPlotSlot()
+{
+   m_curveCommander.showOpenPlotFileDialog();
 }
 
 void plotGuiMain::enDisNewCurves()

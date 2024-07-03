@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019, 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -127,6 +127,11 @@ public:
 
     void showCurvePropertiesGui(QString plotName = "", QString curveName = "");
     void showCreatePlotFromDataGui(QString plotName, const char* dataToPlot);
+    void showOpenPlotFileDialog();
+    
+    QString getOpenSaveDir();
+    QString getOpenSavePath(QString fileName);
+    void setOpenSavePath(QString path);
 
     void storePlotMsg(const char *msgPtr, unsigned int msgSize, QString& plotName, QString& curveName);
     void getStoredPlotMsgs(QVector<tStoredMsg> &storedMsgs);

@@ -73,6 +73,7 @@ private:
     QAction m_trayExitAction;
     QAction m_trayEnDisNewCurvesAction;
     QAction m_trayCreateNewPlotAction;
+    QAction m_trayOpenPlotAction;
     QAction m_propertiesWindowAction;
     QAction m_closeAllPlotsAction;
     QAction m_revDateStampAction;
@@ -103,6 +104,7 @@ public slots:
     void readPlotMsgSlot();
     void enDisNewCurves();
     void createNewPlotSlot();
+    void openPlotSlot();
     void showPropertiesGui();
     void closeAllPlotsFromLibSlot();
     void closeAllPlotsSafeSlot();
