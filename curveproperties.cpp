@@ -72,7 +72,13 @@ const QString mathOpsStr[] = {
 "ROUND UP",
 "ROUND DOWN",
 "LIMIT UPPER",
-"LIMIT LOWER"
+"LIMIT LOWER",
+"SIN",
+"COS",
+"TAN",
+"ASIN",
+"ACOS",
+"ATAN"
 };
 
 const QString mathOpsSymbol[] = {
@@ -90,7 +96,13 @@ const QString mathOpsSymbol[] = {
 "round up",
 "round down",
 "limit upper",
-"limit lower"
+"limit lower",
+"sin",
+"cos",
+"tan",
+"asin",
+"acos",
+"atan"
 };
 
 
@@ -109,7 +121,13 @@ const QString mathOpsValueLabel[] = {
 "Decimal Point to Round Up",
 "Decimal Point to Round Down",
 "Upper Hard Limit Vaue",
-"Lower Hard Limit Vaue"
+"Lower Hard Limit Vaue",
+"", // Trig functiona have no values.
+"", // Trig functiona have no values.
+"", // Trig functiona have no values.
+"", // Trig functiona have no values.
+"", // Trig functiona have no values.
+""  // Trig functiona have no values.
 };
 
 const QString plotTypeNames[] = {

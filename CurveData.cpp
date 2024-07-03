@@ -1546,6 +1546,24 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                      (*dataIter) = mathIter->num;
                   }
                break;
+               case E_SIN:
+                  (*dataIter) = sin((*dataIter));
+               break;
+               case E_COS:
+                  (*dataIter) = cos((*dataIter));
+               break;
+               case E_TAN:
+                  (*dataIter) = tan((*dataIter));
+               break;
+               case E_ASIN:
+                  (*dataIter) = asin((*dataIter));
+               break;
+               case E_ACOS:
+                  (*dataIter) = acos((*dataIter));
+               break;
+               case E_ATAN:
+                  (*dataIter) = atan((*dataIter));
+               break;
             }
          }
       }

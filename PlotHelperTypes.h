@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -337,7 +337,13 @@ typedef enum
    E_ROUND_UP,
    E_ROUND_DOWN,
    E_LIMIT_UPPER,
-   E_LIMIT_LOWER
+   E_LIMIT_LOWER,
+   E_SIN,
+   E_COS,
+   E_TAN,
+   E_ASIN,
+   E_ACOS,
+   E_ATAN
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -358,6 +364,12 @@ inline bool valid_eMathOp(eMathOp in)
    case E_ROUND_DOWN:
    case E_LIMIT_UPPER:
    case E_LIMIT_LOWER:
+   case E_SIN:
+   case E_COS:
+   case E_TAN:
+   case E_ASIN:
+   case E_ACOS:
+   case E_ATAN:
       return true;
       break;
    }
@@ -384,6 +396,12 @@ inline bool needsValue_eMathOp(eMathOp in)
       return true;
       break;
    case E_ABS:
+   case E_SIN:
+   case E_COS:
+   case E_TAN:
+   case E_ASIN:
+   case E_ACOS:
+   case E_ATAN:
       return false;
       break;
    }
