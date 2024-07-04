@@ -180,6 +180,11 @@
                   <string>Divide</string>
                  </property>
                 </item>
+                <item>
+                 <property name="text">
+                  <string>Arctan2</string>
+                 </property>
+                </item>
                </widget>
               </item>
               <item>

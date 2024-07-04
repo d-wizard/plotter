@@ -157,7 +157,8 @@ typedef enum // Must match cmbChildMathOperators
    E_MATH_BETWEEN_CURVES_ADD,
    E_MATH_BETWEEN_CURVES_SUBTRACT,
    E_MATH_BETWEEN_CURVES_MULTILPY,
-   E_MATH_BETWEEN_CURVES_DIVIDE
+   E_MATH_BETWEEN_CURVES_DIVIDE,
+   E_MATH_BETWEEN_CURVES_ARCTAN2
 }eMathBetweenCurves_operators;
 
 inline bool valid_ePlotType(ePlotType in)

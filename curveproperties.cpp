@@ -661,8 +661,16 @@ void curveProperties::on_cmbPlotType_currentIndexChanged(int index)
          ui->lblYAxisSrc->setText("Imag Source");
       break;
       case E_PLOT_TYPE_MATH_BETWEEN_CURVES:
-         ui->lblXAxisSrc->setText("Math LHS");
-         ui->lblYAxisSrc->setText("Math RHS");
+         if(ui->cmbChildMathOperators->currentIndex() == E_MATH_BETWEEN_CURVES_ARCTAN2) // Atan2 is x / y 
+         {
+            ui->lblXAxisSrc->setText("X Axis Source");
+            ui->lblYAxisSrc->setText("Y Axis Source");
+         }
+         else // The rest are LHS / RHS
+         {
+            ui->lblXAxisSrc->setText("Math LHS");
+            ui->lblYAxisSrc->setText("Math RHS");
+         }
          mathCmbVis = true;
       break;
       case E_PLOT_TYPE_FFT_MEASUREMENT:
@@ -2618,4 +2626,9 @@ void curveProperties::on_cmdAutoSetSampRate_clicked()
          }
       }
    }
+}
+
+void curveProperties::on_cmbChildMathOperators_currentIndexChanged(int /*index*/)
+{
+   on_cmbPlotType_currentIndexChanged(ui->cmbPlotType->currentIndex()); // This will update the labels for the sources.
 }

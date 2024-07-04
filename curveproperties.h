@@ -206,6 +206,8 @@ private slots:
 
    void on_cmdAutoSetSampRate_clicked();
 
+   void on_cmbChildMathOperators_currentIndexChanged(int index);
+
 private:
    void closeEvent(QCloseEvent* event);
 

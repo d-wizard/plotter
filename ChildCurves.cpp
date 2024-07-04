@@ -928,6 +928,10 @@ void ChildCurve::updateCurve( bool xParentChanged,
                for(unsigned int i = 0; i < outSize; ++i)
                   mathOut[i] = m_xSrcData[i] / m_ySrcData[i];
             break;
+            case E_MATH_BETWEEN_CURVES_ARCTAN2:
+               for(unsigned int i = 0; i < outSize; ++i)
+                  mathOut[i] = atan2(m_ySrcData[i], m_xSrcData[i]);
+            break;
          }
 
          update1dChildCurve(m_curveName, m_plotType, offset, mathOut, parentCurveMsgId);
