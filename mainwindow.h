@@ -268,7 +268,7 @@ private:
     QAction m_setZoomLimitsAction;
     QAction m_scrollModeAction;
     QAction m_scrollModeChangePlotSizeAction;
-    QAction m_scrollModeClearAllAction;
+    QAction m_clearAllSamplesAction;
     QAction m_resetZoomAction;
     QAction m_normalizeNoneAction;
     QAction m_normalizeYOnlyAction;
@@ -414,7 +414,7 @@ private:
     void restorePersistentPlotParams();
 
     void scrollModeSetPlotSize(int newPlotSize);
-    void scrollModeClearAll(bool askUserViaMsgBox);
+    void clearAllSamples(bool askUserViaMsgBox);
 
     bool areAllCurves1D();
 
@@ -460,7 +460,7 @@ private slots:
     void setZoomLimits_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
-    void scrollModeClearAllSlot();
+    void clearAllSamplesSlot();
     void zoomMode();
     void resetZoom();
     void normalizeCurvesNone();
