@@ -372,6 +372,7 @@ private:
     void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
     void displayDeltaLabel_clean();
     void displayDeltaLabel_update();
+    void display2dPointDeltaLabel(bool valid, bool isDelta);
     void connectPointLabelToRightClickMenu(QLabel* label);
     void updatePointDisplay(bool onlyCurveDataChanged = false);
     void setDisplayRightClickIcons();

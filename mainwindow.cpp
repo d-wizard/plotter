@@ -1933,6 +1933,9 @@ void MainWindow::clearPointLabels()
           m_deltaLabels[i] = NULL;;
        }
     }
+
+    // 2D Label
+    ui->lbl2dPoint->setText("");
 }
 
 QPalette MainWindow::labelColorToPalette(QColor color)
@@ -2034,6 +2037,7 @@ void MainWindow::displayPointLabels_clean()
 
       }
    }
+   display2dPointDeltaLabel(true, false);
 }
 
 void MainWindow::displayPointLabels_update()
@@ -2065,8 +2069,11 @@ void MainWindow::displayPointLabels_update()
       lock.unlock(); // Clean will want to lock the mutex.
       displayPointLabels_clean();
    }
+   else
+   {
+      display2dPointDeltaLabel(true, false);
+   }
 }
-
 
 void MainWindow::initDeltaLabels()
 {
@@ -2176,6 +2183,46 @@ void MainWindow::displayDeltaLabel_update()
       m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
       m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
       m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+   }
+   display2dPointDeltaLabel(deltaLabelsAreValid, true);
+}
+
+void MainWindow::display2dPointDeltaLabel(bool valid, bool isDelta)
+{
+   bool a2DCurveIsDisplayed = false;
+   bool aFftCurveIsDisplayed = false;
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
+      if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
+      {
+         if(m_qwtCurves[i]->getPlotDim() == E_PLOT_DIM_2D)
+            a2DCurveIsDisplayed = true;
+         switch(m_qwtCurves[i]->getPlotType())
+         {
+            case E_PLOT_TYPE_REAL_FFT:
+            case E_PLOT_TYPE_COMPLEX_FFT:
+            case E_PLOT_TYPE_DB_POWER_FFT_REAL:
+            case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
+               aFftCurveIsDisplayed = true;
+            break;
+            default:
+               // Nothing to do.
+            break;
+         }
+      }
+   }
+   valid = valid && a2DCurveIsDisplayed && !aFftCurveIsDisplayed;
+   if(!valid)
+   {
+      ui->lbl2dPoint->setText("");
+   }
+   else if(isDelta)
+   {
+      ui->lbl2dPoint->setText("2D point indexes " + QString::number(m_qwtSelectedSampleDelta->m_pointIndex) + " : " + QString::number(m_qwtSelectedSample->m_pointIndex));
+   }
+   else
+   {
+      ui->lbl2dPoint->setText("2D point index " + QString::number(m_qwtSelectedSample->m_pointIndex));
    }
 }
 
