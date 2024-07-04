@@ -285,6 +285,10 @@ private:
     QMenu m_visibleCurvesMenu;
     QMenu m_stylesCurvesMenu;
 
+    tQMenuActionMapper m_2dPointFirstAction;
+    tQMenuActionMapper m_2dPointLastAction;
+    QMenu m_2dPointMenu;
+
     QAction m_enableDisablePlotUpdate;
 
     QAction m_curveProperties;
@@ -483,12 +487,15 @@ private slots:
     void onApplicationFocusChanged(QWidget* old, QWidget* now);
     void ShowRightClickForPlot(const QPoint& pos);
     void ShowRightClickForDisplayPoints(const QPoint& pos);
+    void ShowRightClickFor2dPointLabel(const QPoint& pos);
 
     void displayPointsChangeType(int type);
     void displayPointsChangePrecision(int precision);
     void displayPointsChangeDecHexX(int type);
     void displayPointsChangeDecHexY(int type);
     void displayPointsCopyToClipboard(int dummy);
+
+    void set2dPointIndex(int index);
 
     void updateCurveOrder();
 

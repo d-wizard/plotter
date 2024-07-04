@@ -119,6 +119,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_selectedCurvesMenu("Selected Curve"),
    m_visibleCurvesMenu("Visible Curves"),
    m_stylesCurvesMenu("Curve Style"),
+   m_2dPointFirstAction("Select First Point", this),
+   m_2dPointLastAction("Select Last Point", this),
+   m_2dPointMenu("2D Point Menu"),
    m_enableDisablePlotUpdate("Disable New Curves", this),
    m_curveProperties("Properties", this),
    m_defaultCurveStyle(QwtPlotCurve::Lines),
@@ -294,6 +297,11 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_displayPointsMenu.addSeparator();
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsCopyToClipboard,     0, displayPointsCopyToClipboard);
 
+    // 2D Point right click menu
+    MAPPER_ACTION_TO_SLOT(m_2dPointMenu, m_2dPointFirstAction, 0, set2dPointIndex);
+    MAPPER_ACTION_TO_SLOT(m_2dPointMenu, m_2dPointLastAction, -1, set2dPointIndex);
+    ui->lbl2dPoint->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->lbl2dPoint, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowRightClickFor2dPointLabel(const QPoint&)));
 
     // Initialize Activity Indicator.
     m_activityIndicator_onEnabledPallet = palette;
@@ -2420,6 +2428,12 @@ void MainWindow::displayPointsCopyToClipboard(int dummy)
 
 }
 
+void MainWindow::set2dPointIndex(int index)
+{
+   int curCursorPos = (int)m_qwtSelectedSample->m_pointIndex;
+   modifyCursorPos(index - curCursorPos);
+}
+
 void MainWindow::updateCursors()
 {
     if(m_qwtSelectedSample->isAttached)
@@ -3062,6 +3076,11 @@ void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
       m_displayPointsMenu.exec(matchingLabel->mapToGlobal(pos));
    }
 
+}
+
+void MainWindow::ShowRightClickFor2dPointLabel(const QPoint& pos)
+{
+   m_2dPointMenu.exec(ui->lbl2dPoint->mapToGlobal(pos));
 }
 
 void MainWindow::onApplicationFocusChanged(QWidget* /*old*/, QWidget* /*now*/)
