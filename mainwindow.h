@@ -283,6 +283,10 @@ private:
     QMenu m_zoomSettingsMenu;
     QMenu m_selectedCurvesMenu;
     QMenu m_visibleCurvesMenu;
+    QAction m_visCurveAllAction;
+    QAction m_visCurveNoneAction;
+    QAction m_visCurveInvertAction;
+    QAction m_visCurveSelectedAction;
     QMenu m_stylesCurvesMenu;
 
     tQMenuActionMapper m_2dPointFirstAction;
@@ -439,6 +443,8 @@ private:
 
     void fillWithSavedAppearance(QString& curveName, CurveAppearance& appearance);
 
+    void setVisibleCurveAction(int actionType);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);
@@ -496,6 +502,11 @@ private slots:
     void displayPointsCopyToClipboard(int dummy);
 
     void set2dPointIndex(int index);
+
+    void setVisibleCurveActionAll();
+    void setVisibleCurveActionNone();
+    void setVisibleCurveActionInvert();
+    void setVisibleCurveActionSelected();
 
     void updateCurveOrder();
 
