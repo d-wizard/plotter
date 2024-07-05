@@ -47,6 +47,14 @@
 #define DISPLAY_POINT_STOP  ")"
 static const QString CAPITAL_DELTA = QChar(0x94, 0x03);
 
+typedef enum
+{
+   E_VIS_MENU_ALL,
+   E_VIS_MENU_NONE,
+   E_VIS_MENU_INVERT,
+   E_VIS_MENU_SELECTED,
+}eVisMenuActions;
+
 #define MAPPER_ACTION_TO_SLOT(menu, mapperAction, intVal, callback) \
 menu.addAction(&mapperAction.m_action); \
 mapperAction.m_mapper.setMapping(&mapperAction.m_action, (int)intVal); \
@@ -118,6 +126,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_zoomSettingsMenu("Zoom Settings"),
    m_selectedCurvesMenu("Selected Curve"),
    m_visibleCurvesMenu("Visible Curves"),
+   m_visCurveAllAction("Show All Curves", this),
+   m_visCurveNoneAction("Hide All Curves", this),
+   m_visCurveInvertAction("Toggle Visible Curves", this),
+   m_visCurveSelectedAction("Only Show Selected Curve(s)", this),
    m_stylesCurvesMenu("Curve Style"),
    m_2dPointFirstAction("Select First Point", this),
    m_2dPointLastAction("Select Last Point", this),
@@ -206,6 +218,10 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_toggleCursorCanSelectAnyCurveAction, SIGNAL(triggered(bool)), this, SLOT(toggleCursorCanSelectAnyCurveAction()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
+    connect(&m_visCurveAllAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionAll()));
+    connect(&m_visCurveNoneAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionNone()));
+    connect(&m_visCurveInvertAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionInvert()));
+    connect(&m_visCurveSelectedAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionSelected()));
 
     m_cursorAction.setIcon(m_checkedIcon);
 
@@ -569,6 +585,11 @@ void MainWindow::updateCursorMenus()
             ++numDisplayedCurves;
         }
     }
+    m_visibleCurvesMenu.removeAction(&m_visCurveAllAction);
+    m_visibleCurvesMenu.removeAction(&m_visCurveNoneAction);
+    m_visibleCurvesMenu.removeAction(&m_visCurveInvertAction);
+    m_visibleCurvesMenu.removeAction(&m_visCurveSelectedAction);
+    m_visibleCurvesMenu.clear();
 
     for(int i = 0; i < m_selectedCursorActions.size(); ++i)
     {
@@ -654,6 +675,14 @@ void MainWindow::updateCursorMenus()
         } // if(m_qwtCurves[i]->hidden == false)
 
     }
+
+    // Add the rest of the Visible Curve menu actions.
+    m_visibleCurvesMenu.addSeparator();
+    m_visibleCurvesMenu.addAction(&m_visCurveAllAction);
+    m_visibleCurvesMenu.addAction(&m_visCurveNoneAction);
+    m_visibleCurvesMenu.addAction(&m_visCurveInvertAction);
+    m_visibleCurvesMenu.addAction(&m_visCurveSelectedAction);
+
     setCurveStyleMenu();
 }
 
@@ -2428,6 +2457,66 @@ void MainWindow::set2dPointIndex(int index)
 {
    int curCursorPos = (int)m_qwtSelectedSample->m_pointIndex;
    modifyCursorPos(index - curCursorPos);
+}
+
+void MainWindow::setVisibleCurveActionAll()
+{
+   setVisibleCurveAction(E_VIS_MENU_ALL);
+}
+void MainWindow::setVisibleCurveActionNone()
+{
+   setVisibleCurveAction(E_VIS_MENU_NONE);
+}
+void MainWindow::setVisibleCurveActionInvert()
+{
+   setVisibleCurveAction(E_VIS_MENU_INVERT);
+}
+void MainWindow::setVisibleCurveActionSelected()
+{
+   setVisibleCurveAction(E_VIS_MENU_SELECTED);
+}
+
+void MainWindow::setVisibleCurveAction(int actionType)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+
+   switch((eVisMenuActions)actionType)
+   {
+      // Fall through is intended.
+      case E_VIS_MENU_ALL:
+      case E_VIS_MENU_NONE:
+      {
+         bool isVis = ((eVisMenuActions)actionType == E_VIS_MENU_ALL);
+         for(int i = 0; i < m_qwtCurves.size(); ++i)
+         {
+            m_qwtCurves[i]->setVisible(isVis);
+         }
+      }
+      break;
+      case E_VIS_MENU_INVERT:
+         for(int i = 0; i < m_qwtCurves.size(); ++i)
+         {
+            m_qwtCurves[i]->setVisible(!m_qwtCurves[i]->isDisplayed());
+         }
+      break;
+      case E_VIS_MENU_SELECTED:
+      {
+         bool useDelta = m_qwtSelectedSampleDelta->isAttached;
+         QString deltaCurveTitle = (useDelta ? m_qwtSelectedSampleDelta->getCurve()->getCurveTitle() : "");
+         for(int i = 0; i < m_qwtCurves.size(); ++i)
+         {
+            bool isVis = ( (i == m_selectedCurveIndex) || (useDelta && (deltaCurveTitle == m_qwtCurves[i]->getCurveTitle())) );
+            m_qwtCurves[i]->setVisible(isVis);
+         }
+      }
+      break;
+      default:
+         // Nothing to do.
+      break;
+   }
+
+   updateCurveOrder();
+   m_curveCommander->curvePropertyChanged();
 }
 
 void MainWindow::updateCursors()
