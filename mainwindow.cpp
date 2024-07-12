@@ -2222,21 +2222,35 @@ void MainWindow::displayDeltaLabel_update()
 
 void MainWindow::display2dPointDeltaLabel(bool valid, bool isDelta)
 {
-   bool a2DCurveIsDisplayed = false;
-   bool aFftCurveIsDisplayed = false;
+   bool twoDCurveIsDisplayed = false;
+   bool fftCurveIsDisplayed = false;
+   bool xAxisDoesntMatchPointIndex = false;
+   QString deltaCurveTitle = (isDelta ? m_qwtSelectedSampleDelta->getCurve()->getCurveTitle() : "");
+
    for(int i = 0; i < m_qwtCurves.size(); ++i)
    {
-      if(m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints())
+      bool validNonDeltaCurve = (m_qwtCurves[i]->isDisplayed() && m_qwtSelectedSample->m_pointIndex < m_qwtCurves[i]->getNumPoints());
+      bool validDeltaCurve_select = (i == m_selectedCurveIndex);
+      bool validDeltaCurve_delta  = (m_qwtCurves[i]->getCurveTitle() == deltaCurveTitle);
+
+      if((validNonDeltaCurve && !isDelta) || ((validDeltaCurve_select || validDeltaCurve_delta) && isDelta))
       {
-         if(m_qwtCurves[i]->getPlotDim() == E_PLOT_DIM_2D)
-            a2DCurveIsDisplayed = true;
-         switch(m_qwtCurves[i]->getPlotType())
+         auto sampRate = m_qwtCurves[i]->getSampleRate();
+         auto plotDim =  m_qwtCurves[i]->getPlotDim();
+         auto plotType = m_qwtCurves[i]->getPlotType();
+
+         if(plotDim == E_PLOT_DIM_2D)
+            twoDCurveIsDisplayed = true;
+         else if(plotDim == E_PLOT_DIM_1D && sampRate != 1.0 && sampRate != 0.0) // Setting the sample rate can make the x axis not match the point index.
+            xAxisDoesntMatchPointIndex = true;
+
+         switch(plotType)
          {
             case E_PLOT_TYPE_REAL_FFT:
             case E_PLOT_TYPE_COMPLEX_FFT:
             case E_PLOT_TYPE_DB_POWER_FFT_REAL:
             case E_PLOT_TYPE_DB_POWER_FFT_COMPLEX:
-               aFftCurveIsDisplayed = true;
+               fftCurveIsDisplayed = true;
             break;
             default:
                // Nothing to do.
@@ -2244,18 +2258,21 @@ void MainWindow::display2dPointDeltaLabel(bool valid, bool isDelta)
          }
       }
    }
-   valid = valid && a2DCurveIsDisplayed && !aFftCurveIsDisplayed;
+   valid = valid && (twoDCurveIsDisplayed || xAxisDoesntMatchPointIndex) && !fftCurveIsDisplayed;
    if(!valid)
    {
       ui->lbl2dPoint->setText("");
    }
    else if(isDelta)
    {
-      ui->lbl2dPoint->setText("2D point indexes " + QString::number(m_qwtSelectedSampleDelta->m_pointIndex) + " : " + QString::number(m_qwtSelectedSample->m_pointIndex));
+      ui->lbl2dPoint->setText("Point indexes " + 
+         QString::number(m_qwtSelectedSampleDelta->m_pointIndex) + " : " +
+         QString::number(m_qwtSelectedSample->m_pointIndex) + " " + CAPITAL_DELTA + " " +
+         QString::number((int64_t)m_qwtSelectedSample->m_pointIndex - (int64_t)m_qwtSelectedSampleDelta->m_pointIndex));
    }
    else
    {
-      ui->lbl2dPoint->setText("2D point index " + QString::number(m_qwtSelectedSample->m_pointIndex));
+      ui->lbl2dPoint->setText("Point index " + QString::number(m_qwtSelectedSample->m_pointIndex));
    }
 }
 
