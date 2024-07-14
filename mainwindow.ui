@@ -419,6 +419,11 @@
       </item>
       <item>
        <widget class="QLabel" name="lbl2dPoint">
+        <property name="toolTip">
+         <string>This shows the index of the selected point(s) in the curve array.
+This is helpful for 2D plots to determine which is the first/last
+point or for 1D plots where the sample rate is specified.</string>
+        </property>
         <property name="text">
          <string/>
         </property>
