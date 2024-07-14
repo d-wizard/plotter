@@ -133,6 +133,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_stylesCurvesMenu("Curve Style"),
    m_2dPointFirstAction("Select First Point", this),
    m_2dPointLastAction("Select Last Point", this),
+   m_2dPointCopyToClipboardAction("Copy to Clipboard", this),
    m_2dPointMenu("2D Point Menu"),
    m_enableDisablePlotUpdate("Disable New Curves", this),
    m_curveProperties("Properties", this),
@@ -315,6 +316,8 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     // 2D Point right click menu
     MAPPER_ACTION_TO_SLOT(m_2dPointMenu, m_2dPointFirstAction, 0, set2dPointIndex);
     MAPPER_ACTION_TO_SLOT(m_2dPointMenu, m_2dPointLastAction, -1, set2dPointIndex);
+    m_2dPointMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_2dPointMenu, m_2dPointCopyToClipboardAction, 0, twoDPointsCopyToClipboard);
     ui->lbl2dPoint->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->lbl2dPoint, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowRightClickFor2dPointLabel(const QPoint&)));
 
@@ -2468,6 +2471,38 @@ void MainWindow::displayPointsCopyToClipboard(int dummy)
    QClipboard* pClipboard = QApplication::clipboard();
    pClipboard->setText(clipboardStr.c_str());
 
+}
+
+void MainWindow::twoDPointsCopyToClipboard(int dummy)
+{
+   (void)dummy; // Tell the compiler to not warn about this dummy variable. The dummy variable is needed to use the MAPPER_ACTION_TO_SLOT macro.
+
+   QString clipboardStr = "";
+   QString delim = "\t"; // Use tab as the delimiter to work best with Excel.
+
+   { // Mutex lock scope.
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         // Delta
+         clipboardStr = 
+            QString::number(m_qwtSelectedSampleDelta->m_pointIndex) + delim +
+            QString::number(m_qwtSelectedSample->m_pointIndex) + delim +
+            QString::number((int64_t)m_qwtSelectedSample->m_pointIndex - (int64_t)m_qwtSelectedSampleDelta->m_pointIndex);
+
+      }
+      else if(!m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
+      {
+         // Non-Delta
+         clipboardStr = QString::number(m_qwtSelectedSample->m_pointIndex);
+      }
+   } // End Mutex lock scope.
+
+   if(clipboardStr != "")
+   {
+      QClipboard* pClipboard = QApplication::clipboard();
+      pClipboard->setText(clipboardStr);
+   }
 }
 
 void MainWindow::set2dPointIndex(int index)

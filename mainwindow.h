@@ -291,6 +291,7 @@ private:
 
     tQMenuActionMapper m_2dPointFirstAction;
     tQMenuActionMapper m_2dPointLastAction;
+    tQMenuActionMapper m_2dPointCopyToClipboardAction;
     QMenu m_2dPointMenu;
 
     QAction m_enableDisablePlotUpdate;
@@ -502,6 +503,7 @@ private slots:
     void displayPointsCopyToClipboard(int dummy);
 
     void set2dPointIndex(int index);
+    void twoDPointsCopyToClipboard(int dummy);
 
     void setVisibleCurveActionAll();
     void setVisibleCurveActionNone();
