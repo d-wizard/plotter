@@ -45,6 +45,7 @@ SOURCES += main.cpp\
     CurveData.cpp \
     ChildCurves.cpp \
     curveproperties.cpp \
+    rawFileTypes.cpp \
     saveRestoreCurve.cpp \
     plotcurvenamedialog.cpp \
     overwriterenamedialog.cpp \

@@ -23,78 +23,8 @@
 #include "localPlotCreate.h"
 #include "FileSystemOperations.h"
 #include "persistentParameters.h"
+#include "rawFileTypes.h"
 
-typedef enum
-{
-   E_RAW_TYPE_SIGNED_INT_8,
-   E_RAW_TYPE_SIGNED_INT_16,
-   E_RAW_TYPE_SIGNED_INT_32,
-   E_RAW_TYPE_SIGNED_INT_64,
-   E_RAW_TYPE_UNSIGNED_INT_8,
-   E_RAW_TYPE_UNSIGNED_INT_16,
-   E_RAW_TYPE_UNSIGNED_INT_32,
-   E_RAW_TYPE_UNSIGNED_INT_64,
-   E_RAW_TYPE_FLOAT_32,
-   E_RAW_TYPE_FLOAT_64,
-   E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8,
-   E_RAW_TYPE_INTERLEAVED_SIGNED_INT_16,
-   E_RAW_TYPE_INTERLEAVED_SIGNED_INT_32,
-   E_RAW_TYPE_INTERLEAVED_SIGNED_INT_64,
-   E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_8,
-   E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16,
-   E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32,
-   E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64,
-   E_RAW_TYPE_INTERLEAVED_FLOAT_32,
-   E_RAW_TYPE_INTERLEAVED_FLOAT_64
-}eRawTypes;
-
-static const QString RAW_TYPE_DROPDOWN[] =
-{
-   "Signed Int 8 Bit",
-   "Signed Int 16 Bit",
-   "Signed Int 32 Bit",
-   "Signed Int 64 Bit",
-   "Unsigned Int 8 Bit",
-   "Unsigned Int 16 Bit",
-   "Unsigned Int 32 Bit",
-   "Unsigned Int 64 Bit",
-   "Float 32 Bit",
-   "Float 64 Bit",
-   "Interleaved Signed Int 8 Bit",
-   "Interleaved Signed Int 16 Bit",
-   "Interleaved Signed Int 32 Bit",
-   "Interleaved Signed Int 64 Bit",
-   "Interleaved Unsigned Int 8 Bit",
-   "Interleaved Unsigned Int 16 Bit",
-   "Interleaved Unsigned Int 32 Bit",
-   "Interleaved Unsigned Int 64 Bit",
-   "Interleaved Float 32 Bit",
-   "Interleaved Float 64 Bit"
-};
-
-static const size_t BLOCK_SIZE[] =
-{
-    1, //E_RAW_TYPE_SIGNED_INT_8,
-    2, //E_RAW_TYPE_SIGNED_INT_16,
-    4, //E_RAW_TYPE_SIGNED_INT_32,
-    8, //E_RAW_TYPE_SIGNED_INT_64,
-    1, //E_RAW_TYPE_UNSIGNED_INT_8,
-    2, //E_RAW_TYPE_UNSIGNED_INT_16,
-    4, //E_RAW_TYPE_UNSIGNED_INT_32,
-    8, //E_RAW_TYPE_UNSIGNED_INT_64,
-    4, //E_RAW_TYPE_FLOAT_32,
-    8, //E_RAW_TYPE_FLOAT_64,
-    2, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8,
-    4, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_16,
-    8, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_32,
-   16, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_64,
-    2, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_8,
-    4, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16,
-    8, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32,
-   16, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64,
-    8, //E_RAW_TYPE_INTERLEAVED_FLOAT_32,
-   16  //E_RAW_TYPE_INTERLEAVED_FLOAT_64
-};
 
 openRawDialog::openRawDialog(QWidget *parent) :
    QDialog(parent),
@@ -242,7 +172,7 @@ void openRawDialog::setCurveNames()
 void openRawDialog::setStatsLabel()
 {
    unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
-   auto blockSize = (curIndex < ARRAY_SIZE(BLOCK_SIZE)) ? BLOCK_SIZE[curIndex] : 0;
+   auto blockSize = (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 0;
    auto numBlocks = m_curFileSizeBytes / blockSize;
    auto numLeftOverBytes = m_curFileSizeBytes - (numBlocks*blockSize);
 
@@ -317,6 +247,7 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64: { fillFromRaw<uint64_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint64_t>(inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_FLOAT_32:        { fillFromRaw<float   >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<float   >(inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_FLOAT_64:        { fillFromRaw<double  >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<double  >(inputFileBytes, curveValues2, 2, 1);} break;
+      default: break;
    }
 
    // Finally, this will actually create the plots.
