@@ -114,6 +114,7 @@ FORMS    += mainwindow.ui \
     plotcurvenamedialog.ui \
     overwriterenamedialog.ui \
     createplotfromdata.ui \
+    saverawdialog.ui \
     zoomlimitsdialog.ui
 
 INCLUDEPATH += $$QWTDIR/src
