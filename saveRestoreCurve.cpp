@@ -81,66 +81,71 @@ static std::string getPlotNameCHeaderVariableName(QString curveName)
    return retVal;
 }
 
-static std::string getCHeaderDataType(eSaveRestorePlotCurveType type, ePlotDataTypes xAxis, ePlotDataTypes yAxis, bool& isInt)
+static ePlotDataTypes getAutoSaveDataType(eSaveRestorePlotCurveType type, ePlotDataTypes xAxis, ePlotDataTypes yAxis)
 {
-   std::string typeStr;
-   isInt = true; // assume int until proven otherwise
+   ePlotDataTypes retVal = E_INVALID_DATA_TYPE;
    switch(type)
    {
       case E_SAVE_RESTORE_C_HEADER_INT:
-         typeStr = "long long";
+         retVal = E_INT_64;
       break;
       case E_SAVE_RESTORE_C_HEADER_FLOAT:
-         typeStr = "double";
-         isInt = false;
+         retVal = E_FLOAT_64;
       break;
       default:
       {
          if(xAxis != yAxis && xAxis != E_INVALID_DATA_TYPE)
          {
             // 2D plot, but X axis type doesn't match Y axis type. Just use double to be sure.
-            typeStr = "double";
-            isInt = false;
+            retVal = E_FLOAT_64;
          }
          else
          {
-            switch(yAxis)
-            {
-               case E_CHAR:
-                  typeStr = "signed char";
-               break;
-               case E_UCHAR:
-                  typeStr = "unsigned char";
-               break;
-               case E_INT_16:
-                  typeStr = "short";
-               break;
-               case E_UINT_16:
-                  typeStr = "unsigned short";
-               break;
-               case E_INT_32:
-                  typeStr = "long";
-               break;
-               case E_UINT_32:
-                  typeStr = "unsigned long";
-               break;
-               case E_INT_64:
-                  typeStr = "long long";
-               break;
-               case E_UINT_64:
-                  typeStr = "unsigned long long";
-               break;
-               case E_FLOAT_32:
-                  typeStr = "float";
-                  isInt = false;
-               break;
-               default:
-                  typeStr = "double";
-                  isInt = false;
-               break;
-            }
+            retVal = yAxis;
          }
       }
+      break;
+   }
+   return retVal;
+}
+
+static std::string getDataStrName(ePlotDataTypes dataType, bool& isInt)
+{
+   std::string typeStr;
+   isInt = true;
+   switch(dataType)
+   {
+      case E_CHAR:
+         typeStr = "signed char";
+      break;
+      case E_UCHAR:
+         typeStr = "unsigned char";
+      break;
+      case E_INT_16:
+         typeStr = "short";
+      break;
+      case E_UINT_16:
+         typeStr = "unsigned short";
+      break;
+      case E_INT_32:
+         typeStr = "long";
+      break;
+      case E_UINT_32:
+         typeStr = "unsigned long";
+      break;
+      case E_INT_64:
+         typeStr = "long long";
+      break;
+      case E_UINT_64:
+         typeStr = "unsigned long long";
+      break;
+      case E_FLOAT_32:
+         typeStr = "float";
+         isInt = false;
+      break;
+      default:
+         typeStr = "double";
+         isInt = false;
       break;
    }
    return typeStr;
@@ -337,11 +342,11 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
 
    // Determine the data type string (i.e. long, double, unsigned char, etc)
    bool dataType_isInt = false;
-   std::string dataType_str = getCHeaderDataType(
+   ePlotDataTypes dataType_type = getAutoSaveDataType(
       type,
       curve->getPlotDim() == E_PLOT_DIM_1D ? E_INVALID_DATA_TYPE : curve->getLastMsgDataType(E_X_AXIS),
-      curve->getLastMsgDataType(E_Y_AXIS),
-      dataType_isInt);
+      curve->getLastMsgDataType(E_Y_AXIS));
+   std::string dataType_str = getDataStrName(dataType_type, dataType_isInt);
 
    headerFile << getCHeaderTypedefStr(plotGui->getPlotName(), curve->getCurveTitle(), dataType_str) << C_HEADER_LINE_DELIM;
 
