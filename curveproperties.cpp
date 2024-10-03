@@ -53,6 +53,8 @@ const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separted Values (*.csv)";
 const QString OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR = "C Header - Auto Type (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
+const QString OPEN_SAVE_FILTER_BINARY_STR = "Raw Binary (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_S16_STR = "Raw Binary - Signed 16 bit Values (*.*)";
 
 const QString OPEN_SAVE_FILTER_DELIM = ";;";
 
@@ -1698,6 +1700,8 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
 
       // Initialize selection with stored value (if there was one).
@@ -1843,6 +1847,16 @@ eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut,
    {
       saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
       ext = ".h";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_STR)
+   {
+      saveType = E_SAVE_RESTORE_BIN_AUTO_TYPE;
+      ext = "";
+   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S16_STR)
+   {
+      saveType = E_SAVE_RESTORE_BIN_S16;
+      ext = "";
    }
 
    if(saveType != E_SAVE_RESTORE_INVALID) // Attempt to update pathInOut, but only if saveType is a valid File Format.

@@ -37,6 +37,9 @@ typedef enum
    E_SAVE_RESTORE_C_HEADER_AUTO_TYPE,
    E_SAVE_RESTORE_C_HEADER_INT,
    E_SAVE_RESTORE_C_HEADER_FLOAT,
+   E_SAVE_RESTORE_BIN_AUTO_TYPE,
+   E_SAVE_RESTORE_BIN_S16,
+   E_SAVE_RESTORE_BIN_INTERLEAVED_AUTO_TYPE,
    E_SAVE_RESTORE_INVALID
 }eSaveRestorePlotCurveType;
 
@@ -76,6 +79,7 @@ private:
    void SaveRaw(CurveData* curve);
    void SaveExcel(MainWindow* plotGui, CurveData* curve, std::string delim);
    void SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestorePlotCurveType type);
+   void SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type);
 
    bool m_limitToZoom;
    bool m_hasData = false;

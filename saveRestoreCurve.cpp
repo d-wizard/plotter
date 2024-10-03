@@ -93,6 +93,9 @@ static ePlotDataTypes getSaveDataType(eSaveRestorePlotCurveType type, ePlotDataT
       case E_SAVE_RESTORE_C_HEADER_FLOAT: // Specific data type.
          retVal = E_FLOAT_64;
       break;
+      case E_SAVE_RESTORE_BIN_S16: // Specific data type.
+         retVal = E_INT_16;
+      break;
       default: // Auto-data type.
       {
          if(xAxis != yAxis && xAxis != E_INVALID_DATA_TYPE)
@@ -215,6 +218,7 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
          SaveCHeader(plotGui, curve, type);
       break;
       case E_SAVE_RESTORE_BIN_AUTO_TYPE:
+      case E_SAVE_RESTORE_BIN_S16:
       case E_SAVE_RESTORE_BIN_INTERLEAVED_AUTO_TYPE:
          SaveBinary(curve, type);
       break;
