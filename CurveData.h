@@ -163,6 +163,9 @@ public:
    maxMinXY get1dDisplayedIndexes();
    maxMinXY get2dDisplayedIndexes(unsigned& numNonContiguousSamples);
    void get2dDisplayedPoints(dubVect& xAxis, dubVect& yAxis);
+
+   void setDisplayedPoints(double val); // Sets all points that are displayed in the current zoom to 'val'
+
 private:
    CurveData();
    void init();

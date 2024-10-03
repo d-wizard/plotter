@@ -1458,6 +1458,29 @@ void MainWindow::clearAllSamples(bool askUserViaMsgBox)
    }
 }
 
+void MainWindow::setDisplayedSamples(bool askUserViaMsgBox, double val) // Sets all the samples in the current zoom to a specific value.
+{
+   bool doSetAll = true;
+   if(askUserViaMsgBox)
+   {
+      QMessageBox::StandardButton reply;
+      reply = QMessageBox::question(this, "Set All Displayed Samples?", "Are you sure you want to set all the currently displayed samples to " + QString::number(val) + "?",
+                                    QMessageBox::Yes | QMessageBox::No);
+      doSetAll = (reply == QMessageBox::Yes);
+   }
+
+   if(doSetAll)
+   {
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      size_t numCurves = m_qwtCurves.size();
+      for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
+      {
+         m_qwtCurves[curveIndex]->setDisplayedPoints(val);
+         handleCurveDataChange(curveIndex, true);
+      }
+   }
+}
+
 void MainWindow::scrollModeSetPlotSize(int newPlotSize)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
@@ -2758,10 +2781,14 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                   }
                }
             }
-            else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::AltModifier))
             {
                // Clear all samples.
                clearAllSamples(false);
+            }
+            else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::AltModifier))
+            {
+               setDisplayedSamples(true, 0);
             }
             else
             {

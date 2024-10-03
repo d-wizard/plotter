@@ -420,6 +420,7 @@ private:
 
     void scrollModeSetPlotSize(int newPlotSize);
     void clearAllSamples(bool askUserViaMsgBox);
+    void setDisplayedSamples(bool askUserViaMsgBox, double val); // Sets all the samples in the current zoom to a specific value.
 
     bool areAllCurves1D();
 

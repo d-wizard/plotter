@@ -771,6 +771,48 @@ void CurveData::get2dDisplayedPoints(dubVect& xAxis, dubVect& yAxis)
    }
 }
 
+void CurveData::setDisplayedPoints(double val)
+{
+   if(plotDim == E_PLOT_DIM_1D && numPoints > 1)
+   {
+      maxMinXY indexes = get1dDisplayedIndexes();
+
+      // Indexes might be out of bounds.
+      indexes.minX = std::max(indexes.minX, double(0));
+      indexes.maxX = std::min(indexes.maxX, double(numPoints));
+
+      for(unsigned i = indexes.minX; i < indexes.maxX; ++i)
+      {
+         yPoints[i] = val;
+      }
+   }
+   else if(plotDim == E_PLOT_DIM_2D && numPoints > 1)
+   {
+      // Not sure how useful this is. (i.e. why would I want to set both x and y axes to the same value?)
+      dubVect& xPointsForGui = xNormalized ? normX : xPoints;
+      dubVect& yPointsForGui = yNormalized ? normY : yPoints;
+
+      maxMinXY zoomDim;
+      QwtScaleDiv plotZoomWidthDim = m_parentPlot->axisScaleDiv(QwtPlot::xBottom); // Get plot zoom dimensions.
+      QwtScaleDiv plotZoomHeightDim = m_parentPlot->axisScaleDiv(QwtPlot::yLeft); // Get plot zoom dimensions.
+      zoomDim.minX = plotZoomWidthDim.lowerBound();
+      zoomDim.maxX = plotZoomWidthDim.upperBound();
+      zoomDim.minY = plotZoomHeightDim.lowerBound();
+      zoomDim.maxY = plotZoomHeightDim.upperBound();
+
+      for(unsigned i = 0; i < numPoints; ++i)
+      {
+         if( (xPointsForGui[i] >= zoomDim.minX && xPointsForGui[i] <= zoomDim.maxX) &&
+             (yPointsForGui[i] >= zoomDim.minY && yPointsForGui[i] <= zoomDim.maxY) )
+         {
+            // The point is being displayed.
+            xPoints[i] = val;
+            yPoints[i] = val;
+         }
+      }
+   }
+}
+
 int CurveData::findFirstSampleGreaterThan(dubVect* xPointsForGui, double startSearchIndex, double compareValue)
 {
    if((*xPointsForGui)[0] > compareValue)
