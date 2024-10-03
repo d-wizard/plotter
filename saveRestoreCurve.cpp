@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <string.h>
 #include <sstream>
+#include <memory>
 #include <QString>
 #include <QStringList>
 #include <algorithm>
@@ -81,18 +82,18 @@ static std::string getPlotNameCHeaderVariableName(QString curveName)
    return retVal;
 }
 
-static ePlotDataTypes getAutoSaveDataType(eSaveRestorePlotCurveType type, ePlotDataTypes xAxis, ePlotDataTypes yAxis)
+static ePlotDataTypes getSaveDataType(eSaveRestorePlotCurveType type, ePlotDataTypes xAxis, ePlotDataTypes yAxis)
 {
    ePlotDataTypes retVal = E_INVALID_DATA_TYPE;
    switch(type)
    {
-      case E_SAVE_RESTORE_C_HEADER_INT:
+      case E_SAVE_RESTORE_C_HEADER_INT: // Specific data type.
          retVal = E_INT_64;
       break;
-      case E_SAVE_RESTORE_C_HEADER_FLOAT:
+      case E_SAVE_RESTORE_C_HEADER_FLOAT: // Specific data type.
          retVal = E_FLOAT_64;
       break;
-      default:
+      default: // Auto-data type.
       {
          if(xAxis != yAxis && xAxis != E_INVALID_DATA_TYPE)
          {
@@ -101,7 +102,7 @@ static ePlotDataTypes getAutoSaveDataType(eSaveRestorePlotCurveType type, ePlotD
          }
          else
          {
-            retVal = yAxis;
+            retVal = yAxis; // Auto-data type. Use y-axis type.
          }
       }
       break;
@@ -159,6 +160,40 @@ static std::string getCHeaderTypedefStr(QString plotName, QString curveName, std
           "#endif" + C_HEADER_LINE_DELIM;
 }
 
+template <typename T>
+void getRawCurveBytes(const double* inX, const double* inY, size_t numPoints, PackedCurveData& out)
+{
+   if(inX != nullptr && inY != nullptr)
+   {
+      // 2D (i.e. both X an Y axes have data)
+      out.resize(sizeof(T)*numPoints*2);
+      T* ptr = (T*)out.data();
+      for(size_t i = 0; i < numPoints; ++i)
+      {
+         ptr[2*i+0] = (T)inX[i];
+         ptr[2*i+1] = (T)inY[i];
+      }
+   }
+   else if(inY != nullptr)
+   {
+      // 1D (i.e. only Y axis has data)
+      out.resize(sizeof(T)*numPoints);
+      T* ptr = (T*)out.data();
+      for(size_t i = 0; i < numPoints; ++i)
+      {
+         ptr[i] = (T)inY[i];
+      }
+   }
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurveType type, bool limitToZoom):
    m_limitToZoom(limitToZoom)
 {
@@ -178,6 +213,10 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
       case E_SAVE_RESTORE_C_HEADER_INT:
       case E_SAVE_RESTORE_C_HEADER_FLOAT:
          SaveCHeader(plotGui, curve, type);
+      break;
+      case E_SAVE_RESTORE_BIN_AUTO_TYPE:
+      case E_SAVE_RESTORE_BIN_INTERLEAVED_AUTO_TYPE:
+         SaveBinary(curve, type);
       break;
    }
 }
@@ -342,7 +381,7 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
 
    // Determine the data type string (i.e. long, double, unsigned char, etc)
    bool dataType_isInt = false;
-   ePlotDataTypes dataType_type = getAutoSaveDataType(
+   ePlotDataTypes dataType_type = getSaveDataType(
       type,
       curve->getPlotDim() == E_PLOT_DIM_1D ? E_INVALID_DATA_TYPE : curve->getLastMsgDataType(E_X_AXIS),
       curve->getLastMsgDataType(E_Y_AXIS));
@@ -438,6 +477,57 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
 
    packedCurveData.resize(outFile.str().size());
    memcpy(&packedCurveData[0], outFile.str().c_str(), outFile.str().size());
+}
+
+void SaveCurve::SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type)
+{
+   unsigned int numSamplesToWrite = curve->getNumPoints();
+   m_hasData = (numSamplesToWrite > 0);
+
+   // Determine the data type string (i.e. long, double, unsigned char, etc)
+   ePlotDataTypes dataType_type = getSaveDataType(
+      type,
+      curve->getPlotDim() == E_PLOT_DIM_1D ? E_INVALID_DATA_TYPE : curve->getLastMsgDataType(E_X_AXIS),
+      curve->getLastMsgDataType(E_Y_AXIS));
+
+   bool is1D = (curve->getPlotDim() == E_PLOT_DIM_1D);
+   const double* xPoints = is1D ? nullptr : curve->getXPoints();
+   const double* yPoints = curve->getYPoints();
+   
+   switch(dataType_type)
+   {
+      case E_CHAR:
+         getRawCurveBytes<int8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_UCHAR:
+         getRawCurveBytes<uint8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_INT_16:
+         getRawCurveBytes<int16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_UINT_16:
+         getRawCurveBytes<uint16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_INT_32:
+         getRawCurveBytes<int32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_UINT_32:
+         getRawCurveBytes<uint32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_INT_64:
+         getRawCurveBytes<int64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_UINT_64:
+         getRawCurveBytes<uint64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      case E_FLOAT_32:
+         getRawCurveBytes<float>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+      default:
+         getRawCurveBytes<double>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+      break;
+   }
+
 }
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
