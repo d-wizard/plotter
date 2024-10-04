@@ -49,7 +49,7 @@ const double CURVE_PROP_E = 2.71828182845904523536028747135266249775724709369995
 
 const QString OPEN_SAVE_FILTER_PLOT_STR = "Plots (*.plot)";
 const QString OPEN_SAVE_FILTER_CURVE_STR = "Curves (*.curve)";
-const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separted Values (*.csv)";
+const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separated Values (*.csv)";
 const QString OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR = "C Header - Auto Type (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
