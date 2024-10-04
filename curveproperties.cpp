@@ -70,7 +70,7 @@ const QString OPEN_SAVE_FILTER_DELIM = ";;";
 
 const QString mathOpsStr[] = {
 "ADD",
-"MUTIPLY",
+"MULTIPLY",
 "DIVIDE",
 "SHIFT UP",
 "SHIFT DOWN",
@@ -131,8 +131,8 @@ const QString mathOpsValueLabel[] = {
 "Decimal Point to Round",
 "Decimal Point to Round Up",
 "Decimal Point to Round Down",
-"Upper Hard Limit Vaue",
-"Lower Hard Limit Vaue",
+"Upper Hard Limit Value",
+"Lower Hard Limit Value",
 "", // Trig functions have no values.
 "", // Trig functions have no values.
 "", // Trig functions have no values.
