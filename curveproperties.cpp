@@ -133,12 +133,12 @@ const QString mathOpsValueLabel[] = {
 "Decimal Point to Round Down",
 "Upper Hard Limit Vaue",
 "Lower Hard Limit Vaue",
-"", // Trig functiona have no values.
-"", // Trig functiona have no values.
-"", // Trig functiona have no values.
-"", // Trig functiona have no values.
-"", // Trig functiona have no values.
-""  // Trig functiona have no values.
+"", // Trig functions have no values.
+"", // Trig functions have no values.
+"", // Trig functions have no values.
+"", // Trig functions have no values.
+"", // Trig functions have no values.
+""  // Trig functions have no values.
 };
 
 const QString plotTypeNames[] = {
