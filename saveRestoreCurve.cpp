@@ -93,8 +93,35 @@ static ePlotDataTypes getSaveDataType(eSaveRestorePlotCurveType type, ePlotDataT
       case E_SAVE_RESTORE_C_HEADER_FLOAT: // Specific data type.
          retVal = E_FLOAT_64;
       break;
-      case E_SAVE_RESTORE_BIN_S16: // Specific data type.
+      case E_SAVE_RESTORE_BIN_S8:  // E_CHAR,
+         retVal = E_CHAR;
+      break;
+      case E_SAVE_RESTORE_BIN_U8:  // E_UCHAR,
+         retVal = E_UCHAR;
+      break;
+      case E_SAVE_RESTORE_BIN_S16: // E_INT_16,
          retVal = E_INT_16;
+      break;
+      case E_SAVE_RESTORE_BIN_U16: // E_UINT_16,
+         retVal = E_UINT_16;
+      break;
+      case E_SAVE_RESTORE_BIN_S32: // E_INT_32,
+         retVal = E_INT_32;
+      break;
+      case E_SAVE_RESTORE_BIN_U32: // E_UINT_32,
+         retVal = E_UINT_32;
+      break;
+      case E_SAVE_RESTORE_BIN_S64: // E_INT_64,
+         retVal = E_INT_64;
+      break;
+      case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
+         retVal = E_UINT_64;
+      break;
+      case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
+         retVal = E_FLOAT_32;
+      break;
+      case E_SAVE_RESTORE_BIN_F64: // E_FLOAT_64,
+         retVal = E_FLOAT_64;
       break;
       default: // Auto-data type.
       {
@@ -222,7 +249,16 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
          SaveCHeader(plotGui, curve, type);
       break;
       case E_SAVE_RESTORE_BIN_AUTO_TYPE:
-      case E_SAVE_RESTORE_BIN_S16:
+      case E_SAVE_RESTORE_BIN_S8:  // E_CHAR,
+      case E_SAVE_RESTORE_BIN_U8:  // E_UCHAR,
+      case E_SAVE_RESTORE_BIN_S16: // E_INT_16,
+      case E_SAVE_RESTORE_BIN_U16: // E_UINT_16,
+      case E_SAVE_RESTORE_BIN_S32: // E_INT_32,
+      case E_SAVE_RESTORE_BIN_U32: // E_UINT_32,
+      case E_SAVE_RESTORE_BIN_S64: // E_INT_64,
+      case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
+      case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
+      case E_SAVE_RESTORE_BIN_F64: // E_FLOAT_64,
          SaveBinary(curve, type);
       break;
    }
@@ -672,7 +708,16 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
          SaveCHeader(plotGui, plotInfo, type);
       break;
       case E_SAVE_RESTORE_BIN_AUTO_TYPE:
-      case E_SAVE_RESTORE_BIN_S16:
+      case E_SAVE_RESTORE_BIN_S8:  // E_CHAR,
+      case E_SAVE_RESTORE_BIN_U8:  // E_UCHAR,
+      case E_SAVE_RESTORE_BIN_S16: // E_INT_16,
+      case E_SAVE_RESTORE_BIN_U16: // E_UINT_16,
+      case E_SAVE_RESTORE_BIN_S32: // E_INT_32,
+      case E_SAVE_RESTORE_BIN_U32: // E_UINT_32,
+      case E_SAVE_RESTORE_BIN_S64: // E_INT_64,
+      case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
+      case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
+      case E_SAVE_RESTORE_BIN_F64: // E_FLOAT_64,
          SaveBinary(plotGui, plotInfo, type);
       break;
    }

@@ -53,8 +53,17 @@ const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separted Values (*.csv)";
 const QString OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR = "C Header - Auto Type (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
 const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
-const QString OPEN_SAVE_FILTER_BINARY_STR = "Raw Binary (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_S16_STR = "Raw Binary - Signed 16 bit Values (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_S8_STR   = "Raw Binary - Signed Int 8 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_S16_STR  = "Raw Binary - Signed Int 16 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_S32_STR  = "Raw Binary - Signed Int 32 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_S64_STR  = "Raw Binary - Signed Int 64 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_U64_STR  = "Raw Binary - Unsigned Int 64 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_U32_STR  = "Raw Binary - Unsigned Int 32 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_U16_STR  = "Raw Binary - Unsigned Int 16 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_U8_STR   = "Raw Binary - Unsigned Int 8 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_F32_STR  = "Raw Binary - Float 32 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_F64_STR  = "Raw Binary - Float 64 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_AUTO_STR = "Raw Binary - Auto Type (*.*)";
 
 const QString OPEN_SAVE_FILTER_DELIM = ";;";
 
@@ -1700,8 +1709,17 @@ void curveProperties::on_cmdSaveCurveToFile_clicked()
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U8_STR  );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
 
       // Initialize selection with stored value (if there was one).
@@ -1763,8 +1781,17 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U8_STR  );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
 
       // Initialize selection with stored value (if there was one).
@@ -1850,16 +1877,29 @@ eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut,
       saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
       ext = ".h";
    }
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_STR)
-   {
-      saveType = E_SAVE_RESTORE_BIN_AUTO_TYPE;
-      ext = "";
-   }
+   // Raw Binary Save types - No Extensions
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S8_STR)
+      saveType = E_SAVE_RESTORE_BIN_S8;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U8_STR)
+      saveType = E_SAVE_RESTORE_BIN_U8;
    else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S16_STR)
-   {
       saveType = E_SAVE_RESTORE_BIN_S16;
-      ext = "";
-   }
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U16_STR)
+      saveType = E_SAVE_RESTORE_BIN_U16;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S32_STR)
+      saveType = E_SAVE_RESTORE_BIN_S32;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U32_STR)
+      saveType = E_SAVE_RESTORE_BIN_U32;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S64_STR)
+      saveType = E_SAVE_RESTORE_BIN_S64;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U64_STR)
+      saveType = E_SAVE_RESTORE_BIN_U64;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F32_STR)
+      saveType = E_SAVE_RESTORE_BIN_F32;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F64_STR)
+      saveType = E_SAVE_RESTORE_BIN_F64;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_AUTO_STR)
+      saveType = E_SAVE_RESTORE_BIN_AUTO_TYPE;
 
    if(saveType != E_SAVE_RESTORE_INVALID) // Attempt to update pathInOut, but only if saveType is a valid File Format.
    {
