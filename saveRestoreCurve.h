@@ -37,9 +37,8 @@ typedef enum
    E_SAVE_RESTORE_C_HEADER_AUTO_TYPE,
    E_SAVE_RESTORE_C_HEADER_INT,
    E_SAVE_RESTORE_C_HEADER_FLOAT,
-   E_SAVE_RESTORE_BIN_AUTO_TYPE,
    E_SAVE_RESTORE_BIN_S16,
-   E_SAVE_RESTORE_BIN_INTERLEAVED_AUTO_TYPE,
+   E_SAVE_RESTORE_BIN_AUTO_TYPE,
    E_SAVE_RESTORE_INVALID
 }eSaveRestorePlotCurveType;
 
@@ -68,6 +67,10 @@ public:
 
    PackedCurveData packedCurveHead;
    PackedCurveData packedCurveData;
+
+   // Parameters set when 'type' is one of the Binary save/restore types (i.e. when 'SaveBinary' is used)
+   unsigned int binary_dataTypeSize = 0;
+   unsigned int binary_numPoints = 0;
 
    bool hasData() {return m_hasData;}
 private:
@@ -124,6 +127,7 @@ private:
    void SaveRaw(MainWindow* plotGui, QString plotName, QVector<CurveData*>& plotInfo);
    void SaveExcel(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
    void SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
+   void SaveBinary(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type);
 
    bool m_limitToZoom;
 };

@@ -164,12 +164,14 @@ static std::string getCHeaderTypedefStr(QString plotName, QString curveName, std
 }
 
 template <typename T>
-void getRawCurveBytes(const double* inX, const double* inY, size_t numPoints, PackedCurveData& out)
+unsigned getRawCurveBytes(const double* inX, const double* inY, size_t numPoints, PackedCurveData& out)
 {
+   unsigned dataTypeSize = 0;
    if(inX != nullptr && inY != nullptr)
    {
       // 2D (i.e. both X an Y axes have data)
-      out.resize(sizeof(T)*numPoints*2);
+      dataTypeSize = 2 * sizeof(T);
+      out.resize(dataTypeSize*numPoints);
       T* ptr = (T*)out.data();
       for(size_t i = 0; i < numPoints; ++i)
       {
@@ -180,13 +182,15 @@ void getRawCurveBytes(const double* inX, const double* inY, size_t numPoints, Pa
    else if(inY != nullptr)
    {
       // 1D (i.e. only Y axis has data)
-      out.resize(sizeof(T)*numPoints);
+      dataTypeSize = sizeof(T);
+      out.resize(dataTypeSize*numPoints);
       T* ptr = (T*)out.data();
       for(size_t i = 0; i < numPoints; ++i)
       {
          ptr[i] = (T)inY[i];
       }
    }
+   return dataTypeSize;
 }
 
 
@@ -219,7 +223,6 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
       break;
       case E_SAVE_RESTORE_BIN_AUTO_TYPE:
       case E_SAVE_RESTORE_BIN_S16:
-      case E_SAVE_RESTORE_BIN_INTERLEAVED_AUTO_TYPE:
          SaveBinary(curve, type);
       break;
    }
@@ -501,37 +504,39 @@ void SaveCurve::SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type)
    switch(dataType_type)
    {
       case E_CHAR:
-         getRawCurveBytes<int8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_UCHAR:
-         getRawCurveBytes<uint8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_INT_16:
-         getRawCurveBytes<int16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_UINT_16:
-         getRawCurveBytes<uint16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_INT_32:
-         getRawCurveBytes<int32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_UINT_32:
-         getRawCurveBytes<uint32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_INT_64:
-         getRawCurveBytes<int64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_UINT_64:
-         getRawCurveBytes<uint64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       case E_FLOAT_32:
-         getRawCurveBytes<float>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<float>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
       default:
-         getRawCurveBytes<double>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<double>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
       break;
    }
 
+   // Save info about the number of points.
+   binary_numPoints = numSamplesToWrite;
 }
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
@@ -666,6 +671,10 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
       case E_SAVE_RESTORE_C_HEADER_FLOAT:
          SaveCHeader(plotGui, plotInfo, type);
       break;
+      case E_SAVE_RESTORE_BIN_AUTO_TYPE:
+      case E_SAVE_RESTORE_BIN_S16:
+         SaveBinary(plotGui, plotInfo, type);
+      break;
    }
 }
 
@@ -784,6 +793,50 @@ void SavePlot::SaveCHeader(MainWindow* plotGui, QVector<CurveData*>& plotInfo, e
       packedCurveHead.insert(packedCurveHead.end(), curveFile.packedCurveHead.begin(), curveFile.packedCurveHead.end());
       packedCurveData.insert(packedCurveData.end(), curveFile.packedCurveData.begin(), curveFile.packedCurveData.end());
    }
+}
+
+void SavePlot::SaveBinary(MainWindow* plotGui, QVector<CurveData*>& plotInfo, eSaveRestorePlotCurveType type)
+{
+   packedCurveHead.clear(); // No Header. This is a raw binary file.
+   packedCurveData.clear(); // Clear data (it will be modified later in this function)
+
+   // Generate all the raw bytes for each curve.
+   std::vector<std::shared_ptr<SaveCurve>> saveCurves;
+   std::vector<char*> saveCurvesRawBytesPtr;
+   std::vector<unsigned> saveCurvesTypeSize;
+   unsigned numPoints = 0;
+   unsigned numBytesPerPoint = 0;
+   for(int i = 0; i < plotInfo.size(); ++i)
+   {
+      saveCurves.emplace_back(std::make_shared<SaveCurve>(plotGui, plotInfo[i], type, m_limitToZoom));
+      saveCurvesRawBytesPtr.emplace_back(saveCurves[i]->hasData() ? saveCurves[i]->packedCurveData.data() : nullptr);
+      saveCurvesTypeSize.emplace_back(saveCurves[i]->hasData() ? saveCurves[i]->binary_dataTypeSize : 0); // If no data, this should be zero.
+      if(saveCurves[i]->hasData())
+      {
+         if(numPoints == 0)
+            numPoints = saveCurves[i]->binary_numPoints; // Initialize with the first curve that has some points.
+         else
+            numPoints = std::min(numPoints, saveCurves[i]->binary_numPoints); // Save the number of points that are available in all curves.
+         numBytesPerPoint += saveCurvesTypeSize[i];
+      }
+   }
+
+   // Interleave all the curve data points.
+   packedCurveData.resize(numBytesPerPoint*numPoints);
+   auto packedDataPtr = packedCurveData.data();
+   unsigned writeByte = 0;
+   for(unsigned pointIndex = 0; pointIndex < numPoints; ++pointIndex)
+   {
+      for(int curveIndex = 0; curveIndex < plotInfo.size(); ++curveIndex)
+      {
+         auto curveMemberSize = saveCurvesTypeSize[curveIndex];
+         memcpy(&packedDataPtr[writeByte], saveCurvesRawBytesPtr[curveIndex], curveMemberSize);
+         writeByte += curveMemberSize;
+         saveCurvesRawBytesPtr[curveIndex] += curveMemberSize;
+      }
+   }
+   assert(writeByte == (numBytesPerPoint*numPoints));
+
 }
 
 RestorePlot::RestorePlot(PackedCurveData &packedPlot)

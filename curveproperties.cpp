@@ -1763,6 +1763,8 @@ void curveProperties::on_cmdSavePlotToFile_clicked()
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
       filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_STR);
+      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR);
       QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
 
       // Initialize selection with stored value (if there was one).
