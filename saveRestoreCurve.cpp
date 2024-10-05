@@ -524,55 +524,92 @@ void SaveCurve::SaveCHeader(MainWindow* plotGui, CurveData* curve, eSaveRestoreP
 
 void SaveCurve::SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type)
 {
-   unsigned int numSamplesToWrite = curve->getNumPoints();
-   m_hasData = (numSamplesToWrite > 0);
+   bool is2D = (curve->getPlotDim() == E_PLOT_DIM_2D);
 
    // Determine the data type string (i.e. long, double, unsigned char, etc)
    ePlotDataTypes dataType_type = getSaveDataType(
       type,
-      curve->getPlotDim() == E_PLOT_DIM_1D ? E_INVALID_DATA_TYPE : curve->getLastMsgDataType(E_X_AXIS),
+      is2D ? curve->getLastMsgDataType(E_X_AXIS) : E_INVALID_DATA_TYPE,
       curve->getLastMsgDataType(E_Y_AXIS));
 
-   bool is1D = (curve->getPlotDim() == E_PLOT_DIM_1D);
-   const double* xPoints = is1D ? nullptr : curve->getXPoints();
-   const double* yPoints = curve->getYPoints();
-   
+   // Parameters for keeping track of the sample to save.
+   unsigned int numPoints = 0;
+   const double* xPoints = nullptr;
+   const double* yPoints = nullptr;
+   dubVect xPoints_zoom; // needed if m_limitToZoom is true
+   dubVect yPoints_zoom; // needed if m_limitToZoom is true
+
+   // Determine which samples to save.
+   if(!m_limitToZoom)
+   {
+      // Not limiting the points to the zoom, so get all the samples.
+      if(is2D) // xPoints only needs to be set for 2D plots. It should stay nullptr for 1D plots.
+         xPoints = curve->getXPoints();
+      yPoints = curve->getYPoints();
+      numPoints = curve->getNumPoints();
+   }
+   else if(is2D)
+   {
+      // 2D - Limit the samples based on the current zoom. 
+      curve->get2dDisplayedPoints(xPoints_zoom, yPoints_zoom); // 2D samples are scattered around, so new memory needs to be used to fill in the samples that are in the current zoom.
+      xPoints = xPoints_zoom.data();
+      yPoints = yPoints_zoom.data();
+      numPoints = (unsigned int)std::min(xPoints_zoom.size(), yPoints_zoom.size());
+   }
+   else
+   {
+      // 1D - Limit the samples based on the current zoom.
+      unsigned int startInclusive = 0;
+      unsigned int stopExclusive = curve->getNumPoints();
+      maxMinXY displayed = curve->get1dDisplayedIndexes();
+      displayed.minX += 1; // Min is the sample before the first sample displayed.
+
+      if(displayed.minX > startInclusive)
+         startInclusive = displayed.minX;
+      if(displayed.maxX < stopExclusive)
+         stopExclusive = displayed.maxX;
+      numPoints = (stopExclusive >= startInclusive) ? (stopExclusive - startInclusive) : 0;
+      yPoints = (numPoints > 0) ? curve->getYPoints()+startInclusive : nullptr;
+   }
+
+   // Store the samples as binary data in the data format specified by 'dataType_type'
    switch(dataType_type)
    {
       case E_CHAR:
-         binary_dataTypeSize = getRawCurveBytes<int8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int8_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_UCHAR:
-         binary_dataTypeSize = getRawCurveBytes<uint8_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint8_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_INT_16:
-         binary_dataTypeSize = getRawCurveBytes<int16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int16_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_UINT_16:
-         binary_dataTypeSize = getRawCurveBytes<uint16_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint16_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_INT_32:
-         binary_dataTypeSize = getRawCurveBytes<int32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int32_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_UINT_32:
-         binary_dataTypeSize = getRawCurveBytes<uint32_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint32_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_INT_64:
-         binary_dataTypeSize = getRawCurveBytes<int64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<int64_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_UINT_64:
-         binary_dataTypeSize = getRawCurveBytes<uint64_t>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<uint64_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_FLOAT_32:
-         binary_dataTypeSize = getRawCurveBytes<float>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<float>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       default:
-         binary_dataTypeSize = getRawCurveBytes<double>(xPoints, yPoints, numSamplesToWrite, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<double>(xPoints, yPoints, numPoints, packedCurveData);
       break;
    }
 
    // Save info about the number of points.
-   binary_numPoints = numSamplesToWrite;
+   m_hasData = (numPoints > 0);
+   binary_numPoints = numPoints;
 }
 
 RestoreCurve::RestoreCurve(PackedCurveData& packedCurve)
