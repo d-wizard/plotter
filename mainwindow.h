@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -446,6 +446,8 @@ private:
     void fillWithSavedAppearance(QString& curveName, CurveAppearance& appearance);
 
     void setVisibleCurveAction(int actionType);
+
+    void openSavePlotDialog(bool limitToZoom);
 
 private slots:
     void pointSelected(const QPointF &pos);

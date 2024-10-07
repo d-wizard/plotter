@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -2648,7 +2648,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 
                usedEvent = false; // Use default Escape button behavoir.
             }
-            else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::ShiftModifier)) // Check against Ctrl+Shift+Z to avoid hitting that case.
             {
                 m_plotZoom->changeZoomFromSavedZooms(-1);
             }
@@ -2656,7 +2656,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                 m_plotZoom->changeZoomFromSavedZooms(1);
             }
-            else if(KeyEvent->key() == Qt::Key_S && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_S && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
                // Toggle Scroll Mode
                scrollModeToggle();
@@ -2789,6 +2789,16 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::AltModifier))
             {
                setDisplayedSamples(true, 0);
+            }
+            else if(KeyEvent->key() == Qt::Key_S && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
+            {
+               // Save Dialog - Save entire plot to file
+               openSavePlotDialog(false);
+            }
+            else if(KeyEvent->key() == Qt::Key_Z && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
+            {
+               // Save Dialog - Limit save points to current zoom
+               openSavePlotDialog(true);
             }
             else
             {
@@ -4077,5 +4087,11 @@ bool MainWindow::closeSubWindows()
    }
 
    return subWindowClosed;
+}
+
+void MainWindow::openSavePlotDialog(bool limitToZoom)
+{
+   SavePlotCurveDialog dialog(this, m_curveCommander, limitToZoom);
+   dialog.savePlot(m_plotName);
 }
 

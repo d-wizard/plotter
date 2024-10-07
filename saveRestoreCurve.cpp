@@ -1240,11 +1240,13 @@ bool SavePlotCurveDialog::saveCurve(const QString& plotName, const QString& curv
          selectedFilter = persistentReadValue.c_str();
 
       // Open the save file dialog.
-      QString fileName = QFileDialog::getSaveFileName(m_widgetParent, QObject::tr("Save Curve To File"),
-                                                       suggestedSavePath,
-                                                       filterString,
-                                                       &selectedFilter,
-                                                       QFileDialog::DontConfirmOverwrite);
+      QString dialogCaption = QString("Save Curve To File") + QString(m_limitToZoom ? " (Only Points in Current Zoom)" : "");
+      QString fileName = QFileDialog::getSaveFileName(m_widgetParent,
+                                                      QObject::tr(dialogCaption.toStdString().c_str()),
+                                                      suggestedSavePath,
+                                                      filterString,
+                                                      &selectedFilter,
+                                                      QFileDialog::DontConfirmOverwrite);
 
       eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
@@ -1310,11 +1312,13 @@ bool SavePlotCurveDialog::savePlot(const QString& plotName)
          selectedFilter = persistentReadValue.c_str();
 
       // Open the save file dialog.
-      QString fileName = QFileDialog::getSaveFileName(m_widgetParent, QObject::tr("Save Plot To File"),
-                                                       suggestedSavePath,
-                                                       filterString,
-                                                       &selectedFilter,
-                                                       QFileDialog::DontConfirmOverwrite);
+      QString dialogCaption = QString("Save Plot To File") + QString(m_limitToZoom ? " (Only Points in Current Zoom)" : "");
+      QString fileName = QFileDialog::getSaveFileName(m_widgetParent, 
+                                                      QObject::tr(dialogCaption.toStdString().c_str()),
+                                                      suggestedSavePath,
+                                                      filterString,
+                                                      &selectedFilter,
+                                                      QFileDialog::DontConfirmOverwrite);
 
       eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
 
