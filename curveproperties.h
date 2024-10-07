@@ -240,8 +240,6 @@ private:
    void storeUserChildPlotNames(ePlotType plotType = (ePlotType)-1);
    void setUserChildPlotNames();
 
-   eSaveRestorePlotCurveType parseSaveFileName(QString& pathInOut, const QString& selectedFilter);
-
    // Restore Tab Functions / Parameters
    void fillRestoreTabListBox();
    QVector<tStoredMsg> m_storedMsgs;

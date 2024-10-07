@@ -20,6 +20,7 @@
 #define saveRestoreCurve_h
 
 #include <vector>
+#include <QWidget>
 #include "DataTypes.h"
 #include "CurveData.h"
 #include "mainwindow.h"
@@ -69,6 +70,8 @@ typedef struct
 
 }tSaveRestoreCurveParams;
 
+////////////////////////////////////////////////////////////////////////////////
+
 class SaveCurve
 {
 public:
@@ -98,6 +101,8 @@ private:
    bool m_hasData = false;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 class RestoreCurve
 {
 public:
@@ -119,6 +124,8 @@ private:
 
 
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class SavePlot
 {
@@ -142,6 +149,8 @@ private:
    bool m_limitToZoom;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 class RestorePlot
 {
 public:
@@ -157,6 +166,8 @@ private:
    RestorePlot(RestorePlot const&);
    void operator=(RestorePlot const&);
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class RestoreCsv
 {
@@ -174,5 +185,30 @@ private:
    void operator=(RestoreCsv const&);
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+class CurveCommander;
+
+class SavePlotCurveDialog
+{
+public:
+   SavePlotCurveDialog(QWidget* widgetParent, CurveCommander* curveCmdr, bool limitToZoom)
+      : m_widgetParent(widgetParent), m_curveCmdr(curveCmdr), m_limitToZoom(limitToZoom){}
+
+   bool saveCurve(const QString& plotName, const QString& curveName); // Returns whether the file was saved or not.
+   bool savePlot(const QString& plotName); // Returns whether the file was saved or not.
+
+private:
+   SavePlotCurveDialog();
+   SavePlotCurveDialog(SavePlotCurveDialog const&);
+   void operator=(SavePlotCurveDialog const&);
+
+private:
+   QWidget* m_widgetParent;
+   CurveCommander* m_curveCmdr;
+   bool m_limitToZoom;
+
+   eSaveRestorePlotCurveType parseSaveFileName(QString& pathInOut, const QString& selectedFilter);
+};
 
 #endif

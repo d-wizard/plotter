@@ -47,27 +47,6 @@ const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751
 const double CURVE_PROP_2PI = 6.2831853071795864769252867665590057683943387987502116;
 const double CURVE_PROP_E = 2.7182818284590452353602874713526624977572470936999595;
 
-const QString OPEN_SAVE_FILTER_PLOT_STR = "Plots (*.plot)";
-const QString OPEN_SAVE_FILTER_CURVE_STR = "Curves (*.curve)";
-const QString OPEN_SAVE_FILTER_CSV_STR = "Comma Separated Values (*.csv)";
-const QString OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR = "C Header - Auto Type (*.h)";
-const QString OPEN_SAVE_FILTER_C_HEADER_INT_STR = "C Header - Integer (*.h)";
-const QString OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR = "C Header - Float (*.h)";
-const QString OPEN_SAVE_FILTER_BINARY_S8_STR   = "Raw Binary - Signed Int 8 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_S16_STR  = "Raw Binary - Signed Int 16 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_S32_STR  = "Raw Binary - Signed Int 32 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_S64_STR  = "Raw Binary - Signed Int 64 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_U64_STR  = "Raw Binary - Unsigned Int 64 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_U32_STR  = "Raw Binary - Unsigned Int 32 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_U16_STR  = "Raw Binary - Unsigned Int 16 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_U8_STR   = "Raw Binary - Unsigned Int 8 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_F32_STR  = "Raw Binary - Float 32 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_F64_STR  = "Raw Binary - Float 64 Bit (*.*)";
-const QString OPEN_SAVE_FILTER_BINARY_AUTO_STR = "Raw Binary - Auto Type (*.*)";
-
-const QString OPEN_SAVE_FILTER_DELIM = ";;";
-
-
 const QString mathOpsStr[] = {
 "ADD",
 "MULTIPLY",
@@ -1689,257 +1668,23 @@ void curveProperties::useZoomForSlice(tCmbBoxValPtr cmbAxisSrc, QSpinBox* spnSta
 void curveProperties::on_cmdSaveCurveToFile_clicked()
 {
    tPlotCurveAxis toSave = m_cmbCurveToSave->getPlotCurveAxis();
-   CurveData* toSaveCurveData = m_curveCmdr->getCurveData(toSave.plotName, toSave.curveName);
-   MainWindow* plotGui = m_curveCmdr->getMainPlot(toSave.plotName);
-
-   if(toSaveCurveData != NULL)
+   SavePlotCurveDialog dialog(this, m_curveCmdr, false);
+   if(dialog.saveCurve(toSave.plotName, toSave.curveName))
    {
-      // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = m_curveCmdr->getOpenSavePath(toSave.curveName);
-
-      // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_STR;
-      std::string persistentReadValue;
-      persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
-
-      // Generate Filter List string (i.e. the File Save types)
-      QStringList filterList;
-      filterList.append(OPEN_SAVE_FILTER_CURVE_STR);
-      filterList.append(OPEN_SAVE_FILTER_CSV_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U8_STR  );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
-      QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
-
-      // Initialize selection with stored value (if there was one).
-      QString selectedFilter;
-      if(filterList.contains(persistentReadValue.c_str()))
-         selectedFilter = persistentReadValue.c_str();
-
-      // Open the save file dialog.
-      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Curve To File"),
-                                                       suggestedSavePath,
-                                                       filterString,
-                                                       &selectedFilter,
-                                                       QFileDialog::DontConfirmOverwrite);
-
-      eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
-
-      if(fileName != "") // Check for 'Cancel' case.
-      {
-         // Write user selections to persisent memory.
-         m_curveCmdr->setOpenSavePath(fileName);
-         persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
-         persistentParam_setParam_f64(PERSIST_PARAM_CURVE_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
-
-         if(saveType != E_SAVE_RESTORE_INVALID)
-         {
-            SaveCurve packedCurve(plotGui, toSaveCurveData, saveType);
-            PackedCurveData dataToWriteToFile;
-            packedCurve.getPackedData(dataToWriteToFile);
-            fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
-
-            // User hit a button, i.e. user specified.
-            m_cmbCurveToSave->userSpecified(true);
-         }
-      }
+      // User hit a button, i.e. user specified.
+      m_cmbCurveToSave->userSpecified(true);
    }
-
 }
 
 
 void curveProperties::on_cmdSavePlotToFile_clicked()
 {
-   tCurveCommanderInfo allPlots = m_curveCmdr->getCurveCommanderInfo();
-   QString plotName = m_cmbPlotToSave->currentText();
-
-   if(allPlots.find(plotName) != allPlots.end())
+   SavePlotCurveDialog dialog(this, m_curveCmdr, false);
+   if(dialog.savePlot(m_cmbPlotToSave->currentText()))
    {
-      // Use the last saved location to determine the folder to save the curve to.
-      QString suggestedSavePath = m_curveCmdr->getOpenSavePath(plotName);
-
-      // Read the last used filter from persistent memory.
-      std::string persistentSaveStr = PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_STR;
-      std::string persistentReadValue;
-      persistentParam_getParam_str(persistentSaveStr, persistentReadValue);
-
-      // Generate Filter List string (i.e. the File Save types)
-      QStringList filterList;
-      filterList.append(OPEN_SAVE_FILTER_PLOT_STR);
-      filterList.append(OPEN_SAVE_FILTER_CSV_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_S64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U8_STR  );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
-      filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
-      QString filterString = filterList.join(OPEN_SAVE_FILTER_DELIM);
-
-      // Initialize selection with stored value (if there was one).
-      QString selectedFilter;
-      if(filterList.contains(persistentReadValue.c_str()))
-         selectedFilter = persistentReadValue.c_str();
-
-      // Open the save file dialog.
-      QString fileName = QFileDialog::getSaveFileName(this, tr("Save Plot To File"),
-                                                       suggestedSavePath,
-                                                       filterString,
-                                                       &selectedFilter,
-                                                       QFileDialog::DontConfirmOverwrite);
-
-      eSaveRestorePlotCurveType saveType = parseSaveFileName(fileName, selectedFilter);
-
-      if(fileName != "") // Check for 'Cancel' case.
-      {
-         // Fill in vector of curve data in the correct order.
-         QVector<CurveData*> curves;
-         curves.resize(allPlots[plotName].curves.size());
-         foreach( QString key, allPlots[plotName].curves.keys() )
-         {
-            int index = allPlots[plotName].plotGui->getCurveIndex(key);
-            curves[index] = allPlots[plotName].curves[key];
-         }
-
-         // Write user selections to persisent memory.
-         m_curveCmdr->setOpenSavePath(fileName);
-         persistentParam_setParam_str(persistentSaveStr, selectedFilter.toStdString());
-         persistentParam_setParam_f64(PERSIST_PARAM_PLOT_SAVE_PREV_SAVE_SELECTION_INDEX, saveType);
-
-         if(saveType != E_SAVE_RESTORE_INVALID)
-         {
-            SavePlot savePlot(allPlots[plotName].plotGui, plotName, curves, saveType);
-            PackedCurveData dataToWriteToFile;
-            savePlot.getPackedData(dataToWriteToFile);
-            fso::WriteFile(fileName.toStdString(), &dataToWriteToFile[0], dataToWriteToFile.size());
-
-            // User hit the button, i.e. user specified.
-            m_cmbPlotToSave->userSpecified(true);
-         }
-      }
+      // User hit a button, i.e. user specified.
+      m_cmbPlotToSave->userSpecified(true);
    }
-}
-
-eSaveRestorePlotCurveType curveProperties::parseSaveFileName(QString& pathInOut, const QString& selectedFilter)
-{
-   // If path is empty, cancel or some equivalent was pressed. Return right away in that case.
-   if(pathInOut == "")
-      return E_SAVE_RESTORE_INVALID;
-
-   // Use selectedFilter to determine the file format to save.
-   eSaveRestorePlotCurveType saveType = E_SAVE_RESTORE_INVALID;
-   QString ext = "";
-   if(selectedFilter == OPEN_SAVE_FILTER_PLOT_STR)
-   {
-      saveType = E_SAVE_RESTORE_RAW;
-      ext = ".plot";
-   }
-   else if(selectedFilter == OPEN_SAVE_FILTER_CURVE_STR)
-   {
-      saveType = E_SAVE_RESTORE_RAW;
-      ext = ".curve";
-   }
-   else if(selectedFilter == OPEN_SAVE_FILTER_CSV_STR)
-   {
-      saveType = E_SAVE_RESTORE_CSV;
-      ext = ".csv";
-   }
-   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR)
-   {
-      saveType = E_SAVE_RESTORE_C_HEADER_AUTO_TYPE;
-      ext = ".h";
-   }
-   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_INT_STR)
-   {
-      saveType = E_SAVE_RESTORE_C_HEADER_INT;
-      ext = ".h";
-   }
-   else if(selectedFilter == OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR)
-   {
-      saveType = E_SAVE_RESTORE_C_HEADER_FLOAT;
-      ext = ".h";
-   }
-   // Raw Binary Save types - No Extensions
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S8_STR)
-      saveType = E_SAVE_RESTORE_BIN_S8;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U8_STR)
-      saveType = E_SAVE_RESTORE_BIN_U8;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S16_STR)
-      saveType = E_SAVE_RESTORE_BIN_S16;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U16_STR)
-      saveType = E_SAVE_RESTORE_BIN_U16;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S32_STR)
-      saveType = E_SAVE_RESTORE_BIN_S32;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U32_STR)
-      saveType = E_SAVE_RESTORE_BIN_U32;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_S64_STR)
-      saveType = E_SAVE_RESTORE_BIN_S64;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U64_STR)
-      saveType = E_SAVE_RESTORE_BIN_U64;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F32_STR)
-      saveType = E_SAVE_RESTORE_BIN_F32;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F64_STR)
-      saveType = E_SAVE_RESTORE_BIN_F64;
-   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_AUTO_STR)
-      saveType = E_SAVE_RESTORE_BIN_AUTO_TYPE;
-
-   if(saveType != E_SAVE_RESTORE_INVALID) // Attempt to update pathInOut, but only if saveType is a valid File Format.
-   {
-      // Check if the correct file extension needs to be added to the save path (this seems to be needed in Linux)
-      if(pathInOut.size() < ext.size())
-      {
-         pathInOut += ext; // path is too short to be the extension, so just add the extension to the end
-      }
-      else
-      {
-         // Check if the correct extension is at the end of the save path, if not fix the save path.
-         QString pathEnd = pathInOut.right(ext.size());
-         if(pathEnd != ext)
-         {
-            if(pathEnd.toLower() == ext)
-            {
-               pathInOut = pathInOut.left(pathInOut.size()-ext.size()); // Extension matches but is the wrong case, remove extension (it will be added back in the line below).
-            }
-            pathInOut += ext;
-         }
-      }
-   }
-   
-   if(fso::FileExists(pathInOut.toStdString()))
-   {
-      // A file with this path name already exists. Ask the user if it should be overwritten.
-      QMessageBox::StandardButton reply;
-      reply = QMessageBox::question( this,
-                                     "Confirm Save As!",
-                                     pathInOut + " already exists.\nDo you want to replace it?",
-                                     QMessageBox::Yes|QMessageBox::No );
-      if (reply != QMessageBox::Yes)
-      {
-         // User doesn't want to replace the existing file.
-         pathInOut = "";
-         saveType = E_SAVE_RESTORE_INVALID;
-      }
-   }
-
-   return saveType;
 }
 
 void curveProperties::on_cmdOpenCurveFromFile_clicked()
