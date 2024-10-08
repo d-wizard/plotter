@@ -1216,11 +1216,15 @@ bool SavePlotCurveDialog::saveCurve(const QString& plotName, const QString& curv
 
       // Generate Filter List string (i.e. the File Save types)
       QStringList filterList;
-      filterList.append(OPEN_SAVE_FILTER_CURVE_STR);
+      if(!m_limitToZoom) // OPEN_SAVE_FILTER_CURVE_STR doesn't support "Limit to Zoom"
+         filterList.append(OPEN_SAVE_FILTER_CURVE_STR);
       filterList.append(OPEN_SAVE_FILTER_CSV_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      if(!m_limitToZoom) // OPEN_SAVE_FILTER_C_HEADER_* doesn't support "Limit to Zoom"
+      {
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      }
       filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
       filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
@@ -1288,11 +1292,15 @@ bool SavePlotCurveDialog::savePlot(const QString& plotName)
 
       // Generate Filter List string (i.e. the File Save types)
       QStringList filterList;
-      filterList.append(OPEN_SAVE_FILTER_PLOT_STR);
+      if(!m_limitToZoom) // OPEN_SAVE_FILTER_PLOT_STR doesn't support "Limit to Zoom"
+         filterList.append(OPEN_SAVE_FILTER_PLOT_STR);
       filterList.append(OPEN_SAVE_FILTER_CSV_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
-      filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      if(!m_limitToZoom) // OPEN_SAVE_FILTER_C_HEADER_* doesn't support "Limit to Zoom"
+      {
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_AUTO_TYPE_STR);
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_INT_STR);
+         filterList.append(OPEN_SAVE_FILTER_C_HEADER_FLOAT_STR);
+      }
       filterList.append(OPEN_SAVE_FILTER_BINARY_S8_STR  );
       filterList.append(OPEN_SAVE_FILTER_BINARY_S16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_S32_STR );
