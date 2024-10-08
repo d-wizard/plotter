@@ -27,6 +27,14 @@
    alt + d | Disable New Curves
 
    -----------------------------------------------------------------
+   | Save Plots
+   -----------------------------------------------------------------
+   ctrl + s | Saves the current plot.
+
+   ctrl + shift + z | Saves the current plot, but only the samples
+                      visible in the current zoom will be saved.
+
+   -----------------------------------------------------------------
    | Copy / Paste Curves
    -----------------------------------------------------------------
    ctrl + c | Copies all displayed plot data to the clipboard
@@ -36,7 +44,7 @@
    -----------------------------------------------------------------
    | Scroll Mode Settings
    -----------------------------------------------------------------
-   ctrl + s | Toggle Scroll Mode
+   ctrl + shift + s | Toggle Scroll Mode
    ctrl + x | Set to Scroll Mode and open dialog to set the scroll
               mode plot size
    ctrl + 1 | Set to Scroll Mode and set the plot size to 10x of its
