@@ -1,4 +1,4 @@
-/* Copyright 2013, 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2017, 2019, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -30,7 +30,7 @@
 void dServerSocket_updateIndexForNextPacket(dSocketRxBuff* rxBuff)
 {
    unsigned int buffIndex = (rxBuff->buffIndex + 3) & ((unsigned int)-4);
-   if( (buffIndex + rxBuff->maxPacketSize) >= sizeof(rxBuff->buff))
+   if( (buffIndex + rxBuff->maxPacketSize) >= rxBuff->buffSize)
    {
       rxBuff->buffIndex = 0;
    }
@@ -44,7 +44,7 @@ void dServerSocket_writeNewPacket(dClientConnection* dConn, char* packet, unsign
 {
    dConn->rxBuff.packetAddr[dConn->rxBuff.writeIndex] = packet;
    dConn->rxBuff.packetSize[dConn->rxBuff.writeIndex] = size;
-   if(++dConn->rxBuff.writeIndex == MAX_STORED_PACKETS)
+   if(++dConn->rxBuff.writeIndex == dConn->rxBuff.maxStoredPackets)
    {
       dConn->rxBuff.writeIndex = 0;
    }
@@ -59,7 +59,7 @@ void dServerSocket_readAllPackets(dClientConnection* dConn)
          &dConn->info,
          dConn->rxBuff.packetAddr[dConn->rxBuff.readIndex],
          dConn->rxBuff.packetSize[dConn->rxBuff.readIndex] );
-      if(++dConn->rxBuff.readIndex == MAX_STORED_PACKETS)
+      if(++dConn->rxBuff.readIndex == dConn->rxBuff.maxStoredPackets)
       {
          dConn->rxBuff.readIndex = 0;
       }
@@ -70,12 +70,15 @@ void dServerSocket_initClientConn(dClientConnection* dConn, dServerSocket* dSock
 {
    memset(dConn, 0, sizeof(dClientConnection));
    dConn->fd = INVALID_FD;
-   dConn->rxBuff.maxPacketSize = MAX_PACKET_SIZE;
-   dConn->rxBuff.buffPtr = (char*)dConn->rxBuff.buff;
+   dConn->rxBuff.maxPacketSize = dSock->maxPacketSize;
+   dConn->rxBuff.maxStoredPackets = dSock->maxStoredPackets;
+   dConn->rxBuff.buffSize = dSock->maxPacketSize * dSock->maxStoredPackets;
+   dConn->rxBuff.packetAddr = (char**)malloc(sizeof(char*) * dSock->maxStoredPackets);
+   dConn->rxBuff.packetSize = (unsigned int*)malloc(sizeof(unsigned int) * dSock->maxStoredPackets);
+   dConn->rxBuff.buffPtr = (char*)malloc(dConn->rxBuff.buffSize);
    dConn->rxPacketCallback = dSock->rxPacketCallback;
    dConn->callbackInputPtr = dSock->callbackInputPtr;
    dConn->killThisThreadSem = &dSock->killThreadSem;
-
 }
 
 #ifdef TCP_SERVER_THREADS_WIN_BUILD
@@ -91,7 +94,9 @@ void dServerSocket_init(dServerSocket* dSock,
                         dRxPacketCallback rxPacketCallback,
                         dClientConnStartCallback clientConnStartCallback,
                         dClientConnEndCallback clientConnEndCallback,
-                        void* inputPtr)
+                        void* inputPtr,
+                        unsigned int maxPacketSize,
+                        unsigned int maxStoredPackets)
 {
    memset(dSock, 0, sizeof(dServerSocket));
    dSock->port = port;
@@ -99,6 +104,8 @@ void dServerSocket_init(dServerSocket* dSock,
    dSock->clientConnStartCallback = clientConnStartCallback;
    dSock->clientConnEndCallback = clientConnEndCallback;
    dSock->callbackInputPtr = inputPtr;
+   dSock->maxPacketSize = (maxPacketSize < 2048) ? 2048 : maxPacketSize;
+   dSock->maxStoredPackets = (maxStoredPackets < 2048) ? 2048 : maxStoredPackets;
 
    sem_init(&dSock->killThreadSem, 0, 0);
    pthread_mutex_init(&dSock->mutex, NULL);
@@ -367,6 +374,11 @@ void dServerSocket_removeClientFromList(struct dClientConnList* clientListPtr, d
 void dServerSocket_deleteClient(struct dClientConnList* clientListPtr, dServerSocket* dSock)
 {
    sem_destroy(&clientListPtr->cur.sem);
+   
+   // Free RX Buffer memory
+   free(clientListPtr->cur.rxBuff.buffPtr);
+   free(clientListPtr->cur.rxBuff.packetAddr);
+   free(clientListPtr->cur.rxBuff.packetSize);
 
    // inform parent that a client has been disconnected
    if(dSock->clientConnEndCallback != NULL)

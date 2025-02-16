@@ -1,4 +1,4 @@
-/* Copyright 2013, 2016 - 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2016 - 2017, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -60,10 +60,6 @@
    #define closesocket(fd) close(fd)
 #endif
 
-#define MAX_PACKET_SIZE (2048)
-#define MAX_PACKETS (2048)
-#define MAX_STORED_PACKETS (2048)
-
 #define INVALID_FD (0xFFFFFFFF)
 
 typedef struct
@@ -76,14 +72,14 @@ typedef struct
 
 typedef struct
 {
-   unsigned int buff[((MAX_PACKET_SIZE*MAX_PACKETS)+(sizeof(unsigned int)-1))/sizeof(unsigned int)];
-
    char* buffPtr;
    unsigned int buffIndex;
    unsigned int maxPacketSize;
+   unsigned int maxStoredPackets;
+   unsigned int buffSize;
 
-   char* packetAddr[MAX_STORED_PACKETS];
-   unsigned int packetSize[MAX_STORED_PACKETS];
+   char** packetAddr;
+   unsigned int* packetSize;
    unsigned int readIndex;
    unsigned int writeIndex;
 }dSocketRxBuff;
@@ -126,6 +122,8 @@ typedef struct
    void* callbackInputPtr;
    struct dClientConnList* clientList;
    pthread_mutex_t mutex;
+   unsigned int maxPacketSize;
+   unsigned int maxStoredPackets;
 }dServerSocket;
 
 
@@ -137,7 +135,9 @@ void dServerSocket_init(dServerSocket* dSock,
                         dRxPacketCallback rxPacketCallback,
                         dClientConnStartCallback clientConnStartCallback,
                         dClientConnEndCallback clientConnEndCallback,
-                        void* inputPtr);
+                        void* inputPtr,
+                        unsigned int maxPacketSize,
+                        unsigned int maxStoredPackets);
 void* dServerSocket_acceptThread(void* voidDSock);
 void* dServerSocket_rxThread(void* voidDClientConn);
 void* dServerSocket_procThread(void* voidDClientConn);
