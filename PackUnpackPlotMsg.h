@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -161,7 +161,6 @@ private:
       E_READ_REST_OF_MSG
    }eMsgUnpackState;
 
-   bool ReadOneByte(char inByte);
    void setNextState(eMsgUnpackState state, void* ptrToFill, unsigned int numBytesToFill);
    void initNextWriteMsg();
    void reset();

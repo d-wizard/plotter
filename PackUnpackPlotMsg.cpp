@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -17,6 +17,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
+#include <algorithm>
 #include <QMutex>
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
@@ -137,10 +138,29 @@ void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBy
    }
    m_timeBetweenPackets.restart();
 
-   for(unsigned int i = 0; i < numBytes; ++i)
+   unsigned int readByteIndex = 0;
+   while(readByteIndex < numBytes)
    {
-      if(ReadOneByte(inBytes[i]))
+      // Write the incoming data to the current buffer location.
+      auto numBytesToRead = std::min((numBytes-readByteIndex), (m_bytesNeededForCurValue-m_curValueNumBytesFilled));
+      if(numBytesToRead > 0)
       {
+         memcpy(&m_curPtrToFill[m_curValueNumBytesFilled], &inBytes[readByteIndex], numBytesToRead);
+         readByteIndex += numBytesToRead;
+         m_curValueNumBytesFilled += numBytesToRead;
+      }
+      else
+      {
+         reset();
+         break; // Shouldn't ever get here, but if we do, don't loop forever...
+      }
+
+      // Check if enough bytes have been written to move to the next state
+      if(m_curValueNumBytesFilled >= m_bytesNeededForCurValue)
+      {
+         m_curValueNumBytesFilled = 0; // Done with this "curValue"
+         
+         // Process the newly unpacked data.
          switch(m_unpackState)
          {
             case E_READ_ACTION:
@@ -179,8 +199,8 @@ void GetEntirePlotMsg::ProcessPlotPacket(const char* inBytes, unsigned int numBy
                initNextWriteMsg();
             break;
          }
-      }
-   }
+      } // End if(m_curValueNumBytesFilled >= m_bytesNeededForCurValue)
+   } // End while(readByteIndex < numBytes)
 }
 
 void GetEntirePlotMsg::setNextState(eMsgUnpackState state, void* ptrToFill, unsigned int numBytesToFill)
@@ -189,19 +209,6 @@ void GetEntirePlotMsg::setNextState(eMsgUnpackState state, void* ptrToFill, unsi
    m_curPtrToFill = (char*)ptrToFill;
    m_curValueNumBytesFilled = 0;
    m_bytesNeededForCurValue = numBytesToFill;
-}
-
-bool GetEntirePlotMsg::ReadOneByte(char inByte)
-{
-   bool valueFilled = false;
-   m_curPtrToFill[m_curValueNumBytesFilled] = inByte;
-   if(++m_curValueNumBytesFilled >= m_bytesNeededForCurValue)
-   {
-      m_curValueNumBytesFilled = 0;
-      valueFilled = true;
-   }
-
-   return valueFilled;
 }
 
 UnpackPlotMsg::UnpackPlotMsg():
