@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2021, 2023 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021, 2023, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -201,6 +201,28 @@ static void setSpectrumAnalyzerModeFromIni(std::string iniFile)
    }
 }
 
+static bool getByteSizeFromIni(const std::string& iniFile, const std::string& key, unsigned int& retNum)
+{
+   bool found = false;
+   std::string keySearchStr = std::string("\n") + key + "="; 
+   std::string strBegin =  dString::SplitRight(iniFile, keySearchStr);
+
+   std::string sizeNumStr = dString::SplitNumFromStr(strBegin);
+   if(sizeNumStr.size() > 0)
+   {
+      retNum = atoi(sizeNumStr.c_str());
+      std::string nextChar = strBegin.substr(0, 1);
+
+      // Determine scale
+      if(dString::Lower(nextChar) == "k")
+         retNum *= 1024;
+      else if(dString::Lower(nextChar) == "m")
+         retNum *= (1024*1024);
+      found = true;
+   }
+   return found;
+}
+
 static void processIniFile(int argc, char *argv[])
 {
    (void)argc; // Tell the compiler not to warn that this variable is unused.
@@ -256,24 +278,17 @@ static void processIniFile(int argc, char *argv[])
          }
       } // End if(g_portsSpecifiedViaCmdLine == false)
 
-      std::string maxPacketSizeStrBegin =
-            dString::SplitRight(iniFile, "\nmax_packet_size=");
-
-      std::string maxPacketSizeNumStr = dString::SplitNumFromStr(maxPacketSizeStrBegin);
-      if(maxPacketSizeNumStr.size() > 0)
+      // Get the size of the max plot packet to support. This is an entire "stitched-together" packet that could be megabytes.
+      if(getByteSizeFromIni(iniFile, "max_packet_size", g_maxTcpPlotMsgSize)) // Returns true if g_maxTcpPlotMsgSize was updated
       {
-         g_maxTcpPlotMsgSize = atoi(maxPacketSizeNumStr.c_str());
-         std::string nextChar = maxPacketSizeStrBegin.substr(0, 1);
-
-         // Determine scale of Max Packet Size.
-         if(dString::Lower(nextChar) == "k")
-            g_maxTcpPlotMsgSize *= 1024;
-         else if(dString::Lower(nextChar) == "m")
-            g_maxTcpPlotMsgSize *= (1024*1024);
-
-         // Increase to add remove for message header.
-         g_maxTcpPlotMsgSize += MAX_PLOT_MSG_HEADER_SIZE;
+         g_maxTcpPlotMsgSize += MAX_PLOT_MSG_HEADER_SIZE; // Increase to add space for message header.
       }
+
+      // Get the size of packets to support at the socket level.
+      extern unsigned int g_tcp_maxPacketSize;
+      extern unsigned int g_tcp_maxStoredPackets;
+      getByteSizeFromIni(iniFile, "socket_max_packet_size", g_tcp_maxPacketSize);
+      getByteSizeFromIni(iniFile, "socket_max_stored_packets", g_tcp_maxStoredPackets);
 
       std::string defaultMode = dString::GetMiddle(&iniFile, "\ndefault_mode=", "\n");
       if(defaultMode == std::string("zoom"))

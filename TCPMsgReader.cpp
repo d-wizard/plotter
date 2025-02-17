@@ -19,6 +19,9 @@
 #include "TCPMsgReader.h"
 #include "plotguimain.h"
 
+unsigned int g_tcp_maxPacketSize = 2048;
+unsigned int g_tcp_maxStoredPackets = 2048;
+
 TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
     m_parent(parent)
 {
@@ -30,8 +33,8 @@ TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
                       ClientStartCallback,
                       ClientEndCallback,
                       this,
-                      0,
-                      0);
+                      g_tcp_maxPacketSize,
+                      g_tcp_maxStoredPackets);
 
    dServerSocket_bind(&m_servSock);
 
