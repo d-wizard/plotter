@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2021 - 2022, 2024 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -51,7 +51,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
    m_trayMenu(NULL),
    m_curveCommander(this),
    m_allowNewCurves(true),
-   m_storedMsgBuff(new char[STORED_MSG_SIZE]),
+   m_storedMsgBuff(g_maxTcpPlotMsgSize),
    m_storedMsgBuffIndex(0)
 {
     ui->setupUi(this);
@@ -144,8 +144,6 @@ plotGuiMain::~plotGuiMain()
 
     m_curveCommander.destroyAllPlots();
     delete ui;
-
-    delete [] m_storedMsgBuff;
 }
 
 void plotGuiMain::closeAllPlotsFromLib()
@@ -238,22 +236,26 @@ void plotGuiMain::startPlotMsgProcess(tIncomingMsg* inMsg)
 
    m_curveCommander.getIpBlocker()->addIpAddrToList(inMsg->ipAddr); // Store off the IP address
 
-   if(m_allowNewCurves == true)// && size < STORED_MSG_SIZE)
+   // g_maxTcpPlotMsgSize can be set via .ini file. Make sure the buffer is big enough to store a "max sized" message.
+   if(m_storedMsgBuff.size() < g_maxTcpPlotMsgSize)
+      m_storedMsgBuff.resize(g_maxTcpPlotMsgSize);
+
+   if(m_allowNewCurves == true && size <= m_storedMsgBuff.size())
    {
       m_storedMsgBuffMutex.lock(); // Make sure multiple threads cannot modify buffer at same time
 
       // Make sure new message won't overrun the buffer.
-      if( (m_storedMsgBuffIndex + size) > STORED_MSG_SIZE )
+      if( ((int64_t)m_storedMsgBuffIndex + (int64_t)size) > (int64_t)m_storedMsgBuff.size() )
       {
          m_storedMsgBuffIndex = 0;
       }
 
-      char* msgCopy = m_storedMsgBuff+m_storedMsgBuffIndex;
+      char* msgCopy = m_storedMsgBuff.data()+m_storedMsgBuffIndex;
       memcpy(msgCopy, msg, size);
 
       // Update index to position for next packet (make sure index is mod 4)
       m_storedMsgBuffIndex = (m_storedMsgBuffIndex + size + 3) & (~3);
-      if( m_storedMsgBuffIndex >= STORED_MSG_SIZE )
+      if( m_storedMsgBuffIndex >= m_storedMsgBuff.size() )
       {
          m_storedMsgBuffIndex = 0;
       }

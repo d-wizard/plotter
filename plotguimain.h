@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2022, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2022, 2024 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,6 +22,7 @@
 #include <string>
 #include <queue>
 #include <list>
+#include <vector>
 
 #include <QMainWindow>
 #include <QSystemTrayIcon>
@@ -36,8 +37,6 @@
 #include "PlotHelperTypes.h"
 #include "CurveData.h"
 #include "CurveCommander.h"
-
-#define STORED_MSG_SIZE (40*1024*1024)
 
 class createFFTPlot;
 
@@ -86,7 +85,7 @@ private:
 
     bool m_allowNewCurves;
 
-    char* m_storedMsgBuff;
+    std::vector<char> m_storedMsgBuff;
     unsigned int m_storedMsgBuffIndex;
     QMutex m_storedMsgBuffMutex;
 

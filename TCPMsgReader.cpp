@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2014, 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2014, 2016, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,9 @@
 #include "TCPMsgReader.h"
 #include "plotguimain.h"
 
+unsigned int g_tcp_maxPacketSize = 2048;
+unsigned int g_tcp_maxStoredPackets = 2048;
+
 TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
     m_parent(parent)
 {
@@ -29,7 +32,9 @@ TCPMsgReader::TCPMsgReader(plotGuiMain* parent, int port):
                       RxPacketCallback,
                       ClientStartCallback,
                       ClientEndCallback,
-                      this);
+                      this,
+                      g_tcp_maxPacketSize,
+                      g_tcp_maxStoredPackets);
 
    dServerSocket_bind(&m_servSock);
 
