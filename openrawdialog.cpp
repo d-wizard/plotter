@@ -25,6 +25,13 @@
 #include "persistentParameters.h"
 #include "rawFileTypes.h"
 
+typedef enum
+{
+   E_SPLICE_BYTES,
+   E_SPLICE_DATA_TYPE,
+   E_START_AND_LEN_BYTES,
+   E_START_AND_LEN_DATA_TYPE
+}eSubsetTypes;
 
 openRawDialog::openRawDialog(QWidget *parent) :
    QDialog(parent),
@@ -44,6 +51,7 @@ openRawDialog::openRawDialog(QWidget *parent) :
       if(index < ARRAY_SIZE(RAW_TYPE_DROPDOWN))
          ui->cmbRawType->setCurrentIndex(index);
    }
+   on_cmbSubsetType_currentIndexChanged(ui->cmbSubsetType->currentIndex());
 }
 
 openRawDialog::~openRawDialog()
@@ -172,7 +180,20 @@ void openRawDialog::setCurveNames()
 void openRawDialog::setStatsLabel()
 {
    unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
-   auto blockSize = (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 0;
+   auto blockSize = (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 1;
+
+   //int64_t startByteIndex = 0; // Inclusive
+   //int64_t endByteIndex = m_curFileSizeBytes; // Exclusive
+   //eSubsetTypes subsetType = (eSubsetTypes)ui->cmbSubsetType->currentIndex();
+   //int64_t bytesPerSubset = (subsetType == E_SPLICE_DATA_TYPE || subsetType == E_START_AND_LEN_DATA_TYPE) ? blockSize : 1; // If Subset type is "Data Type", then it is the size of the data type, otherwise it is 1 byte.
+   //int64_t startSubsetVal = ui->spnSubset1->value();
+   //int64_t endSubsetVal = ui->spnSubset2->value();
+
+   // Do slicing
+
+
+
+
    auto numBlocks = m_curFileSizeBytes / blockSize;
    auto numLeftOverBytes = m_curFileSizeBytes - (numBlocks*blockSize);
 
@@ -279,4 +300,27 @@ void openRawDialog::fillFromRaw(const std::vector<char>& inFile, dubVect& result
       memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
       result[i] = (double)(rawVal);
    }
+}
+
+void openRawDialog::on_cmbSubsetType_currentIndexChanged(int index)
+{
+   switch(index)
+   {
+   case E_SPLICE_BYTES:
+   case E_SPLICE_DATA_TYPE:
+      ui->lblSubset1->setText("Start");
+      ui->lblSubset2->setText("End");
+   break;
+   case E_START_AND_LEN_BYTES:
+   case E_START_AND_LEN_DATA_TYPE:
+      ui->lblSubset1->setText("Start");
+      ui->lblSubset2->setText("Length");
+   break;
+   }
+   setStatsLabel();
+}
+
+void openRawDialog::setSubsetGui()
+{
+
 }

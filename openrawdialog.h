@@ -45,6 +45,8 @@ private slots:
 
    void on_cmbRawType_currentIndexChanged(int index);
 
+   void on_cmbSubsetType_currentIndexChanged(int index);
+
 private:
    Ui::openRawDialog *ui;
 
@@ -63,5 +65,6 @@ private:
    template <typename tRawFileType>
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
    
+   void setSubsetGui();
 
 };
