@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -150,6 +150,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_displayPointsPrecisionDownAction("Precision -1", this),
    m_displayPointsPrecisionUpBigAction("Precision +3", this),
    m_displayPointsPrecisionDownBigAction("Precision -3", this),
+   m_displayPointsClearCurveSamples("Clear Curve Samples", this),
    m_displayPointsCopyToClipboard("Copy to Clipboard", this),
    m_displayPointsHexMenu("Hex/Dec"),
    m_displayPointsHexOffX("X Axis Dec", this),
@@ -309,6 +310,9 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexOffY,       E_DISPLAY_POINT_DEC,          displayPointsChangeDecHexY);
     MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexUnsignedY,  E_DISPLAY_POINT_UNSIGNED_HEX, displayPointsChangeDecHexY);
     MAPPER_ACTION_TO_SLOT(m_displayPointsHexMenu, m_displayPointsHexSignedY,    E_DISPLAY_POINT_SIGNED_HEX,   displayPointsChangeDecHexY);
+    
+    m_displayPointsMenu.addSeparator();
+    MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsClearCurveSamples,   0, displayPointsClearCurveSamples);
 
     m_displayPointsMenu.addSeparator();
     MAPPER_ACTION_TO_SLOT(m_displayPointsMenu, m_displayPointsCopyToClipboard,     0, displayPointsCopyToClipboard);
@@ -1426,17 +1430,30 @@ void MainWindow::scrollModeChangePlotSize()
 
 void MainWindow::clearAllSamplesSlot()
 {
-   clearAllSamples(true); // Clear all the samples, but ask the user for confirmation before doing so.
+   clearCurveSamples(true, true); // Clear all curve's samples, but ask the user for confirmation before doing so.
 }
 
-void MainWindow::clearAllSamples(bool askUserViaMsgBox)
+void MainWindow::clearCurveSamples(bool askUserViaMsgBox, bool allCurves, int singleCurveIndex)
 {
+   // Check if we are just clearing samples for a single curve.
+   QString singleCurveTitle = "";
+   if(!allCurves)
+   {
+      QMutexLocker lock(&m_qwtCurvesMutex);
+      if(singleCurveIndex >= 0 && singleCurveIndex < m_qwtCurves.size())
+         singleCurveTitle = m_qwtCurves[singleCurveIndex]->getCurveTitle();
+      else
+         return; // Return early on invalid singleCurveIndex (this should never happen).
+   }
+
    bool doClearAll = true;
    if(askUserViaMsgBox)
    {
+      QString title = allCurves ? "Clear ALL Curve Samples?" : "Clear Samples for Curve '" + singleCurveTitle + "' ?";
+      QString text = allCurves ? "Are you sure you want to clear ALL the samples in ALL the curves?" : "Are you sure you want to clear ALL the samples in curve '" + singleCurveTitle + "' ?";
+
       QMessageBox::StandardButton reply;
-      reply = QMessageBox::question(this, "Clear All Samples?", "Are you sure you want to clear all samples in this curve?",
-                                    QMessageBox::Yes | QMessageBox::No);
+      reply = QMessageBox::question(this, title, text, QMessageBox::Yes | QMessageBox::No);
       doClearAll = (reply == QMessageBox::Yes);
    }
 
@@ -1446,14 +1463,17 @@ void MainWindow::clearAllSamples(bool askUserViaMsgBox)
       size_t numCurves = m_qwtCurves.size();
       for(size_t curveIndex = 0; curveIndex < numCurves; ++curveIndex)
       {
-         // Kinda hacky way to 'clear' samples. Set the number of samples to 1, set that
-         // sample to not-a-number, then set the number of samples back to the orginal value (if in scroll mode).
-         unsigned int origNumPoints = m_qwtCurves[curveIndex]->getNumPoints();
-         m_qwtCurves[curveIndex]->setNumPoints(1);
-         m_qwtCurves[curveIndex]->setPointValue(0, NAN);
-         if(m_scrollMode)
-            m_qwtCurves[curveIndex]->setNumPoints(origNumPoints);
-         handleCurveDataChange(curveIndex, true);
+         if(allCurves || m_qwtCurves[curveIndex]->getCurveTitle() == singleCurveTitle)
+         {
+            // Kinda hacky way to 'clear' samples. Set the number of samples to 1, set that
+            // sample to not-a-number, then set the number of samples back to the orginal value (if in scroll mode).
+            unsigned int origNumPoints = m_qwtCurves[curveIndex]->getNumPoints();
+            m_qwtCurves[curveIndex]->setNumPoints(1);
+            m_qwtCurves[curveIndex]->setPointValue(0, NAN);
+            if(m_scrollMode)
+               m_qwtCurves[curveIndex]->setNumPoints(origNumPoints);
+            handleCurveDataChange(curveIndex, true);
+         }
       }
    }
 }
@@ -2446,6 +2466,12 @@ void MainWindow::displayPointsChangeDecHexY(int type)
    updatePointDisplay();
 }
 
+void MainWindow::displayPointsClearCurveSamples(int dummy)
+{
+   (void)dummy; // Tell the compiler to not warn about this dummy variable. The dummy variable is needed to use the MAPPER_ACTION_TO_SLOT macro.
+   clearCurveSamples(true, false, m_displayPointsMenu_selectedCurveIndex); // Clear just the sample of the selected curve. Ask the user for confirmation before doing so.
+}
+
 void MainWindow::displayPointsCopyToClipboard(int dummy)
 {
    (void)dummy; // Tell the compiler to not warn about this dummy variable. The dummy variable is needed to use the MAPPER_ACTION_TO_SLOT macro.
@@ -2784,7 +2810,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::AltModifier))
             {
                // Clear all samples.
-               clearAllSamples(false);
+               clearCurveSamples(false, true);
             }
             else if(KeyEvent->key() == Qt::Key_0 && KeyEvent->modifiers().testFlag(Qt::AltModifier))
             {
@@ -3207,6 +3233,7 @@ void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
    QMutexLocker lock(&m_qwtCurvesMutex);
 
    QList<QLabel*> labelsToTry; // List of the currently displayed labels.
+   QMap<QLabel*, int> labelToCurveIndex; // Add ability to determine the curve index from the label pointer.
 
    // Fill in the list with valid Normal Display Point Labels
    for(int i = 0; i < m_qwtCurves.size(); ++i)
@@ -3214,6 +3241,7 @@ void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
       if(m_qwtCurves[i]->pointLabel != NULL)
       {
          labelsToTry.push_back(m_qwtCurves[i]->pointLabel);
+         labelToCurveIndex[m_qwtCurves[i]->pointLabel] = i;
       }
    }
 
@@ -3247,6 +3275,7 @@ void MainWindow::ShowRightClickForDisplayPoints(const QPoint& pos)
       }
 
       // Display the right click menu.
+      m_displayPointsMenu_selectedCurveIndex = labelToCurveIndex[matchingLabel]; // Store off the curve index the corresponds to the curve label that was right-clicked on.
       m_displayPointsMenu.exec(matchingLabel->mapToGlobal(pos));
    }
 

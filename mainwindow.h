@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -306,6 +306,7 @@ private:
     eDisplayPointHexDec m_displayDecHexX;
     eDisplayPointHexDec m_displayDecHexY;
     QMenu m_displayPointsMenu;
+    int m_displayPointsMenu_selectedCurveIndex;
     tQMenuActionMapper m_displayPointsAutoAction;
     tQMenuActionMapper m_displayPointsFixedAction;
     tQMenuActionMapper m_displayPointsScientificAction;
@@ -315,6 +316,7 @@ private:
     tQMenuActionMapper m_displayPointsPrecisionDownAction;
     tQMenuActionMapper m_displayPointsPrecisionUpBigAction;
     tQMenuActionMapper m_displayPointsPrecisionDownBigAction;
+    tQMenuActionMapper m_displayPointsClearCurveSamples;
     tQMenuActionMapper m_displayPointsCopyToClipboard;
 
     QMenu m_displayPointsHexMenu;
@@ -419,7 +421,7 @@ private:
     void restorePersistentPlotParams();
 
     void scrollModeSetPlotSize(int newPlotSize);
-    void clearAllSamples(bool askUserViaMsgBox);
+    void clearCurveSamples(bool askUserViaMsgBox, bool allCurves, int singleCurveIndex = -1);
     void setDisplayedSamples(bool askUserViaMsgBox, double val); // Sets all the samples in the current zoom to a specific value.
 
     bool areAllCurves1D();
@@ -503,6 +505,7 @@ private slots:
     void displayPointsChangePrecision(int precision);
     void displayPointsChangeDecHexX(int type);
     void displayPointsChangeDecHexY(int type);
+    void displayPointsClearCurveSamples(int dummy);
     void displayPointsCopyToClipboard(int dummy);
 
     void set2dPointIndex(int index);
