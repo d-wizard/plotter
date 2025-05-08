@@ -2025,10 +2025,16 @@ QPalette MainWindow::labelColorToPalette(QColor color)
    return palette;
 }
 
-void MainWindow::displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis)
+void MainWindow::displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis, bool forceHex)
 {
    eDisplayPointHexDec displayDecHex = (axis == E_X_AXIS) ? m_displayDecHexX : m_displayDecHexY;
    bool hex = (displayDecHex == E_DISPLAY_POINT_UNSIGNED_HEX || displayDecHex == E_DISPLAY_POINT_SIGNED_HEX);
+
+   if(forceHex) // Allow this function to be reused to always interpret a number as hex.
+   {
+      displayDecHex = E_DISPLAY_POINT_UNSIGNED_HEX;
+      hex = true;
+   }
 
    if(hex)
    {
@@ -2092,6 +2098,26 @@ void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, uns
       lblText << "</b>"; // Make Not Bold Anymore
 }
 
+void MainWindow::displayPointLabels_getToolTipText(std::stringstream& lblText, double number, const std::string& title, const std::string& oneOverStr)
+{
+   // Get the curve point value.
+   bool isValidInteger = (double(static_cast<int64_t>(number)) == number);
+
+   std::stringstream toolTip;
+   toolTip << std::setprecision(m_displayPrecision); // Do use the specified precision.
+   toolTip << "-------------------------------" << std::endl << title << std::endl;
+   toolTip << "Decimal: " << std::fixed << number << std::endl;
+   toolTip << "Scientific: " << std::scientific << number;
+   if(isValidInteger)
+   {
+      toolTip << std::endl << "Hex: ";
+      displayLabelAddNum(toolTip, number, E_X_AXIS, true); // Hard-code axis. The axis value isn't used when forceHex is set to true
+   }
+   if(std::isfinite(number))
+      toolTip << std::endl << "Inverse (1/" << oneOverStr << "): " << std::resetiosflags(std::ios::floatfield) << double(1.0)/number;
+   lblText << toolTip.str();
+}
+
 void MainWindow::displayPointLabels_clean()
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
@@ -2108,7 +2134,16 @@ void MainWindow::displayPointLabels_clean()
 
          m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
-         m_qwtCurves[i]->pointLabel->setToolTip(m_qwtCurves[i]->getCurveTitle());
+
+         std::stringstream toolTipText;
+         CurveData* curve = m_qwtCurves[i];
+         auto curvePointIndex = m_qwtSelectedSample->m_pointIndex;
+         toolTipText << "Curve: " << m_qwtCurves[i]->getCurveTitle().toStdString() << std::endl;
+         displayPointLabels_getToolTipText(toolTipText, curve->getXPoints()[curvePointIndex], "X Axis", "X");
+         toolTipText << std::endl;
+         displayPointLabels_getToolTipText(toolTipText, curve->getYPoints()[curvePointIndex], "Y Axis", "Y");
+
+         m_qwtCurves[i]->pointLabel->setToolTip(toolTipText.str().c_str());
 
          ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
 
