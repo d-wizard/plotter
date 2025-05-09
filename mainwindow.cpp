@@ -2098,7 +2098,7 @@ void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, uns
       lblText << "</b>"; // Make Not Bold Anymore
 }
 
-void MainWindow::displayPointLabels_getToolTipText(std::stringstream& lblText, double number, const std::string& title, const std::string& oneOverStr)
+void MainWindow::displayPointLabels_getToolTipText(std::stringstream& ss, double number, const std::string& title, const std::string& oneOverStr)
 {
    // Get the curve point value.
    bool isValidInteger = (double(static_cast<int64_t>(number)) == number);
@@ -2115,7 +2115,29 @@ void MainWindow::displayPointLabels_getToolTipText(std::stringstream& lblText, d
    }
    if(std::isfinite(number))
       toolTip << std::endl << "Inverse (1/" << oneOverStr << "): " << std::resetiosflags(std::ios::floatfield) << double(1.0)/number;
-   lblText << toolTip.str();
+   ss << toolTip.str();
+}
+
+void MainWindow::displayPointLabels_getToolTipText(std::stringstream& ss, const QString& curveName, double xNumber, double yNumber, bool isDelta)
+{
+   std::stringstream toolTip;
+   QString xTitle = "X Axis";
+   QString yTitle = "Y Axis";
+   QString xOneOverStr = "X";
+   QString yOneOverStr = "Y";
+   if(isDelta)
+   {
+      xTitle = CAPITAL_DELTA + xTitle;
+      yTitle = CAPITAL_DELTA + yTitle;
+      xOneOverStr = CAPITAL_DELTA + xOneOverStr;
+      yOneOverStr = CAPITAL_DELTA + yOneOverStr;
+   }
+
+   toolTip << "Curve: " << curveName.toStdString() << std::endl;
+   displayPointLabels_getToolTipText(toolTip, xNumber, xTitle.toStdString(), xOneOverStr.toStdString());
+   toolTip << std::endl;
+   displayPointLabels_getToolTipText(toolTip, yNumber, yTitle.toStdString(), yOneOverStr.toStdString());
+   ss << toolTip.str();
 }
 
 void MainWindow::displayPointLabels_clean()
@@ -2135,14 +2157,11 @@ void MainWindow::displayPointLabels_clean()
          m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
 
-         std::stringstream toolTipText;
+         // Set the tool tip text.
          CurveData* curve = m_qwtCurves[i];
          auto curvePointIndex = m_qwtSelectedSample->m_pointIndex;
-         toolTipText << "Curve: " << m_qwtCurves[i]->getCurveTitle().toStdString() << std::endl;
-         displayPointLabels_getToolTipText(toolTipText, curve->getXPoints()[curvePointIndex], "X Axis", "X");
-         toolTipText << std::endl;
-         displayPointLabels_getToolTipText(toolTipText, curve->getYPoints()[curvePointIndex], "Y Axis", "Y");
-
+         std::stringstream toolTipText;
+         displayPointLabels_getToolTipText(toolTipText, m_qwtCurves[i]->getCurveTitle(), curve->getXPoints()[curvePointIndex], curve->getYPoints()[curvePointIndex], false);
          m_qwtCurves[i]->pointLabel->setToolTip(toolTipText.str().c_str());
 
          ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);

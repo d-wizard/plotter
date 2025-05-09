@@ -378,7 +378,8 @@ private:
     QPalette labelColorToPalette(QColor color);
     void displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis, bool forceHex = false);
     void displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex);
-    void displayPointLabels_getToolTipText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex, eAxis axis);
+    void displayPointLabels_getToolTipText(std::stringstream& ss, double number, const std::string& title, const std::string& oneOverStr);
+    void displayPointLabels_getToolTipText(std::stringstream& ss, const QString& curveName, double xNumber, double yNumber, bool isDelta);
     void displayPointLabels_clean();
     void displayPointLabels_update();
     void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
