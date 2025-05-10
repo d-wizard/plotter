@@ -382,7 +382,8 @@ private:
     void displayPointLabels_getToolTipText(std::stringstream& ss, const QString& curveName, double xNumber, double yNumber, bool isDelta);
     void displayPointLabels_clean();
     void displayPointLabels_update();
-    void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
+    void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta,
+         QString& ttAnchored, QString& ttCurrent, QString& ttDelta); // Tooltips.
     void displayDeltaLabel_clean();
     void displayDeltaLabel_update();
     void display2dPointDeltaLabel(bool valid, bool isDelta);

@@ -2133,7 +2133,8 @@ void MainWindow::displayPointLabels_getToolTipText(std::stringstream& ss, const 
       yOneOverStr = CAPITAL_DELTA + yOneOverStr;
    }
 
-   toolTip << "Curve: " << curveName.toStdString() << std::endl;
+   if(curveName != "")
+      toolTip << "Curve: " << curveName.toStdString() << std::endl;
    displayPointLabels_getToolTipText(toolTip, xNumber, xTitle.toStdString(), xOneOverStr.toStdString());
    toolTip << std::endl;
    displayPointLabels_getToolTipText(toolTip, yNumber, yTitle.toStdString(), yOneOverStr.toStdString());
@@ -2216,13 +2217,16 @@ void MainWindow::initDeltaLabels()
    }
 }
 
-void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta)
+void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta,
+   QString &ttAnchored, QString &ttCurrent, QString &ttDelta) // Tooltips
 {
    CurveData* curve = m_qwtSelectedSample->m_parentCurve;
    std::stringstream lblText;
+   std::stringstream toolTip;
 
    // Get Anchored text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_xPoint, E_X_AXIS);
@@ -2231,9 +2235,12 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_yPoint, E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    anchored = QString(lblText.str().c_str());
+   displayPointLabels_getToolTipText(toolTip, m_qwtSelectedSampleDelta->m_parentCurve->getCurveTitle(), m_qwtSelectedSampleDelta->m_xPoint, m_qwtSelectedSampleDelta->m_yPoint, false);
+   ttAnchored = toolTip.str().c_str();
 
    // Get Current text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, m_qwtSelectedSample->m_xPoint, E_X_AXIS);
@@ -2242,9 +2249,12 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, m_qwtSelectedSample->m_yPoint, E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    current = QString(lblText.str().c_str());
+   displayPointLabels_getToolTipText(toolTip, m_qwtSelectedSample->m_parentCurve->getCurveTitle(), m_qwtSelectedSample->m_xPoint, m_qwtSelectedSample->m_yPoint, false);
+   ttCurrent = toolTip.str().c_str();
 
    // Get Delta text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint), E_X_AXIS);
@@ -2253,6 +2263,9 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint), E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    delta = QString(lblText.str().c_str());
+   QString deltaCurveName = m_qwtSelectedSample->m_parentCurve == m_qwtSelectedSampleDelta->m_parentCurve ? m_qwtSelectedSample->m_parentCurve->getCurveTitle() : "";
+   displayPointLabels_getToolTipText(toolTip, deltaCurveName, m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint, m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint, true);
+   ttDelta = toolTip.str().c_str();
 }
 
 void MainWindow::displayDeltaLabel_clean()
@@ -2302,8 +2315,8 @@ void MainWindow::displayDeltaLabel_update()
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
-   QString anchored, current, delta;
-   displayDeltaLabel_getLabelText(anchored, current, delta);
+   QString anchored, current, delta, ttAnchored, ttCurrent, ttDelta;
+   displayDeltaLabel_getLabelText(anchored, current, delta, ttAnchored, ttCurrent, ttDelta);
 
    bool deltaLabelsAreValid = true;
    for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
@@ -2314,8 +2327,11 @@ void MainWindow::displayDeltaLabel_update()
    if(deltaLabelsAreValid)
    {
       m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
+      m_deltaLabels[DELTA_LABEL_ANCHORED]->setToolTip(ttAnchored);
       m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
+      m_deltaLabels[DELTA_LABEL_CURRENT]->setToolTip(ttCurrent);
       m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+      m_deltaLabels[DELTA_LABEL_DELTA]->setToolTip(ttDelta);
    }
    display2dPointDeltaLabel(deltaLabelsAreValid, true);
 }
@@ -2539,8 +2555,8 @@ void MainWindow::displayPointsCopyToClipboard(int dummy)
       if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
       {
          // Delta
-         QString anchored, current, delta;
-         displayDeltaLabel_getLabelText(anchored, current, delta);
+         QString anchored, current, delta, ttAnchored, ttCurrent, ttDelta;
+         displayDeltaLabel_getLabelText(anchored, current, delta, ttAnchored, ttCurrent, ttDelta);
 
          std::string label = (anchored + current + delta).toStdString(); // Combine all 3 strings into 1 so the following while loop can get all the individal values.
          while(dString::InStr(label, DISPLAY_POINT_START) >= 0)
