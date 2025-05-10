@@ -1,4 +1,4 @@
-/* Copyright 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2022, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -16,6 +16,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <QMessageBox>
 #include "zoomlimitsdialog.h"
 #include "ui_zoomlimitsdialog.h"
 #include "dString.h"
@@ -134,6 +135,10 @@ void zoomLimitsDialog::on_cmdApply_clicked()
    {
       m_applySelected = true;
       this->accept(); // Return from exec()
+   }
+   else
+   {
+      QMessageBox::critical(this, "Invalid Settings", "Something is wrong with the settings. Double check and try again.", QMessageBox::Ok);
    }
 }
 
