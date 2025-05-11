@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1252,12 +1252,12 @@ void CurveData::UpdateCurveSamples(const dubVect& newXPoints, const dubVect& new
       {
          if(xOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
-            xOrigPoints.resize(sampleStartIndex + newPointsSize);
+            xOrigPoints.resize(sampleStartIndex + newPointsSize, NAN);
          }
 
          if(yOrigPoints.size() < (sampleStartIndex + newPointsSize))
          {
-            yOrigPoints.resize(sampleStartIndex + newPointsSize);
+            yOrigPoints.resize(sampleStartIndex + newPointsSize, NAN);
          }
 
          memcpy(&xOrigPoints[sampleStartIndex], &newXPoints[0], sizeof(newXPoints[0]) * newPointsSize);
@@ -1416,11 +1416,11 @@ void CurveData::performMathOnPoints(unsigned int sampleStartIndex, unsigned int 
    // Copy new samples.
    if(xPoints.size() < finalNewSampPosition)
    {
-      xPoints.resize(finalNewSampPosition);
+      xPoints.resize(finalNewSampPosition, NAN);
    }
    if(yPoints.size() < finalNewSampPosition)
    {
-      yPoints.resize(finalNewSampPosition);
+      yPoints.resize(finalNewSampPosition, NAN);
    }
    memcpy(&xPoints[sampleStartIndex], &xOrigPoints[sampleStartIndex], sizeof(xOrigPoints[0]) * numSamples);
    memcpy(&yPoints[sampleStartIndex], &yOrigPoints[sampleStartIndex], sizeof(yOrigPoints[0]) * numSamples);

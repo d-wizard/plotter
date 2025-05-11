@@ -110,6 +110,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_holdZoomAction("Freeze", this),
    m_maxHoldZoomAction("Max Hold", this),
    m_setZoomLimitsAction("Set Zoom Limits", this),
+   m_clearZoomLimitsAction("Clear Zoom Limits", this),
    m_scrollModeAction("Scroll Mode", this),
    m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
    m_clearAllSamplesAction("Clear All Samples", this),
@@ -207,6 +208,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom_guiSlot()));
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
     connect(&m_setZoomLimitsAction, SIGNAL(triggered(bool)), this, SLOT(setZoomLimits_guiSlot()));
+    connect(&m_clearZoomLimitsAction, SIGNAL(triggered(bool)), this, SLOT(clearZoomLimits_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_clearAllSamplesAction, SIGNAL(triggered(bool)), this, SLOT(clearAllSamplesSlot()));
@@ -286,6 +288,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_zoomSettingsMenu.addAction(&m_maxHoldZoomAction);
     m_zoomSettingsMenu.addSeparator();
     m_zoomSettingsMenu.addAction(&m_setZoomLimitsAction);
+    m_zoomSettingsMenu.addAction(&m_clearZoomLimitsAction);
     m_autoZoomAction.setIcon(m_checkedIcon);
     setDisplayRightClickIcons();
 
@@ -1349,6 +1352,29 @@ void MainWindow::setZoomLimits_guiSlot()
    m_zoomLimitDialog = NULL;
 }
 
+void MainWindow::clearZoomLimits_guiSlot()
+{
+   QMutexLocker lock(&m_zoomLimitMutex);
+
+   bool changeMade = false;
+   if(m_zoomLimits.GetPlotLimits(E_X_AXIS).limitType != ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      m_zoomLimits.SetPlotLimits(E_X_AXIS, ZoomLimits::tZoomLimitInfo()); // Set to default tZoomLimitInfo settings (i.e. E_ZOOM_LIMIT__NONE)
+      changeMade = true;
+   }
+   if(m_zoomLimits.GetPlotLimits(E_Y_AXIS).limitType != ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      m_zoomLimits.SetPlotLimits(E_Y_AXIS, ZoomLimits::tZoomLimitInfo()); // Set to default tZoomLimitInfo settings (i.e. E_ZOOM_LIMIT__NONE)
+      changeMade = true;
+   }
+
+   if(changeMade)
+   {
+      maxMinXY maxMin = calcMaxMin();
+      SetZoomPlotDimensions(maxMin, true);
+   }
+}
+
 void MainWindow::autoZoom()
 {
    m_plotZoom->m_holdZoom = false;
@@ -2025,10 +2051,16 @@ QPalette MainWindow::labelColorToPalette(QColor color)
    return palette;
 }
 
-void MainWindow::displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis)
+void MainWindow::displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis, bool forceHex)
 {
    eDisplayPointHexDec displayDecHex = (axis == E_X_AXIS) ? m_displayDecHexX : m_displayDecHexY;
    bool hex = (displayDecHex == E_DISPLAY_POINT_UNSIGNED_HEX || displayDecHex == E_DISPLAY_POINT_SIGNED_HEX);
+
+   if(forceHex) // Allow this function to be reused to always interpret a number as hex.
+   {
+      displayDecHex = E_DISPLAY_POINT_UNSIGNED_HEX;
+      hex = true;
+   }
 
    if(hex)
    {
@@ -2092,6 +2124,49 @@ void MainWindow::displayPointLabels_getLabelText(std::stringstream& lblText, uns
       lblText << "</b>"; // Make Not Bold Anymore
 }
 
+void MainWindow::displayPointLabels_getToolTipText(std::stringstream& ss, double number, const std::string& title, const std::string& oneOverStr)
+{
+   // Get the curve point value.
+   bool isValidInteger = (double(static_cast<int64_t>(number)) == number);
+
+   std::stringstream toolTip;
+   toolTip << std::setprecision(m_displayPrecision); // Do use the specified precision.
+   toolTip << "-------------------------------" << std::endl << title << std::endl;
+   toolTip << "Decimal: " << std::fixed << number << std::endl;
+   toolTip << "Scientific: " << std::scientific << number;
+   if(isValidInteger)
+   {
+      toolTip << std::endl << "Hex: ";
+      displayLabelAddNum(toolTip, number, E_X_AXIS, true); // Hard-code axis. The axis value isn't used when forceHex is set to true
+   }
+   if(std::isfinite(number))
+      toolTip << std::endl << "Inverse (1/" << oneOverStr << "): " << std::resetiosflags(std::ios::floatfield) << double(1.0)/number;
+   ss << toolTip.str();
+}
+
+void MainWindow::displayPointLabels_getToolTipText(std::stringstream& ss, const QString& curveName, double xNumber, double yNumber, bool isDelta)
+{
+   std::stringstream toolTip;
+   QString xTitle = "X Axis";
+   QString yTitle = "Y Axis";
+   QString xOneOverStr = "X";
+   QString yOneOverStr = "Y";
+   if(isDelta)
+   {
+      xTitle = CAPITAL_DELTA + xTitle;
+      yTitle = CAPITAL_DELTA + yTitle;
+      xOneOverStr = CAPITAL_DELTA + xOneOverStr;
+      yOneOverStr = CAPITAL_DELTA + yOneOverStr;
+   }
+
+   if(curveName != "")
+      toolTip << "Curve: " << curveName.toStdString() << std::endl;
+   displayPointLabels_getToolTipText(toolTip, xNumber, xTitle.toStdString(), xOneOverStr.toStdString());
+   toolTip << std::endl;
+   displayPointLabels_getToolTipText(toolTip, yNumber, yTitle.toStdString(), yOneOverStr.toStdString());
+   ss << toolTip.str();
+}
+
 void MainWindow::displayPointLabels_clean()
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
@@ -2108,7 +2183,13 @@ void MainWindow::displayPointLabels_clean()
 
          m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
-         m_qwtCurves[i]->pointLabel->setToolTip(m_qwtCurves[i]->getCurveTitle());
+
+         // Set the tool tip text.
+         CurveData* curve = m_qwtCurves[i];
+         auto curvePointIndex = m_qwtSelectedSample->m_pointIndex;
+         std::stringstream toolTipText;
+         displayPointLabels_getToolTipText(toolTipText, m_qwtCurves[i]->getCurveTitle(), curve->getXPoints()[curvePointIndex], curve->getYPoints()[curvePointIndex], false);
+         m_qwtCurves[i]->pointLabel->setToolTip(toolTipText.str().c_str());
 
          ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
 
@@ -2162,13 +2243,16 @@ void MainWindow::initDeltaLabels()
    }
 }
 
-void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta)
+void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta,
+   QString &ttAnchored, QString &ttCurrent, QString &ttDelta) // Tooltips
 {
    CurveData* curve = m_qwtSelectedSample->m_parentCurve;
    std::stringstream lblText;
+   std::stringstream toolTip;
 
    // Get Anchored text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_xPoint, E_X_AXIS);
@@ -2177,9 +2261,12 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, m_qwtSelectedSampleDelta->m_yPoint, E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    anchored = QString(lblText.str().c_str());
+   displayPointLabels_getToolTipText(toolTip, m_qwtSelectedSampleDelta->m_parentCurve->getCurveTitle(), m_qwtSelectedSampleDelta->m_xPoint, m_qwtSelectedSampleDelta->m_yPoint, false);
+   ttAnchored = toolTip.str().c_str();
 
    // Get Current text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, m_qwtSelectedSample->m_xPoint, E_X_AXIS);
@@ -2188,9 +2275,12 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, m_qwtSelectedSample->m_yPoint, E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    current = QString(lblText.str().c_str());
+   displayPointLabels_getToolTipText(toolTip, m_qwtSelectedSample->m_parentCurve->getCurveTitle(), m_qwtSelectedSample->m_xPoint, m_qwtSelectedSample->m_yPoint, false);
+   ttCurrent = toolTip.str().c_str();
 
    // Get Delta text.
    lblText.str("");
+   toolTip.str("");
    lblText << DISPLAY_POINT_START;
    setDisplayIoMapipXAxis(lblText, curve);
    displayLabelAddNum(lblText, (m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint), E_X_AXIS);
@@ -2199,6 +2289,9 @@ void MainWindow::displayDeltaLabel_getLabelText(QString& anchored, QString& curr
    displayLabelAddNum(lblText, (m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint), E_Y_AXIS);
    lblText << DISPLAY_POINT_STOP;
    delta = QString(lblText.str().c_str());
+   QString deltaCurveName = m_qwtSelectedSample->m_parentCurve == m_qwtSelectedSampleDelta->m_parentCurve ? m_qwtSelectedSample->m_parentCurve->getCurveTitle() : "";
+   displayPointLabels_getToolTipText(toolTip, deltaCurveName, m_qwtSelectedSample->m_xPoint-m_qwtSelectedSampleDelta->m_xPoint, m_qwtSelectedSample->m_yPoint-m_qwtSelectedSampleDelta->m_yPoint, true);
+   ttDelta = toolTip.str().c_str();
 }
 
 void MainWindow::displayDeltaLabel_clean()
@@ -2248,8 +2341,8 @@ void MainWindow::displayDeltaLabel_update()
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
-   QString anchored, current, delta;
-   displayDeltaLabel_getLabelText(anchored, current, delta);
+   QString anchored, current, delta, ttAnchored, ttCurrent, ttDelta;
+   displayDeltaLabel_getLabelText(anchored, current, delta, ttAnchored, ttCurrent, ttDelta);
 
    bool deltaLabelsAreValid = true;
    for(int i = 0; i < DELTA_LABEL_NUM_LABELS; ++i)
@@ -2260,8 +2353,11 @@ void MainWindow::displayDeltaLabel_update()
    if(deltaLabelsAreValid)
    {
       m_deltaLabels[DELTA_LABEL_ANCHORED]->setText(anchored);
+      m_deltaLabels[DELTA_LABEL_ANCHORED]->setToolTip(ttAnchored);
       m_deltaLabels[DELTA_LABEL_CURRENT]->setText(current);
+      m_deltaLabels[DELTA_LABEL_CURRENT]->setToolTip(ttCurrent);
       m_deltaLabels[DELTA_LABEL_DELTA]->setText(delta);
+      m_deltaLabels[DELTA_LABEL_DELTA]->setToolTip(ttDelta);
    }
    display2dPointDeltaLabel(deltaLabelsAreValid, true);
 }
@@ -2485,8 +2581,8 @@ void MainWindow::displayPointsCopyToClipboard(int dummy)
       if(m_qwtSelectedSampleDelta->isAttached && m_qwtSelectedSample->isAttached)
       {
          // Delta
-         QString anchored, current, delta;
-         displayDeltaLabel_getLabelText(anchored, current, delta);
+         QString anchored, current, delta, ttAnchored, ttCurrent, ttDelta;
+         displayDeltaLabel_getLabelText(anchored, current, delta, ttAnchored, ttCurrent, ttDelta);
 
          std::string label = (anchored + current + delta).toStdString(); // Combine all 3 strings into 1 so the following while loop can get all the individal values.
          while(dString::InStr(label, DISPLAY_POINT_START) >= 0)

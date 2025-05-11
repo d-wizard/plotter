@@ -266,6 +266,7 @@ private:
     QAction m_holdZoomAction;
     QAction m_maxHoldZoomAction;
     QAction m_setZoomLimitsAction;
+    QAction m_clearZoomLimitsAction;
     QAction m_scrollModeAction;
     QAction m_scrollModeChangePlotSizeAction;
     QAction m_clearAllSamplesAction;
@@ -376,11 +377,14 @@ private:
     void initDeltaLabels();
     void clearPointLabels();
     QPalette labelColorToPalette(QColor color);
-    void displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis);
+    void displayLabelAddNum(std::stringstream& lblText, double number, eAxis axis, bool forceHex = false);
     void displayPointLabels_getLabelText(std::stringstream& lblText, unsigned curveIndex, unsigned curvePointIndex);
+    void displayPointLabels_getToolTipText(std::stringstream& ss, double number, const std::string& title, const std::string& oneOverStr);
+    void displayPointLabels_getToolTipText(std::stringstream& ss, const QString& curveName, double xNumber, double yNumber, bool isDelta);
     void displayPointLabels_clean();
     void displayPointLabels_update();
-    void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta);
+    void displayDeltaLabel_getLabelText(QString& anchored, QString& current, QString& delta,
+         QString& ttAnchored, QString& ttCurrent, QString& ttDelta); // Tooltips.
     void displayDeltaLabel_clean();
     void displayDeltaLabel_update();
     void display2dPointDeltaLabel(bool valid, bool isDelta);
@@ -470,6 +474,7 @@ private slots:
     void holdZoom_guiSlot();
     void maxHoldZoom_guiSlot();
     void setZoomLimits_guiSlot();
+    void clearZoomLimits_guiSlot();
     void scrollModeToggle();
     void scrollModeChangePlotSize();
     void clearAllSamplesSlot();

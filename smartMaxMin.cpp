@@ -1,4 +1,4 @@
-/* Copyright 2015 - 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2015 - 2019, 2021 - 2022, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -105,16 +105,16 @@ void smartMaxMin::updateMaxMin(unsigned int startIndex, unsigned int numPoints)
    if(overlapFound == false && lastSegEndIndex < startIndex)
    {
       // There is a gap between the new samples and the old samples.
-      // It is safe to assume all the samples in the gap are zero.
-      // Create a new Segment with the max and min set to 0.
+      // It is safe to assume all the samples in the gap are NAN (not-a-number).
+      // Create a new Segment with the max and min set to NAN.
       tMaxMinSegment newSeg;
-      newSeg.maxValue = 0;
-      newSeg.minValue = 0;
+      newSeg.maxValue = NAN;
+      newSeg.minValue = NAN;
       newSeg.startIndex = lastSegEndIndex;
       newSeg.numPoints = startIndex - lastSegEndIndex;
       newSeg.maxIndex = newSeg.startIndex;
       newSeg.minIndex = newSeg.startIndex;
-      newSeg.realPoints = true;
+      newSeg.realPoints = false;
       newSeg.firstRealPointIndex = newSeg.startIndex;
       newSeg.lastRealPointIndex = newSeg.startIndex + newSeg.numPoints - 1;
       m_segList.push_back(newSeg);

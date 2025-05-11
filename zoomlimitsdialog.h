@@ -1,4 +1,4 @@
-/* Copyright 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2022, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -53,7 +53,7 @@ public:
    virtual ~ZoomLimits();
 
    tZoomLimitInfo GetPlotLimits(eAxis axis);
-   void SetPlotLimits(eAxis axis, tZoomLimitInfo& limits);
+   void SetPlotLimits(eAxis axis, const tZoomLimitInfo &limits);
 
    void ApplyLimits(maxMinXY &plotDimensions);
 
