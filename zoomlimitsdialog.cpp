@@ -36,7 +36,7 @@ ZoomLimits::tZoomLimitInfo ZoomLimits::GetPlotLimits(eAxis axis)
    return m_widthLimit;
 }
 
-void ZoomLimits::SetPlotLimits(eAxis axis, tZoomLimitInfo& limits)
+void ZoomLimits::SetPlotLimits(eAxis axis, const tZoomLimitInfo& limits)
 {
    if(axis == E_Y_AXIS)
       m_heightLimit = limits;

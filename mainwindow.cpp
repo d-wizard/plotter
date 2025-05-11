@@ -110,6 +110,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_holdZoomAction("Freeze", this),
    m_maxHoldZoomAction("Max Hold", this),
    m_setZoomLimitsAction("Set Zoom Limits", this),
+   m_clearZoomLimitsAction("Clear Zoom Limits", this),
    m_scrollModeAction("Scroll Mode", this),
    m_scrollModeChangePlotSizeAction("Change Scroll Plot Size", this),
    m_clearAllSamplesAction("Clear All Samples", this),
@@ -207,6 +208,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_holdZoomAction, SIGNAL(triggered(bool)), this, SLOT(holdZoom_guiSlot()));
     connect(&m_maxHoldZoomAction, SIGNAL(triggered(bool)), this, SLOT(maxHoldZoom_guiSlot()));
     connect(&m_setZoomLimitsAction, SIGNAL(triggered(bool)), this, SLOT(setZoomLimits_guiSlot()));
+    connect(&m_clearZoomLimitsAction, SIGNAL(triggered(bool)), this, SLOT(clearZoomLimits_guiSlot()));
     connect(&m_scrollModeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeToggle()));
     connect(&m_scrollModeChangePlotSizeAction, SIGNAL(triggered(bool)), this, SLOT(scrollModeChangePlotSize()));
     connect(&m_clearAllSamplesAction, SIGNAL(triggered(bool)), this, SLOT(clearAllSamplesSlot()));
@@ -286,6 +288,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_zoomSettingsMenu.addAction(&m_maxHoldZoomAction);
     m_zoomSettingsMenu.addSeparator();
     m_zoomSettingsMenu.addAction(&m_setZoomLimitsAction);
+    m_zoomSettingsMenu.addAction(&m_clearZoomLimitsAction);
     m_autoZoomAction.setIcon(m_checkedIcon);
     setDisplayRightClickIcons();
 
@@ -1347,6 +1350,29 @@ void MainWindow::setZoomLimits_guiSlot()
    }
    delete m_zoomLimitDialog;
    m_zoomLimitDialog = NULL;
+}
+
+void MainWindow::clearZoomLimits_guiSlot()
+{
+   QMutexLocker lock(&m_zoomLimitMutex);
+
+   bool changeMade = false;
+   if(m_zoomLimits.GetPlotLimits(E_X_AXIS).limitType != ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      m_zoomLimits.SetPlotLimits(E_X_AXIS, ZoomLimits::tZoomLimitInfo()); // Set to default tZoomLimitInfo settings (i.e. E_ZOOM_LIMIT__NONE)
+      changeMade = true;
+   }
+   if(m_zoomLimits.GetPlotLimits(E_Y_AXIS).limitType != ZoomLimits::E_ZOOM_LIMIT__NONE)
+   {
+      m_zoomLimits.SetPlotLimits(E_Y_AXIS, ZoomLimits::tZoomLimitInfo()); // Set to default tZoomLimitInfo settings (i.e. E_ZOOM_LIMIT__NONE)
+      changeMade = true;
+   }
+
+   if(changeMade)
+   {
+      maxMinXY maxMin = calcMaxMin();
+      SetZoomPlotDimensions(maxMin, true);
+   }
 }
 
 void MainWindow::autoZoom()
