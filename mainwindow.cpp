@@ -2185,10 +2185,8 @@ void MainWindow::displayPointLabels_clean()
          m_qwtCurves[i]->pointLabel->setPalette(labelColorToPalette(m_qwtCurves[i]->getColor()));
 
          // Set the tool tip text.
-         CurveData* curve = m_qwtCurves[i];
-         auto curvePointIndex = m_qwtSelectedSample->m_pointIndex;
          std::stringstream toolTipText;
-         displayPointLabels_getToolTipText(toolTipText, m_qwtCurves[i]->getCurveTitle(), curve->getXPoints()[curvePointIndex], curve->getYPoints()[curvePointIndex], false);
+         displayPointLabels_getToolTipText(toolTipText, m_qwtCurves[i]->getCurveTitle(), m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex], m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex], false);
          m_qwtCurves[i]->pointLabel->setToolTip(toolTipText.str().c_str());
 
          ui->InfoLayout->addWidget(m_qwtCurves[i]->pointLabel);
@@ -2215,7 +2213,11 @@ void MainWindow::displayPointLabels_update()
             displayPointLabels_getLabelText(lblText, i, m_qwtSelectedSample->m_pointIndex);
 
             m_qwtCurves[i]->pointLabel->setText(lblText.str().c_str());
-            m_qwtCurves[i]->pointLabel->setToolTip(m_qwtCurves[i]->getCurveTitle());
+
+            // Set the tool tip text.
+            std::stringstream toolTipText;
+            displayPointLabels_getToolTipText(toolTipText, m_qwtCurves[i]->getCurveTitle(), m_qwtCurves[i]->getXPoints()[m_qwtSelectedSample->m_pointIndex], m_qwtCurves[i]->getYPoints()[m_qwtSelectedSample->m_pointIndex], false);
+            m_qwtCurves[i]->pointLabel->setToolTip(toolTipText.str().c_str());
          }
          else
          {
