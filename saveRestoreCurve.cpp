@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 - 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1318,6 +1318,10 @@ bool SavePlotCurveDialog::savePlot(const QString& plotName)
       QString selectedFilter;
       if(filterList.contains(persistentReadValue.c_str()))
          selectedFilter = persistentReadValue.c_str();
+      
+      // Force an extention, otherwise QT seems to just use the first one in the list (i.e. .plot)
+      if(selectedFilter.contains("(*.*)"))
+         suggestedSavePath += ".raw";
 
       // Open the save file dialog.
       QString dialogCaption = QString("Save Plot To File") + QString(m_limitToZoom ? " (Only Points in Current Zoom)" : "");
