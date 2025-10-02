@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1719,11 +1719,26 @@ void curveProperties::fillInPropTab(bool userChangedPropertiesGuiSettings)
       ui->txtPropDim->setText(parentCurve->getPlotDim() == E_PLOT_DIM_1D ? "1D" : "2D");
       ui->spnPropCurvePos->setMaximum(parentPlot->getNumCurves()-1);
 
+      // Fill in Min / Max values. Use the Main Displays IO Manip settings to ensure resolution isn't lost.
       maxMinXY curveDataMaxMin = parentCurve->getMaxMinXYOfData();
-      ui->txtPropXMin->setText(QString::number(curveDataMaxMin.minX));
-      ui->txtPropXMax->setText(QString::number(curveDataMaxMin.maxX));
-      ui->txtPropYMin->setText(QString::number(curveDataMaxMin.minY));
-      ui->txtPropYMax->setText(QString::number(curveDataMaxMin.maxY));
+      auto minMaxValToQStr = [parentPlot, parentCurve](double val, bool xAxis)
+      {
+         std::stringstream ss;
+         if(xAxis) parentPlot->setDisplayIoMapipXAxis(ss, parentCurve); // Get X-Axis IoManip
+         else parentPlot->setDisplayIoMapipYAxis(ss); // Get Y-Axis IoManip
+         ss << val; // Write the value to the string stream.
+         auto retVal = QString(ss.str().c_str()); // Convert to QString
+         if(retVal.contains('.')) // Check if decimal point is in the string and if so remove trailing zeros.
+         {
+            while(retVal.endsWith('0')) {retVal.chop(1);} // Remove unneeded zeros.
+            if(retVal.endsWith('.')) {retVal.chop(1);} // Remove unneeded decimal point.
+         }
+         return retVal; // Return as QString
+      };
+      ui->txtPropXMin->setText(minMaxValToQStr(curveDataMaxMin.minX, true));
+      ui->txtPropXMax->setText(minMaxValToQStr(curveDataMaxMin.maxX, true));
+      ui->txtPropYMin->setText(minMaxValToQStr(curveDataMaxMin.minY, false));
+      ui->txtPropYMax->setText(minMaxValToQStr(curveDataMaxMin.maxY, false));
 
       // Set the calculated sample rate (this number might jump around a bit, make sure number of decimal points doesn't change).
       std::stringstream calcSampRateStr;
