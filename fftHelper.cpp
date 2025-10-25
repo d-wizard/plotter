@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015, 2017, 2019 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015, 2017, 2019, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -70,18 +70,48 @@ static void fixStartNanReal(fftw_complex* in, unsigned int N)
    }
 }
 
-void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double *windowCoef)
-{
-   fftw_complex *in, *out;
-   fftw_plan p;
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-   unsigned int N = std::min(inRe.size(), inIm.size());
+void complexFFT::removePlan()
+{
+   bool needToRemovePlan = false;
+   if(in != nullptr)
+   {
+      fftw_free(in);
+      in = nullptr;
+      needToRemovePlan = true;
+   }
+   if(out != nullptr)
+   {
+      fftw_free(out);
+      out = nullptr;
+      needToRemovePlan = true;
+   }
+   if(needToRemovePlan)
+   {
+      fftw_destroy_plan(p);
+   }
+   N = 0;
+}
+
+
+void complexFFT::run(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double *windowCoef)
+{
+   unsigned int newN = std::min(inRe.size(), inIm.size());
+   if(newN > 0 && newN != N)
+   {
+      // New FFT Size. Clean up old size and configure for the new size.
+      removePlan();
+      in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * newN);
+      out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * newN);
+      p = fftw_plan_dft_1d(newN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+   }
+   N = newN; // Always set this (i.e. if input is size 0, don't do anything).
 
    if(N > 0)
    {
-       in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-       out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-
        if(windowCoef == NULL)
        {
           for(unsigned int i = 0; i < N; ++i)
@@ -102,11 +132,7 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
        // Overwrite NaN samples at the beginning with 0's
        fixStartNanComplex(in, N);
 
-       p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-
        fftw_execute(p);
-
-       fftw_destroy_plan(p);
 
        outRe.resize(N);
        outIm.resize(N);
@@ -125,10 +151,7 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
           outRe[i] = out[i-numEndFftPointsToSwap][0] / (double)N;
           outIm[i] = out[i-numEndFftPointsToSwap][1] / (double)N;
        }
-
-       fftw_free(in);
-       fftw_free(out);
-    }
+   }
    else
    {
        outRe.clear();
@@ -136,19 +159,48 @@ void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVec
    }
 }
 
-void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
-{
-   fftw_complex *in, *out;
-   fftw_plan p;
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-   unsigned int N = inRe.size();
+void realFFT::removePlan()
+{
+   bool needToRemovePlan = false;
+   if(in != nullptr)
+   {
+      fftw_free(in);
+      in = nullptr;
+      needToRemovePlan = true;
+   }
+   if(out != nullptr)
+   {
+      fftw_free(out);
+      out = nullptr;
+      needToRemovePlan = true;
+   }
+   if(needToRemovePlan)
+   {
+      fftw_destroy_plan(p);
+   }
+   N = 0;
+}
+
+void realFFT::run(const dubVect& inRe, dubVect& outRe, double* windowCoef)
+{
+   unsigned int newN = inRe.size();
+   if(newN > 0 && newN != N)
+   {
+      // New FFT Size. Clean up old size and configure for the new size.
+      removePlan();
+      in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * newN);
+      out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * newN);
+      p = fftw_plan_dft_1d(newN, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+   }
+   N = newN; // Always set this (i.e. if input is size 0, don't do anything).
 
    if(N > 0)
    {
        unsigned int halfN = N >> 1;
-
-       in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-       out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
 
        if(windowCoef == NULL)
        {
@@ -170,11 +222,7 @@ void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
        // Overwrite NaN samples at the beginning with 0's
        fixStartNanReal(in, N);
 
-       p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-
        fftw_execute(p);
-
-       fftw_destroy_plan(p);
 
        outRe.resize(halfN);
        outRe[0] = fabs(out[0][0] / (double)N);
@@ -182,15 +230,16 @@ void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef)
        {
           outRe[i] = (fabs(out[i][0]) + fabs(out[N-i][0])) / (double)N;
        }
-
-       fftw_free(in);
-       fftw_free(out);
    }
    else
    {
        outRe.clear();
    }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double& min, double& max, double sampleRate)
 {

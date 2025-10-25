@@ -1,4 +1,4 @@
-/* Copyright 2014, 2016, 2019, 2021 Dan Williams. All Rights Reserved.
+/* Copyright 2014, 2016, 2019, 2021, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -24,6 +24,7 @@
 #include <QVector>
 #include <PlotHelperTypes.h>
 #include "CurveData.h"
+#include "fftHelper.h"
 
 class CurveCommander;
 
@@ -141,6 +142,9 @@ private:
 
    int m_curveStatsChildSize;
    int m_curveStatsChildPointIndex;
+   
+   complexFFT m_complexFFT; // Class for doing Complex FFTs
+   realFFT m_realFFT; // Class for doing Real FFTs
 };
 
 #endif

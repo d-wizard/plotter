@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2015, 2017 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2015, 2017, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -19,9 +19,53 @@
 #ifndef fftHelper_h
 #define fftHelper_h
 
-void complexFFT(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double* windowCoef = NULL);
+#include <fftw3.h>
 
-void realFFT(const dubVect& inRe, dubVect& outRe, double* windowCoef = NULL);
+////////////////////////////////////////////////////////////////////////////////
+
+class complexFFT
+{
+public:
+   complexFFT(){}
+   virtual ~complexFFT(){removePlan();}
+   void run(const dubVect& inRe, const dubVect& inIm, dubVect& outRe, dubVect& outIm, double* windowCoef = NULL);
+private:
+   // copy, assignment constructors.
+   complexFFT (const complexFFT&) = delete;
+   complexFFT& operator= (const complexFFT&) = delete;
+
+private:
+   void removePlan();
+
+   fftw_complex* in = nullptr;
+   fftw_complex* out = nullptr;
+   fftw_plan p;
+   unsigned int N = 0;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class realFFT
+{
+public:
+   realFFT(){}
+   virtual ~realFFT(){removePlan();}
+   void run(const dubVect& inRe, dubVect& outRe, double* windowCoef = NULL);
+private:
+   // copy, assignment constructors.
+   realFFT (const realFFT&) = delete;
+   realFFT& operator= (const realFFT&) = delete;
+
+private:
+   void removePlan();
+
+   fftw_complex* in = nullptr;
+   fftw_complex* out = nullptr;
+   fftw_plan p;
+   unsigned int N = 0;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 void getFFTXAxisValues_real(dubVect& xAxis, unsigned int numPoints, double& min, double& max, double sampleRate = 0.0);
 void getFFTXAxisValues_complex(dubVect& xAxis, unsigned int numPoints, double& min, double& max, double sampleRate = 0.0);

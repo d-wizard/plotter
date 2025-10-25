@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 - 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2022, 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -555,11 +555,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
                m_prevInfo.resize(dataSize);
                genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
-            realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
+            m_realFFT.run(m_ySrcData, realFFTOut, &m_prevInfo[0]);
          }
          else
          {
-            realFFT(m_ySrcData, realFFTOut);
+            m_realFFT.run(m_ySrcData, realFFTOut);
          }
 
          update1dChildCurve(m_curveName, m_plotType, 0, realFFTOut, parentCurveMsgId);
@@ -580,11 +580,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
                m_prevInfo.resize(dataSize);
                genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
-            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
+            m_complexFFT.run(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
          }
          else
          {
-            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+            m_complexFFT.run(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
          }
 
 
@@ -778,11 +778,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
                m_prevInfo.resize(dataSize);
                genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
-            realFFT(m_ySrcData, realFFTOut, &m_prevInfo[0]);
+            m_realFFT.run(m_ySrcData, realFFTOut, &m_prevInfo[0]);
          }
          else
          {
-            realFFT(m_ySrcData, realFFTOut);
+            m_realFFT.run(m_ySrcData, realFFTOut);
          }
 
          unsigned int fftSize = realFFTOut.size();
@@ -810,11 +810,11 @@ void ChildCurve::updateCurve( bool xParentChanged,
                m_prevInfo.resize(dataSize);
                genWindowCoef(&m_prevInfo[0], dataSize, m_yAxis.scaleFftWindow);
             }
-            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
+            m_complexFFT.run(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut, &m_prevInfo[0]);
          }
          else
          {
-            complexFFT(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
+            m_complexFFT.run(m_xSrcData, m_ySrcData, realFFTOut, imagFFTOut);
          }
 
          unsigned int fftSize = realFFTOut.size();
