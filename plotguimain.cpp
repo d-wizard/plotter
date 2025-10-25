@@ -28,7 +28,6 @@
 #include "ui_plotguimain.h"
 #include "update.h"
 
-#include "createfftplot.h"
 #include "fftHelper.h"
 
 #include "localPlotCreate.h"
