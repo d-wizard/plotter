@@ -2800,6 +2800,16 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                   scrollModeToggle();
                scrollModeSetPlotSize(10*m_qwtCurves[m_selectedCurveIndex]->getMaxNumPointsFromPlotMsg());
             }
+            else if(KeyEvent->key() == Qt::Key_2 && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               // Set the scroll mode plot size to half the current size.
+               QMutexLocker lock(&m_qwtCurvesMutex);
+               if(!m_scrollMode) // Set to scroll mode
+                  scrollModeToggle();
+               int newNumPoints = m_qwtCurves[m_selectedCurveIndex]->getNumPoints() >> 1; // Divide by 2.
+               if(newNumPoints < 1){newNumPoints = 1;} // Bound to 1
+               scrollModeSetPlotSize(newNumPoints);
+            }
             else if(KeyEvent->key() == Qt::Key_U && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                // Set to Auto Zoom
