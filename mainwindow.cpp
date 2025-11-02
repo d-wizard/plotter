@@ -2802,11 +2802,13 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
             else if(KeyEvent->key() == Qt::Key_2 && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
+               bool zoomOut = KeyEvent->modifiers().testFlag(Qt::AltModifier);
                // Set the scroll mode plot size to half the current size.
                QMutexLocker lock(&m_qwtCurvesMutex);
                if(!m_scrollMode) // Set to scroll mode
                   scrollModeToggle();
-               int newNumPoints = m_qwtCurves[m_selectedCurveIndex]->getNumPoints() >> 1; // Divide by 2.
+               auto oldPoints = m_qwtCurves[m_selectedCurveIndex]->getNumPoints();
+               auto newNumPoints = zoomOut ? oldPoints << 1 : oldPoints >> 1; // Mutliply by 2 when shift is selected. Divide by 2 when it is not.
                if(newNumPoints < 1){newNumPoints = 1;} // Bound to 1
                scrollModeSetPlotSize(newNumPoints);
             }
