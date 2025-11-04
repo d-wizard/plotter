@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2021 - 2022, 2024 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -30,6 +30,7 @@
 #include <QDateTime>
 #include <limits>  // std::numeric_limits
 #include <cmath>   // std::isfinite
+#include <algorithm>
 
 #include "plotMsgPack.h"
 
@@ -614,11 +615,48 @@ inline bool operator>=(const tPlotCurveName& lhs, const tPlotCurveName& rhs){ret
 
 
 
+//////////////////////////////////////////////
+////////////// Type Functions ////////////////
+//////////////////////////////////////////////
 
+inline bool sampleRateSigFigs(double calcSampRate, double& sampRateToUse)
+{
+   // Check for early return cases.
+   if(!isDoubleValid(calcSampRate) || calcSampRate <= 0.0)
+      return false;
 
+   // The calculated sample rate will have some error. Keep reducing significant figures and rounding
+   // to find the closest match with the least amount of significant figures.
+   static const double HOW_CLOSE_FOR_MATCH = 0.01; // 1.0 %
+   static const int MAX_NUM_SIG_FIGS = 4;
 
+   int exponent = (int)(log10(calcSampRate));
+   sampRateToUse = 0.0;
+   bool found = false;
+   for(int sigFig = MAX_NUM_SIG_FIGS; sigFig >= 1; --sigFig)
+   {
+      double divisor = pow(10, exponent - sigFig + 1);
+      int sigFigRateInt = (int)(calcSampRate / divisor); // Make sure to round down.
+      double sigFigRateLo = (double)sigFigRateInt * divisor;
+      double sigFigRateHi = (double)(sigFigRateInt+1) * divisor;
 
+      double loError = std::min(abs(1.0 - (sigFigRateLo/calcSampRate)), abs(1.0 - (calcSampRate/sigFigRateLo)));
+      double hiError = std::min(abs(1.0 - (sigFigRateHi/calcSampRate)), abs(1.0 - (calcSampRate/sigFigRateHi)));
 
+      if(loError < hiError && loError <= HOW_CLOSE_FOR_MATCH)
+      {
+         sampRateToUse = sigFigRateLo;
+         found = true;
+      }
+      else if(hiError < loError && hiError <= HOW_CLOSE_FOR_MATCH)
+      {
+         sampRateToUse = sigFigRateHi;
+         found = true;
+      }
+   }
+
+   return found;
+}
 
 #endif
 
