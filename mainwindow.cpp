@@ -38,6 +38,7 @@
 #include "persistentPlotParameters.h"
 #include "persistentParameters.h"
 #include "FileSystemOperations.h"
+#include "setsampleratedialog.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -137,6 +138,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
    m_2dPointCopyToClipboardAction("Copy to Clipboard", this),
    m_2dPointMenu("2D Point Menu"),
    m_enableDisablePlotUpdate("Disable New Curves", this),
+   m_showSetSampleRateDialogAction("Set Sample Rate", this),
    m_curveProperties("Properties", this),
    m_defaultCurveStyle(QwtPlotCurve::Lines),
    m_displayType(E_DISPLAY_POINT_AUTO),
@@ -221,6 +223,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     connect(&m_toggleSpecAnAction, SIGNAL(triggered(bool)), this, SLOT(specAnFuncToggle()));
     connect(&m_toggleCursorCanSelectAnyCurveAction, SIGNAL(triggered(bool)), this, SLOT(toggleCursorCanSelectAnyCurveAction()));
     connect(&m_enableDisablePlotUpdate, SIGNAL(triggered(bool)), this, SLOT(togglePlotUpdateAbility()));
+    connect(&m_showSetSampleRateDialogAction, SIGNAL(triggered(bool)), this, SLOT(showSetPlotSampleRateDialog()));
     connect(&m_curveProperties, SIGNAL(triggered(bool)), this, SLOT(showCurveProperties()));
     connect(&m_visCurveAllAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionAll()));
     connect(&m_visCurveNoneAction, SIGNAL(triggered(bool)), this, SLOT(setVisibleCurveActionNone()));
@@ -273,6 +276,7 @@ MainWindow::MainWindow(CurveCommander* curveCmdr, plotGuiMain* plotGui, QString 
     m_rightClickMenu.addAction(&m_enableDisablePlotUpdate);
 
     m_rightClickMenu.addSeparator();
+    m_rightClickMenu.addAction(&m_showSetSampleRateDialogAction);
     m_rightClickMenu.addAction(&m_curveProperties);
 
     // Initialize the right click menu's normalize settings sub menu.
@@ -1644,6 +1648,22 @@ void MainWindow::selectedCursorMenuSelect(int index)
         updateCursors();
         emit updateCursorMenusSignal();
     }
+}
+
+void MainWindow::showSetPlotSampleRateDialog()
+{
+   QMutexLocker lock(&m_qwtCurvesMutex);
+   auto setSampleRateDialog = std::make_unique<setsampleratedialog>(m_curveCommander, getPlotName(), this);
+   
+   lock.unlock();
+   setSampleRateDialog->exec();
+   lock.relock();
+
+   double newSampleRate;
+   if(setSampleRateDialog->getSampleRate(newSampleRate))
+   {
+      setSampleRate_allCurves(newSampleRate);
+   }
 }
 
 void MainWindow::showCurveProperties()

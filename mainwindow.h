@@ -297,6 +297,7 @@ private:
 
     QAction m_enableDisablePlotUpdate;
 
+    QAction m_showSetSampleRateDialogAction;
     QAction m_curveProperties;
 
     QwtPlotCurve::CurveStyle m_defaultCurveStyle;
@@ -490,6 +491,8 @@ private slots:
     void selectedCursorMenuSelect(int index);
 
     void changeCurveStyle(int inVal);
+
+    void showSetPlotSampleRateDialog();
 
     void showCurveProperties();
     void togglePlotUpdateAbility();

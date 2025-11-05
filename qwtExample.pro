@@ -49,6 +49,7 @@ SOURCES += main.cpp\
     saveRestoreCurve.cpp \
     plotcurvenamedialog.cpp \
     overwriterenamedialog.cpp \
+    setsampleratedialog.cpp \
     smartMaxMin.cpp \
     persistentParameters.cpp \
     localPlotCreate.cpp \
@@ -88,6 +89,7 @@ HEADERS  += mainwindow.h \
     AmFmPmDemod.h \
     handleLogData.h \
     logToFile.h \
+    setsampleratedialog.h \
     smartMaxMin.h \
     persistentParameters.h \
     sendTCPPacket.h \
@@ -114,6 +116,7 @@ FORMS    += mainwindow.ui \
     plotcurvenamedialog.ui \
     overwriterenamedialog.ui \
     createplotfromdata.ui \
+    setsampleratedialog.ui \
     zoomlimitsdialog.ui
 
 INCLUDEPATH += $$QWTDIR/src

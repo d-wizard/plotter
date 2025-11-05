@@ -15,6 +15,19 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="QLabel" name="label_2">
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Set the sample rate for ALL curves in this plot.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="label">
@@ -28,6 +41,12 @@
      </item>
      <item>
       <widget class="QPushButton" name="cmdQuery">
+       <property name="toolTip">
+        <string>Attempts to determine the sample rate based on 
+how fast the samples are coming in. 
+Keep pressing this button if the sample rate 
+seems close, but isn't quite right.</string>
+       </property>
        <property name="text">
         <string>Query Sample Rate</string>
        </property>
