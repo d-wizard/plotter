@@ -1446,6 +1446,10 @@ Set to 0 for default behavoir.</string>
               changing scroll mode plot size settings. This can 
               be helpful for removing old values on 2D plots with
               time as the X Axis.
+   ctrl + 2 | Set to Scroll Mode and set the plot size to half of its
+              current value
+   ctrl + alt + 2 | Set to Scroll Mode and set the plot size to
+                    double of its current value
 
    -----------------------------------------------------------------
    | Any Curve Cursor Mode Settings
@@ -1459,6 +1463,10 @@ Set to 0 for default behavoir.</string>
               Window (the point will be set to &quot;Not A Number&quot;).
               This is useful to eliminate outlier points.
 
+   -----------------------------------------------------------------
+   | Set Plot Sample Rate
+   -----------------------------------------------------------------
+   ctrl + shift + r | Show the Set Plot Sample Rate Dialog.
 
 --------------------------------------------------------------------
 | Arrow Keys
