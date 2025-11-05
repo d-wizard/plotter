@@ -2842,7 +2842,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Set to Freeze Zoom
                holdZoom();
             }
-            else if(KeyEvent->key() == Qt::Key_M && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_M && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
                // Set to Max Hold Zoom
                maxHoldZoom();
@@ -2955,6 +2955,10 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                // Save Dialog - Limit save points to current zoom
                openSavePlotDialog(true);
+            }
+            else if(KeyEvent->key() == Qt::Key_M && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
+            {
+               showSetPlotSampleRateDialog();
             }
             else
             {
