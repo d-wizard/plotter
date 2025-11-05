@@ -2847,7 +2847,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Set to Max Hold Zoom
                maxHoldZoom();
             }
-            else if(KeyEvent->key() == Qt::Key_R && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            else if(KeyEvent->key() == Qt::Key_R && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && !KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
                resetZoom();
             }
@@ -2872,7 +2872,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             }
             else if(KeyEvent->key() == Qt::Key_L && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
-               // Toggle Legend Visablity.
+               // Toggle Legend Visiblity.
                toggleLegend();
             }
             else if(KeyEvent->key() == Qt::Key_A && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
@@ -2956,7 +2956,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
                // Save Dialog - Limit save points to current zoom
                openSavePlotDialog(true);
             }
-            else if(KeyEvent->key() == Qt::Key_M && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
+            else if(KeyEvent->key() == Qt::Key_R && KeyEvent->modifiers().testFlag(Qt::ControlModifier) && KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
             {
                showSetPlotSampleRateDialog();
             }
