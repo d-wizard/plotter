@@ -70,7 +70,6 @@ void setsampleratedialog::on_cmdQuery_clicked()
    }
 
    // Set the sample rate Text Box.
-   m_outSampleRate = sampRateToUse;
    std::stringstream calcSampRateStr;
    calcSampRateStr << std::setprecision(3) << std::fixed << sampRateToUse;
    ui->txtSampRate->setText(calcSampRateStr.str().c_str());
@@ -78,6 +77,7 @@ void setsampleratedialog::on_cmdQuery_clicked()
 
 void setsampleratedialog::on_cmdApply_clicked()
 {
+   m_outSampleRate = atof(ui->txtSampRate->text().toStdString().c_str());
    m_apply = (m_outSampleRate > 0 && isDoubleValid(m_outSampleRate)); // Only apply the sample rate change if it is a valid sample rate.
    this->accept(); // Return from exec()
 }
