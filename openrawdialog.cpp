@@ -1,4 +1,4 @@
-/* Copyright 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2024 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -44,6 +44,7 @@ openRawDialog::openRawDialog(QWidget *parent) :
       if(index < ARRAY_SIZE(RAW_TYPE_DROPDOWN))
          ui->cmbRawType->setCurrentIndex(index);
    }
+   setSliceVisible();
 }
 
 openRawDialog::~openRawDialog()
@@ -279,4 +280,43 @@ void openRawDialog::fillFromRaw(const std::vector<char>& inFile, dubVect& result
       memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
       result[i] = (double)(rawVal);
    }
+}
+
+void openRawDialog::setSliceVisible()
+{
+   bool visible = ui->chkSliceInput->isChecked();
+   ui->sepSlice1->setVisible(visible);
+   ui->lblSliceStart->setVisible(visible);
+   ui->spnSliceStart->setVisible(visible);
+   ui->sepSlice2->setVisible(visible);
+   ui->lblSliceEnd->setVisible(visible);
+   ui->spnSliceEnd->setVisible(visible);
+   ui->sepSlice3->setVisible(visible);
+   ui->radSliceBytes->setVisible(visible);
+   ui->radSliceSamples->setVisible(visible);
+}
+
+void openRawDialog::on_chkSliceInput_stateChanged(int arg1)
+{
+   setSliceVisible();
+}
+
+void openRawDialog::on_spnSliceStart_valueChanged(int arg1)
+{
+
+}
+
+void openRawDialog::on_spnSliceEnd_valueChanged(int arg1)
+{
+
+}
+
+void openRawDialog::on_radSliceBytes_clicked()
+{
+
+}
+
+void openRawDialog::on_radSliceSamples_clicked()
+{
+
 }

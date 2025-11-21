@@ -1,4 +1,4 @@
-/* Copyright 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2024 - 2025 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -45,6 +45,16 @@ private slots:
 
    void on_cmbRawType_currentIndexChanged(int index);
 
+   void on_chkSliceInput_stateChanged(int arg1);
+
+   void on_spnSliceStart_valueChanged(int arg1);
+
+   void on_spnSliceEnd_valueChanged(int arg1);
+
+   void on_radSliceBytes_clicked();
+
+   void on_radSliceSamples_clicked();
+
 private:
    Ui::openRawDialog *ui;
 
@@ -63,5 +73,6 @@ private:
    template <typename tRawFileType>
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
    
+   void setSliceVisible();
 
 };
