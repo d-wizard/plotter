@@ -57,6 +57,11 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
    this->setWindowTitle( (std::string("Opening ") + fso::GetFile(filePath.toStdString())).c_str() );
 
    m_curFileSizeBytes = fso::GetFileSize(filePath.toStdString());
+   double oneLessByte = m_curFileSizeBytes - 1;
+   ui->spnSliceStart->setMinimum(-oneLessByte);
+   ui->spnSliceStart->setMaximum(oneLessByte);
+   ui->spnSliceEnd->setMinimum(-oneLessByte);
+   ui->spnSliceEnd->setMaximum(oneLessByte);
 
    // Fill in plot name combo box
    setPlotComboBox(curveCmdr, suggestedPlotName);
@@ -172,13 +177,26 @@ void openRawDialog::setCurveNames()
 
 void openRawDialog::setStatsLabel()
 {
-   unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
-   auto blockSize = (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 0;
-   auto numBlocks = m_curFileSizeBytes / blockSize;
-   auto numLeftOverBytes = m_curFileSizeBytes - (numBlocks*blockSize);
+   int64_t bytesToRemoveFromFront, totalBytesToKeep;
+   getSliceValueBytes(bytesToRemoveFromFront, totalBytesToKeep);
 
-   std::string stats = "File Size: " + std::to_string(m_curFileSizeBytes) + " bytes | Plot Size: "  + std::to_string(numBlocks) +
-      " points | Leftover Data: " + std::to_string(numLeftOverBytes) + " bytes";
+   unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
+   int64_t blockSize = (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 1;
+   int64_t numBlocksTotal = m_curFileSizeBytes / blockSize;
+   int64_t numBlocksSliced = totalBytesToKeep / blockSize;
+   int64_t numLeftOverBytes = totalBytesToKeep - (numBlocksSliced*blockSize);
+
+   std::string stats;
+   if(totalBytesToKeep <int64_t(m_curFileSizeBytes))
+   {
+      stats = "Whole File Size: " + std::to_string(m_curFileSizeBytes) + " bytes ("  + std::to_string(numBlocksTotal) + " points)";
+      stats = stats + " | Sliced File Size: " + std::to_string(totalBytesToKeep) + " bytes ("  + std::to_string(numBlocksSliced) + " points)";
+   }
+   else
+   {
+      stats = "File Size: " + std::to_string(m_curFileSizeBytes) + " bytes ("  + std::to_string(numBlocksTotal) + " points)";
+   }
+   stats = stats + " | Leftover: " + std::to_string(numLeftOverBytes) + " bytes";
 
    ui->lblStats->setText(stats.c_str());
 }
@@ -224,6 +242,14 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
    fso::ReadBinaryFile(filePath.toStdString(), inputFileBytes);
    dubVect curveValues1;
    dubVect curveValues2;
+
+   int64_t bytesToRemoveFromFront, totalBytesToKeep;
+   getSliceValueBytes(bytesToRemoveFromFront, totalBytesToKeep);
+   if(int64_t(inputFileBytes.size()) >= (bytesToRemoveFromFront+totalBytesToKeep))
+   {
+      inputFileBytes.erase(inputFileBytes.begin(), inputFileBytes.begin()+bytesToRemoveFromFront);
+      inputFileBytes.resize(totalBytesToKeep);
+   }
 
    auto openRawType = (eRawTypes)ui->cmbRawType->currentIndex();
    switch(openRawType)
@@ -296,27 +322,68 @@ void openRawDialog::setSliceVisible()
    ui->radSliceSamples->setVisible(visible);
 }
 
-void openRawDialog::on_chkSliceInput_stateChanged(int arg1)
+unsigned openRawDialog::getSampleSizeFromGui()
+{
+   unsigned curIndex = (unsigned)ui->cmbRawType->currentIndex();
+   return (curIndex < ARRAY_SIZE(RAW_TYPE_BLOCK_SIZE)) ? RAW_TYPE_BLOCK_SIZE[curIndex] : 1;
+}
+
+void openRawDialog::getSliceValueBytes(int64_t& bytesToRemoveFromFront, int64_t& totalBytes)
+{
+   unsigned bytesPerSamp = getSampleSizeFromGui();
+   int64_t bytesPerUserSlice = ui->radSliceBytes->isChecked() ? 1 : bytesPerSamp;
+   int64_t curFileSizeBytes = int64_t(m_curFileSizeBytes);
+
+   int64_t sliceStartBytes = int64_t(ui->spnSliceStart->value()) * bytesPerUserSlice;
+   if(sliceStartBytes < 0)
+      sliceStartBytes += curFileSizeBytes;
+   if(sliceStartBytes > curFileSizeBytes)
+      sliceStartBytes = curFileSizeBytes;
+   if(sliceStartBytes < 0)
+      sliceStartBytes = 0;
+
+   int64_t sliceEndBytes = int64_t(ui->spnSliceEnd->value()) * bytesPerUserSlice;
+   if(sliceEndBytes <= 0)
+      sliceEndBytes += curFileSizeBytes;
+   if(sliceEndBytes > curFileSizeBytes)
+      sliceEndBytes = curFileSizeBytes;
+   if(sliceEndBytes <= 0)
+      sliceEndBytes = curFileSizeBytes;
+
+   totalBytes = sliceEndBytes - sliceStartBytes;
+   if(totalBytes > 0 && sliceStartBytes >= 0)
+   {
+      bytesToRemoveFromFront = sliceStartBytes;
+   }
+   else
+   {
+      totalBytes = 0;
+      bytesToRemoveFromFront = 0;
+   }
+}
+
+void openRawDialog::on_chkSliceInput_stateChanged(int /*arg1*/)
 {
    setSliceVisible();
-}
-
-void openRawDialog::on_spnSliceStart_valueChanged(int arg1)
-{
-
-}
-
-void openRawDialog::on_spnSliceEnd_valueChanged(int arg1)
-{
-
+   setStatsLabel();
 }
 
 void openRawDialog::on_radSliceBytes_clicked()
 {
-
+   setStatsLabel();
 }
 
 void openRawDialog::on_radSliceSamples_clicked()
 {
+   setStatsLabel();
+}
 
+void openRawDialog::on_spnSliceStart_valueChanged(double /*arg1*/)
+{
+   setStatsLabel();
+}
+
+void openRawDialog::on_spnSliceEnd_valueChanged(double /*arg1*/)
+{
+   setStatsLabel();
 }

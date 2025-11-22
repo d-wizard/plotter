@@ -72,9 +72,12 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spnSliceStart">
-       <property name="maximum">
-        <number>2147483647</number>
+      <widget class="QDoubleSpinBox" name="spnSliceStart">
+       <property name="decimals">
+        <number>0</number>
+       </property>
+       <property name="minimum">
+        <double>-10.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -93,9 +96,12 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spnSliceEnd">
-       <property name="maximum">
-        <number>2147483647</number>
+      <widget class="QDoubleSpinBox" name="spnSliceEnd">
+       <property name="decimals">
+        <number>0</number>
+       </property>
+       <property name="minimum">
+        <double>-10.000000000000000</double>
        </property>
       </widget>
      </item>

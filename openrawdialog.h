@@ -47,13 +47,13 @@ private slots:
 
    void on_chkSliceInput_stateChanged(int arg1);
 
-   void on_spnSliceStart_valueChanged(int arg1);
-
-   void on_spnSliceEnd_valueChanged(int arg1);
-
    void on_radSliceBytes_clicked();
 
    void on_radSliceSamples_clicked();
+
+   void on_spnSliceStart_valueChanged(double arg1);
+
+   void on_spnSliceEnd_valueChanged(double arg1);
 
 private:
    Ui::openRawDialog *ui;
@@ -74,5 +74,9 @@ private:
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
    
    void setSliceVisible();
+
+   // Helper functions
+   unsigned getSampleSizeFromGui();
+   void getSliceValueBytes(int64_t& bytesToRemoveFromFront, int64_t& totalBytes);
 
 };
