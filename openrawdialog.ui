@@ -52,6 +52,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
       <widget class="QCheckBox" name="chkSliceInput">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Allows the ability to plot only a subset of the input file data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Slice Input</string>
        </property>
@@ -66,6 +69,10 @@
      </item>
      <item>
       <widget class="QLabel" name="lblSliceStart">
+       <property name="toolTip">
+        <string>Start index (inclusive).
+Negative numbers reference values from the end of the file.</string>
+       </property>
        <property name="text">
         <string>Start Slice</string>
        </property>
@@ -73,6 +80,10 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spnSliceStart">
+       <property name="toolTip">
+        <string>Start index (inclusive).
+Negative numbers reference values from the end of the file.</string>
+       </property>
        <property name="decimals">
         <number>0</number>
        </property>
@@ -90,6 +101,10 @@
      </item>
      <item>
       <widget class="QLabel" name="lblSliceEnd">
+       <property name="toolTip">
+        <string>End index (exclusive).
+Negative numbers reference values from the end of the file.</string>
+       </property>
        <property name="text">
         <string>End Slice</string>
        </property>
@@ -97,6 +112,10 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spnSliceEnd">
+       <property name="toolTip">
+        <string>End index (exclusive).
+Negative numbers reference values from the end of the file.</string>
+       </property>
        <property name="decimals">
         <number>0</number>
        </property>
@@ -114,6 +133,9 @@
      </item>
      <item>
       <widget class="QRadioButton" name="radSliceBytes">
+       <property name="toolTip">
+        <string>Interpret start/end slice values as bytes.</string>
+       </property>
        <property name="text">
         <string>Bytes Units</string>
        </property>
@@ -124,6 +146,9 @@
      </item>
      <item>
       <widget class="QRadioButton" name="radSliceSamples">
+       <property name="toolTip">
+        <string>Interpret start/end slice values as samples (sample size is determined by the Data Type).</string>
+       </property>
        <property name="text">
         <string>Samples Units</string>
        </property>
