@@ -405,31 +405,41 @@ void fso::ReadBinaryFile(std::string t_path, std::vector<char>& t_binaryFile)
 
    if(FileExists(t_path) == true)
    {
-      int length;
+      size_t totalFileSizeBytes;
 
       std::ifstream is;
-      is.open(t_path.c_str(), std::ios::binary );
+      is.open(t_path.c_str(), std::ios::binary);
 
       // get length of file:
       is.seekg (0, std::ios::end);
-      length = is.tellg();
+      totalFileSizeBytes = is.tellg();
 
-      if(length >= 0)
+      if(totalFileSizeBytes > 0)
       {
          is.seekg (0, std::ios::beg);
 
          // allocate memory:
-         t_binaryFile.resize(length);
+         t_binaryFile.resize(totalFileSizeBytes);
 
-         // read data as a block:
-         is.read (&t_binaryFile[0],length);
-         is.close();
+         // Read out the data in chunks (there seems to be an issue reading out super big files all at once).
+         const size_t chunkSize = 1<<24;
+         size_t bytesLeftToRead = totalFileSizeBytes;
+         size_t readByteIndex = 0;
+         while(bytesLeftToRead > 0)
+         {
+            size_t numBytesToReadAtOnce = std::min(bytesLeftToRead, chunkSize);
 
+            // read data as a block:
+            is.read(&t_binaryFile[readByteIndex], numBytesToReadAtOnce);
+
+            readByteIndex += numBytesToReadAtOnce;
+            bytesLeftToRead -= numBytesToReadAtOnce;
+         }
       }
       else
-      {
-         is.close();
-      }
+         t_binaryFile.clear();
+   
+      is.close();
    }
 }
 
