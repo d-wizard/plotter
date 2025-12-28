@@ -85,6 +85,9 @@ inline UINT_32 getPlotDataTypeSize(ePlotDataTypes in)
    case E_UINT_64:
       size = sizeof(UINT_64);
       break;
+   case E_FLOAT_16:
+      size = sizeof(UINT_16);
+      break;
    case E_FLOAT_32:
       size = sizeof(FLOAT_32);
       break;
@@ -118,6 +121,7 @@ inline bool validPlotDataTypes(ePlotDataTypes in)
    case E_UINT_32:
    case E_INT_64:
    case E_UINT_64:
+   case E_FLOAT_16:
    case E_FLOAT_32:
    case E_FLOAT_64:
    case E_TIME_STRUCT_64:

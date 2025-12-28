@@ -22,6 +22,7 @@
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 #include "TCPThreads.h" // Socket types.
+#include "F16ToF32.h"
 
 // Global, can be changed outside of this file.
 unsigned int g_maxTcpPlotMsgSize = (40*1024*1024) + MAX_PLOT_MSG_HEADER_SIZE; // 40 MB+
@@ -461,6 +462,13 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
          UINT_64 samp = 0;
          unpack(&samp, sizeof(samp));
          retVal = (double)samp;
+      }
+      break;
+      case E_FLOAT_16:
+      {
+         UINT_16 samp = 0;
+         unpack(&samp, sizeof(samp));
+         retVal = (double)F16ToF32[samp]; // Use lookup table to convert from E_FLOAT_16
       }
       break;
       case E_FLOAT_32:
