@@ -1495,30 +1495,10 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                   (*dataIter) /= mathIter->num;
                break;
                case E_SHIFT_UP:
-               {
-                  if(*dataIter != 0.0)
-                  {
-                     // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                     short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
-
-                     short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
-                     curExponent += (short)mathIter->num;
-                     *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
-                  }
-               }
+                  (*dataIter) = ldexp((*dataIter), (int)mathIter->num);
                break;
                case E_SHIFT_DOWN:
-               {
-                  if(*dataIter != 0.0)
-                  {
-                     // Put shift value in double exponent. ( 52 bits mantessa, 11 bits exponent, 1 bit sign)
-                     short* shiftValPtr = ((short*)&(*dataIter))+3; // point to 16 MSBs of 64 bit double (where the exponent is)
-
-                     short curExponent = ((*shiftValPtr) & (0x7FF0)) >> 4;
-                     curExponent -= (short)mathIter->num;
-                     *shiftValPtr = (*shiftValPtr & 0x800F) | ((curExponent << 4) & (0x7FF0));
-                  }
-               }
+                  (*dataIter) = ldexp((*dataIter), -(int)mathIter->num);
                break;
                case E_POWER:
                   (*dataIter) = pow((*dataIter), mathIter->num);
