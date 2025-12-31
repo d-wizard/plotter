@@ -47,7 +47,7 @@ const double CURVE_PROP_PI = 3.1415926535897932384626433832795028841971693993751
 const double CURVE_PROP_2PI = 6.2831853071795864769252867665590057683943387987502116;
 const double CURVE_PROP_E = 2.7182818284590452353602874713526624977572470936999595;
 
-const QString mathOpsStr[] = {
+const QString mathOpsStr[] = { // Matches eMathOp defined in PlotHelperTypes.h
 "ADD",
 "MULTIPLY",
 "DIVIDE",
@@ -68,10 +68,14 @@ const QString mathOpsStr[] = {
 "TAN",
 "ASIN",
 "ACOS",
-"ATAN"
+"ATAN",
+"SIGN",
+"FLT SIGN BIT",
+"FLT IS NAN",
+"FLT IS INF"
 };
 
-const QString mathOpsSymbol[] = {
+const QString mathOpsSymbol[] = { // Matches eMathOp defined in PlotHelperTypes.h
 "+",
 "*",
 "/",
@@ -92,11 +96,15 @@ const QString mathOpsSymbol[] = {
 "tan",
 "asin",
 "acos",
-"atan"
+"atan",
+"sign",
+"float sign bit",
+"float is NaN",
+"float is inf"
 };
 
 
-const QString mathOpsValueLabel[] = {
+const QString mathOpsValueLabel[] = { // Matches eMathOp defined in PlotHelperTypes.h
 "Value to Add",
 "Value to Multiply by",
 "Value to Divide by",
@@ -117,7 +125,11 @@ const QString mathOpsValueLabel[] = {
 "", // Trig functions have no values.
 "", // Trig functions have no values.
 "", // Trig functions have no values.
-""  // Trig functions have no values.
+"", // Trig functions have no values.
+"+1 for pos/+inf\n-1 for neg/-inf\n0 otherwise",
+"Floating Point:\n Sign Bit Value\n (0 = positive,\n   1 = negative)",
+"Floating Point:\n Is Not A Number?\n  (0 = number or inf,\n   1 = NaN)",
+"Floating Point:\n Is Infinity?\n  (0 = number or NaN,\n   1 = inf or -inf)",
 };
 
 const QString plotTypeNames[] = {

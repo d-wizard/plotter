@@ -345,7 +345,11 @@ typedef enum
    E_TAN,
    E_ASIN,
    E_ACOS,
-   E_ATAN
+   E_ATAN,
+   E_SIGN,
+   E_FLOAT_SIGN_BIT,
+   E_FLOAT_IS_NAN,
+   E_FLOAT_IS_INF
 }eMathOp;
 inline bool valid_eMathOp(eMathOp in)
 {
@@ -372,6 +376,10 @@ inline bool valid_eMathOp(eMathOp in)
    case E_ASIN:
    case E_ACOS:
    case E_ATAN:
+   case E_SIGN:
+   case E_FLOAT_SIGN_BIT:
+   case E_FLOAT_IS_NAN:
+   case E_FLOAT_IS_INF:
       return true;
       break;
    }
@@ -404,6 +412,10 @@ inline bool needsValue_eMathOp(eMathOp in)
    case E_ASIN:
    case E_ACOS:
    case E_ATAN:
+   case E_SIGN:
+   case E_FLOAT_SIGN_BIT:
+   case E_FLOAT_IS_NAN:
+   case E_FLOAT_IS_INF:
       return false;
       break;
    }

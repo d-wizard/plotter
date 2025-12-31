@@ -1606,6 +1606,18 @@ void CurveData::doMathOnCurve(dubVect& data, tMathOpList& mathOp, unsigned int s
                case E_ATAN:
                   (*dataIter) = atan((*dataIter));
                break;
+               case E_SIGN:
+                  (*dataIter) = (0.0 < (*dataIter)) - ((*dataIter) < 0.0); // always return +1, 0, or -1
+               break;
+               case E_FLOAT_SIGN_BIT:
+                  (*dataIter) = std::signbit((*dataIter));
+               break;
+               case E_FLOAT_IS_NAN:
+                  (*dataIter) = std::isnan((*dataIter));
+               break;
+               case E_FLOAT_IS_INF:
+                  (*dataIter) = std::isinf((*dataIter));
+               break;
             }
          }
       }
