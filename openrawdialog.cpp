@@ -1,4 +1,4 @@
-/* Copyright 2024 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2024 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -24,6 +24,7 @@
 #include "FileSystemOperations.h"
 #include "persistentParameters.h"
 #include "rawFileTypes.h"
+#include "F16ToF32.h" // Float 16-bit to Float 32-bit lookup table.
 
 
 openRawDialog::openRawDialog(QWidget *parent) :
@@ -214,6 +215,7 @@ bool openRawDialog::isInterleaved()
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16:
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32:
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64:
+      case E_RAW_TYPE_INTERLEAVED_FLOAT_16:
       case E_RAW_TYPE_INTERLEAVED_FLOAT_32:
       case E_RAW_TYPE_INTERLEAVED_FLOAT_64:
          retVal = true;
@@ -262,6 +264,7 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
       case E_RAW_TYPE_UNSIGNED_INT_16: { fillFromRaw<uint16_t>(inputFileBytes, curveValues1); } break;
       case E_RAW_TYPE_UNSIGNED_INT_32: { fillFromRaw<uint32_t>(inputFileBytes, curveValues1); } break;
       case E_RAW_TYPE_UNSIGNED_INT_64: { fillFromRaw<uint64_t>(inputFileBytes, curveValues1); } break;
+      case E_RAW_TYPE_FLOAT_16:        { fillFromRaw_float16(  inputFileBytes, curveValues1); } break;
       case E_RAW_TYPE_FLOAT_32:        { fillFromRaw<float   >(inputFileBytes, curveValues1); } break;
       case E_RAW_TYPE_FLOAT_64:        { fillFromRaw<double  >(inputFileBytes, curveValues1); } break;
       case E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8:    { fillFromRaw<int8_t  >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<int8_t  >(inputFileBytes, curveValues2, 2, 1);} break;
@@ -272,6 +275,7 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16: { fillFromRaw<uint16_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint16_t>(inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32: { fillFromRaw<uint32_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint32_t>(inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64: { fillFromRaw<uint64_t>(inputFileBytes, curveValues1, 2, 0); fillFromRaw<uint64_t>(inputFileBytes, curveValues2, 2, 1);} break;
+      case E_RAW_TYPE_INTERLEAVED_FLOAT_16:        { fillFromRaw_float16(  inputFileBytes, curveValues1, 2, 0); fillFromRaw_float16(  inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_FLOAT_32:        { fillFromRaw<float   >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<float   >(inputFileBytes, curveValues2, 2, 1);} break;
       case E_RAW_TYPE_INTERLEAVED_FLOAT_64:        { fillFromRaw<double  >(inputFileBytes, curveValues1, 2, 0); fillFromRaw<double  >(inputFileBytes, curveValues2, 2, 1);} break;
       default: break;
@@ -305,6 +309,28 @@ void openRawDialog::fillFromRaw(const std::vector<char>& inFile, dubVect& result
    {
       memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
       result[i] = (double)(rawVal);
+   }
+}
+
+void openRawDialog::fillFromRaw_float16(const std::vector<char>& inFile, dubVect& result, int dimension, int offsetIndex) // Same as the function above, but specifically for Float16
+{
+   assert(dimension > 0 && dimension < 3);
+   assert(offsetIndex < dimension);
+
+   // Determine some sizes.
+   uint16_t rawVal;
+   constexpr size_t RAW_TYPE_SIZE = sizeof(rawVal);
+   const size_t inFileSizeBytes = inFile.size();
+   const size_t blockSizeBytes = RAW_TYPE_SIZE * dimension;
+   const size_t offsetBytes = RAW_TYPE_SIZE * offsetIndex;
+   const char* inFilePtr = inFile.data();
+
+   size_t numLoops = inFileSizeBytes / blockSizeBytes; // round down.
+   result.resize(numLoops);
+   for(size_t i = 0; i < numLoops; ++i)
+   {
+      memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
+      result[i] = (double)F16ToF32[rawVal];
    }
 }
 

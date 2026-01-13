@@ -1,4 +1,4 @@
-/* Copyright 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2024, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -28,6 +28,7 @@ const QString RAW_TYPE_DROPDOWN[E_RAW_TYPE_SIZE] =
    "Unsigned Int 16 Bit",
    "Unsigned Int 32 Bit",
    "Unsigned Int 64 Bit",
+   "Float 16 Bit",
    "Float 32 Bit",
    "Float 64 Bit",
    "Interleaved Signed Int 8 Bit",
@@ -38,6 +39,7 @@ const QString RAW_TYPE_DROPDOWN[E_RAW_TYPE_SIZE] =
    "Interleaved Unsigned Int 16 Bit",
    "Interleaved Unsigned Int 32 Bit",
    "Interleaved Unsigned Int 64 Bit",
+   "Interleaved Float 16 Bit",
    "Interleaved Float 32 Bit",
    "Interleaved Float 64 Bit"
 };
@@ -52,6 +54,7 @@ const size_t RAW_TYPE_BLOCK_SIZE[E_RAW_TYPE_SIZE] =
     2, //E_RAW_TYPE_UNSIGNED_INT_16,
     4, //E_RAW_TYPE_UNSIGNED_INT_32,
     8, //E_RAW_TYPE_UNSIGNED_INT_64,
+    2, //E_RAW_TYPE_FLOAT_16,
     4, //E_RAW_TYPE_FLOAT_32,
     8, //E_RAW_TYPE_FLOAT_64,
     2, //E_RAW_TYPE_INTERLEAVED_SIGNED_INT_8,
@@ -62,6 +65,7 @@ const size_t RAW_TYPE_BLOCK_SIZE[E_RAW_TYPE_SIZE] =
     4, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_16,
     8, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_32,
    16, //E_RAW_TYPE_INTERLEAVED_UNSIGNED_INT_64,
+    4, //E_RAW_TYPE_INTERLEAVED_FLOAT_16,
     8, //E_RAW_TYPE_INTERLEAVED_FLOAT_32,
    16  //E_RAW_TYPE_INTERLEAVED_FLOAT_64
 };
