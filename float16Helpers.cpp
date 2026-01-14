@@ -16,7 +16,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <string>
+#include <string.h>
+#include <stdint.h>
 #include "float16Helpers.h"
 #include "F16ToF32.h" // Lookup table for converting from 16-bit float to 32-bit float.
 
