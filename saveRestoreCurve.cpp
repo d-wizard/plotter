@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2021 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2021 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -29,6 +29,7 @@
 #include "persistentParameters.h"
 #include "dString.h"
 #include "FileSystemOperations.h"
+#include "float16Helpers.h"
 
 static const std::string EXCEL_LINE_DELIM = "\r\n";
 static const std::string CSV_CELL_DELIM = ",";
@@ -51,6 +52,7 @@ const QString OPEN_SAVE_FILTER_BINARY_U64_STR  = "Raw Binary - Unsigned Int 64 B
 const QString OPEN_SAVE_FILTER_BINARY_U32_STR  = "Raw Binary - Unsigned Int 32 Bit (*.*)";
 const QString OPEN_SAVE_FILTER_BINARY_U16_STR  = "Raw Binary - Unsigned Int 16 Bit (*.*)";
 const QString OPEN_SAVE_FILTER_BINARY_U8_STR   = "Raw Binary - Unsigned Int 8 Bit (*.*)";
+const QString OPEN_SAVE_FILTER_BINARY_F16_STR  = "Raw Binary - Float 16 Bit (*.*)";
 const QString OPEN_SAVE_FILTER_BINARY_F32_STR  = "Raw Binary - Float 32 Bit (*.*)";
 const QString OPEN_SAVE_FILTER_BINARY_F64_STR  = "Raw Binary - Float 64 Bit (*.*)";
 const QString OPEN_SAVE_FILTER_BINARY_AUTO_STR = "Raw Binary - Auto Type (*.*)";
@@ -146,6 +148,9 @@ static ePlotDataTypes getSaveDataType(eSaveRestorePlotCurveType type, ePlotDataT
       case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
          retVal = E_UINT_64;
       break;
+      case E_SAVE_RESTORE_BIN_F16: // E_FLOAT_16,
+         retVal = E_FLOAT_16;
+      break;
       case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
          retVal = E_FLOAT_32;
       break;
@@ -199,6 +204,7 @@ static std::string getDataStrName(ePlotDataTypes dataType, bool& isInt)
       case E_UINT_64:
          typeStr = "unsigned long long";
       break;
+      case E_FLOAT_16: // Keep as float for now.
       case E_FLOAT_32:
          typeStr = "float";
          isInt = false;
@@ -249,6 +255,34 @@ unsigned getRawCurveBytes(const double* inX, const double* inY, size_t numPoints
    return dataTypeSize;
 }
 
+unsigned getRawCurveBytes_float16(const double* inX, const double* inY, size_t numPoints, PackedCurveData& out)
+{
+   unsigned dataTypeSize = 0;
+   if(inX != nullptr && inY != nullptr)
+   {
+      // 2D (i.e. both X an Y axes have data)
+      dataTypeSize = 2 * sizeof(uint16_t);
+      out.resize(dataTypeSize*numPoints);
+      uint16_t* ptr = (uint16_t*)out.data();
+      for(size_t i = 0; i < numPoints; ++i)
+      {
+         ptr[2*i+0] = float32ToFloat16_asUint16((float)inX[i]);
+         ptr[2*i+1] = float32ToFloat16_asUint16((float)inY[i]);
+      }
+   }
+   else if(inY != nullptr)
+   {
+      // 1D (i.e. only Y axis has data)
+      dataTypeSize = sizeof(uint16_t);
+      out.resize(dataTypeSize*numPoints);
+      uint16_t* ptr = (uint16_t*)out.data();
+      for(size_t i = 0; i < numPoints; ++i)
+      {
+         ptr[i] = float32ToFloat16_asUint16((float)inY[i]);
+      }
+   }
+   return dataTypeSize;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -284,6 +318,7 @@ SaveCurve::SaveCurve(MainWindow *plotGui, CurveData *curve, eSaveRestorePlotCurv
       case E_SAVE_RESTORE_BIN_U32: // E_UINT_32,
       case E_SAVE_RESTORE_BIN_S64: // E_INT_64,
       case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
+      case E_SAVE_RESTORE_BIN_F16: // E_FLOAT_16,
       case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
       case E_SAVE_RESTORE_BIN_F64: // E_FLOAT_64,
          SaveBinary(curve, type);
@@ -626,6 +661,9 @@ void SaveCurve::SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type)
       case E_UINT_64:
          binary_dataTypeSize = getRawCurveBytes<uint64_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
+      case E_FLOAT_16:
+         binary_dataTypeSize = getRawCurveBytes_float16(xPoints, yPoints, numPoints, packedCurveData);
+      break;
       case E_FLOAT_32:
          binary_dataTypeSize = getRawCurveBytes<float>(xPoints, yPoints, numPoints, packedCurveData);
       break;
@@ -791,6 +829,7 @@ SavePlot::SavePlot(MainWindow* plotGui, QString plotName, QVector<CurveData*>& p
       case E_SAVE_RESTORE_BIN_U32: // E_UINT_32,
       case E_SAVE_RESTORE_BIN_S64: // E_INT_64,
       case E_SAVE_RESTORE_BIN_U64: // E_UINT_64,
+      case E_SAVE_RESTORE_BIN_F16: // E_FLOAT_16,
       case E_SAVE_RESTORE_BIN_F32: // E_FLOAT_32,
       case E_SAVE_RESTORE_BIN_F64: // E_FLOAT_64,
          SaveBinary(plotGui, plotInfo, type);
@@ -1233,6 +1272,7 @@ bool SavePlotCurveDialog::saveCurve(const QString& plotName, const QString& curv
       filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
@@ -1309,6 +1349,7 @@ bool SavePlotCurveDialog::savePlot(const QString& plotName)
       filterList.append(OPEN_SAVE_FILTER_BINARY_U16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_U32_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_U64_STR );
+      filterList.append(OPEN_SAVE_FILTER_BINARY_F16_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_F32_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_F64_STR );
       filterList.append(OPEN_SAVE_FILTER_BINARY_AUTO_STR);
@@ -1420,6 +1461,8 @@ eSaveRestorePlotCurveType SavePlotCurveDialog::parseSaveFileName(QString& pathIn
       saveType = E_SAVE_RESTORE_BIN_S64;
    else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_U64_STR)
       saveType = E_SAVE_RESTORE_BIN_U64;
+   else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F16_STR)
+      saveType = E_SAVE_RESTORE_BIN_F16;
    else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F32_STR)
       saveType = E_SAVE_RESTORE_BIN_F32;
    else if(selectedFilter == OPEN_SAVE_FILTER_BINARY_F64_STR)

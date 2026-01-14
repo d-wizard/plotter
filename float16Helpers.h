@@ -22,3 +22,5 @@
 extern float* F16ToF32; // Takes uint16_t values in (representing the 16-bit float) and returns the equivalent 32-bit float value.
 
 
+uint16_t float32ToFloat16_asUint16(float f); // Function that converts a 32-bit float to 16-bit float, but returns the value as a uint16_t (this is need for platforms that might not support 16-bit float).
+

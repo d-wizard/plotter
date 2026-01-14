@@ -1,4 +1,4 @@
-/* Copyright 2014 - 2017, 2019, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2014 - 2017, 2019, 2024, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -46,6 +46,7 @@ typedef enum
    E_SAVE_RESTORE_BIN_U32, // E_UINT_32,
    E_SAVE_RESTORE_BIN_S64, // E_INT_64,
    E_SAVE_RESTORE_BIN_U64, // E_UINT_64,
+   E_SAVE_RESTORE_BIN_F16, // E_FLOAT_16,
    E_SAVE_RESTORE_BIN_F32, // E_FLOAT_32,
    E_SAVE_RESTORE_BIN_F64, // E_FLOAT_64,
    E_SAVE_RESTORE_BIN_AUTO_TYPE,
