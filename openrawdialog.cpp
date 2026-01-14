@@ -24,7 +24,7 @@
 #include "FileSystemOperations.h"
 #include "persistentParameters.h"
 #include "rawFileTypes.h"
-#include "F16ToF32.h" // Float 16-bit to Float 32-bit lookup table.
+#include "float16Helpers.h"
 
 
 openRawDialog::openRawDialog(QWidget *parent) :

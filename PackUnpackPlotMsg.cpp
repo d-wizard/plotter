@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2025 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -22,7 +22,7 @@
 #include "DataTypes.h"
 #include "PackUnpackPlotMsg.h"
 #include "TCPThreads.h" // Socket types.
-#include "F16ToF32.h"
+#include "float16Helpers.h"
 
 // Global, can be changed outside of this file.
 unsigned int g_maxTcpPlotMsgSize = (40*1024*1024) + MAX_PLOT_MSG_HEADER_SIZE; // 40 MB+
