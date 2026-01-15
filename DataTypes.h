@@ -1,4 +1,4 @@
-/* Copyright 2013 Dan Williams. All Rights Reserved.
+/* Copyright 2013, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <list>
+#include "float16Helpers.h"
 
 typedef signed char SCHAR;
 typedef unsigned char UCHAR;
@@ -30,6 +31,7 @@ typedef signed int INT_32;
 typedef unsigned int UINT_32;
 typedef signed long long INT_64;
 typedef unsigned long long UINT_64;
+typedef PlotFloat16 FLOAT_16;
 typedef float FLOAT_32;
 typedef double FLOAT_64;
 typedef long double FLOAT_96;

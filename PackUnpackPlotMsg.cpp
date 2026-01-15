@@ -466,9 +466,9 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
       break;
       case E_FLOAT_16:
       {
-         UINT_16 samp = 0;
+         FLOAT_16 samp;
          unpack(&samp, sizeof(samp));
-         retVal = (double)F16ToF32[samp]; // Use lookup table to convert from E_FLOAT_16
+         retVal = (double)samp;
       }
       break;
       case E_FLOAT_32:

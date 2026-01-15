@@ -73,8 +73,6 @@ private:
    template <typename tRawFileType>
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
 
-   void fillFromRaw_float16(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
-   
    void setSliceVisible();
 
    // Helper functions

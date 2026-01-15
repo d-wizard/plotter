@@ -22,11 +22,11 @@
 #include "F16ToF32.h" // Lookup table for converting from 16-bit float to 32-bit float.
 
 // __F16ToF32 stores the float values as uint32_t. Cast pointer to float.
-float* F16ToF32 = (float*)&__F16ToF32[0];
+float* PlotFloat16::float16AsUint16ToFloat32 = (float*)&__F16ToF32[0];
 
 ////////////////////////////////////////////////////////////////////////////////
 
-uint16_t float32ToFloat16_asUint16(float f)
+uint16_t PlotFloat16::float32ToFloat16AsUint16(float f)
 {
     uint32_t bits;
     memcpy(&bits, &f, sizeof(bits));

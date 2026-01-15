@@ -17,10 +17,36 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <stdint.h>
 
-// Lookup table for converting from 16-bit float to 32-bit float.
-extern float* F16ToF32; // Takes uint16_t values in (representing the 16-bit float) and returns the equivalent 32-bit float value.
+// Define a type that can convert to / from 16-bit float completely in software.
+class PlotFloat16
+{
+public:
+   PlotFloat16(){}
 
+   PlotFloat16(const float& val):data(float32ToFloat16AsUint16(val)){}
+   PlotFloat16(const double& val):data(float32ToFloat16AsUint16((float)val)){}
 
-uint16_t float32ToFloat16_asUint16(float f); // Function that converts a 32-bit float to 16-bit float, but returns the value as a uint16_t (this is need for platforms that might not support 16-bit float).
+   operator float() const { return float16AsUint16ToFloat32[data]; }
+   operator double() const { return static_cast<double>(float16AsUint16ToFloat32[data]); }
+   
+   PlotFloat16& operator=(const float& val)
+   {
+      data = float32ToFloat16AsUint16(val);
+      return *this;
+   }
+   PlotFloat16& operator=(const double& val)
+   {
+      data = float32ToFloat16AsUint16((float)val);
+      return *this;
+   }
+private:
+   uint16_t data;
 
+   // Lookup table for converting from 16-bit float to 32-bit float.
+   static float* float16AsUint16ToFloat32; // Takes uint16_t values in (representing the 16-bit float) and returns the equivalent 32-bit float value.
+
+   static uint16_t float32ToFloat16AsUint16(float f); // Function that converts a 32-bit float to 16-bit float, but returns the value as a uint16_t (this is need for platforms that might not support 16-bit float).
+
+};

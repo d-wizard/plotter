@@ -255,35 +255,6 @@ unsigned getRawCurveBytes(const double* inX, const double* inY, size_t numPoints
    return dataTypeSize;
 }
 
-unsigned getRawCurveBytes_float16(const double* inX, const double* inY, size_t numPoints, PackedCurveData& out)
-{
-   unsigned dataTypeSize = 0;
-   if(inX != nullptr && inY != nullptr)
-   {
-      // 2D (i.e. both X an Y axes have data)
-      dataTypeSize = 2 * sizeof(uint16_t);
-      out.resize(dataTypeSize*numPoints);
-      uint16_t* ptr = (uint16_t*)out.data();
-      for(size_t i = 0; i < numPoints; ++i)
-      {
-         ptr[2*i+0] = float32ToFloat16_asUint16((float)inX[i]);
-         ptr[2*i+1] = float32ToFloat16_asUint16((float)inY[i]);
-      }
-   }
-   else if(inY != nullptr)
-   {
-      // 1D (i.e. only Y axis has data)
-      dataTypeSize = sizeof(uint16_t);
-      out.resize(dataTypeSize*numPoints);
-      uint16_t* ptr = (uint16_t*)out.data();
-      for(size_t i = 0; i < numPoints; ++i)
-      {
-         ptr[i] = float32ToFloat16_asUint16((float)inY[i]);
-      }
-   }
-   return dataTypeSize;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -662,7 +633,7 @@ void SaveCurve::SaveBinary(CurveData* curve, eSaveRestorePlotCurveType type)
          binary_dataTypeSize = getRawCurveBytes<uint64_t>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_FLOAT_16:
-         binary_dataTypeSize = getRawCurveBytes_float16(xPoints, yPoints, numPoints, packedCurveData);
+         binary_dataTypeSize = getRawCurveBytes<FLOAT_16>(xPoints, yPoints, numPoints, packedCurveData);
       break;
       case E_FLOAT_32:
          binary_dataTypeSize = getRawCurveBytes<float>(xPoints, yPoints, numPoints, packedCurveData);
