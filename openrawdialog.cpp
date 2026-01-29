@@ -334,6 +334,15 @@ unsigned openRawDialog::getSampleSizeFromGui()
 
 void openRawDialog::getSliceValueBytes(int64_t& bytesToRemoveFromFront, int64_t& totalBytes)
 {
+   // If not slicing, just return full-file values.
+   if(!ui->chkSliceInput->isChecked())
+   {
+      bytesToRemoveFromFront = 0;
+      totalBytes = int64_t(m_curFileSizeBytes);
+      return;
+   }
+
+   // Determine slicing values.
    unsigned bytesPerSamp = getSampleSizeFromGui();
    int64_t bytesPerUserSlice = ui->radSliceBytes->isChecked() ? 1 : bytesPerSamp;
    int64_t curFileSizeBytes = int64_t(m_curFileSizeBytes);
