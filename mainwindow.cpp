@@ -4297,11 +4297,24 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
          curveNameAsNum_max = asNum;
    }
 
-   // Sort
+   // Sort 
+   auto mixedStringCompareLambda = [](const QString& a, const QString& b)
+   {
+      double na, nb;
+      bool aIsNum = dString::strTo(a.toStdString(), na);
+      bool bIsNum = dString::strTo(b.toStdString(), nb);
+
+      if (aIsNum && bIsNum)
+         return na < nb;      // numeric compare
+
+      if (aIsNum != bIsNum)
+         return aIsNum;      // numbers first
+
+      return a < b;           // lexicographical compare
+   };
+   curveNames.sort(mixedStringCompareLambda);
    if(reverse)
-      curveNames.sort(std::greater<QString>());
-   else
-      curveNames.sort();
+      curveNames.reverse();
 
    // Color changing parameters.
    const double HEATMAP_HUE_START = 0;
