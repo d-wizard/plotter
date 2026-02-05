@@ -456,6 +456,9 @@ private:
 
     void openSavePlotDialog(bool limitToZoom);
 
+   // Functions for sorting curves / manipulating curve colors.
+   void sortCurvesByName(bool reverse);
+
 private slots:
     void pointSelected(const QPointF &pos);
     void rectSelected(const QRectF &pos);

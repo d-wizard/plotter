@@ -4258,3 +4258,24 @@ void MainWindow::openSavePlotDialog(bool limitToZoom)
    dialog.savePlot(m_plotName);
 }
 
+void MainWindow::sortCurvesByName(bool reverse)
+{
+   QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
+
+   // Grab a list of the curves.
+   std::list<QString> curveNames;
+   for(int i = 0; i < m_qwtCurves.size(); ++i)
+      curveNames.push_back(m_qwtCurves[i]->getCurveTitle());
+
+   // Sort
+   if(reverse)
+      curveNames.sort(std::greater<QString>());
+   else
+      curveNames.sort();
+
+   // Update the curve positions.
+   int newCurveIndex = 0;
+   for(const auto& curveName : curveNames)
+      setCurveIndex(curveName, newCurveIndex++);
+}
+
