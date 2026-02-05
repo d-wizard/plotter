@@ -32,6 +32,7 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
     float16Helpers.cpp \
+    hsvrgb.cpp \
         mainwindow.cpp \
     TCPThreads.cpp \
     TCPMsgReader.cpp \
