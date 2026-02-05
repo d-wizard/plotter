@@ -4353,5 +4353,9 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
       // Increment.
       ++newCurveIndex;
    }
+   
+   // Make sure plot is fully updated.
+   replotMainPlot(true, true);
+   updateCursors();
 }
 
