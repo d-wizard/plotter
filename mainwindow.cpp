@@ -4354,7 +4354,7 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
          {
             heatMapHsv.h = (unsigned char)(std::max(std::min(heatMapHueValue*255.0+0.5, 255.0), 0.0)); // Convert hue from (0 to 1) to (0 to 255). Round and bound to 0 to 255.
             heatMapHueValue += heatMapHueIncr; // Update.
-            auto rgb = HsvToRgb(heatMapHsv, true);
+            auto rgb = HsvToRgb(heatMapHsv, false);
             appearance.color = QColor(rgb.r, rgb.g, rgb.b);
          }
          break;
