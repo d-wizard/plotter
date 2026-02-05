@@ -162,7 +162,7 @@ public:
 
     int getNumCurves();
     int getCurveIndex(const QString& curveTitle);
-    void setCurveIndex(const QString& curveTitle, int newIndex);
+    void setCurveIndex(const QString& curveTitle, int newIndex, bool skipGuiUpdate = false);
 
     void removeCurve(const QString& curveName);
 

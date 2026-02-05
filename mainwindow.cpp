@@ -3482,7 +3482,7 @@ int MainWindow::getCurveIndex(CurveData* ptr)
    return -1;
 }
 
-void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
+void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex, bool skipGuiUpdate)
 {
    QMutexLocker lock(&m_qwtCurvesMutex);
 
@@ -3509,7 +3509,8 @@ void MainWindow::setCurveIndex(const QString& curveTitle, int newIndex)
             m_selectedCurveIndex = getCurveIndex(selectedCurveTitle);
 
          // Update the GUI.
-         updateCurveOrder();
+         if(!skipGuiUpdate)
+            updateCurveOrder();
       }
       // Else new and cur index are the same, nothing to do.
    }
@@ -4334,7 +4335,7 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
    int newCurveIndex = 0;
    for(const auto& curveName : curveNames)
    {
-      setCurveIndex(curveName, newCurveIndex);
+      setCurveIndex(curveName, newCurveIndex, true); // Set the skipGuiUpdate to true, we will call updateCurveOrder() below when all the curves have been updated.
 
       // Update the colors.
       CurveAppearance appearance = m_qwtCurves[newCurveIndex]->getCurveAppearance();
@@ -4368,6 +4369,7 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
    }
    
    // Make sure plot is fully updated.
+   updateCurveOrder(); // Curve order has changed, but we skipped it in the setCurveIndex function. Do it here.
    replotMainPlot(true, true);
    updateCursors();
 }
