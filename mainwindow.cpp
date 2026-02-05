@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -39,6 +39,7 @@
 #include "persistentParameters.h"
 #include "FileSystemOperations.h"
 #include "setsampleratedialog.h"
+#include "hsvrgb.h"
 
 // curveColors array is created from .h file, probably should be made into its own class at some point.
 #include "curveColors.h"
@@ -2888,6 +2889,14 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             {
                setZoomLimits_guiSlot();
             }
+            else if(KeyEvent->key() == Qt::Key_Q && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               sortCurvesByName(false, KeyEvent->modifiers().testFlag(Qt::ShiftModifier) ? eSortColorsTypes::HEATMAP_BLUE_TO_RED : eSortColorsTypes::HEATMAP_RED_TO_BLUE);
+            }
+            else if(KeyEvent->key() == Qt::Key_W && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
+            {
+               sortCurvesByName(true, KeyEvent->modifiers().testFlag(Qt::ShiftModifier) ? eSortColorsTypes::HEATMAP_BLUE_TO_RED : eSortColorsTypes::HEATMAP_RED_TO_BLUE);
+            }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                QMutexLocker lock(&m_qwtCurvesMutex);
@@ -4258,14 +4267,35 @@ void MainWindow::openSavePlotDialog(bool limitToZoom)
    dialog.savePlot(m_plotName);
 }
 
-void MainWindow::sortCurvesByName(bool reverse)
+void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
 {
    QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
 
    // Grab a list of the curves.
    std::list<QString> curveNames;
+   double curveNameAsNum_min = NAN;
+   double curveNameAsNum_max = NAN;
+   bool first = true;
    for(int i = 0; i < m_qwtCurves.size(); ++i)
+   {
       curveNames.push_back(m_qwtCurves[i]->getCurveTitle());
+      
+      // Interpret Curve Name as a number (default to zero if not a number).
+      double asNum = 0;
+      dString::strTo(m_qwtCurves[i]->getCurveTitle().toStdString(), asNum);
+
+      // Update max / min.
+      if(first)
+      {
+         curveNameAsNum_min = asNum;
+         curveNameAsNum_max = asNum;
+         first = false;
+      }
+      else if(asNum < curveNameAsNum_min)
+         curveNameAsNum_min = asNum;
+      else if(asNum > curveNameAsNum_max)
+         curveNameAsNum_max = asNum;
+   }
 
    // Sort
    if(reverse)
@@ -4273,9 +4303,55 @@ void MainWindow::sortCurvesByName(bool reverse)
    else
       curveNames.sort();
 
-   // Update the curve positions.
+   // Color changing parameters.
+   const double HEATMAP_HUE_START = 0;
+   const double HEATMAP_HUE_END = 0.85; // Don't end at zero, that just puts us back where we started.
+
+   double heatMapHueValue = HEATMAP_HUE_START;
+   double heatMapHueIncr = (HEATMAP_HUE_END - HEATMAP_HUE_START) / double(curveNames.size() > 1 ? double(curveNames.size() - 1) : 1.0); // Prevent divide by zero.
+   HsvColor heatMapHsv = {0, 200, 255}; // Init here, hue will change.
+   if(colorType == eSortColorsTypes::HEATMAP_BLUE_TO_RED)
+   {
+      // Reverse direction.
+      heatMapHueValue = HEATMAP_HUE_END;
+      heatMapHueIncr *= -1;
+   }
+
+   // Update the curve positions / colors
    int newCurveIndex = 0;
    for(const auto& curveName : curveNames)
-      setCurveIndex(curveName, newCurveIndex++);
+   {
+      setCurveIndex(curveName, newCurveIndex);
+
+      // Update the colors.
+      CurveAppearance appearance = m_qwtCurves[newCurveIndex]->getCurveAppearance();
+      bool updateColor = true;
+      switch(colorType)
+      {
+         default:
+            updateColor = false;
+         break;
+         case eSortColorsTypes::CHANGE_TO_DEFAULT_COLORS:
+            appearance.color = curveColors[(newCurveIndex % ARRAY_SIZE(curveColors))];
+         break;
+         // Fall through is intended.
+         case eSortColorsTypes::HEATMAP_RED_TO_BLUE:
+         case eSortColorsTypes::HEATMAP_BLUE_TO_RED:
+         {
+            heatMapHsv.h = (unsigned char)(std::max(std::min(heatMapHueValue*255.0+0.5, 255.0), 0.0)); // Convert hue from (0 to 1) to (0 to 255). Round and bound to 0 to 255.
+            heatMapHueValue += heatMapHueIncr; // Update.
+            auto rgb = HsvToRgb(heatMapHsv, true);
+            appearance.color = QColor(rgb.r, rgb.g, rgb.b);
+         }
+         break;
+      }
+      if(updateColor)
+      {
+         m_qwtCurves[newCurveIndex]->setCurveAppearance(appearance);
+      }
+
+      // Increment.
+      ++newCurveIndex;
+   }
 }
 

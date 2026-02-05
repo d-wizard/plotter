@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -205,6 +205,14 @@ private:
        DELTA_LABEL_DELTA,
        DELTA_LABEL_NUM_LABELS
     }eDeltaLabelsTypes;
+
+    enum class eSortColorsTypes
+    {
+      DONT_CHANGE,
+      CHANGE_TO_DEFAULT_COLORS,
+      HEATMAP_RED_TO_BLUE,
+      HEATMAP_BLUE_TO_RED
+    };
 
     Ui::MainWindow *ui;
 
@@ -457,7 +465,7 @@ private:
     void openSavePlotDialog(bool limitToZoom);
 
    // Functions for sorting curves / manipulating curve colors.
-   void sortCurvesByName(bool reverse);
+   void sortCurvesByName(bool reverse, eSortColorsTypes colorType);
 
 private slots:
     void pointSelected(const QPointF &pos);
