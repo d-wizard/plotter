@@ -4319,7 +4319,7 @@ void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
 
    // Color changing parameters.
    const double HEATMAP_HUE_START = 0;
-   const double HEATMAP_HUE_END = 0.85; // Don't end at zero, that just puts us back where we started.
+   const double HEATMAP_HUE_END = 0.70; // Don't end at zero, that just puts us back where we started.
 
    double heatMapHueValue = HEATMAP_HUE_START;
    double heatMapHueIncr = (HEATMAP_HUE_END - HEATMAP_HUE_START) / double(curveNames.size() > 1 ? double(curveNames.size() - 1) : 1.0); // Prevent divide by zero.
