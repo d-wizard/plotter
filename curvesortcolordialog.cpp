@@ -16,12 +16,12 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <algorithm>
 #include <QPixmap>
 #include <QImage>
 #include <QScreen>
 #include "curvesortcolordialog.h"
 #include "ui_curvesortcolordialog.h"
-
 #include "hsvrgb.h"
 
 curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
@@ -40,32 +40,10 @@ curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
    double heightInches = 0.25;
 
    // Convert inches to pixels
-   int widthPixels = static_cast<int>(widthInches * dpiX + 0.5);
-   int heightPixels = static_cast<int>(heightInches * dpiY + 0.5);
+   m_hueWidthPixels = static_cast<int>(widthInches * dpiX + 0.5);
+   m_hueHeightPixels = static_cast<int>(heightInches * dpiY + 0.5);
 
-   // Create image with computed pixel size
-   QImage image(widthPixels, heightPixels, QImage::Format_RGB32);
-
-   // Fill with HSV Scale
-   HsvColor hsv = {0, 200, 255}; // Init here, hue will change.
-   if(widthPixels > 0 && heightPixels > 0)
-   {
-      for (int x = 0; x < widthPixels; ++x)
-      {
-         float percent = float(x) / float(widthPixels-1);
-         hsv.h = (unsigned char)(percent * 255.0 + 0.5);
-         auto rgb = HsvToRgb(hsv);
-         auto qtRgb = qRgb(rgb.r, rgb.g, rgb.b);
-         for (int y = 0; y < heightPixels; ++y)
-         {
-            image.setPixel(x, y, qtRgb);
-         }
-      }
-
-      ui->lblHue->setPixmap(QPixmap::fromImage(image));
-      ui->lblHue->setFixedSize(image.size());
-   }
-
+   setHueImage(0.7, 0.0);
 }
 
 curveSortColorDialog::~curveSortColorDialog()
@@ -82,3 +60,36 @@ void curveSortColorDialog::on_buttonBox_rejected()
 {
 
 }
+
+void curveSortColorDialog::setHueImage(float startHue, float stopHue)
+{
+   // Create image with computed pixel size
+   QImage image(m_hueWidthPixels, m_hueHeightPixels, QImage::Format_RGB32);
+
+   // Fill with HSV Scale
+   HsvColor hsv = {0, 200, 255}; // Init here, hue will change.
+   if(m_hueWidthPixels > 0 && m_hueHeightPixels > 0)
+   {
+      for (int x = 0; x < m_hueWidthPixels; ++x)
+      {
+         // Determine the hue value.
+         float percent = float(x) / float(m_hueWidthPixels-1);
+         float hueVal = startHue + (stopHue - startHue) * percent;
+         hueVal = std::max(std::min(hueVal, 1.0f), 0.0f);
+
+         hsv.h = (unsigned char)(hueVal * 255.0 + 0.5);
+         auto rgb = HsvToRgb(hsv, true);
+         auto qtRgb = qRgb(rgb.r, rgb.g, rgb.b);
+         for (int y = 0; y < m_hueHeightPixels; ++y)
+         {
+            image.setPixel(x, y, qtRgb);
+         }
+      }
+
+      ui->lblHue->setPixmap(QPixmap::fromImage(image));
+      ui->lblHue->setFixedSize(image.size());
+   }
+
+
+}
+

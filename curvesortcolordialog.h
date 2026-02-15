@@ -40,6 +40,12 @@ private slots:
 
 private:
    Ui::curveSortColorDialog *ui;
+
+   int m_hueWidthPixels = 0;
+   int m_hueHeightPixels = 0;
+
+   void setHueImage(float startHue, float stopHue);
+
 };
 
 #endif // CURVESORTCOLORDIALOG_H
