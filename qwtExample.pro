@@ -31,6 +31,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
+    curvesortcolordialog.cpp \
     float16Helpers.cpp \
     hsvrgb.cpp \
         mainwindow.cpp \
@@ -76,6 +77,7 @@ HEADERS  += mainwindow.h \
     PlotHelperTypes.h \
     Cursor.h \
     CurveData.h \
+    curvesortcolordialog.h \
     openrawdialog.h \
     plotguimain.h \
     dString.h \
@@ -112,6 +114,7 @@ HEADERS  += mainwindow.h \
     zoomlimitsdialog.h
 
 FORMS    += mainwindow.ui \
+    curvesortcolordialog.ui \
     openrawdialog.ui \
     plotguimain.ui \
     curveproperties.ui \

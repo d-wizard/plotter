@@ -1380,6 +1380,24 @@ void MainWindow::clearZoomLimits_guiSlot()
    }
 }
 
+void MainWindow::showCurveSortColorDialog()
+{
+   QMutexLocker lock(&m_curveSortColorMutex);
+   m_curveSortColorDialog = new curveSortColorDialog(this);
+
+   lock.unlock();
+   // bool changeMade = m_zoomLimitDialog->getZoomLimits(&m_zoomLimits);
+   m_curveSortColorDialog->exec();
+   lock.relock();
+
+   //if(changeMade)
+   {
+      // Do the change.
+   }
+   delete m_curveSortColorDialog;
+   m_curveSortColorDialog = NULL;
+}
+
 void MainWindow::autoZoom()
 {
    m_plotZoom->m_holdZoom = false;
@@ -4259,6 +4277,16 @@ bool MainWindow::closeSubWindows()
       }
    }
 
+   // Handle Curve Sort Color Dialog Window.
+   {
+      QMutexLocker lock(&m_curveSortColorMutex);
+      if(m_curveSortColorDialog != NULL)
+      {
+//         m_curveSortColorDialog->cancel();
+         subWindowClosed = true;
+      }
+   }
+
    return subWindowClosed;
 }
 
@@ -4270,6 +4298,8 @@ void MainWindow::openSavePlotDialog(bool limitToZoom)
 
 void MainWindow::sortCurvesByName(bool reverse, eSortColorsTypes colorType)
 {
+   showCurveSortColorDialog();
+
    QMutexLocker lock(&m_qwtCurvesMutex); // Make sure multiple threads can't modify the curves.
 
    // Grab a list of the curves.

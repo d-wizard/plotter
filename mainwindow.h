@@ -54,6 +54,7 @@
 #include "CurveData.h"
 #include "plotSnrCalc.h"
 #include "zoomlimitsdialog.h"
+#include "curvesortcolordialog.h"
 
 #define PLOT_CANVAS_OFFSET (6)
 
@@ -367,6 +368,9 @@ private:
     ZoomLimits m_zoomLimits;
     QMutex m_zoomLimitMutex;
 
+    // Curve Sort Color Dialog Stuff
+    curveSortColorDialog* m_curveSortColorDialog = NULL;
+    QMutex m_curveSortColorMutex;
 
     void resetPlot();
 
@@ -464,8 +468,10 @@ private:
 
     void openSavePlotDialog(bool limitToZoom);
 
-   // Functions for sorting curves / manipulating curve colors.
-   void sortCurvesByName(bool reverse, eSortColorsTypes colorType);
+    // Functions for sorting curves / manipulating curve colors.
+    void sortCurvesByName(bool reverse, eSortColorsTypes colorType);
+
+    void showCurveSortColorDialog();
 
 private slots:
     void pointSelected(const QPointF &pos);
