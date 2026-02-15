@@ -51,7 +51,7 @@ public:
    explicit curveSortColorDialog(QWidget *parent = nullptr);
    ~curveSortColorDialog();
 
-   bool getResult(tCurveSortColor& results){results = m_result; return m_applySelected;}
+   bool getResult(tCurveSortColor& results);
    void cancel(){on_buttonBox_rejected();}
 
 private slots:

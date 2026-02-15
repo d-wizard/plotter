@@ -64,6 +64,16 @@ void curveSortColorDialog::on_buttonBox_rejected()
    this->accept(); // Return from exec()
 }
 
+bool curveSortColorDialog::getResult(tCurveSortColor& results)
+{
+   m_result.sort = !ui->radSortNone->isChecked();
+   m_result.sortAscending = ui->radSortAscending->isChecked();
+   m_result.setColor = ui->radColorDefault->isChecked();
+
+   results = m_result; 
+   return m_applySelected;
+}
+
 void curveSortColorDialog::on_slideHueStart_valueChanged(int /*value*/)
 {
    setHueFromGui();
@@ -143,6 +153,11 @@ void curveSortColorDialog::setHueFromGui()
 
 void curveSortColorDialog::setHueImage(float startHue, float stopHue, float modHue)
 {
+   // Save off the hue values.
+   m_result.hueStart = startHue;
+   m_result.hueEnd = stopHue;
+   m_result.hueMod = modHue;
+
    // Create image with computed pixel size
    QImage image(m_hueWidthPixels, m_hueHeightPixels, QImage::Format_RGB32);
 
@@ -170,7 +185,5 @@ void curveSortColorDialog::setHueImage(float startHue, float stopHue, float modH
       ui->lblHue->setPixmap(QPixmap::fromImage(image));
       ui->lblHue->setFixedSize(image.size());
    }
-
-
 }
 
