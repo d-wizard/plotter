@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Sort and Set Curve Colors</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="0">
@@ -46,7 +46,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Hue Start</string>
+         <string>Start</string>
         </property>
        </widget>
       </item>
@@ -70,17 +70,31 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="6">
+      <item row="1" column="0" colspan="11">
        <widget class="QLabel" name="lblHue">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
+      <item row="0" column="9">
+       <widget class="QCheckBox" name="chkHueRev">
+        <property name="text">
+         <string>Reverse</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="3">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Hue End</string>
+         <string>End</string>
         </property>
        </widget>
       </item>
@@ -91,6 +105,32 @@
         </property>
         <property name="pageStep">
          <number>100</number>
+        </property>
+        <property name="value">
+         <number>7000</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="7">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QSlider" name="slideHueMod">
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+        <property name="pageStep">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>3000</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

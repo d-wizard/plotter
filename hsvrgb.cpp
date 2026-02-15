@@ -44,7 +44,7 @@ static double quarterCircle(double val) {
  * @param hue The input hue value (0.0 to 1.0).
  * @return The adjusted hue value.
  */
-static double betterHue(double hue) {
+static double betterHue(double hue, double betterHueFactor = 2.0) {
     const double oneSixth = 1.0 / 6.0;
 
     // Determine which sixth of the hue we are in.
@@ -55,7 +55,7 @@ static double betterHue(double hue) {
 
     // Setup for scaling
     double scaledRemainder = remainderInSixth * 6.0; // Convert from 0 to 1/6th to 0 to 1
-    double scaledPower = 2.0; // 2 = square the value, 3 = cube the value, 0.5 = square root, etc
+    double scaledPower = betterHueFactor; // 2 = square the value, 3 = cube the value, 0.5 = square root, etc
 
     // Do the math to determine the scaling.
     if (direction) { scaledRemainder = 1.0 - scaledRemainder; } // Mirror on odd sixths
@@ -69,7 +69,7 @@ static double betterHue(double hue) {
     return static_cast<double>(whichSixth) * oneSixth + scaledRemainder;
 }
 
-RgbColor HsvToRgb(HsvColor hsv, bool applyBetterHue)
+RgbColor HsvToRgb(HsvColor hsv, float betterHueFactor)
 {
     RgbColor rgb;
     unsigned char region, remainder, p, q, t;
@@ -82,9 +82,9 @@ RgbColor HsvToRgb(HsvColor hsv, bool applyBetterHue)
         return rgb;
     }
 
-    if(applyBetterHue)
+    if(betterHueFactor > 0)
     {
-        hsv.h = (unsigned char)(betterHue(double(hsv.h)/256.0) * 256.0); // Convert from 0 to 255 and back when using the 'betterHue' function.
+        hsv.h = (unsigned char)(betterHue(double(hsv.h)/256.0, betterHueFactor) * 256.0); // Convert from 0 to 255 and back when using the 'betterHue' function.
     }
 
     region = hsv.h / 43;

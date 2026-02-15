@@ -20,6 +20,7 @@
 #include <QPixmap>
 #include <QImage>
 #include <QScreen>
+#include <math.h>
 #include "curvesortcolordialog.h"
 #include "ui_curvesortcolordialog.h"
 #include "hsvrgb.h"
@@ -43,7 +44,7 @@ curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
    m_hueWidthPixels = static_cast<int>(widthInches * dpiX + 0.5);
    m_hueHeightPixels = static_cast<int>(heightInches * dpiY + 0.5);
 
-   setHueImage(0.7, 0.0);
+   setHueFromGui();
 }
 
 curveSortColorDialog::~curveSortColorDialog()
@@ -63,15 +64,37 @@ void curveSortColorDialog::on_buttonBox_rejected()
 
 void curveSortColorDialog::on_slideHueStart_valueChanged(int /*value*/)
 {
-   setHueImage( float(ui->slideHueStart->value()) / float(ui->slideHueStart->maximum()-1), float(ui->slideHueEnd->value()) / float(ui->slideHueEnd->maximum()-1) );
+   setHueFromGui();
 }
 
 void curveSortColorDialog::on_slideHueEnd_valueChanged(int /*value*/)
 {
-   setHueImage( float(ui->slideHueStart->value()) / float(ui->slideHueStart->maximum()-1), float(ui->slideHueEnd->value()) / float(ui->slideHueEnd->maximum()-1) );
+   setHueFromGui();
 }
 
-void curveSortColorDialog::setHueImage(float startHue, float stopHue)
+void curveSortColorDialog::on_slideHueMod_valueChanged(int /*value*/)
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::on_chkHueRev_stateChanged(int /*arg1*/)
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::setHueFromGui()
+{
+   float start = float(ui->slideHueStart->value()*2) / float(ui->slideHueStart->maximum());
+   float end   = float(ui->slideHueEnd->value()*2) / float(ui->slideHueEnd->maximum());
+   float mod   = float(ui->slideHueMod->value()*10) / float(ui->slideHueMod->maximum()) + 0.01;
+
+   if(ui->chkHueRev->isChecked())
+      setHueImage(end, start, mod);
+   else
+      setHueImage(start, end, mod);
+}
+
+void curveSortColorDialog::setHueImage(float startHue, float stopHue, float modHue)
 {
    // Create image with computed pixel size
    QImage image(m_hueWidthPixels, m_hueHeightPixels, QImage::Format_RGB32);
@@ -85,10 +108,11 @@ void curveSortColorDialog::setHueImage(float startHue, float stopHue)
          // Determine the hue value.
          float percent = float(x) / float(m_hueWidthPixels-1);
          float hueVal = startHue + (stopHue - startHue) * percent;
-         hueVal = std::max(std::min(hueVal, 1.0f), 0.0f);
+         hueVal = std::max(hueVal, 0.0f); // Don't be less than zero
+         hueVal = std::fmod(hueVal, 1.0); // Wrap back around when greater than 1
 
          hsv.h = (unsigned char)(hueVal * 255.0 + 0.5);
-         auto rgb = HsvToRgb(hsv, true);
+         auto rgb = HsvToRgb(hsv, modHue);
          auto qtRgb = qRgb(rgb.r, rgb.g, rgb.b);
          for (int y = 0; y < m_hueHeightPixels; ++y)
          {
@@ -102,4 +126,3 @@ void curveSortColorDialog::setHueImage(float startHue, float stopHue)
 
 
 }
-

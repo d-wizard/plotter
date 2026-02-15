@@ -42,13 +42,18 @@ private slots:
 
    void on_slideHueEnd_valueChanged(int value);
 
+   void on_slideHueMod_valueChanged(int value);
+
+   void on_chkHueRev_stateChanged(int arg1);
+
 private:
    Ui::curveSortColorDialog *ui;
 
    int m_hueWidthPixels = 0;
    int m_hueHeightPixels = 0;
 
-   void setHueImage(float startHue, float stopHue);
+   void setHueFromGui();
+   void setHueImage(float startHue, float stopHue, float modHue);
 
 };
 

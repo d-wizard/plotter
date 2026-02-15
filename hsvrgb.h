@@ -34,7 +34,7 @@ typedef struct HsvColor
 
 
 
-RgbColor HsvToRgb(HsvColor hsv, bool applyBetterHue = false);
+RgbColor HsvToRgb(HsvColor hsv, float betterHueFactor = 0);
 HsvColor RgbToHsv(RgbColor rgb);
 
 long RgbToLong(RgbColor rgb);
