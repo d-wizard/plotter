@@ -38,6 +38,10 @@ private slots:
 
    void on_buttonBox_rejected();
 
+   void on_slideHueStart_valueChanged(int value);
+
+   void on_slideHueEnd_valueChanged(int value);
+
 private:
    Ui::curveSortColorDialog *ui;
 

@@ -61,6 +61,16 @@ void curveSortColorDialog::on_buttonBox_rejected()
 
 }
 
+void curveSortColorDialog::on_slideHueStart_valueChanged(int /*value*/)
+{
+   setHueImage( float(ui->slideHueStart->value()) / float(ui->slideHueStart->maximum()-1), float(ui->slideHueEnd->value()) / float(ui->slideHueEnd->maximum()-1) );
+}
+
+void curveSortColorDialog::on_slideHueEnd_valueChanged(int /*value*/)
+{
+   setHueImage( float(ui->slideHueStart->value()) / float(ui->slideHueStart->maximum()-1), float(ui->slideHueEnd->value()) / float(ui->slideHueEnd->maximum()-1) );
+}
+
 void curveSortColorDialog::setHueImage(float startHue, float stopHue)
 {
    // Create image with computed pixel size
