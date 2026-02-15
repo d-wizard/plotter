@@ -54,12 +54,14 @@ curveSortColorDialog::~curveSortColorDialog()
 
 void curveSortColorDialog::on_buttonBox_accepted()
 {
-
+   m_applySelected = true;
+   this->accept(); // Return from exec()
 }
 
 void curveSortColorDialog::on_buttonBox_rejected()
 {
-
+   m_applySelected = false;
+   this->accept(); // Return from exec()
 }
 
 void curveSortColorDialog::on_slideHueStart_valueChanged(int /*value*/)
@@ -82,16 +84,61 @@ void curveSortColorDialog::on_chkHueRev_stateChanged(int /*arg1*/)
    setHueFromGui();
 }
 
+void curveSortColorDialog::on_radColorDefault_clicked()
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::on_radColorRedToBlue_clicked()
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::on_radColorBlueToRed_clicked()
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::on_radColorManual_clicked()
+{
+   setHueFromGui();
+}
+
 void curveSortColorDialog::setHueFromGui()
 {
-   float start = float(ui->slideHueStart->value()*2) / float(ui->slideHueStart->maximum());
-   float end   = float(ui->slideHueEnd->value()*2) / float(ui->slideHueEnd->maximum());
-   float mod   = float(ui->slideHueMod->value()*10) / float(ui->slideHueMod->maximum()) + 0.01;
+   bool showHue = !ui->radColorDefault->isChecked();
+   bool showHueControls = ui->radColorManual->isChecked();
+   if(ui->radColorRedToBlue->isChecked())
+   {
+      setHueImage(RED_HUE, BLUE_HUE, HUE_MOD);
+   }
+   else if(ui->radColorBlueToRed->isChecked())
+   {
+      setHueImage(BLUE_HUE, RED_HUE, HUE_MOD);
+   }
+   else if(ui->radColorManual->isChecked())
+   {
+      float start = float(ui->slideHueStart->value()*2) / float(ui->slideHueStart->maximum());
+      float end   = float(ui->slideHueEnd->value()*2) / float(ui->slideHueEnd->maximum());
+      float mod   = float(ui->slideHueMod->value()*10) / float(ui->slideHueMod->maximum()) + 0.01;
 
-   if(ui->chkHueRev->isChecked())
-      setHueImage(end, start, mod);
-   else
-      setHueImage(start, end, mod);
+      if(ui->chkHueRev->isChecked())
+         setHueImage(end, start, mod);
+      else
+         setHueImage(start, end, mod);
+   }
+
+   ui->grpHue->setVisible(showHue);
+   ui->lblHue->setVisible(showHue);
+   ui->lblHueStart->setVisible(showHueControls);
+   ui->lblHueEnd->setVisible(showHueControls);
+   ui->lblHueMod->setVisible(showHueControls);
+   ui->lineHue1->setVisible(showHueControls);
+   ui->lineHue2->setVisible(showHueControls);
+   ui->chkHueRev->setVisible(showHueControls);
+   ui->slideHueStart->setVisible(showHueControls);
+   ui->slideHueEnd->setVisible(showHueControls);
+   ui->slideHueMod->setVisible(showHueControls);
 }
 
 void curveSortColorDialog::setHueImage(float startHue, float stopHue, float modHue)
@@ -126,3 +173,4 @@ void curveSortColorDialog::setHueImage(float startHue, float stopHue, float modH
 
 
 }
+

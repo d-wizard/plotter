@@ -43,10 +43,40 @@
       <string>Color Hue Scale</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="7">
+       <widget class="QSlider" name="slideHueMod">
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+        <property name="pageStep">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>3000</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="lblHueStart">
         <property name="text">
          <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="lblHueEnd">
+        <property name="text">
+         <string>End</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QLabel" name="lblHueMod">
+        <property name="text">
+         <string>Mod</string>
         </property>
        </widget>
       </item>
@@ -64,37 +94,16 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="Line" name="line">
+       <widget class="Line" name="lineHue1">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="11">
+      <item row="1" column="0" colspan="13">
        <widget class="QLabel" name="lblHue">
         <property name="text">
          <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="9">
-       <widget class="QCheckBox" name="chkHueRev">
-        <property name="text">
-         <string>Reverse</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="6">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>End</string>
         </property>
        </widget>
       </item>
@@ -107,33 +116,24 @@
          <number>100</number>
         </property>
         <property name="value">
-         <number>7000</number>
+         <number>3500</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="0" column="7">
-       <widget class="QLabel" name="label_3">
+      <item row="0" column="11">
+       <widget class="QCheckBox" name="chkHueRev">
         <property name="text">
-         <string>Mod</string>
+         <string>Reverse</string>
         </property>
        </widget>
       </item>
       <item row="0" column="5">
-       <widget class="QSlider" name="slideHueMod">
-        <property name="maximum">
-         <number>10000</number>
-        </property>
-        <property name="pageStep">
-         <number>100</number>
-        </property>
-        <property name="value">
-         <number>3000</number>
-        </property>
+       <widget class="Line" name="lineHue2">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Vertical</enum>
         </property>
        </widget>
       </item>
@@ -149,23 +149,26 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QRadioButton" name="radSortAssending">
+         <widget class="QRadioButton" name="radSortNone">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Don't Sort</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_3">
+         <widget class="QRadioButton" name="radSortAscending">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Ascending</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_2">
+         <widget class="QRadioButton" name="radSortDescending">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Descending</string>
           </property>
          </widget>
         </item>
@@ -192,30 +195,33 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QRadioButton" name="radioButton_4">
+         <widget class="QRadioButton" name="radColorDefault">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Default</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_5">
+         <widget class="QRadioButton" name="radColorRedToBlue">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Red to Blue</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_6">
+         <widget class="QRadioButton" name="radColorBlueToRed">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Blue to Red</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="radioButton_7">
+         <widget class="QRadioButton" name="radColorManual">
           <property name="text">
-           <string>RadioButton</string>
+           <string>Manual Hue</string>
           </property>
          </widget>
         </item>

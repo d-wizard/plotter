@@ -30,8 +30,29 @@ class curveSortColorDialog : public QDialog
    Q_OBJECT
 
 public:
+   static constexpr float RED_HUE = 0.0;
+   static constexpr float BLUE_HUE = 0.7;
+   static constexpr float HUE_MOD = 2.0;
+
+   typedef struct tCurveSortColor
+   {
+      // Sort
+      bool sort = false;
+      bool sortAscending = false;
+
+      // Color
+      bool setColor = false;
+      float hueStart = RED_HUE;
+      float hueEnd = BLUE_HUE;
+      float hueMod = HUE_MOD;
+   }tCurveSortColor;
+   
+public:
    explicit curveSortColorDialog(QWidget *parent = nullptr);
    ~curveSortColorDialog();
+
+   bool getResult(tCurveSortColor& results){results = m_result; return m_applySelected;}
+   void cancel(){on_buttonBox_rejected();}
 
 private slots:
    void on_buttonBox_accepted();
@@ -46,6 +67,14 @@ private slots:
 
    void on_chkHueRev_stateChanged(int arg1);
 
+   void on_radColorDefault_clicked();
+
+   void on_radColorRedToBlue_clicked();
+
+   void on_radColorBlueToRed_clicked();
+
+   void on_radColorManual_clicked();
+
 private:
    Ui::curveSortColorDialog *ui;
 
@@ -55,6 +84,8 @@ private:
    void setHueFromGui();
    void setHueImage(float startHue, float stopHue, float modHue);
 
+   bool m_applySelected = false;
+   tCurveSortColor m_result;
 };
 
 #endif // CURVESORTCOLORDIALOG_H
