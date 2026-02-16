@@ -48,7 +48,8 @@ public:
    }tCurveSortColor;
    
 public:
-   explicit curveSortColorDialog(QWidget *parent = nullptr);
+   curveSortColorDialog(const tCurveSortColor& start, QWidget *parent);
+   explicit curveSortColorDialog(QWidget *parent);
    ~curveSortColorDialog();
 
    bool getResult(tCurveSortColor& results);

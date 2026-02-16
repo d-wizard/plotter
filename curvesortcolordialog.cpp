@@ -25,11 +25,33 @@
 #include "ui_curvesortcolordialog.h"
 #include "hsvrgb.h"
 
-curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
+
+curveSortColorDialog::curveSortColorDialog(const tCurveSortColor& start, QWidget *parent) :
    QDialog(parent),
    ui(new Ui::curveSortColorDialog)
 {
    ui->setupUi(this);
+
+   // Set GUI elements from the starting settings.
+   if(!start.sort)
+      ui->radSortNone->setChecked(true);
+   else if(start.sortAscending)
+      ui->radSortAscending->setChecked(true);
+   else
+      ui->radSortDescending->setChecked(true);
+   if(!start.setColor)
+      ui->radColorDefault->setChecked(true);
+   else if(start.hueStart == RED_HUE && start.hueEnd == BLUE_HUE)
+      ui->radColorRedToBlue->setChecked(true);
+   else if(start.hueStart == BLUE_HUE && start.hueEnd == RED_HUE)
+      ui->radColorBlueToRed->setChecked(true);
+   else
+   {
+      ui->radColorManual->setChecked(true);
+      ui->slideHueStart->setValue(start.hueStart * ui->slideHueStart->maximum() / 2);
+      ui->slideHueEnd->setValue(start.hueEnd * ui->slideHueEnd->maximum() / 2);
+      ui->slideHueMod->setValue((start.hueMod - 0.01) * ui->slideHueMod->maximum() / 10);
+   }
 
    // Get screen DPI (logical DPI respects OS scaling)
    QScreen *screen = QGuiApplication::primaryScreen();
@@ -45,6 +67,11 @@ curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
    m_hueHeightPixels = static_cast<int>(heightInches * dpiY + 0.5);
 
    setHueFromGui();
+}
+
+curveSortColorDialog::curveSortColorDialog(QWidget *parent) :
+   curveSortColorDialog(tCurveSortColor(), parent)
+{
 }
 
 curveSortColorDialog::~curveSortColorDialog()
@@ -68,7 +95,7 @@ bool curveSortColorDialog::getResult(tCurveSortColor& results)
 {
    m_result.sort = !ui->radSortNone->isChecked();
    m_result.sortAscending = ui->radSortAscending->isChecked();
-   m_result.setColor = ui->radColorDefault->isChecked();
+   m_result.setColor = !ui->radColorDefault->isChecked();
 
    results = m_result; 
    return m_applySelected;

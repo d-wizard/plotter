@@ -207,14 +207,6 @@ private:
        DELTA_LABEL_NUM_LABELS
     }eDeltaLabelsTypes;
 
-    enum class eSortColorsTypes
-    {
-      DONT_CHANGE,
-      CHANGE_TO_DEFAULT_COLORS,
-      HEATMAP_RED_TO_BLUE,
-      HEATMAP_BLUE_TO_RED
-    };
-
     Ui::MainWindow *ui;
 
     QString m_plotName;
@@ -469,9 +461,9 @@ private:
     void openSavePlotDialog(bool limitToZoom);
 
     // Functions for sorting curves / manipulating curve colors.
-    void sortCurvesByName(bool reverse, eSortColorsTypes colorType);
+    void showCurveSortColorDialog(const curveSortColorDialog::tCurveSortColor& guiStartSettings);
+    void sortCurvesByName(const curveSortColorDialog::tCurveSortColor& settings);
 
-    void showCurveSortColorDialog();
 
 private slots:
     void pointSelected(const QPointF &pos);

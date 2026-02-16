@@ -221,7 +221,7 @@
         <item>
          <widget class="QRadioButton" name="radColorManual">
           <property name="text">
-           <string>Manual Hue</string>
+           <string>Custom Hue</string>
           </property>
          </widget>
         </item>
