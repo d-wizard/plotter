@@ -2912,27 +2912,15 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             else if(KeyEvent->key() == Qt::Key_Q && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                curveSortColorDialog::tCurveSortColor guiStartSettings;
-               guiStartSettings.sort = true;
-               guiStartSettings.sortAscending = true;
-               guiStartSettings.setColor = true;
-               if(KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
-               {
-                  guiStartSettings.hueStart = curveSortColorDialog::BLUE_HUE;
-                  guiStartSettings.hueEnd = curveSortColorDialog::RED_HUE;
-               }
+               guiStartSettings.sort = curveSortColorDialog::eSortType::ASCENDING;
+               guiStartSettings.color = (KeyEvent->modifiers().testFlag(Qt::ShiftModifier)) ? curveSortColorDialog::eColorType::BLUE_TO_RED : curveSortColorDialog::eColorType::RED_TO_BLUE;
                showCurveSortColorDialog(guiStartSettings);
             }
             else if(KeyEvent->key() == Qt::Key_W && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
             {
                curveSortColorDialog::tCurveSortColor guiStartSettings;
-               guiStartSettings.sort = true;
-               guiStartSettings.sortAscending = false;
-               guiStartSettings.setColor = true;
-               if(KeyEvent->modifiers().testFlag(Qt::ShiftModifier))
-               {
-                  guiStartSettings.hueStart = curveSortColorDialog::BLUE_HUE;
-                  guiStartSettings.hueEnd = curveSortColorDialog::RED_HUE;
-               }
+               guiStartSettings.sort = curveSortColorDialog::eSortType::DESCENDING;
+               guiStartSettings.color = (KeyEvent->modifiers().testFlag(Qt::ShiftModifier)) ? curveSortColorDialog::eColorType::BLUE_TO_RED : curveSortColorDialog::eColorType::RED_TO_BLUE;
                showCurveSortColorDialog(guiStartSettings);
             }
             else if(KeyEvent->key() == Qt::Key_C && KeyEvent->modifiers().testFlag(Qt::ControlModifier))
@@ -4347,7 +4335,7 @@ void MainWindow::sortCurvesByName(const curveSortColorDialog::tCurveSortColor& s
    }
 
    // Sort
-   if(settings.sort)
+   if(settings.sort != curveSortColorDialog::eSortType::NO_CHANGE)
    {
       auto mixedStringCompareLambda = [](const QString& a, const QString& b)
       {
@@ -4364,7 +4352,7 @@ void MainWindow::sortCurvesByName(const curveSortColorDialog::tCurveSortColor& s
          return a < b;           // lexicographical compare
       };
       curveNames.sort(mixedStringCompareLambda);
-      if(!settings.sortAscending)
+      if(settings.sort == curveSortColorDialog::eSortType::DESCENDING)
          curveNames.reverse();
    }
 
@@ -4385,18 +4373,24 @@ void MainWindow::sortCurvesByName(const curveSortColorDialog::tCurveSortColor& s
       // Update the colors.
       CurveAppearance appearance = m_qwtCurves[newCurveIndex]->getCurveAppearance();
       bool updateColor = true;
-      if(!settings.setColor)
+      switch(settings.color)
       {
-         appearance.color = curveColors[(newCurveIndex % ARRAY_SIZE(curveColors))];
-      }
-      else
-      {
-         heatMapHueValue = std::max(heatMapHueValue, 0.0); // Don't be less than zero
-         heatMapHueValue = std::fmod(heatMapHueValue, 1.0); // Wrap back around when greater than 1
-         heatMapHsv.h = (unsigned char)(std::max(std::min(heatMapHueValue*255.0+0.5, 255.0), 0.0)); // Convert hue from (0 to 1) to (0 to 255). Round and bound to 0 to 255.
-         heatMapHueValue += heatMapHueIncr; // Update.
-         auto rgb = HsvToRgb(heatMapHsv, false);
-         appearance.color = QColor(rgb.r, rgb.g, rgb.b);
+         case curveSortColorDialog::eColorType::NO_CHANGE:
+            updateColor = false;
+         break;
+         case curveSortColorDialog::eColorType::DEFAULT:
+            appearance.color = curveColors[(newCurveIndex % ARRAY_SIZE(curveColors))];
+         break;
+         // The rest are hue based.
+         default:
+            heatMapHueValue = std::fmod(heatMapHueValue, 1.0); // Wrap back around when greater than 1
+            if(heatMapHueValue < 0)
+               heatMapHueValue += 1.0;
+            heatMapHsv.h = (unsigned char)(std::max(std::min(heatMapHueValue*255.0+0.5, 255.0), 0.0)); // Convert hue from (0 to 1) to (0 to 255). Round and bound to 0 to 255.
+            heatMapHueValue += heatMapHueIncr; // Update.
+            auto rgb = HsvToRgb(heatMapHsv, false);
+            appearance.color = QColor(rgb.r, rgb.g, rgb.b);
+         break;
       }
 
       if(updateColor)

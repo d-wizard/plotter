@@ -33,24 +33,43 @@ curveSortColorDialog::curveSortColorDialog(const tCurveSortColor& start, QWidget
    ui->setupUi(this);
 
    // Set GUI elements from the starting settings.
-   if(!start.sort)
-      ui->radSortNone->setChecked(true);
-   else if(start.sortAscending)
-      ui->radSortAscending->setChecked(true);
-   else
-      ui->radSortDescending->setChecked(true);
-   if(!start.setColor)
-      ui->radColorDefault->setChecked(true);
-   else if(start.hueStart == RED_HUE && start.hueEnd == BLUE_HUE)
-      ui->radColorRedToBlue->setChecked(true);
-   else if(start.hueStart == BLUE_HUE && start.hueEnd == RED_HUE)
-      ui->radColorBlueToRed->setChecked(true);
-   else
+   switch(start.sort)
    {
-      ui->radColorManual->setChecked(true);
-      ui->slideHueStart->setValue(start.hueStart * ui->slideHueStart->maximum() / 2);
-      ui->slideHueEnd->setValue(start.hueEnd * ui->slideHueEnd->maximum() / 2);
-      ui->slideHueMod->setValue((start.hueMod - 0.01) * ui->slideHueMod->maximum() / 10);
+      // Fall through is intended.
+      default:
+      case eSortType::NO_CHANGE:
+         ui->radSortNone->setChecked(true);
+      break;
+      case eSortType::ASCENDING:
+         ui->radSortAscending->setChecked(true);
+      break;
+      case eSortType::DESCENDING:
+         ui->radSortDescending->setChecked(true);
+      break;
+   }
+   switch(start.color)
+   {
+      // Fall through is intended.
+      default:
+      case eColorType::NO_CHANGE:
+      break;
+      case eColorType::DEFAULT:
+         ui->radColorDefault->setChecked(true);
+      break;
+      case eColorType::RED_TO_BLUE:
+         ui->radColorRedToBlue->setChecked(true);
+      break;
+      case eColorType::BLUE_TO_RED:
+         ui->radColorBlueToRed->setChecked(true);
+      break;
+      case eColorType::CUSTOM:
+      {
+         ui->radColorManual->setChecked(true);
+         ui->slideHueStart->setValue(start.hueStart * ui->slideHueStart->maximum() / 2);
+         ui->slideHueEnd->setValue(start.hueEnd * ui->slideHueEnd->maximum() / 2);
+         ui->slideHueMod->setValue((start.hueMod - 0.01) * ui->slideHueMod->maximum() / 10);
+      }
+      break;
    }
 
    // Get screen DPI (logical DPI respects OS scaling)
@@ -93,11 +112,26 @@ void curveSortColorDialog::on_buttonBox_rejected()
 
 bool curveSortColorDialog::getResult(tCurveSortColor& results)
 {
-   m_result.sort = !ui->radSortNone->isChecked();
-   m_result.sortAscending = ui->radSortAscending->isChecked();
-   m_result.setColor = !ui->radColorDefault->isChecked();
+   results = m_result;
 
-   results = m_result; 
+   if(ui->radSortNone->isChecked())
+      results.sort = eSortType::NO_CHANGE;
+   else if(ui->radSortAscending->isChecked())
+      results.sort = eSortType::ASCENDING;
+   else
+      results.sort = eSortType::DESCENDING;
+
+   if(ui->radColorDontChange->isChecked())
+      results.color = eColorType::NO_CHANGE;
+   else if(ui->radColorDefault->isChecked())
+      results.color = eColorType::DEFAULT;
+   else if(ui->radColorRedToBlue->isChecked())
+      results.color = eColorType::RED_TO_BLUE;
+   else if(ui->radColorBlueToRed->isChecked())
+      results.color = eColorType::BLUE_TO_RED;
+   else
+      results.color = eColorType::CUSTOM;
+
    return m_applySelected;
 }
 
@@ -117,6 +151,11 @@ void curveSortColorDialog::on_slideHueMod_valueChanged(int /*value*/)
 }
 
 void curveSortColorDialog::on_chkHueRev_stateChanged(int /*arg1*/)
+{
+   setHueFromGui();
+}
+
+void curveSortColorDialog::on_radColorDontChange_clicked()
 {
    setHueFromGui();
 }
@@ -143,7 +182,7 @@ void curveSortColorDialog::on_radColorManual_clicked()
 
 void curveSortColorDialog::setHueFromGui()
 {
-   bool showHue = !ui->radColorDefault->isChecked();
+   bool showHue = !ui->radColorDefault->isChecked() && !ui->radColorDontChange->isChecked();
    bool showHueControls = ui->radColorManual->isChecked();
    if(ui->radColorRedToBlue->isChecked())
    {

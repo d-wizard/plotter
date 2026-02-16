@@ -34,18 +34,36 @@ public:
    static constexpr float BLUE_HUE = 0.7;
    static constexpr float HUE_MOD = 2.0;
 
+   enum class eSortType
+   {
+      NO_CHANGE,
+      ASCENDING,
+      DESCENDING
+   };
+
+   enum class eColorType
+   {
+      NO_CHANGE,
+      DEFAULT,
+      RED_TO_BLUE,
+      BLUE_TO_RED,
+      CUSTOM
+   };
+
+
    typedef struct tCurveSortColor
    {
       // Sort
-      bool sort = false;
-      bool sortAscending = false;
+      eSortType sort = eSortType::NO_CHANGE;
 
       // Color
-      bool setColor = false;
+      eColorType color = eColorType::NO_CHANGE;
+
+      // Hue return values.
       float hueStart = RED_HUE;
       float hueEnd = BLUE_HUE;
       float hueMod = HUE_MOD;
-   }tCurveSortColor;
+   }tCurveSortColorResults;
    
 public:
    curveSortColorDialog(const tCurveSortColor& start, QWidget *parent);
@@ -75,6 +93,8 @@ private slots:
    void on_radColorBlueToRed_clicked();
 
    void on_radColorManual_clicked();
+
+   void on_radColorDontChange_clicked();
 
 private:
    Ui::curveSortColorDialog *ui;

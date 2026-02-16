@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>415</width>
-    <height>269</height>
+    <width>447</width>
+    <height>283</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -151,7 +151,7 @@
         <item>
          <widget class="QRadioButton" name="radSortNone">
           <property name="text">
-           <string>Don't Sort</string>
+           <string>Don't Change</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -195,12 +195,22 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
+         <widget class="QRadioButton" name="radColorDontChange">
+          <property name="text">
+           <string>Don't Change</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="radColorDefault">
           <property name="text">
            <string>Default</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
