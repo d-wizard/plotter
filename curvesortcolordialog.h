@@ -31,7 +31,7 @@ class curveSortColorDialog : public QDialog
 
 public:
    static constexpr float RED_HUE = 0.0;
-   static constexpr float BLUE_HUE = 0.7;
+   static constexpr float BLUE_HUE = 0.67;
    static constexpr float HUE_MOD = 2.0;
 
    enum class eSortType
