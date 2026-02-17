@@ -22,7 +22,7 @@
 #include <QScreen>
 #include <math.h>
 #include "curvesortcolordialog.h"
-#include "ui_curvesortcolordialog.h"
+#include "ui_curveSortColorDialog.h"
 #include "hsvrgb.h"
 
 
