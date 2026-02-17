@@ -114,7 +114,7 @@ HEADERS  += mainwindow.h \
     zoomlimitsdialog.h
 
 FORMS    += mainwindow.ui \
-    curvesortcolordialog.ui \
+    curveSortColorDialog.ui \
     openrawdialog.ui \
     plotguimain.ui \
     curveproperties.ui \
