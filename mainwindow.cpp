@@ -4388,7 +4388,7 @@ void MainWindow::sortCurvesByName(const curveSortColorDialog::tCurveSortColor& s
                heatMapHueValue += 1.0;
             heatMapHsv.h = (unsigned char)(std::max(std::min(heatMapHueValue*255.0+0.5, 255.0), 0.0)); // Convert hue from (0 to 1) to (0 to 255). Round and bound to 0 to 255.
             heatMapHueValue += heatMapHueIncr; // Update.
-            auto rgb = HsvToRgb(heatMapHsv, false);
+            auto rgb = HsvToRgb(heatMapHsv, settings.hueMod);
             appearance.color = QColor(rgb.r, rgb.g, rgb.b);
          break;
       }
