@@ -38,6 +38,7 @@ openRawDialog::openRawDialog(QWidget *parent) :
       ui->cmbRawType->addItem(RAW_TYPE_DROPDOWN[i]);
    }
 
+   // Get previous type from persistent memory.
    double pppVal = -1;
    if(persistentParam_getParam_f64(PERSIST_PARAM_OPEN_RAW_TYPE, pppVal))
    {
@@ -45,6 +46,7 @@ openRawDialog::openRawDialog(QWidget *parent) :
       if(index < ARRAY_SIZE(RAW_TYPE_DROPDOWN))
          ui->cmbRawType->setCurrentIndex(index);
    }
+   setSampRateVisible();
    setSliceVisible();
 }
 
@@ -113,9 +115,6 @@ bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& 
    if(openTheFile)
    {
       plotTheFile(curveCmdr, filePath);
-
-      // Save raw type.
-      persistentParam_setParam_f64(PERSIST_PARAM_OPEN_RAW_TYPE, (double)ui->cmbRawType->currentIndex());
    }
 
    return openTheFile;
@@ -281,12 +280,25 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
       default: break;
    }
 
+   // Check if we need to set the sample rate.
+   tCurveMathProperties mathProps;
+   tCurveMathProperties* mathPropsPtr = nullptr; // setting this to null means don't set the sample rate.
+   if(!ui->spnSampRate->isVisible() and ui->spnSampRate->value() > 0)
+   {
+      mathProps.sampleRate = ui->spnSampRate->value();
+      mathPropsPtr = &mathProps; // Indicate that the sample rate should be set.
+   }
+
    // Finally, this will actually create the plots.
    if(curveValues1.size() > 0)
-      curveCmdr->create1dCurve(plotName, curveName1, E_PLOT_TYPE_1D, curveValues1);
+      curveCmdr->create1dCurve(plotName, curveName1, E_PLOT_TYPE_1D, curveValues1, mathPropsPtr);
    if(curveValues2.size() > 0)
-      curveCmdr->create1dCurve(plotName, curveName2, E_PLOT_TYPE_1D, curveValues2);
-
+      curveCmdr->create1dCurve(plotName, curveName2, E_PLOT_TYPE_1D, curveValues2, mathPropsPtr);
+      
+   // Save persistent info
+   persistentParam_setParam_f64(PERSIST_PARAM_OPEN_RAW_TYPE, (double)ui->cmbRawType->currentIndex());
+   if(mathPropsPtr != nullptr)
+      persistentParam_setParam_f64(PERSIST_PARAM_OPEN_RAW_SAMP_RATE, mathProps.sampleRate);
 }
 
 template <typename tRawFileType>
@@ -310,6 +322,16 @@ void openRawDialog::fillFromRaw(const std::vector<char>& inFile, dubVect& result
       memcpy(&rawVal, &inFilePtr[i*blockSizeBytes+offsetBytes], RAW_TYPE_SIZE);
       result[i] = (double)(rawVal);
    }
+}
+
+void openRawDialog::setSampRateVisible()
+{
+   bool visible = ui->chkSetSampRate->isChecked();
+   ui->spnSampRate->setVisible(visible);
+   ui->cmdSampRateFromFileName->setVisible(visible);
+   ui->cmdSampRatePrev->setVisible(visible);
+   ui->sepSampRate1->setVisible(visible);
+   ui->sepSampRate2->setVisible(visible);
 }
 
 void openRawDialog::setSliceVisible()
@@ -399,4 +421,22 @@ void openRawDialog::on_spnSliceStart_valueChanged(double /*arg1*/)
 void openRawDialog::on_spnSliceEnd_valueChanged(double /*arg1*/)
 {
    setStatsLabel();
+}
+
+void openRawDialog::on_chkSetSampRate_stateChanged(int /*arg1*/)
+{
+   setSampRateVisible();
+}
+
+void openRawDialog::on_cmdSampRatePrev_clicked()
+{
+   // Get previous samp rate from persistent memory.
+   double pppVal = -1;
+   if(persistentParam_getParam_f64(PERSIST_PARAM_OPEN_RAW_SAMP_RATE, pppVal))
+      ui->spnSampRate->setValue(pppVal);
+}
+
+void openRawDialog::on_cmdSampRateFromFileName_clicked()
+{
+
 }

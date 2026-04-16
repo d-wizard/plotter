@@ -46,6 +46,7 @@ static const std::string PERSIST_PARAM_FFT_MEAS_CHILD_SIZE = "fftMeasurementChil
 static const std::string PERSIST_PARAM_MATCH_PARENT_SCROLL = "matchParentScroll";
 
 static const std::string PERSIST_PARAM_OPEN_RAW_TYPE = "openRawType";
+static const std::string PERSIST_PARAM_OPEN_RAW_SAMP_RATE = "openRawSampRate";
 
 void persistentParam_setPath(std::string path);
 

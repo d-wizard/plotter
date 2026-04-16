@@ -55,6 +55,12 @@ private slots:
 
    void on_spnSliceEnd_valueChanged(double arg1);
 
+   void on_chkSetSampRate_stateChanged(int arg1);
+
+   void on_cmdSampRatePrev_clicked();
+
+   void on_cmdSampRateFromFileName_clicked();
+
 private:
    Ui::openRawDialog *ui;
 
@@ -73,6 +79,7 @@ private:
    template <typename tRawFileType>
    void fillFromRaw(const std::vector<char>& inFile, dubVect& result, int dimension = 1, int offsetIndex = 0); 
 
+   void setSampRateVisible();
    void setSliceVisible();
 
    // Helper functions
