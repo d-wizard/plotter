@@ -18,6 +18,9 @@
  */
 #include <assert.h>
 #include <string>
+#include <sstream>
+#include <math.h>
+#include <algorithm>
 #include "openrawdialog.h"
 #include "ui_openrawdialog.h"
 #include "localPlotCreate.h"
@@ -26,6 +29,15 @@
 #include "rawFileTypes.h"
 #include "float16Helpers.h"
 
+template <typename T>
+std::string toStringWithSigFigs(const T val, const int sigFigs = 3)
+{
+   int magnitude = val == 0 ? 0 : -std::ceil(std::log10(val));
+   std::ostringstream out;
+   out.precision(std::max(magnitude+sigFigs, 1));
+   out << std::fixed << val;
+   return std::move(out).str();
+}
 
 openRawDialog::openRawDialog(QWidget *parent) :
    QDialog(parent),
@@ -198,7 +210,14 @@ void openRawDialog::setStatsLabel()
    }
    stats = stats + " | Leftover: " + std::to_string(numLeftOverBytes) + " bytes";
 
-   ui->lblStats->setText(stats.c_str());
+   if(settingSampleRateViaGui())
+   {
+      double sampleRate = ui->spnSampRate->value();
+      std::string timeStats = "Samp Rate: " + toStringWithSigFigs(sampleRate, 2) + " | File Time: " + toStringWithSigFigs(double(numBlocksTotal) / sampleRate, 3);
+      ui->lblStatsTime->setText(timeStats.c_str());
+   }
+
+   ui->lblStatsSize->setText(stats.c_str());
 }
 
 bool openRawDialog::isInterleaved()
@@ -283,7 +302,7 @@ void openRawDialog::plotTheFile(CurveCommander* curveCmdr, const QString& filePa
    // Check if we need to set the sample rate.
    tCurveMathProperties mathProps;
    tCurveMathProperties* mathPropsPtr = nullptr; // setting this to null means don't set the sample rate.
-   if(!ui->spnSampRate->isVisible() and ui->spnSampRate->value() > 0)
+   if(settingSampleRateViaGui())
    {
       mathProps.sampleRate = ui->spnSampRate->value();
       mathPropsPtr = &mathProps; // Indicate that the sample rate should be set.
@@ -328,10 +347,15 @@ void openRawDialog::setSampRateVisible()
 {
    bool visible = ui->chkSetSampRate->isChecked();
    ui->spnSampRate->setVisible(visible);
-   ui->cmdSampRateFromFileName->setVisible(visible);
    ui->cmdSampRatePrev->setVisible(visible);
    ui->sepSampRate1->setVisible(visible);
-   ui->sepSampRate2->setVisible(visible);
+
+   // Sample Rate from File Name isn't supported yet. Set to not visible.
+   ui->sepSampRate2->setVisible(false);
+   ui->cmdSampRateFromFileName->setVisible(false);
+
+   // Label
+   ui->lblStatsTime->setVisible(visible);
 }
 
 void openRawDialog::setSliceVisible()
@@ -397,6 +421,11 @@ void openRawDialog::getSliceValueBytes(int64_t& bytesToRemoveFromFront, int64_t&
    }
 }
 
+bool openRawDialog::settingSampleRateViaGui()
+{
+   return (ui->chkSetSampRate->isChecked() && ui->spnSampRate->value() > 0);
+}
+
 void openRawDialog::on_chkSliceInput_stateChanged(int /*arg1*/)
 {
    setSliceVisible();
@@ -426,6 +455,7 @@ void openRawDialog::on_spnSliceEnd_valueChanged(double /*arg1*/)
 void openRawDialog::on_chkSetSampRate_stateChanged(int /*arg1*/)
 {
    setSampRateVisible();
+   setStatsLabel();
 }
 
 void openRawDialog::on_cmdSampRatePrev_clicked()
@@ -439,4 +469,14 @@ void openRawDialog::on_cmdSampRatePrev_clicked()
 void openRawDialog::on_cmdSampRateFromFileName_clicked()
 {
 
+}
+
+void openRawDialog::on_spnSampRate_editingFinished()
+{
+   setStatsLabel();
+}
+
+void openRawDialog::on_spnSampRate_valueChanged(double /*arg1*/)
+{
+   setStatsLabel();
 }

@@ -61,6 +61,10 @@ private slots:
 
    void on_cmdSampRateFromFileName_clicked();
 
+   void on_spnSampRate_editingFinished();
+
+   void on_spnSampRate_valueChanged(double arg1);
+
 private:
    Ui::openRawDialog *ui;
 
@@ -85,5 +89,6 @@ private:
    // Helper functions
    unsigned getSampleSizeFromGui();
    void getSliceValueBytes(int64_t& bytesToRemoveFromFront, int64_t& totalBytes);
+   bool settingSampleRateViaGui();
 
 };
