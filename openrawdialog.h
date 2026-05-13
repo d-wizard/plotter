@@ -73,6 +73,8 @@ private:
 
    size_t m_curFileSizeBytes = 0;
 
+   std::string m_openFilePath;
+
    void setPlotComboBox(CurveCommander* curveCmdr, const QString& plotName);
    void setCurveNames();
    void setStatsLabel();

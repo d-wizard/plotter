@@ -21,6 +21,7 @@
 #include <sstream>
 #include <math.h>
 #include <algorithm>
+#include <list>
 #include "openrawdialog.h"
 #include "ui_openrawdialog.h"
 #include "localPlotCreate.h"
@@ -28,6 +29,8 @@
 #include "persistentParameters.h"
 #include "rawFileTypes.h"
 #include "float16Helpers.h"
+#include "dString.h"
+#include "FileSystemOperations.h"
 
 template <typename T>
 std::string toStringWithSigFigs(const T val, const int sigFigs = 3)
@@ -69,6 +72,7 @@ openRawDialog::~openRawDialog()
 
 bool openRawDialog::deterimineRawType(CurveCommander* curveCmdr, const QString& filePath, const QString& suggestedPlotName)
 {
+   m_openFilePath = filePath.toStdString();
    this->setWindowTitle( (std::string("Opening ") + fso::GetFile(filePath.toStdString())).c_str() );
 
    m_curFileSizeBytes = fso::GetFileSize(filePath.toStdString());
@@ -468,6 +472,10 @@ void openRawDialog::on_cmdSampRatePrev_clicked()
 
 void openRawDialog::on_cmdSampRateFromFileName_clicked()
 {
+   std::list<std::string> rateStrs = {"sps", "hz"}; // lower case
+   std::list<std::string> modifierStrs = {"k", "m", "g"}; // lower case.
+
+   std::string fileName = m_openFilePath;
 
 }
 
