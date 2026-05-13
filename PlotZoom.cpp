@@ -16,6 +16,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <sstream>
+#include <iomanip>
 #include "PlotZoom.h"
 #include "mainwindow.h"
 
@@ -255,8 +257,22 @@ void PlotZoom::setAxisToolTip(eAxis axis)
    if(axisWidget != nullptr)
    {
       auto divisions = m_qwtPlot->axisScaleDiv(qwtAxisLocation).ticks(QwtScaleDiv::MajorTick);
-      if (divisions.size() >= 2)
-         axisWidget->setToolTip(std::to_string(divisions[1] - divisions[0]).c_str());
+      if(divisions.size() >= 2)
+      {
+         // Set the tool tip for the Axis.
+         double scalePerDiv = divisions[1] - divisions[0];
+         std::stringstream toolTip;
+         std::string title = std::string(axis == eAxis::E_X_AXIS ? "X" : "Y") + " Axis | Scale Per Division";
+         //
+         toolTip << std::setprecision(6); // Make sure enough precision
+         toolTip << title << std::endl << "-------------------------------" << std::endl;
+         toolTip << "Decimal: " << std::fixed << scalePerDiv << std::endl;
+         toolTip << "Scientific: " << std::scientific << scalePerDiv;
+
+         if(std::isfinite(scalePerDiv))
+            toolTip << std::endl << "Inverse (i.e. Rate): " << std::resetiosflags(std::ios::floatfield) << double(1.0)/scalePerDiv;
+         axisWidget->setToolTip(toolTip.str().c_str());
+      }
       else
          axisWidget->setToolTip(""); // Only 1 or 0 divisions, not enough to determine value per division.
    }
