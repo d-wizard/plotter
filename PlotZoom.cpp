@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2022, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -242,6 +242,24 @@ void PlotZoom::ResetPlotAxisScale()
   div = lineSE.divideScale(m_zoomDimensions.minX, m_zoomDimensions.maxX, 12,4);
   m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
   m_qwtPlot->setAxisScaleDiv(QwtPlot::xBottom, div);
+
+   // Update tooltip
+   setAxisToolTip(eAxis::E_X_AXIS);
+   setAxisToolTip(eAxis::E_Y_AXIS);
+}
+
+void PlotZoom::setAxisToolTip(eAxis axis)
+{
+   const auto qwtAxisLocation = (axis == eAxis::E_X_AXIS) ? QwtPlot::xBottom : QwtPlot::yLeft;
+   auto* axisWidget = m_qwtPlot->axisWidget(qwtAxisLocation);
+   if(axisWidget != nullptr)
+   {
+      auto divisions = m_qwtPlot->axisScaleDiv(qwtAxisLocation).ticks(QwtScaleDiv::MajorTick);
+      if (divisions.size() >= 2)
+         axisWidget->setToolTip(std::to_string(divisions[1] - divisions[0]).c_str());
+      else
+         axisWidget->setToolTip(""); // Only 1 or 0 divisions, not enough to determine value per division.
+   }
 }
 
 void PlotZoom::VertSliderMoved()
