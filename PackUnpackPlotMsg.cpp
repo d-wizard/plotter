@@ -499,6 +499,13 @@ double UnpackPlotMsg::readSampleValue(ePlotDataTypes dataType)
          retVal = (double)samp[0] + ((double)samp[2] / (double)1000000000.0);
       }
       break;
+      case E_TIME_NANOSEC_64:
+      {
+         INT_64 samp = 0;
+         unpack(&samp, sizeof(samp));
+         retVal = ((double)samp) / 1e9; // Convert nanoseconds to seconds
+      }
+      break;
       case E_INVALID_DATA_TYPE:
       break;
    }

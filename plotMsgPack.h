@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2016 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2016, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -56,6 +56,7 @@ typedef enum
    E_TIME_STRUCT_64,
    E_TIME_STRUCT_128,
    E_FLOAT_16, // Add to end for backward compatibility.
+   E_TIME_NANOSEC_64, // Add to end to keep backward compatibility.
    E_INVALID_DATA_TYPE
 }ePlotDataTypes;
 
@@ -74,7 +75,8 @@ static const int PLOT_DATA_TYPE_SIZES[]=
    sizeof(FLOAT_64),
    sizeof(UINT_32) + sizeof(UINT_32), // E_TIME_STRUCT_64
    sizeof(UINT_64) + sizeof(UINT_64), // E_TIME_STRUCT_128
-   sizeof(UINT_16) // E_FLOAT_16
+   sizeof(UINT_16), // E_FLOAT_16
+   sizeof(INT_64), // E_TIME_NANOSEC_64
 };
 
 
