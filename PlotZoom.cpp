@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2019, 2022 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2019, 2022, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -16,6 +16,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <sstream>
+#include <iomanip>
 #include "PlotZoom.h"
 #include "mainwindow.h"
 
@@ -242,6 +244,38 @@ void PlotZoom::ResetPlotAxisScale()
   div = lineSE.divideScale(m_zoomDimensions.minX, m_zoomDimensions.maxX, 12,4);
   m_qwtPlot->setAxisScale(QwtPlot::xBottom, m_zoomDimensions.minX, m_zoomDimensions.maxX);
   m_qwtPlot->setAxisScaleDiv(QwtPlot::xBottom, div);
+
+   // Update tooltip
+   setAxisToolTip(eAxis::E_X_AXIS);
+   setAxisToolTip(eAxis::E_Y_AXIS);
+}
+
+void PlotZoom::setAxisToolTip(eAxis axis)
+{
+   const auto qwtAxisLocation = (axis == eAxis::E_X_AXIS) ? QwtPlot::xBottom : QwtPlot::yLeft;
+   auto* axisWidget = m_qwtPlot->axisWidget(qwtAxisLocation);
+   if(axisWidget != nullptr)
+   {
+      auto divisions = m_qwtPlot->axisScaleDiv(qwtAxisLocation).ticks(QwtScaleDiv::MajorTick);
+      if(divisions.size() >= 2)
+      {
+         // Set the tool tip for the Axis.
+         double scalePerDiv = divisions[1] - divisions[0];
+         std::stringstream toolTip;
+         std::string title = std::string(axis == eAxis::E_X_AXIS ? "X" : "Y") + " Axis | Scale Per Division";
+         //
+         toolTip << std::setprecision(6); // Make sure enough precision
+         toolTip << title << std::endl << "-------------------------------" << std::endl;
+         toolTip << "Decimal: " << std::fixed << scalePerDiv << std::endl;
+         toolTip << "Scientific: " << std::scientific << scalePerDiv;
+
+         if(std::isfinite(scalePerDiv))
+            toolTip << std::endl << "Inverse (i.e. Rate): " << std::resetiosflags(std::ios::floatfield) << double(1.0)/scalePerDiv;
+         axisWidget->setToolTip(toolTip.str().c_str());
+      }
+      else
+         axisWidget->setToolTip(""); // Only 1 or 0 divisions, not enough to determine value per division.
+   }
 }
 
 void PlotZoom::VertSliderMoved()
