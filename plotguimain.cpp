@@ -163,6 +163,13 @@ void plotGuiMain::closeAllPlotsFromLibSlot()
 
 void plotGuiMain::closeAllPlotsSafeSlot()
 {
+   // Ask before closing all plots.
+   QMessageBox::StandardButton reply = 
+      QMessageBox::question(this, "Close All Plots?",
+         "Close all Plot Windows?", QMessageBox::Ok | QMessageBox::Cancel);
+   if(reply != QMessageBox::Ok)
+      return; // User didn't select OK. Exit early.
+
    bool allPlotsDestroyed = m_curveCommander.destroyAllPlotsSafe();
    m_curveCommander.curvePropertiesGuiCloseSlot(); // Close the Properties window too.
 
@@ -184,8 +191,8 @@ void plotGuiMain::clearAllPlotCurvesSlot()
 {
    QMessageBox::StandardButton reply = 
       QMessageBox::question(this, "Clear All Plot Curves?",
-         "Clear all the curve data on all the plots?\nPlot GUIs will remain, but all curve data will be erased.\nThis can take is little while...", QMessageBox::Yes | QMessageBox::No);
-   if(reply == QMessageBox::Yes)
+         "Clear all the curve data on all the plots?\nPlot GUIs will remain, but all curve data will be erased.\nThis can take is little while...", QMessageBox::Ok | QMessageBox::Cancel);
+   if(reply == QMessageBox::Ok)
    {
       m_curveCommander.clearAllPlotCurves();
    }
