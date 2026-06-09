@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2019, 2021 - 2022, 2024 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2019, 2021 - 2022, 2024, 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -1145,3 +1145,14 @@ void CurveCommander::configForSpectrumAnalyzerView(QString plotName)
       }
    }
 }
+
+void CurveCommander::clearAllPlotCurves()
+{
+   tCurveCommanderInfo::iterator iter = m_allCurves.begin();
+   while(iter != m_allCurves.end())
+   {
+      iter->plotGui->clearAllSamplesSilent(); // Clear all the samples in all the curves for this plot (silent means doen't prompt the user).
+      ++iter;
+   }
+}
+

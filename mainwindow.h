@@ -194,6 +194,8 @@ public:
 
     bool closeSubWindows(); // Returns true if sub-windows were closed.
 
+    void clearAllSamplesSilent(); // Silently clears all samples on all the curves.
+    
     bool m_spectrumAnalyzerViewSet;
 private:
     // Define indexes for the array of delta cursor labels.

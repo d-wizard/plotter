@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2021 - 2022, 2024 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2021 - 2022, 2024 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -45,6 +45,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
    m_trayOpenPlotAction("Open Plot From File", this),
    m_propertiesWindowAction("Properties", this),
    m_closeAllPlotsAction("Close All Plots", this),
+   m_clearAllPlotCurves("Clear Curve Data on All Plots", this),
    m_revDateStampAction(REV_DATE_STAMP, this),
    m_updateBinaryAction("Update", this),
    m_trayMenu(NULL),
@@ -88,6 +89,7 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     connect(&m_trayOpenPlotAction, SIGNAL(triggered(bool)), this, SLOT(openPlotSlot()));
     connect(&m_propertiesWindowAction, SIGNAL(triggered(bool)), this, SLOT(showPropertiesGui()));
     connect(&m_closeAllPlotsAction, SIGNAL(triggered(bool)), this, SLOT(closeAllPlotsSafeSlot()));
+    connect(&m_clearAllPlotCurves, SIGNAL(triggered(bool)), this, SLOT(clearAllPlotCurvesSlot()));
     connect(&m_updateBinaryAction, SIGNAL(triggered(bool)), this, SLOT(updateBinarySlot()));
 
     m_trayMenu = new QMenu("Plot", this);
@@ -102,6 +104,8 @@ plotGuiMain::plotGuiMain(QWidget *parent, std::vector<unsigned short> tcpPorts, 
     m_trayMenu->addAction(&m_trayEnDisNewCurvesAction);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_propertiesWindowAction);
+    m_trayMenu->addSeparator();
+    m_trayMenu->addAction(&m_clearAllPlotCurves);
     m_trayMenu->addSeparator();
     m_trayMenu->addAction(&m_closeAllPlotsAction);
     m_trayMenu->addSeparator();
@@ -174,6 +178,17 @@ void plotGuiMain::closeAllPlotsSafeRetrySlot()
 {
    // Try the destroy one more time.
    m_curveCommander.destroyAllPlotsSafe();
+}
+
+void plotGuiMain::clearAllPlotCurvesSlot()
+{
+   QMessageBox::StandardButton reply = 
+      QMessageBox::question(this, "Clear All Plot Curves?",
+         "Clear all the curve data on all the plots?\nPlot GUIs will remain, but all curve data will be erased.\nThis can take is little while...", QMessageBox::Yes | QMessageBox::No);
+   if(reply == QMessageBox::Yes)
+   {
+      m_curveCommander.clearAllPlotCurves();
+   }
 }
 
 void plotGuiMain::restorePlotFilesInListSlot()

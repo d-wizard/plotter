@@ -1479,6 +1479,11 @@ void MainWindow::scrollModeChangePlotSize()
 
 }
 
+void MainWindow::clearAllSamplesSilent()
+{
+   clearCurveSamples(false, true); // Clear all curve's samples without asking the user.
+}
+
 void MainWindow::clearAllSamplesSlot()
 {
    clearCurveSamples(true, true); // Clear all curve's samples, but ask the user for confirmation before doing so.

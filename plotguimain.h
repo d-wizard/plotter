@@ -1,4 +1,4 @@
-/* Copyright 2013 - 2017, 2022, 2024 - 2025 Dan Williams. All Rights Reserved.
+/* Copyright 2013 - 2017, 2022, 2024 - 2026 Dan Williams. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
  * software and associated documentation files (the "Software"), to deal in the Software
@@ -75,6 +75,7 @@ private:
     QAction m_trayOpenPlotAction;
     QAction m_propertiesWindowAction;
     QAction m_closeAllPlotsAction;
+    QAction m_clearAllPlotCurves;
     QAction m_revDateStampAction;
     QAction m_updateBinaryAction;
     QMenu* m_trayMenu;
@@ -108,6 +109,7 @@ public slots:
     void closeAllPlotsFromLibSlot();
     void closeAllPlotsSafeSlot();
     void closeAllPlotsSafeRetrySlot();
+    void clearAllPlotCurvesSlot();
     void restorePlotFilesInListSlot();
     void updateBinarySlot();
 signals:
