@@ -191,7 +191,7 @@ void plotGuiMain::clearAllPlotCurvesSlot()
 {
    QMessageBox::StandardButton reply = 
       QMessageBox::question(this, "Clear All Plot Curves?",
-         "Clear all the curve data on all the plots?\nPlot GUIs will remain, but all curve data will be erased.\nThis can take is little while...", QMessageBox::Ok | QMessageBox::Cancel);
+         "Clear all the curve data on all the plots?\nPlot GUIs will remain, but all curve data will be erased.\nThis can take a little while...", QMessageBox::Ok | QMessageBox::Cancel);
    if(reply == QMessageBox::Ok)
    {
       m_curveCommander.clearAllPlotCurves();
